@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-QString rev="$Rev: 198 $";
+QString rev="$Rev: 200 $";
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -1708,7 +1708,7 @@ void MyWindow::restoreXDfiles(){
 }
 
 void MyWindow::about(){  
-  QString date="$LastChangedDate: 2010-09-28 17:29:36 +0200 (Di, 28 Sep 2010)$";
+  QString date="$LastChangedDate: 2010-09-29 15:07:22 +0200 (Mi, 29 Sep 2010)$";
   date.remove("LastChangedDate:");
   date.remove("$");
   QString bau_datum=QString(__TIME__ " " __DATE__);
@@ -2223,10 +2223,10 @@ void MyWindow::load_MoPro(QString fileName) {
        else if ((axstr.at(i)=="bYZ")|| (axstr.at(i)=="-bYZ")) {asymmUnit[i].icor1=2; asymmUnit[i].icor2=1;gendum=1;}
        else if ((axstr.at(i)=="bZX")|| (axstr.at(i)=="-bZX")) {asymmUnit[i].icor1=3; asymmUnit[i].icor2=1;gendum=1;}
        else if ((axstr.at(i)=="bZY")|| (axstr.at(i)=="-bZY")) {asymmUnit[i].icor1=3; asymmUnit[i].icor2=2;gendum=1;}
-       else if ((axstr.at(i)=="3ZX")|| (axstr.at(i)=="-3ZX")) {
-            asymmUnit[i].icor1=3;
-            asymmUnit[i].icor2=1;
-            gendum=3;
+       else if ((axstr.at(i)=="3Zb")|| (axstr.at(i)=="-3Zb")) {asymmUnit[i].icor1=3; asymmUnit[i].icor2=1;gendum=4;}
+       else if ((axstr.at(i)=="3bZ")|| (axstr.at(i)=="-3bZ")) {asymmUnit[i].icor1=2; asymmUnit[i].icor2=1;gendum=5;}
+       else if ((axstr.at(i)=="3ZX")|| (axstr.at(i)=="-3ZX")) {asymmUnit[i].icor1=3; asymmUnit[i].icor2=1;gendum=3;}
+       if (gendum>1){//wir haben eine dritte richtung
             if (ato3.at(i).contains(QRegExp("[A-Za-z]+"))){
              if (ato3.at(i).contains("_")){
                int rn=ato3.at(i).section("_",0,0).toInt();
@@ -2317,6 +2317,34 @@ strncpy(newAtom.atomname,QString("DUM%1!%2").arg(dummax).arg(axstr.at(i)).toStdS
 asymmUnit[i].nax=dummax+atmax+1;
 dummax++;
 dummys.append(newAtom);
+}
+if (gendum==4){//3Zb  symmUnit[i].icor1=3; asymmUnit[i].icor2=1;gendum=4;
+V3 mitte, arm1, arm2, arm3;
+mol.frac2kart(asymmUnit.at(asymmUnit.at(i).nay2-1).frac,arm2);
+mol.frac2kart(asymmUnit.at(asymmUnit.at(i).nay1-1).frac,mitte);
+mol.frac2kart(asymmUnit.at(asymmUnit.at(i).na3-1).frac,arm3);
+newAtom.kart=mitte+0.5*Normalize(((arm2-mitte)+(arm3-mitte)));
+mol.kart2frac(newAtom.kart,newAtom.frac);
+newAtom.OrdZahl=-1;
+strncpy(newAtom.atomname,QString("DUM%1!%2").arg(dummax).arg(axstr.at(i)).toStdString().c_str(),38);
+asymmUnit[i].nay2=dummax+atmax+1;
+dummax++;
+dummys.append(newAtom);
+
+}
+if (gendum==4){//3bZ
+V3 mitte, arm1, arm2, arm3;
+mol.frac2kart(asymmUnit.at(asymmUnit.at(i).nax-1).frac,arm1);
+mol.frac2kart(asymmUnit.at(asymmUnit.at(i).nay1-1).frac,mitte);
+mol.frac2kart(asymmUnit.at(asymmUnit.at(i).na3-1).frac,arm3);
+newAtom.kart=mitte+0.5*Normalize(((arm1-mitte)+(arm3-mitte)));
+mol.kart2frac(newAtom.kart,newAtom.frac);
+newAtom.OrdZahl=-1;
+strncpy(newAtom.atomname,QString("DUM%1!%2").arg(dummax).arg(axstr.at(i)).toStdString().c_str(),38);
+asymmUnit[i].nax=dummax+atmax+1;
+dummax++;
+dummys.append(newAtom);
+
 }
     }
     for (int i=0; i<dummys.size();i++)
