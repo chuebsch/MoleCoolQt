@@ -32,6 +32,7 @@ public:
   bool drawAt,elli,drawBo,drawLa,drawHb,Luftschlange,invEditAble,moveLab,moveLeg,xdSetupMode,reSe,depthCueing,moai,horizont,monochrom;
  // GLuint tex[2];
  // int texti;
+  QStringList invariomsComplete, invariomsUnique;
   QFont myFont;
   QFont MLegendFont;
  // QString Tex1FileName;
@@ -123,6 +124,7 @@ public slots:
   void invariomExport();
 //  void unsetXDSetup();
   void loadDataBase();
+  void exportMoProFiles();
   void updateBondActions();
   void disSelection();
   void connectSelection();
@@ -159,6 +161,7 @@ private:
   CEnvironment ce;
   Connection cl;
   QStringList dataBase;
+  QList<DABA> entries;
 };
 #endif
 

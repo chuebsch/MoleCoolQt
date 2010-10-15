@@ -2027,6 +2027,70 @@ bool molekul::decodeSymmCard(const QString symmCard){
 
   return true;
 }
+QString molekul::encodeSymm(int s){
+    QString erg="  ";
+    Matrix m;
+    V3 t;
+    m=zelle.symmops.at(s);
+    QString symstrX,symstrY,symstrZ;
+    if (m.m11==1) symstrX.append("+x");
+    if (m.m11==-1) symstrX.append("-x");
+    if (m.m12==1) symstrX.append("+y");
+    if (m.m12==-1) symstrX.append("-y");
+    if (m.m13==1) symstrX.append("+z");
+    if (m.m13==-1) symstrX.append("-z");
+
+    if (m.m21==1) symstrY.append("+x");
+    if (m.m21==-1) symstrY.append("-x");
+    if (m.m22==1) symstrY.append("+y");
+    if (m.m22==-1) symstrY.append("-y");
+    if (m.m23==1) symstrY.append("+z");
+    if (m.m23==-1) symstrY.append("-z");
+
+    if (m.m31==1) symstrZ.append("+x");
+    if (m.m31==-1) symstrZ.append("-x");
+    if (m.m32==1) symstrZ.append("+y");
+    if (m.m32==-1) symstrZ.append("-y");
+    if (m.m33==1) symstrZ.append("+z");
+    if (m.m33==-1) symstrZ.append("-z");
+    t=zelle.trans.at(s);
+    V3 zaehler,nenner;
+    double egal;
+    for (int g=1;g<5; g++){
+        nenner.x=(t.x<0)?-g:g;;
+        zaehler.x=(int)((t.x)*g);
+        if (fabs(modf(t.x*g,&egal))<0.05) break;
+    }
+    for (int g=1;g<5; g++){
+        nenner.y=(t.y<0)?-g:g;
+        zaehler.y=(int)((t.y)*g);
+        if (fabs(modf(t.y*g,&egal))<0.05) break;
+    }
+    for (int g=1;g<5; g++){
+        nenner.z=(t.z<0)?-g:g;
+        zaehler.z=(int)((t.z)*g);
+        if (fabs(modf(t.z*g,&egal))<0.05) break;
+    }
+    erg.append(QString("%1/%2%3, %4/%5%6, %7/%8%9 \n")
+               .arg(zaehler.x)
+               .arg(nenner.x)
+               .arg(symstrX)
+               .arg(zaehler.y)
+               .arg(nenner.y)
+               .arg(symstrY)
+               .arg(zaehler.z)
+               .arg(nenner.z)
+               .arg(symstrZ));
+    //erg.remove(QRegExp("0/+"));
+    erg.remove(QRegExp("0/\\d"));
+    erg.replace(" +","  ");
+    erg.replace("1/1","1");
+    erg.replace("2/1","2");
+    erg.replace("3/1","3");
+    erg.replace("4/1","4");
+    erg.replace("5/1","5");
+    return erg;
+}
 QString molekul::symmcode2human(QStringList brauchSymm){
   QString erg;
   Matrix m;
@@ -2100,9 +2164,13 @@ QString molekul::symmcode2human(QStringList brauchSymm){
   erg.replace("5/1","5");
   return erg;
 }
+
 bool molekul::applyLatticeCentro(const QChar latt,const bool centro){
-  int z=zelle.symmops.size();
-  Matrix inv(-1.0,0.0,0.0, 0.0,-1.0,0.0, 0.0,0.0,-1.0);  
+  int z=zelle.symuncent=zelle.symmops.size();
+  zelle.centro=centro;
+  zelle.lattis=latt;
+//  qDebug()<<zelle.centro<<centro<<zelle.lattis;
+  Matrix inv(-1.0,0.0,0.0, 0.0,-1.0,0.0, 0.0,0.0,-1.0);
   if (centro) 
     for (int i=0; i<z;i++){
       Matrix m=zelle.symmops.at(i)*inv;

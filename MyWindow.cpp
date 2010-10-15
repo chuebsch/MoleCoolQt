@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-QString rev="$Rev: 200 $";
+QString rev="$Rev: 202 $";
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -1708,7 +1708,7 @@ void MyWindow::restoreXDfiles(){
 }
 
 void MyWindow::about(){  
-  QString date="$LastChangedDate: 2010-09-29 15:07:22 +0200 (Mi, 29 Sep 2010)$";
+  QString date="$LastChangedDate: 2010-09-30 17:15:50 +0200 (Do, 30 Sep 2010)$";
   date.remove("LastChangedDate:");
   date.remove("$");
   QString bau_datum=QString(__TIME__ " " __DATE__);
@@ -2091,13 +2091,14 @@ void MyWindow::load_MoPro(QString fileName) {
             tok.clear();
             tok=all.at(li).split(" ",QString::SkipEmptyParts);
             if (tok.size()){
-                if ((tok.size()>6)&&(tok.at(0).toUpper()=="CELL")) {
+                if ((tok.size()>7)&&(tok.at(0).toUpper()=="CELL")) {
                     mol.zelle.a  = tok.at(1).toDouble();
                     mol.zelle.b  = tok.at(2).toDouble();
                     mol.zelle.c  = tok.at(3).toDouble();
                     mol.zelle.al = tok.at(4).toDouble();
                     mol.zelle.be = tok.at(5).toDouble();
                     mol.zelle.ga = tok.at(6).toDouble();
+                    mol.zelle.lambda=tok.at(7).toDouble();
                     //qDebug()<<mol.zelle.a<<mol.zelle.b<<mol.zelle.c<<mol.zelle.al<<mol.zelle.be<<mol.zelle.ga;
                     habzell=true;
                     setup_zelle();
@@ -2110,7 +2111,7 @@ void MyWindow::load_MoPro(QString fileName) {
                         mol.decodeSymmCard(all.at(k));
                     }
                     li+=nsym;
-                    mol.applyLatticeCentro(gitt,((tok.size()>3)&&(tok.at(3).toUpper()=="CENTRO")));
+                    mol.applyLatticeCentro(gitt,((tok.size()>3)&&(tok.at(3).toUpper().startsWith("CENTRO"))));
                 }
                 if ((tok.size()> 1)&&(tok.at(0).toUpper()=="DUMMY")){
                     dummax = tok.at(1).toInt();
@@ -2134,6 +2135,7 @@ void MyWindow::load_MoPro(QString fileName) {
                 }
                 if ((tok.size()> 1)&&(tok.at(0).toUpper()=="ATOMS")){
                     atmax= tok.at(1).toInt();
+                    //qDebug()<<atmax;
                     for (int k=0;k<atmax;k++){
                         tok.clear();
                         tok=all.at(++li).split(" ",QString::SkipEmptyParts);
@@ -2317,9 +2319,10 @@ strncpy(newAtom.atomname,QString("DUM%1!%2").arg(dummax).arg(axstr.at(i)).toStdS
 asymmUnit[i].nax=dummax+atmax+1;
 dummax++;
 dummys.append(newAtom);
+
 }
 if (gendum==4){//3Zb  symmUnit[i].icor1=3; asymmUnit[i].icor2=1;gendum=4;
-V3 mitte, arm1, arm2, arm3;
+V3 mitte, arm2, arm3;
 mol.frac2kart(asymmUnit.at(asymmUnit.at(i).nay2-1).frac,arm2);
 mol.frac2kart(asymmUnit.at(asymmUnit.at(i).nay1-1).frac,mitte);
 mol.frac2kart(asymmUnit.at(asymmUnit.at(i).na3-1).frac,arm3);
@@ -2327,12 +2330,16 @@ newAtom.kart=mitte+0.5*Normalize(((arm2-mitte)+(arm3-mitte)));
 mol.kart2frac(newAtom.kart,newAtom.frac);
 newAtom.OrdZahl=-1;
 strncpy(newAtom.atomname,QString("DUM%1!%2").arg(dummax).arg(axstr.at(i)).toStdString().c_str(),38);
+/*qDebug()<<"Arm2"<<asymmUnit.at(asymmUnit.at(i).nay2-1).atomname
+<<"the atom"<<asymmUnit.at(asymmUnit.at(i).nay1-1).atomname
+<<"arm3 "<<asymmUnit.at(asymmUnit.at(i).na3-1).atomname
+<<asymmUnit.at(asymmUnit.at(i).nax-1).atomname;// */
 asymmUnit[i].nay2=dummax+atmax+1;
 dummax++;
 dummys.append(newAtom);
 
 }
-if (gendum==4){//3bZ
+if (gendum==5){//3bZ
 V3 mitte, arm1, arm2, arm3;
 mol.frac2kart(asymmUnit.at(asymmUnit.at(i).nax-1).frac,arm1);
 mol.frac2kart(asymmUnit.at(asymmUnit.at(i).nay1-1).frac,mitte);
@@ -2368,11 +2375,6 @@ void MyWindow::load_xdres(QString fileName) {
   {//RES  
   char line[85]="",dv[20],*dvv;
   int i=0;
-  /*char dn[1024], *ddd=strrchr(fn,'/');
-
-  int dlen=ddd-fn;
-  strncpy(dn,fn,dlen);
-  dn[dlen]='\0';*/
   mol.initDir();//dn);
   if ((adp=fopen(fileName.toLocal8Bit(),"r"))==NULL) {QMessageBox::critical(this,"Read Error!",QString("read error %1!").arg(fileName),QMessageBox::Ok);exit(2);}  
   i=0;

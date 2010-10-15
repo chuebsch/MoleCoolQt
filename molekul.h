@@ -187,6 +187,13 @@ struct MAS  {
   double           NSCTL;
   int              orbital[19];
 }; 
+
+struct DABA{
+double m0,m1,d1p,d1m,d0,q0,q1p,q1m,q2p,q2m,o0,o1p,o1m,o2p,o2m,o3p,o3m,h0,h1p,h1m,h2p,h2m,h3p,h3m,h4p,h4m,k1,k2,k3,k4,k5,k6;
+QString Symmetry,CoordinateSystem;
+};
+
+
 struct INP {
   char     atomname[strgl]; // Name of the Atom(s)   
   int      lflag; //R-L
@@ -223,7 +230,10 @@ struct INP {
 }; 
 struct Cell {
   double a,b,c,al,be,ga;
-  double phi,V,as,bs,cs;
+  double phi,V,as,bs,cs,lambda;
+  bool centro;
+  QChar lattis;
+  int symuncent;
   QList<Matrix> symmops;
   QList<V3> trans;
 };
@@ -270,6 +280,7 @@ class molekul {
   void countMols(QList<INP> & xdinp);
   bool applyLatticeCentro(const QChar latt,const bool centro);
   QString symmcode2human(QStringList brachSymm);
+  QString encodeSymm(int s);
   bool tubifiedAtoms,singleColorBonds,dratom;
   molekul(void) {
     dratom=false;

@@ -910,12 +910,81 @@ void CubeGL::loadDataBase(){
   QString fileName = QFileDialog::getOpenFileName(this,QString(tr("Open invariom data base.")), "DABA.txt","All files (*)" );
   if (!fileName.isEmpty()){
     QFile daba(fileName);
-    cout<<fileName.toStdString()<<endl;
+    //cout<<fileName.toStdString()<<endl;
     daba.open(QIODevice::ReadOnly);
+    DABA entry;
+
+    QString line;
+    int lineCntr=-1;
     while (!daba.atEnd()){
-      QString line = QString(daba.readLine(150));
-      if (line.contains(QRegExp("^R-|S-|=-|[3-8]{1,3}-|[A-Z]{1,1}[a-z]{0,1}[123#@]{1,1}"))) {line.remove(QRegExp("[ \n\r]")); dataBase.append(line) ;}
-    }    
+      line = QString(daba.readLine(150));
+      if (line.contains(QRegExp("^R-|S-|=-|[3-8]{1,3}-|[A-Z]{1,1}[a-z]{0,1}[123#@]{1,1}"))) {
+        if ((!line.startsWith("KS"))&&(!line.startsWith("!"))) {
+          lineCntr=0;
+          line.remove(QRegExp("[ \n\r]"));
+          dataBase.append(line);
+          }
+      }
+      if ((lineCntr>-1)&&(lineCntr<7)){
+      line.remove(QRegExp("[\n\r]"));
+      //printf("test %d (%s)\n",lineCntr,line.toStdString().c_str());
+        QStringList tok=line.split(" ",QString::SkipEmptyParts);
+        switch(lineCntr){
+        case 1: if (tok.size()>9) {
+             entry.m0=tok.at(0).toDouble();
+             entry.m1=tok.at(1).toDouble();
+             entry.d1p=tok.at(2).toDouble();
+             entry.d1m=tok.at(3).toDouble();
+             entry.d0=tok.at(4).toDouble();
+             entry.q0=tok.at(5).toDouble();
+             entry.q1p=tok.at(6).toDouble();
+             entry.q1m=tok.at(7).toDouble();
+             entry.q2p=tok.at(8).toDouble();
+             entry.q2m=tok.at(9).toDouble();
+
+              } break;
+        case 2: if (tok.size()>9) {
+             entry.o0=tok.at(0).toDouble();
+             entry.o1p=tok.at(1).toDouble();
+             entry.o1m=tok.at(2).toDouble();
+             entry.o2p=tok.at(3).toDouble();
+             entry.o2m=tok.at(4).toDouble();
+             entry.o3p=tok.at(5).toDouble();
+             entry.o3m=tok.at(6).toDouble();
+             entry.h0=tok.at(7).toDouble();
+             entry.h1p=tok.at(8).toDouble();
+             entry.h1m=tok.at(9).toDouble();
+
+              } break;
+        case 3: if (tok.size()>5) {
+             entry.h2p=tok.at(0).toDouble();
+             entry.h2m=tok.at(1).toDouble();
+             entry.h3p=tok.at(2).toDouble();
+             entry.h3m=tok.at(3).toDouble();
+             entry.h4p=tok.at(4).toDouble();
+             entry.h4m=tok.at(5).toDouble();
+
+              } break;
+        case 4: entry.Symmetry=tok.at(1); break;
+        case 5: entry.CoordinateSystem=line; break;
+        case 6: line.remove("Kappa=");
+                tok = line.split(";=",QString::SkipEmptyParts);
+                entry.k1=tok.at(0).toDouble();
+                entry.k2=tok.at(1).toDouble();
+                entry.k3=tok.at(2).toDouble();
+                entry.k4=tok.at(3).toDouble();
+                entry.k5=tok.at(4).toDouble();
+                entry.k6=tok.at(5).toDouble();
+        //        printf("%d %d %f %f %f %f %f %f\n",entries.size(),dataBase.size(),entry.k1,entry.k2,entry.k3,entry.k4,entry.k5,entry.k6);
+                entries.append(entry);
+             break;
+        }
+        lineCntr++;
+      }
+
+    }
+
+  //qDebug()<<entries.size()<<dataBase.size();
   }
 }
 
@@ -1388,12 +1457,17 @@ void CubeGL::invariomExport(){
     "Cs","Ba", "La","Ce","Pr","Nd","Pm","Sm","Eu","Gd","Tb","Dy","Ho","Er","Tm","Yb","Lu",
     "Hf","Ta","W","Re","Os","Ir","Pt","Au","Hg","Tl","Pb","Bi","Po","At","Rn","Fr","Ra",
     "Ac","Th","Pa","U","Np","Pu","Am","Cm","Bk","Cf","Es","Fm","Md","No","Lr","Ku","Ha","Rf","Ns","Hs","Mt"};
+  invariomsComplete.clear();
+  invariomsUnique.clear();
   QDialog *invExportDlg =new QDialog(this);
   invExportDlg->setMinimumSize(400,300);  
   QTextBrowser *browser=new QTextBrowser;
   QDialogButtonBox *buttonBox = new QDialogButtonBox(QDialogButtonBox::Save | QDialogButtonBox::Cancel);
   connect(buttonBox, SIGNAL(accepted()), invExportDlg, SLOT(accept()));
   connect(buttonBox, SIGNAL(rejected()), invExportDlg, SLOT(reject()));
+  QPushButton *exportMoProbutton = new QPushButton("Export Invarioms to MoPro files//not finished yet");
+  exportMoProbutton->setEnabled(false);
+  connect(exportMoProbutton,SIGNAL(clicked()),this,SLOT(exportMoProFiles()));
   QString text;
   //  extern Connection bondList;
   for (int ix=0;ix<asymmUnit.size();ix++){
@@ -1456,6 +1530,7 @@ void CubeGL::invariomExport(){
     if (invom.an>-1 ){
       text+="<b>";
       ina=inames::invName(invom,bondList,sel,ix);
+      invariomsComplete.append(ina);
       if (dataBase.contains(ina)) text+="<font color=\"green\">";
       else text+="<font color=\"red\">";
       text+=invom.Label;
@@ -1465,9 +1540,12 @@ void CubeGL::invariomExport(){
     }
   }
   browser->setHtml(text);
+  invariomsUnique=invariomsComplete;
+  invariomsUnique.removeDuplicates();
   QVBoxLayout sss;
   sss.addWidget(browser);
   sss.addWidget(buttonBox);
+  sss.addWidget(exportMoProbutton);
   invExportDlg->setLayout(&sss);
   invExportDlg->setWindowTitle("Export these Invaromnames to 'Invariome.in'");
   if (QDialog::Accepted==invExportDlg->exec()){
@@ -1476,9 +1554,82 @@ void CubeGL::invariomExport(){
     in.write(browser->toPlainText().toLatin1(),browser->toPlainText().length());
     in.close();
   }
-
-
 }
+
+void CubeGL::exportMoProFiles(){
+    QDir md;
+    extern molekul mol;
+    extern QList<INP> asymmUnit;
+    extern int dummax;
+    md.mkdir("InvariomTransfer");
+    QFile moprofile("InvariomTransfer/just-a-name.00");
+    QDir moprodir("InvariomTransfer/just-a-name.00");
+    if (moprofile.open(QIODevice::WriteOnly)){
+        QString Name=moprodir.canonicalPath();
+        Name.chop(3);
+        moprofile.write(QString("! MOPRO6.2   %1   %2     %3.00\n! reflection file : %3.Ihkl\n")
+                        .arg(QDate::currentDate().toString("dd/MM/yy"))
+                        .arg(QTime::currentTime().toString("hh:mm:ss"))
+                        .arg(Name).toLatin1());
+        moprofile.write(QString("!  RF  factor =  0.000  %        RI  factor =  0.000%\n! wR2F factor =  0.000  %       wR2I factor =  0.000%\n").toLatin1());
+        moprofile.write(QString("! g.o.f. =   1.000  Nref=   0  Nfree=      0    0.00<sinT/l< 3.00\n! Created by MoleCoolQt (c) Christian B. Huebschle\n").toLatin1());
+        moprofile.write(QString("\nCELL %1 %2 %3 %4 %5 %6 %7\n")
+                        .arg(mol.zelle.a)
+                        .arg(mol.zelle.b)
+                        .arg(mol.zelle.c)
+                        .arg(mol.zelle.al)
+                        .arg(mol.zelle.be)
+                        .arg(mol.zelle.ga)
+                        .arg(mol.zelle.lambda).toLatin1());
+        moprofile.write(QString("\nSYMM %1 %2 %3\n")
+                        .arg(mol.zelle.symuncent)
+                        .arg(mol.zelle.lattis)
+                        .arg((mol.zelle.centro)?"CENTRO":"").toLatin1());
+        for (int i=0; i<mol.zelle.symuncent;i++){
+            moprofile.write(mol.encodeSymm(i).toLatin1());
+        }
+        moprofile.write("\nSCALE  1   1.0000\n\nFMULT     1.00000\n\nUOVER     0.00000   ISO\n\nSOLVT     0.00000    50.00000\n\nEXTIN  0.00000   GAUSSIAN      ISOT  TTYP1      !  G*10^4\n\n");
+        moprofile.write(QString("DUMMY %1\n").arg(dummax).toLatin1());
+        if (dummax) for (int i=0; i<asymmUnit.size();i++){
+            if (asymmUnit.at(i).OrdZahl==-1)
+                moprofile.write(QString("  DUM %1 %2 %3 %4 0\n")
+                                .arg(asymmUnit.at(i).frac.x,11,'f',6)
+                                .arg(asymmUnit.at(i).frac.y,11,'f',6)
+                                .arg(asymmUnit.at(i).frac.z,11,'f',6)
+                                .arg(strtok(asymmUnit[i].atomname,"!")).toLatin1());
+        }
+        moprofile.write(QString("\nKAPPA  %1\n").arg(invariomsUnique.size()).toLatin1());
+        for (int i=0; i<invariomsUnique.size();i++){
+            int j=dataBase.indexOf(invariomsUnique.at(i));
+            if (j==-1) {
+                moprofile.write("  1.000000 1.000000 ! Not in data base!\n");
+                continue;
+            }
+            moprofile.write(QString("  %1 %2\n")
+                            .arg(entries.at(j).k1,0,'f',6)
+                            .arg(entries.at(j).k2,0,'f',6)
+                            .toLatin1());
+
+        }
+        moprofile.write(QString("\nATOMS  %1\n").arg(asymmUnit.size()-dummax).toLatin1());
+        for (int i=0; i<asymmUnit.size();i++){
+            if (asymmUnit.at(i).OrdZahl!=-1){
+                QString anam,resinr,resityp;
+                if (QString(asymmUnit.at(i).atomname).contains(' '));
+                else anam=QString(asymmUnit.at(i).atomname);
+                moprofile.write(QString("ATOM %1 %2 %3 %4 %5 %6 %7 %8 %9\n")
+                                .arg(i+1)
+                                .arg(anam)
+                                .arg(resinr)
+                                .arg(resityp)
+                                .toLatin1());////hier bin ich gerade
+            }
+        }
+        moprofile.close();
+
+    }
+}
+
 
 void CubeGL::wheelEvent(QWheelEvent *event){   
   int numDegrees = event->delta() / 8;
