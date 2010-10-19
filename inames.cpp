@@ -445,7 +445,8 @@ QString inames::invName(MyAtom core,Connection &cl, CEnvironment &sel ,int rung)
     }
     //cout<<"alive ";
 //    if (!ringID[*cl.at(i).ato1]&ringID[core]) cl[i].order=1;
-    if ((hand.contains("#"))||(!hand.contains("@")&&(2==cl.at(i).order))||((!hand.contains("@"))&&(core.Symbol=="H"))||((core.an!=14)&&((cl.at(i).ato1->an==14)||(cl.at(i).ato2->an==14)))){ //meso
+    //printf("%d %d\n",cl.at(i).ato1->an,cl.at(i).ato2->an);
+    if ((hand.contains("#"))||(!hand.contains("@")&&(2==cl.at(i).order))||((!hand.contains("@"))&&(core.Symbol=="H"))||((core.an!=14)&&((cl.at(i).ato1->an==14)||(cl.at(i).ato2->an==14)))||((core.an!=15)&&((cl.at(i).ato1->an==15)||(cl.at(i).ato2->an==15)))){ //meso
       hand+="[";    
       fingers.clear();
       for (int j=0; j<cl.size();j++){//2.for

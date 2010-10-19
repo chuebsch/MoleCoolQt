@@ -1466,7 +1466,7 @@ void CubeGL::invariomExport(){
   connect(buttonBox, SIGNAL(accepted()), invExportDlg, SLOT(accept()));
   connect(buttonBox, SIGNAL(rejected()), invExportDlg, SLOT(reject()));
   QPushButton *exportMoProbutton = new QPushButton("Export Invarioms to MoPro files//not finished yet");
-  exportMoProbutton->setEnabled(false);
+//  exportMoProbutton->setEnabled(false);
   connect(exportMoProbutton,SIGNAL(clicked()),this,SLOT(exportMoProFiles()));
   QString text;
   //  extern Connection bondList;
@@ -1561,6 +1561,12 @@ void CubeGL::exportMoProFiles(){
     extern molekul mol;
     extern QList<INP> asymmUnit;
     extern int dummax;
+    static char PSE_Symbol[109][3] = {"H","He","Li","Be","B","C","N","O","F","Ne","Na","Mg","Al","Si","P","S","Cl","Ar",
+      "K","Ca","Sc","Ti","V","Cr","Mn","Fe","Co","Ni","Cu","Zn","Ga","Ge","As","Se","Br","Kr",
+      "Rb","Sr","Y","Zr","Nb","Mo","Tc","Ru","Rh","Pd","Ag","Cd","In","Sn","Sb","Te","J","Xe",
+      "Cs","Ba", "La","Ce","Pr","Nd","Pm","Sm","Eu","Gd","Tb","Dy","Ho","Er","Tm","Yb","Lu",
+      "Hf","Ta","W","Re","Os","Ir","Pt","Au","Hg","Tl","Pb","Bi","Po","At","Rn","Fr","Ra",
+      "Ac","Th","Pa","U","Np","Pu","Am","Cm","Bk","Cf","Es","Fm","Md","No","Lr","Ku","Ha","Rf","Ns","Hs","Mt"};
     md.mkdir("InvariomTransfer");
     QFile moprofile("InvariomTransfer/just-a-name.00");
     QDir moprodir("InvariomTransfer/just-a-name.00");
@@ -1615,14 +1621,38 @@ void CubeGL::exportMoProFiles(){
         for (int i=0; i<asymmUnit.size();i++){
             if (asymmUnit.at(i).OrdZahl!=-1){
                 QString anam,resinr,resityp;
-                if (QString(asymmUnit.at(i).atomname).contains(' '));
-                else anam=QString(asymmUnit.at(i).atomname);
-                moprofile.write(QString("ATOM %1 %2 %3 %4 %5 %6 %7 %8 %9\n")
-                                .arg(i+1)
-                                .arg(anam)
-                                .arg(resinr)
-                                .arg(resityp)
-                                .toLatin1());////hier bin ich gerade
+                if (QString(asymmUnit.at(i).atomname).contains('@')){
+		  //wenn es '@' im Namen gibt dann resi und resi-Nr decodieren
+		  anam=QString(asymmUnit.at(i).atomname).section('@',0,0);
+		  resinr=QString(asymmUnit.at(i).atomname).section('@',1,1).section(QRegExp("[A-Za-z]+"),0,0);
+		  resityp=QString(asymmUnit.at(i).atomname).right(3);// ich hoffe resi typen sind immer 3 lang .... 		
+		}
+                else {
+		  anam=QString(asymmUnit.at(i).atomname);
+		  resinr="1";
+		  resityp="MOL";
+		}
+                moprofile.write(QString("ATOM %1  %2 %3 %4 %5%6%7  %8 %9 %10\n")
+                                .arg(i+1,5)//1
+                                .arg(anam,-4)//2
+                                .arg(resityp,4)//3
+                                .arg(resinr,3)//4
+				.arg(asymmUnit.at(i).frac.x,10,'f',6)//5
+				.arg(asymmUnit.at(i).frac.y,10,'f',6)//6
+				.arg(asymmUnit.at(i).frac.z,10,'f',6)//7
+				.arg("1.0000")//8 pop //achtung hier sollten wir populationen haben 
+				                      //werden aber noch nicht eingelesen
+				.arg(1)//9 occ
+				.arg(PSE_Symbol[asymmUnit.at(i).OrdZahl])//10 elem
+                                .toLatin1());
+/*		moprofile.write(QString("%1 %2 %3 %4  %5  K%6     V0   M0   Q0\n")
+				.arg()//1ax
+				.arg()//2a1
+				.arg()//3a2
+				.arg()//4a3
+				.arg()//5DIP OCT HEX
+				.arg()//6kappanr
+                                .toLatin1());////hier bin ich gerade */
             }
         }
         moprofile.close();
