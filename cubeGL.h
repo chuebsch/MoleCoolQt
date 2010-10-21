@@ -50,6 +50,9 @@ public:
   void moveX(double speed);
   void moveY(double speed);
   void resetENV();
+  QString inv2moproaxes(int index);
+  QList<CEnvironment> knoepfe;
+  int maxmol;
   void checkTC();
   bool MIS,MILe;
   //  INP *xdinpC;

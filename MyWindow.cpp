@@ -4667,6 +4667,7 @@ void MyWindow::SDM(QStringList &brauchSymm,int packart){
       if (nextmol) asymmUnit[nextmol].molindex=(++maxmol);
     }while (nextmol);
     printf ("The asymmetric unit contains %d fragments. SDM is %d\n",maxmol,sdm.size());
+    cubeGL->maxmol=maxmol;
   }
   for (int k =0; k<sdm.size();k++){
      if ((packart==1)||sdm.at(k).covalent){

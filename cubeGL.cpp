@@ -1459,6 +1459,7 @@ void CubeGL::invariomExport(){
     "Ac","Th","Pa","U","Np","Pu","Am","Cm","Bk","Cf","Es","Fm","Md","No","Lr","Ku","Ha","Rf","Ns","Hs","Mt"};
   invariomsComplete.clear();
   invariomsUnique.clear();
+  knoepfe.clear();
   QDialog *invExportDlg =new QDialog(this);
   invExportDlg->setMinimumSize(400,300);  
   QTextBrowser *browser=new QTextBrowser;
@@ -1520,6 +1521,7 @@ void CubeGL::invariomExport(){
     if (bondList.size()!=cl.size()) {	    
       bondList=cl;
     }
+
     CEnvironment sel;
     QString ina;
     invom.Label=xdinp[ix].atomname;
@@ -1529,7 +1531,9 @@ void CubeGL::invariomExport(){
     invom.Symbol=PSE_Symbol[xdinp[ix].OrdZahl];
     if (invom.an>-1 ){
       text+="<b>";
-      ina=inames::invName(invom,bondList,sel,ix);
+      ina=inames::invName(invom,bondList,sel,ix);      
+      //qDebug()<<sel.size()<<knoepfe.size();
+      knoepfe.append(sel);
       invariomsComplete.append(ina);
       if (dataBase.contains(ina)) text+="<font color=\"green\">";
       else text+="<font color=\"red\">";
@@ -1556,11 +1560,232 @@ void CubeGL::invariomExport(){
   }
 }
 
+QString CubeGL::inv2moproaxes(int index){
+    QStringList axtok;
+    QString as1,as2;
+    extern molekul mol;
+    int j=dataBase.indexOf(invariomsComplete.at(index));
+    if (j==-1) {
+        //default
+      if (knoepfe.at(index).size()>1){
+        as1=knoepfe.at(index).at(0).Label;
+        as2=knoepfe.at(index).at(1).Label;
+        as1.remove(QRegExp("[)(]+"));
+        as2.remove(QRegExp("[)(]+"));
+        return QString(" XY  %1 %2").arg(as1).arg(as2);//
+      }
+    }
+    QString erg = "problem ",axcopy=entries.at(j).CoordinateSystem;
+    //KS: X:C(4) Y:C(7) AX2:C0.033974 AX1:C0.033938
+    axcopy.remove("KS: ");
+    axcopy.remove(QRegExp("\\(\\w+\\)"));
+    axcopy.replace(" ",":");
+
+    axtok=axcopy.split(":",QString::SkipEmptyParts);
+    //qDebug()<<axtok.size()<<axtok<<index<<invariomsComplete.at(index);
+    if (axtok.size()>3){
+    int at1=mol.Get_OZ(axtok.at(1));
+    int at2=mol.Get_OZ(axtok.at(3));
+    int ind1=0,ind2=0,r=0;
+
+    if ((axcopy.contains("DUM"))&&(entries.at(j).Symmetry=="mm2")) {
+      ind1=qMax(at1,at2);//der index der nicht dummy ist
+      at1=at2=-1;
+      for (int k=1; k< knoepfe.at(index).size();k++){//direkte Nachbarn finden
+        if ((at1!=-1)&&(knoepfe.at(index).at(k).an==ind1)) {at2=k;continue;}
+        if ((at1==-1)&&(knoepfe.at(index).at(k).an==ind1)) {at1=k;continue;}
+
+      }
+      as1=knoepfe.at(index).at(at1).Label;
+      as2=knoepfe.at(index).at(at2).Label;
+
+      as1.remove(QRegExp("[)(]+"));
+      as2.remove(QRegExp("[)(]+"));
+      erg = QString("%1%2%3  %4 %5")
+            .arg("b")
+            .arg(axtok.at(0))
+            .arg(axtok.at(2))
+            .arg(as1)
+            .arg(as2);
+      return erg;
+    }
+    for (int k=1; k< knoepfe.at(index).size();k++){//direkte Nachbarn finden
+        if (knoepfe.at(index).at(k).an==at1) {ind1=k;continue;}
+        if (knoepfe.at(index).at(k).an==at2) {ind2=k;continue;}
+
+    }
+    as1=knoepfe.at(index).at(ind1).Label;
+    as2=knoepfe.at(index).at(ind2).Label;
+    // qDebug()<<ind1<<ind2;
+    if (ind1>=ind2){
+      while ((r<knoepfe.size())&&(as1!=knoepfe.at(r).at(0).Label)) r++;
+
+      as2=QString("MIST");
+      //qDebug()<<as1<<r<<knoepfe.size()<<knoepfe.at(r).at(0).Label;
+      for (int k=1; k< knoepfe.at(r).size();k++){
+        if ((knoepfe.at(r).at(k).an==at2)&&(knoepfe.at(r).at(k).Label!=as1)) {
+          as2=knoepfe.at(r).at(k).Label;
+          //qDebug()<<"oo"<<as1<<as2<<r<<k<<knoepfe.at(r).at(0).Label;
+          break;
+        }
+      }
+      if (as2=="MIST"){
+        //qDebug()<<as2;
+        for (int k=1; k< knoepfe.at(r).size();k++){
+          if ((knoepfe.at(r).at(k).Label!=as1)) {
+            as2=knoepfe.at(r).at(k).Label;
+            //qDebug()<<"aa"<<as1<<as2;
+            break;
+          }
+        }
+      }
+    }
+    //qDebug()<<as1<<as2;
+    if ((as1==as2)||(knoepfe.at(index).at(0).Label==as1)||(knoepfe.at(index).at(0).Label==as2)){
+        QStringList nb,nnb;
+        for (int r=0;r<knoepfe.at(index).size();r++) nb.append(knoepfe.at(index).at(r).Label);
+        for (int r=0;r<knoepfe.at(ind1).size();r++) nnb.append(knoepfe.at(ind1).at(r).Label);
+        //qDebug()<<knoepfe.at(index).at(0).Label<<as1<<as2<<nb<<"!!!!\n"<<nnb;
+        for (int k=1; k< knoepfe.at(ind1).size();k++){
+        if ((knoepfe.at(ind1).at(k).Label!=knoepfe.at(index).at(0).Label)&&(knoepfe.at(ind1).at(k).Label!=as1)) {
+            as2=knoepfe.at(index).at(k).Label;
+            //qDebug()<<as1<<as2;
+            break;
+        }
+        }
+    }
+    //qDebug()<<ind1<<ind2;
+
+    as1.remove(QRegExp("[)(]+"));
+    as2.remove(QRegExp("[)(]+"));
+    erg = QString("%1%2%3  %4 %5")
+          .arg(" ")
+          .arg(axtok.at(0))
+          .arg(axtok.at(2))
+          .arg(as1)
+          .arg(as2);
+    //qDebug()<<erg;
+    //exit(11);
+      }
+    return erg;
+
+}
+
 void CubeGL::exportMoProFiles(){
     QDir md;
     extern molekul mol;
     extern QList<INP> asymmUnit;
     extern int dummax;
+    const int vale[109]= {1 ,//H
+     2 ,//He
+     1 ,//Li
+     2 ,//Be
+     3 ,//B
+     4 ,//C
+     5 ,//N
+     6 ,//O
+     7 ,//F
+     8 ,//Ne
+     1 ,//Na
+     2 ,//Mg
+     3 ,//Al
+     4 ,//Si
+     5 ,//P
+     6 ,//S
+     7 ,//Cl
+     8 ,//Ar
+     1 ,//K
+     2 ,//Ca
+     3 ,//Sc
+     4 ,//Ti
+     5 ,//V
+     6 ,//Cr
+     7 ,//Mn
+     8 ,//Fe
+     9 ,//Co
+     10,//Ni
+     11,//Cu
+     12,//Zn
+     3 ,//Ga
+     4 ,//Ge
+     5 ,//As
+     6 ,//Se
+     7 ,//Br
+     8 ,//Kr
+     1 ,//Rb
+     2 ,//Sr
+     3 ,//Y
+     4 ,//Zr
+     5 ,//Nb
+     6 ,//Mo
+     7 ,//Tc
+     8 ,//Ru
+     9 ,//Rh
+     10,//Pd
+     11,//Ag
+     12,//Cd
+     3 ,//In
+     4 ,//Sn
+     5 ,//Sb
+     6 ,//Te
+     7 ,//I
+     8 ,//Xe
+     1 ,//Cs
+     2 ,//Ba
+     3 ,//La
+     4 ,//Cr
+     5 ,//Pr
+     6 ,//Nd
+     7 ,//Pm
+     8 ,//Sm
+     9 ,//Eu
+     10,//Gd
+     11,//Tb
+     12,//Dy
+     13,//Ho
+     14,//Er
+     15,//Tm
+     16,//Yb
+     17,//Lu
+     4 ,//Hf
+     5 ,//Ta
+     6 ,//W
+     7 ,//Re
+     8 ,//Os
+     9 ,//Ir
+     10,//Pt
+     11,//Au
+     12,//Hg
+     3 ,//Tl
+     4 ,//Pb
+     5 ,//Bi
+     6 ,//Po
+     7 ,//At
+     8 ,//Rn
+     1 ,//Fr
+     2 ,//Ra
+     3 ,//Ac
+     4 ,//Th
+     5 ,//Pa
+     6 ,//U
+     7 ,//Np
+     8 ,//Pu
+     9 ,//Am
+     10,//Cm
+     11,//Bk
+     12,//Cf
+     13,//Es
+     14,//Fm
+     15,//Md
+     16,//No
+     17,//Lr
+     4 ,//Rf
+     5 ,//Db
+     6 ,//Sg
+     7 ,//Bh
+     8 ,//Hs
+     9 };//Mt
+
     static char PSE_Symbol[109][3] = {"H","He","Li","Be","B","C","N","O","F","Ne","Na","Mg","Al","Si","P","S","Cl","Ar",
       "K","Ca","Sc","Ti","V","Cr","Mn","Fe","Co","Ni","Cu","Zn","Ga","Ge","As","Se","Br","Kr",
       "Rb","Sr","Y","Zr","Nb","Mo","Tc","Ru","Rh","Pd","Ag","Cd","In","Sn","Sb","Te","J","Xe",
@@ -1568,6 +1793,27 @@ void CubeGL::exportMoProFiles(){
       "Hf","Ta","W","Re","Os","Ir","Pt","Au","Hg","Tl","Pb","Bi","Po","At","Rn","Fr","Ra",
       "Ac","Th","Pa","U","Np","Pu","Am","Cm","Bk","Cf","Es","Fm","Md","No","Lr","Ku","Ha","Rf","Ns","Hs","Mt"};
     md.mkdir("InvariomTransfer");
+    QList<double> corr3;
+    double issu=0.0,corr_3;
+    int sosu=0,anzahl=0;
+
+    for (int mi =0; mi < maxmol; mi++){
+      for (int i=0;i<asymmUnit.size();i++){
+        if (asymmUnit.at(i).molindex!=mi) continue;
+        int z=dataBase.indexOf(invariomsComplete.at(i));
+        if (z>-1) issu+=entries.at(z).m0;
+        else issu+=vale[asymmUnit.at(i).OrdZahl];
+        sosu+=vale[asymmUnit.at(i).OrdZahl];
+        //if (asymmUnit.at(i).OrdZahl==0)
+        anzahl++;
+      }
+      corr_3=0;
+      if (anzahl) corr_3 = (sosu-issu)/anzahl;
+      corr3.append(corr_3);
+      sosu=0;
+      issu=0;
+      anzahl=0;
+    }
     QFile moprofile("InvariomTransfer/just-a-name.00");
     QDir moprodir("InvariomTransfer/just-a-name.00");
     if (moprofile.open(QIODevice::WriteOnly)){
@@ -1632,6 +1878,7 @@ void CubeGL::exportMoProFiles(){
 		  resinr="1";
 		  resityp="MOL";
 		}
+                anam.remove(QRegExp("[)(]+"));
                 moprofile.write(QString("ATOM %1  %2 %3 %4 %5%6%7  %8 %9 %10\n")
                                 .arg(i+1,5)//1
                                 .arg(anam,-4)//2
@@ -1645,14 +1892,65 @@ void CubeGL::exportMoProFiles(){
 				.arg(1)//9 occ
 				.arg(PSE_Symbol[asymmUnit.at(i).OrdZahl])//10 elem
                                 .toLatin1());
-/*		moprofile.write(QString("%1 %2 %3 %4  %5  K%6     V0   M0   Q0\n")
-				.arg()//1ax
-				.arg()//2a1
-				.arg()//3a2
-				.arg()//4a3
-				.arg()//5DIP OCT HEX
-				.arg()//6kappanr
+
+                int j = invariomsUnique.indexOf(invariomsComplete.at(i));
+                moprofile.write(QString("%1HEX  K%2     V0   M0   Q0\n")
+                                .arg(inv2moproaxes(i),-32)//1ax
+                                .arg(j)//6kappanr
                                 .toLatin1());////hier bin ich gerade */
+                if ((asymmUnit.at(i).uf.m12==asymmUnit.at(i).uf.m13)&&
+                    (asymmUnit.at(i).uf.m13==asymmUnit.at(i).uf.m23)&&
+                    (asymmUnit.at(i).uf.m12==0))
+                  moprofile.write(QString("UISO %1\n").arg(asymmUnit.at(i).uf.m11).toLatin1());
+                else
+                  moprofile.write(QString("UANI %1 %2 %3 %4 %5 %6\n")
+                                  .arg(asymmUnit.at(i).uf.m11)
+                                  .arg(asymmUnit.at(i).uf.m22)
+                                  .arg(asymmUnit.at(i).uf.m33)
+                                  .arg(asymmUnit.at(i).uf.m12)
+                                  .arg(asymmUnit.at(i).uf.m13)
+                                  .arg(asymmUnit.at(i).uf.m23)
+                                  .toLatin1());
+                int z=dataBase.indexOf(invariomsComplete.at(i));
+                if (z>-1){
+                moprofile.write(QString("%1 %2 %3 %4 %5 %6 %6 %7 %8 %9 %10\n")
+                                .arg(entries.at(z).m0+corr3.at(asymmUnit.at(i).molindex)
+                                     ,8,'f',5)
+                                .arg(entries.at(z).m1,8,'f',5)
+                                .arg(entries.at(z).d0,8,'f',5)
+                                .arg(entries.at(z).d1p,8,'f',5)
+                                .arg(entries.at(z).d1m,8,'f',5)
+                                .arg(entries.at(z).q0,8,'f',5)
+                                .arg(entries.at(z).q1p,8,'f',5)
+                                .arg(entries.at(z).q1m,8,'f',5)
+                                .arg(entries.at(z).q2p,8,'f',5)
+                                .arg(entries.at(z).q2m,8,'f',5)
+                                .toLatin1());
+                moprofile.write(QString("%1 %2 %3 %4 %5 %6 %6 %7\n")
+                                .arg(entries.at(z).o0,8,'f',5)
+                                .arg(entries.at(z).o1p,8,'f',5)
+                                .arg(entries.at(z).o1m,8,'f',5)
+                                .arg(entries.at(z).o2p,8,'f',5)
+                                .arg(entries.at(z).o2m,8,'f',5)
+                                .arg(entries.at(z).o3p,8,'f',5)
+                                .arg(entries.at(z).o3m,8,'f',5)
+                                .toLatin1());
+                moprofile.write(QString("%1 %2 %3 %4 %5 %6 %6 %7 %8 %9\n")
+                                .arg(entries.at(z).h0,8,'f',5)
+                                .arg(entries.at(z).h1p,8,'f',5)
+                                .arg(entries.at(z).h1m,8,'f',5)
+                                .arg(entries.at(z).h2p,8,'f',5)
+                                .arg(entries.at(z).h2m,8,'f',5)
+                                .arg(entries.at(z).h3p,8,'f',5)
+                                .arg(entries.at(z).h3m,8,'f',5)
+                                .arg(entries.at(z).h4p,8,'f',5)
+                                .arg(entries.at(z).h4m,8,'f',5)
+                                .toLatin1());
+              }else{
+                moprofile.write("0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.!not in database!!!\n");
+                moprofile.write("0. 0. 0. 0. 0. 0. 0. 0.\n");
+                moprofile.write("0. 0. 0. 0. 0. 0. 0. 0. 0. 0.\n");
+              }
             }
         }
         moprofile.close();

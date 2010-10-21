@@ -172,7 +172,7 @@ void inames::ringlord(Connection cl){//
    *      |  c 
    *      B/
    */
-  printf ("i am the loard\n");
+  //printf ("I am the lord\n");
   ringID.clear();
   planarity.clear();
   ringCode.clear();
@@ -527,6 +527,6 @@ QString inames::invName(MyAtom core,Connection &cl, CEnvironment &sel ,int rung)
   }
   if (ringCode.contains(core)) nom.prepend(QString("%1-").arg(ringCode[core]));
   //for (int i=0; i<sel.size();i++)
-  //cout<<i<<sel.at(i).Label.toStdString()<<endl; 
+  //cout<<i<<sel.at(i).Label.toStdString()<<endl;
   return nom;
 }
