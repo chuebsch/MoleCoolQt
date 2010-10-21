@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-QString rev="$Rev: 203 $";
+QString rev="$Rev: 205 $";
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -3941,6 +3941,7 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
   QDir directory(fileName);
   dirName=directory.canonicalPath();
   fileName=dirName;
+  cubeGL->afilename=fileName.section("/",-1);
   infoKanal->setHtml(QString("<strong>File name:</strong><br> %1<hr>").arg(fileName));
   if (GD<0) GD=2.3;
   mol.gd=GD;
@@ -4386,7 +4387,9 @@ void MyWindow::updateStatusBar(const QString& s) {
 void MyWindow::updateStatusBar() {
   QString label =   QString(tr("%1 @ %2").arg(CID).arg(dirName.mid(dirName.lastIndexOf('/')+1)));//
     //  QMessageBox::information(this,"Compound ID",QString(tr("CID %1 ").arg(CID)),QMessageBox::Ok);
-   sLabel->setText(label);
+   sLabel->setText(label);   
+   if ((cubeGL->afilename=="xd.res")||(cubeGL->afilename=="xd.mas")||(cubeGL->afilename=="xd.inp"))
+     cubeGL->afilename=QString(CID);
 }
 // Zeit in der Statusleiste
 

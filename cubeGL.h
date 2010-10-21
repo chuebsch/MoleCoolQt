@@ -53,6 +53,7 @@ public:
   QString inv2moproaxes(int index);
   QList<CEnvironment> knoepfe;
   int maxmol;
+  QString afilename;
   void checkTC();
   bool MIS,MILe;
   //  INP *xdinpC;

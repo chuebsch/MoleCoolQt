@@ -1572,6 +1572,8 @@ QString CubeGL::inv2moproaxes(int index){
         as2=knoepfe.at(index).at(1).Label;
         as1.remove(QRegExp("[)(]+"));
         as2.remove(QRegExp("[)(]+"));
+        as1.remove(QRegExp("@.+$"));
+        as2.remove(QRegExp("@.+$"));
         return QString(" XY  %1 %2").arg(as1).arg(as2);//
       }
     }
@@ -1601,6 +1603,8 @@ QString CubeGL::inv2moproaxes(int index){
 
       as1.remove(QRegExp("[)(]+"));
       as2.remove(QRegExp("[)(]+"));
+      as1.remove(QRegExp("@.+$"));
+      as2.remove(QRegExp("@.+$"));
       erg = QString("%1%2%3  %4 %5")
             .arg("b")
             .arg(axtok.at(0))
@@ -1658,6 +1662,8 @@ QString CubeGL::inv2moproaxes(int index){
 
     as1.remove(QRegExp("[)(]+"));
     as2.remove(QRegExp("[)(]+"));
+    as1.remove(QRegExp("@.+$"));
+    as2.remove(QRegExp("@.+$"));
     erg = QString("%1%2%3  %4 %5")
           .arg(" ")
           .arg(axtok.at(0))
@@ -1800,6 +1806,7 @@ void CubeGL::exportMoProFiles(){
     for (int mi =0; mi < maxmol; mi++){
       for (int i=0;i<asymmUnit.size();i++){
         if (asymmUnit.at(i).molindex!=mi) continue;
+        if (asymmUnit.at(i).OrdZahl<0) continue;
         int z=dataBase.indexOf(invariomsComplete.at(i));
         if (z>-1) issu+=entries.at(z).m0;
         else issu+=vale[asymmUnit.at(i).OrdZahl];
@@ -1814,8 +1821,9 @@ void CubeGL::exportMoProFiles(){
       issu=0;
       anzahl=0;
     }
-    QFile moprofile("InvariomTransfer/just-a-name.00");
-    QDir moprodir("InvariomTransfer/just-a-name.00");
+    //qDebug()<<corr3.size()<<maxmol;
+    QFile moprofile(QString("InvariomTransfer/%1.00").arg(afilename));
+    QDir moprodir(QString("InvariomTransfer/%1.00").arg(afilename));
     if (moprofile.open(QIODevice::WriteOnly)){
         QString Name=moprodir.canonicalPath();
         Name.chop(3);
@@ -1841,6 +1849,8 @@ void CubeGL::exportMoProFiles(){
             moprofile.write(mol.encodeSymm(i).toLatin1());
         }
         moprofile.write("\nSCALE  1   1.0000\n\nFMULT     1.00000\n\nUOVER     0.00000   ISO\n\nSOLVT     0.00000    50.00000\n\nEXTIN  0.00000   GAUSSIAN      ISOT  TTYP1      !  G*10^4\n\n");
+        moprofile.write("DUMMY 0\n\n");
+        /*
         moprofile.write(QString("DUMMY %1\n").arg(dummax).toLatin1());
         if (dummax) for (int i=0; i<asymmUnit.size();i++){
             if (asymmUnit.at(i).OrdZahl==-1)
@@ -1850,6 +1860,7 @@ void CubeGL::exportMoProFiles(){
                                 .arg(asymmUnit.at(i).frac.z,11,'f',6)
                                 .arg(strtok(asymmUnit[i].atomname,"!")).toLatin1());
         }
+        */
         moprofile.write(QString("\nKAPPA  %1\n").arg(invariomsUnique.size()).toLatin1());
         for (int i=0; i<invariomsUnique.size();i++){
             int j=dataBase.indexOf(invariomsUnique.at(i));
@@ -1913,9 +1924,10 @@ void CubeGL::exportMoProFiles(){
                                   .toLatin1());
                 int z=dataBase.indexOf(invariomsComplete.at(i));
                 if (z>-1){
-                moprofile.write(QString("%1 %2 %3 %4 %5 %6 %6 %7 %8 %9 %10\n")
-                                .arg(entries.at(z).m0+corr3.at(asymmUnit.at(i).molindex)
-                                     ,8,'f',5)
+                  double mv=0;
+                  if (asymmUnit.at(i).molindex<corr3.size()) mv= entries.at(z).m0+corr3.at(asymmUnit.at(i).molindex);
+                  moprofile.write(QString("%1 %2 %3 %4 %5 %6 %6 %7 %8 %9 %10\n")
+                                  .arg(mv,8,'f',5)
                                 .arg(entries.at(z).m1,8,'f',5)
                                 .arg(entries.at(z).d0,8,'f',5)
                                 .arg(entries.at(z).d1p,8,'f',5)
@@ -1953,8 +1965,9 @@ void CubeGL::exportMoProFiles(){
               }
             }
         }
+        moprofile.write("ANHAR 0 3 \n\nSTOP\n");
         moprofile.close();
-
+        qDebug()<<"MoPro file succesfully written!";
     }
 }
 
