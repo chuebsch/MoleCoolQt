@@ -126,6 +126,7 @@ public slots:
   void fontSizeUp() ;
   void fontSizeDown() ;
   void invariomExport();
+  QString translateSymm2MP(QString idbs);
 //  void unsetXDSetup();
   void loadDataBase();
   void exportMoProFiles();
@@ -157,6 +158,7 @@ private:
   void draw();
   void dieDiPole();
   bool atomsClickable;
+  double getHDist(int index);
   GLuint selectBuf[MAXSELECT];
   GLfloat feedBuf[3000];
   GLint vp[4];

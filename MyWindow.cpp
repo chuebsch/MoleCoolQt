@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-QString rev="$Rev: 206 $";
+QString rev="$Rev: 207 $";
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -1708,7 +1708,7 @@ void MyWindow::restoreXDfiles(){
 }
 
 void MyWindow::about(){  
-  QString date="$LastChangedDate: 2010-10-21 14:17:16 +0200 (Do, 21 Okt 2010)$";
+  QString date="$LastChangedDate: 2010-10-21 23:13:46 +0200 (Thu, 21 Oct 2010)$";
   date.remove("LastChangedDate:");
   date.remove("$");
   QString bau_datum=QString(__TIME__ " " __DATE__);
@@ -3942,6 +3942,8 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
   dirName=directory.canonicalPath();
   fileName=dirName;
   cubeGL->afilename=fileName.section("/",-1);
+  if (cubeGL->afilename.contains("."))
+    cubeGL->afilename=cubeGL->afilename.section(".",-2,-2);
   infoKanal->setHtml(QString("<strong>File name:</strong><br> %1<hr>").arg(fileName));
   if (GD<0) GD=2.3;
   mol.gd=GD;

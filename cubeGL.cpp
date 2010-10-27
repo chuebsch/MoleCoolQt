@@ -1572,8 +1572,22 @@ QString CubeGL::inv2moproaxes(int index){
         as2=knoepfe.at(index).at(1).Label;
         as1.remove(QRegExp("[)(]+"));
         as2.remove(QRegExp("[)(]+"));
+      if (as1.contains('@')){
+	//wenn es '@' im Namen gibt dann resi und resi-Nr decodieren
+	QString anam =as1.section('@',0,0);
+	QString resinr =as1.section('@',1,1).section(QRegExp("[A-Za-z]+"),0,0);
+	as1=QString("%1_%2").arg(resinr).arg(anam);
+      }
+      if (as2.contains('@')){
+	//wenn es '@' im Namen gibt dann resi und resi-Nr decodieren
+	QString anam =as2.section('@',0,0);
+	QString resinr =as2.section('@',1,1).section(QRegExp("[A-Za-z]+"),0,0);
+	as2=QString("%1_%2").arg(resinr).arg(anam);
+      }
+	/*
         as1.remove(QRegExp("@.+$"));
         as2.remove(QRegExp("@.+$"));
+	*/
         return QString(" XY  %1 %2").arg(as1).arg(as2);//
       }
     }
@@ -1603,8 +1617,19 @@ QString CubeGL::inv2moproaxes(int index){
 
       as1.remove(QRegExp("[)(]+"));
       as2.remove(QRegExp("[)(]+"));
-      as1.remove(QRegExp("@.+$"));
-      as2.remove(QRegExp("@.+$"));
+
+      if (as1.contains('@')){
+	//wenn es '@' im Namen gibt dann resi und resi-Nr decodieren
+	QString anam =as1.section('@',0,0);
+	QString resinr =as1.section('@',1,1).section(QRegExp("[A-Za-z]+"),0,0);
+	as1=QString("%1_%2").arg(resinr).arg(anam);
+      }
+      if (as2.contains('@')){
+	//wenn es '@' im Namen gibt dann resi und resi-Nr decodieren
+	QString anam =as2.section('@',0,0);
+	QString resinr =as2.section('@',1,1).section(QRegExp("[A-Za-z]+"),0,0);
+	as2=QString("%1_%2").arg(resinr).arg(anam);
+      }
       erg = QString("%1%2%3  %4 %5")
             .arg("b")
             .arg(axtok.at(0))
@@ -1614,20 +1639,20 @@ QString CubeGL::inv2moproaxes(int index){
       return erg;
     }
     for (int k=1; k< knoepfe.at(index).size();k++){//direkte Nachbarn finden
-        if (knoepfe.at(index).at(k).an==at1) {ind1=k;continue;}
+        if ((!ind1)&&(knoepfe.at(index).at(k).an==at1)) {ind1=k;continue;}
         if (knoepfe.at(index).at(k).an==at2) {ind2=k;continue;}
 
     }
     as1=knoepfe.at(index).at(ind1).Label;
     as2=knoepfe.at(index).at(ind2).Label;
-    // qDebug()<<ind1<<ind2;
-    if (ind1>=ind2){
+    //qDebug()<<index<<ind1<<ind2;
+//      qDebug()<<knoepfe.at(index).at(0).Label<<as1<<as2<<ind1<<ind2;
+    if ((ind1<1)||(ind2<1)){
       while ((r<knoepfe.size())&&(as1!=knoepfe.at(r).at(0).Label)) r++;
 
       as2=QString("MIST");
-      //qDebug()<<as1<<r<<knoepfe.size()<<knoepfe.at(r).at(0).Label;
       for (int k=1; k< knoepfe.at(r).size();k++){
-        if ((knoepfe.at(r).at(k).an==at2)&&(knoepfe.at(r).at(k).Label!=as1)) {
+        if ((knoepfe.at(r).at(k).an==at2)&&(knoepfe.at(r).at(k).Label!=as1)&&(knoepfe.at(r).at(k).Label!=knoepfe.at(index).at(0).Label)) {
           as2=knoepfe.at(r).at(k).Label;
           //qDebug()<<"oo"<<as1<<as2<<r<<k<<knoepfe.at(r).at(0).Label;
           break;
@@ -1662,8 +1687,22 @@ QString CubeGL::inv2moproaxes(int index){
 
     as1.remove(QRegExp("[)(]+"));
     as2.remove(QRegExp("[)(]+"));
+    if (as1.contains('@')){
+      //wenn es '@' im Namen gibt dann resi und resi-Nr decodieren
+      QString anam =as1.section('@',0,0);
+      QString resinr =as1.section('@',1,1).section(QRegExp("[A-Za-z]+"),0,0);
+      as1=QString("%1_%2").arg(resinr).arg(anam);
+    }
+    if (as2.contains('@')){
+      //wenn es '@' im Namen gibt dann resi und resi-Nr decodieren
+      QString anam =as2.section('@',0,0);
+      QString resinr =as2.section('@',1,1).section(QRegExp("[A-Za-z]+"),0,0);
+      as2=QString("%1_%2").arg(resinr).arg(anam);
+    }
+    /*
     as1.remove(QRegExp("@.+$"));
     as2.remove(QRegExp("@.+$"));
+    */
     erg = QString("%1%2%3  %4 %5")
           .arg(" ")
           .arg(axtok.at(0))
@@ -1674,6 +1713,46 @@ QString CubeGL::inv2moproaxes(int index){
     //exit(11);
       }
     return erg;
+
+}
+
+QString CubeGL::translateSymm2MP(QString idbs){
+  QString mps="";
+  idbs= idbs.trimmed();
+  if (idbs=="m") mps="mz";
+  if (idbs=="1") mps="";
+  if (idbs=="-1") mps="i";
+  if (idbs=="2") mps="2y";
+  if (idbs=="222") mps="222";
+  if (idbs=="mm2") mps="mxmy";
+  if (idbs=="mmm") mps="mmm";
+  if (idbs=="4/mmm") mps="mmm";
+  if (idbs=="3") mps="3z";
+  if (idbs=="3m") mps="3m";
+  if (idbs=="6") mps="cy";
+  if (idbs=="-6m2") mps="3m";
+  return mps;
+}
+
+double CubeGL::getHDist(int index){
+  extern molekul mol;
+  int j=dataBase.indexOf(invariomsComplete.at(index));
+  if (j<0) return -1.0;
+  QString axcopy=entries.at(j).CoordinateSystem;
+    //KS: X:C(4) Y:C(7) AX2:C0.033974 AX1:C0.033938
+    axcopy.remove("KS: ");
+    axcopy.remove(QRegExp("\\(\\w+\\)"));
+    axcopy.replace(" ",":");
+
+    QStringList axtok=axcopy.split(":",QString::SkipEmptyParts);
+    QString tok=axtok.last();
+    int atyp=mol.Get_OZ(tok.remove(QRegExp("[-.0-9]+")));
+    double a1_dist=axtok.last().remove(QRegExp("[A-Za-z]+")).toDouble();
+//    printf ("==>>> %d %f\n",atyp,a1_dist);
+    a1_dist=(((37+mol.Kovalenz_Radien[atyp]) / 100.0) - 
+		    (0.08 * fabs(((double)220-mol.ElNeg[atyp])/100.0)))-a1_dist;
+
+    return a1_dist;
 
 }
 
@@ -1805,7 +1884,8 @@ void CubeGL::exportMoProFiles(){
 
     for (int mi =0; mi < maxmol; mi++){
       for (int i=0;i<asymmUnit.size();i++){
-        if (asymmUnit.at(i).molindex!=mi) continue;
+//	printf("%-10s %d %d mi= %d maxmol= %d\n",asymmUnit.at(i).atomname,asymmUnit.at(i).molindex,asymmUnit.at(i).OrdZahl,mi,maxmol); 
+        if (asymmUnit.at(i).molindex!=(mi+1)) continue;
         if (asymmUnit.at(i).OrdZahl<0) continue;
         int z=dataBase.indexOf(invariomsComplete.at(i));
         if (z>-1) issu+=entries.at(z).m0;
@@ -1816,6 +1896,7 @@ void CubeGL::exportMoProFiles(){
       }
       corr_3=0;
       if (anzahl) corr_3 = (sosu-issu)/anzahl;
+  //    printf("%d %d %f %f\n",anzahl,sosu,issu,corr_3);
       corr3.append(corr_3);
       sosu=0;
       issu=0;
@@ -1907,7 +1988,7 @@ void CubeGL::exportMoProFiles(){
                 int j = invariomsUnique.indexOf(invariomsComplete.at(i));
                 moprofile.write(QString("%1HEX  K%2     V0   M0   Q0\n")
                                 .arg(inv2moproaxes(i),-32)//1ax
-                                .arg(j)//6kappanr
+                                .arg(j+1)//6kappanr
                                 .toLatin1());////hier bin ich gerade */
                 if ((asymmUnit.at(i).uf.m12==asymmUnit.at(i).uf.m13)&&
                     (asymmUnit.at(i).uf.m13==asymmUnit.at(i).uf.m23)&&
@@ -1915,48 +1996,48 @@ void CubeGL::exportMoProFiles(){
                   moprofile.write(QString("UISO %1\n").arg(asymmUnit.at(i).uf.m11).toLatin1());
                 else
                   moprofile.write(QString("UANI %1 %2 %3 %4 %5 %6\n")
-                                  .arg(asymmUnit.at(i).uf.m11)
-                                  .arg(asymmUnit.at(i).uf.m22)
-                                  .arg(asymmUnit.at(i).uf.m33)
-                                  .arg(asymmUnit.at(i).uf.m12)
-                                  .arg(asymmUnit.at(i).uf.m13)
-                                  .arg(asymmUnit.at(i).uf.m23)
+                                  .arg(asymmUnit.at(i).uf.m11,8,'f',6)
+                                  .arg(asymmUnit.at(i).uf.m22,8,'f',6)
+                                  .arg(asymmUnit.at(i).uf.m33,8,'f',6)
+                                  .arg(asymmUnit.at(i).uf.m12,8,'f',6)
+                                  .arg(asymmUnit.at(i).uf.m13,8,'f',6)
+                                  .arg(asymmUnit.at(i).uf.m23,8,'f',6)
                                   .toLatin1());
                 int z=dataBase.indexOf(invariomsComplete.at(i));
                 if (z>-1){
                   double mv=0;
-                  if (asymmUnit.at(i).molindex<corr3.size()) mv= entries.at(z).m0+corr3.at(asymmUnit.at(i).molindex);
-                  moprofile.write(QString("%1 %2 %3 %4 %5 %6 %6 %7 %8 %9 %10\n")
+                  if ((asymmUnit.at(i).molindex-1)<corr3.size()) mv= entries.at(z).m0+corr3.at(asymmUnit.at(i).molindex-1);
+                  moprofile.write(QString("%1 %2 %3 %4 %5 %6 %7 %8 %9 %10\n")
                                   .arg(mv,8,'f',5)
-                                .arg(entries.at(z).m1,8,'f',5)
-                                .arg(entries.at(z).d0,8,'f',5)
-                                .arg(entries.at(z).d1p,8,'f',5)
-                                .arg(entries.at(z).d1m,8,'f',5)
-                                .arg(entries.at(z).q0,8,'f',5)
-                                .arg(entries.at(z).q1p,8,'f',5)
-                                .arg(entries.at(z).q1m,8,'f',5)
-                                .arg(entries.at(z).q2p,8,'f',5)
-                                .arg(entries.at(z).q2m,8,'f',5)
+                                .arg(entries.at(z).m1,6,'f',3)
+                                .arg(entries.at(z).d1p,6,'f',3)
+                                .arg(entries.at(z).d1m,6,'f',3)
+                                .arg(entries.at(z).d0,6,'f',3)
+                                .arg(entries.at(z).q0,6,'f',3)
+                                .arg(entries.at(z).q1p,6,'f',3)
+                                .arg(entries.at(z).q1m,6,'f',3)
+                                .arg(entries.at(z).q2p,6,'f',3)
+                                .arg(entries.at(z).q2m,6,'f',3)
                                 .toLatin1());
-                moprofile.write(QString("%1 %2 %3 %4 %5 %6 %6 %7\n")
-                                .arg(entries.at(z).o0,8,'f',5)
-                                .arg(entries.at(z).o1p,8,'f',5)
-                                .arg(entries.at(z).o1m,8,'f',5)
-                                .arg(entries.at(z).o2p,8,'f',5)
-                                .arg(entries.at(z).o2m,8,'f',5)
-                                .arg(entries.at(z).o3p,8,'f',5)
-                                .arg(entries.at(z).o3m,8,'f',5)
+                moprofile.write(QString("%1 %2 %3 %4 %5 %6 %7\n")
+                                .arg(entries.at(z).o0,6,'f',3)
+                                .arg(entries.at(z).o1p,6,'f',3)
+                                .arg(entries.at(z).o1m,6,'f',3)
+                                .arg(entries.at(z).o2p,6,'f',3)
+                                .arg(entries.at(z).o2m,6,'f',3)
+                                .arg(entries.at(z).o3p,6,'f',3)
+                                .arg(entries.at(z).o3m,6,'f',3)
                                 .toLatin1());
-                moprofile.write(QString("%1 %2 %3 %4 %5 %6 %6 %7 %8 %9\n")
-                                .arg(entries.at(z).h0,8,'f',5)
-                                .arg(entries.at(z).h1p,8,'f',5)
-                                .arg(entries.at(z).h1m,8,'f',5)
-                                .arg(entries.at(z).h2p,8,'f',5)
-                                .arg(entries.at(z).h2m,8,'f',5)
-                                .arg(entries.at(z).h3p,8,'f',5)
-                                .arg(entries.at(z).h3m,8,'f',5)
-                                .arg(entries.at(z).h4p,8,'f',5)
-                                .arg(entries.at(z).h4m,8,'f',5)
+                moprofile.write(QString("%1 %2 %3 %4 %5 %6 %7 %8 %9\n")
+                                .arg(entries.at(z).h0,6,'f',3)
+                                .arg(entries.at(z).h1p,6,'f',3)
+                                .arg(entries.at(z).h1m,6,'f',3)
+                                .arg(entries.at(z).h2p,6,'f',3)
+                                .arg(entries.at(z).h2m,6,'f',3)
+                                .arg(entries.at(z).h3p,6,'f',3)
+                                .arg(entries.at(z).h3m,6,'f',3)
+                                .arg(entries.at(z).h4p,6,'f',3)
+                                .arg(entries.at(z).h4m,6,'f',3)
                                 .toLatin1());
               }else{
                 moprofile.write("0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.!not in database!!!\n");
@@ -1967,7 +2048,118 @@ void CubeGL::exportMoProFiles(){
         }
         moprofile.write("ANHAR 0 3 \n\nSTOP\n");
         moprofile.close();
-        qDebug()<<"MoPro file succesfully written!";
+	moprodir= QDir("InvariomTransfer/CONSTRAIN");
+
+	QFile con("InvariomTransfer/CONSTRAIN");
+	if (con.open(QIODevice::WriteOnly)){
+	  con.write("! PREP CONS SYMP\n");
+	  for (int i=0; i<asymmUnit.size();i++){
+	    if (asymmUnit.at(i).OrdZahl!=-1){
+	      int z=dataBase.indexOf(invariomsComplete.at(i));
+	      if (z>-1){
+		QString anam,resinr,symm;
+		if (!translateSymm2MP(entries.at(z).Symmetry).isEmpty()){
+		  symm=translateSymm2MP(entries.at(z).Symmetry);
+		  if (QString(asymmUnit.at(i).atomname).contains('@')){
+		    //wenn es '@' im Namen gibt dann resi und resi-Nr decodieren
+		    anam=QString(asymmUnit.at(i).atomname).section('@',0,0);
+		    resinr=QString(asymmUnit.at(i).atomname).section('@',1,1).section(QRegExp("[A-Za-z]+"),0,0);
+		  }
+		  else {
+		    anam=QString(asymmUnit.at(i).atomname);
+		    resinr="1";
+		  }
+		  anam.remove(QRegExp("[)(]+"));
+		  con.write(QString("SYMPLM %1 %2 %3\n")
+				  .arg(symm)
+				  .arg(anam)
+				  .arg(resinr)
+				  .toLatin1());
+
+/*		  printf("->=>> %d %d %s\n", i,z,
+				  QString("SYMPLM %1 %2 %3\n")
+				  .arg(symm)
+				  .arg(anam)
+				  .arg(resinr).toStdString().c_str()
+			);  // */ 
+		}
+	      }
+	    }
+	  }
+	  con.write("\n! PREP CONS EQUI\n");
+	  for (int k=0; k<invariomsComplete.size(); k++){
+            int index=-1;
+	    if (-1!=(index=invariomsComplete.indexOf(invariomsComplete.at(k),k+1))){
+		QString anam,resinr,anam2,resinr2;
+		  if (QString(asymmUnit.at(k).atomname).contains('@')){
+		    //wenn es '@' im Namen gibt dann resi und resi-Nr decodieren
+		    anam=QString(asymmUnit.at(k).atomname).section('@',0,0);
+		    resinr=QString(asymmUnit.at(k).atomname).section('@',1,1).section(QRegExp("[A-Za-z]+"),0,0);
+		  }
+		  else {
+		    anam=QString(asymmUnit.at(k).atomname);
+		    resinr="1";
+		  }
+		  anam.remove(QRegExp("[)(]+"));
+		  if (QString(asymmUnit.at(index).atomname).contains('@')){
+		    //wenn es '@' im Namen gibt dann resi und resi-Nr decodieren
+		    anam2=QString(asymmUnit.at(index).atomname).section('@',0,0);
+		    resinr2=QString(asymmUnit.at(index).atomname).section('@',1,1).section(QRegExp("[A-Za-z]+"),0,0);
+		  }
+		  else {
+		    anam2=QString(asymmUnit.at(index).atomname);
+		    resinr2="1";
+		  }
+		  anam2.remove(QRegExp("[)(]+"));
+		  con.write(QString("AVEPVM %1 %2 %3 %4\n")
+				  .arg(anam)
+				  .arg(resinr)
+				  .arg(anam2)
+				  .arg(resinr2)
+				  .toStdString().c_str());
+	    }
+	  
+	  }
+	  con.close();
+	}
+	QFile rest("InvariomTransfer/RESTRAIN");
+	if (rest.open(QIODevice::WriteOnly)){
+	  for (int i=0; i<asymmUnit.size(); i++){
+	    if (asymmUnit.at(i).OrdZahl!=0) continue;
+		QString anam,resinr,anam2,resinr2;
+		  if (knoepfe.at(i).at(1).Label.contains('@')){
+		    //wenn es '@' im Namen gibt dann resi und resi-Nr decodieren
+		    anam=knoepfe.at(i).at(1).Label.section('@',0,0);
+		    resinr=knoepfe.at(i).at(1).Label.section('@',1,1).section(QRegExp("[A-Za-z]+"),0,0);
+		  }
+		  else {
+		    anam=knoepfe.at(i).at(1).Label;
+		    resinr="1";
+		  }
+		  anam.remove(QRegExp("[)(]+"));
+		  if (knoepfe.at(i).at(0).Label.contains('@')){
+		    //wenn es '@' im Namen gibt dann resi und resi-Nr decodieren
+		    anam2=knoepfe.at(i).at(0).Label.section('@',0,0);
+		    resinr2=knoepfe.at(i).at(0).Label.section('@',1,1).section(QRegExp("[A-Za-z]+"),0,0);
+		  }
+		  else {
+		    anam2=knoepfe.at(i).at(0).Label;
+		    resinr2="1";
+		  }
+		  anam2.remove(QRegExp("[)(]+"));
+		  rest.write(QString("DISTAN %1 %2 %3 %4 %5 0.002\n")
+				  .arg(anam,8).arg(resinr,8).arg(anam2,8).arg(resinr2,8).arg(getHDist(i)).toLatin1());
+		  rest.write(QString("URATIO %1 %2 %3 %4 %5 0.01! %6\n")
+				  .arg(anam,8).arg(resinr,8).arg(anam2,8).arg(resinr2,8).arg(
+					  (2==invariomsComplete.at(i).count('h')?"1.5":"1.2")).arg(invariomsComplete.at(i)).toLatin1());
+//	    qDebug()<<knoepfe.at(i).at(1).Label <<knoepfe.at(i).at(0).Label<<getHDist(i);
+	  }
+
+	  rest.close();
+	}
+
+	
+        qDebug()<<"MoPro files succesfully written!";
     }
 }
 

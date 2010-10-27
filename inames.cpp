@@ -397,6 +397,7 @@ void inames::ringlord(Connection cl){//
 
 QString inames::invName(MyAtom core,Connection &cl, CEnvironment &sel ,int rung){
   if (rung==0) ringlord(cl);  
+  int erstesphaere=0;
   //cout<<"invName is running."<<rung<<endl;
   int tmp1;
   if (core.an<0) return QString("Not a real atom!"); 
@@ -445,6 +446,7 @@ QString inames::invName(MyAtom core,Connection &cl, CEnvironment &sel ,int rung)
     }
     //cout<<"alive ";
 //    if (!ringID[*cl.at(i).ato1]&ringID[core]) cl[i].order=1;
+   erstesphaere=sel.size();
     //printf("%d %d\n",cl.at(i).ato1->an,cl.at(i).ato2->an);
     if ((hand.contains("#"))||(!hand.contains("@")&&(2==cl.at(i).order))||((!hand.contains("@"))&&(core.Symbol=="H"))||((core.an!=14)&&((cl.at(i).ato1->an==14)||(cl.at(i).ato2->an==14)))||((core.an!=15)&&((cl.at(i).ato1->an==15)||(cl.at(i).ato2->an==15)))){ //meso
       hand+="[";    
@@ -527,6 +529,7 @@ QString inames::invName(MyAtom core,Connection &cl, CEnvironment &sel ,int rung)
   }
   if (ringCode.contains(core)) nom.prepend(QString("%1-").arg(ringCode[core]));
   //for (int i=0; i<sel.size();i++)
+  while (erstesphaere!=sel.size()) sel.removeLast();//fuer ko systeme brauche ich nur erste nachbarssphaere 
   //cout<<i<<sel.at(i).Label.toStdString()<<endl;
   return nom;
 }
