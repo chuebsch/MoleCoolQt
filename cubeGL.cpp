@@ -1545,7 +1545,16 @@ void CubeGL::invariomExport(){
   }
   browser->setHtml(text);
   invariomsUnique=invariomsComplete;
+#if (QT_VERSION >= 0x040500)
   invariomsUnique.removeDuplicates();
+#else
+  for (int i=0; i < invariomsUnique.size(); i++){
+    do{  
+  int of= invariomsUnique.lastIndexOf(invariomsUnique.at(i));
+  if (of>i) invariomsUnique.removeAt(of);
+    }while(of>i);
+  }
+#endif
   QVBoxLayout sss;
   sss.addWidget(browser);
   sss.addWidget(buttonBox);
