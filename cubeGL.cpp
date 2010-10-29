@@ -1548,11 +1548,14 @@ void CubeGL::invariomExport(){
 #if (QT_VERSION >= 0x040500)
   invariomsUnique.removeDuplicates();
 #else
-  for (int i=0; i < invariomsUnique.size(); i++){
-    do{  
-  int of= invariomsUnique.lastIndexOf(invariomsUnique.at(i));
-  if (of>i) invariomsUnique.removeAt(of);
-    }while(of>i);
+  {
+    int of=0;
+    for (int i=0; i < invariomsUnique.size(); i++){
+      do{  
+	of= invariomsUnique.lastIndexOf(invariomsUnique.at(i));
+	if (of>i) invariomsUnique.removeAt(of);
+      }while(of>i);
+    }
   }
 #endif
   QVBoxLayout sss;
