@@ -2262,6 +2262,7 @@ void MyWindow::load_MoPro(QString fileName) {
           }
 
        }
+//       qDebug()<<ato1.at(i);
        }else {
        asymmUnit[i].nax=ato1.at(i).toInt();
        }

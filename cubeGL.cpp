@@ -2038,7 +2038,7 @@ void CubeGL::exportMoProFiles(){
                                 .arg(entries.at(z).o2p,6,'f',3)
                                 .arg(entries.at(z).o2m,6,'f',3)
                                 .arg(entries.at(z).o3p,6,'f',3)
-                                .arg(entries.at(z).o3m,6,'f',3)
+                                .arg(-entries.at(z).o3m,6,'f',3)
                                 .toLatin1());
                 moprofile.write(QString("%1 %2 %3 %4 %5 %6 %7 %8 %9\n")
                                 .arg(entries.at(z).h0,6,'f',3)
@@ -2047,7 +2047,7 @@ void CubeGL::exportMoProFiles(){
                                 .arg(entries.at(z).h2p,6,'f',3)
                                 .arg(entries.at(z).h2m,6,'f',3)
                                 .arg(entries.at(z).h3p,6,'f',3)
-                                .arg(entries.at(z).h3m,6,'f',3)
+                                .arg(-entries.at(z).h3m,6,'f',3)
                                 .arg(entries.at(z).h4p,6,'f',3)
                                 .arg(entries.at(z).h4m,6,'f',3)
                                 .toLatin1());
