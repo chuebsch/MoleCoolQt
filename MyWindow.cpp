@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-QString rev="$Rev: 210 $";
+QString rev="$Rev: 213 $";
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -1708,7 +1708,7 @@ void MyWindow::restoreXDfiles(){
 }
 
 void MyWindow::about(){  
-  QString date="$LastChangedDate: 2010-10-27 23:02:24 +0200 (Wed, 27 Oct 2010)$";
+  QString date="$LastChangedDate: 2010-11-04 08:42:28 +0100 (Thu, 04 Nov 2010)$";
   date.remove("LastChangedDate:");
   date.remove("$");
   QString bau_datum=QString(__TIME__ " " __DATE__);

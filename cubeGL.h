@@ -128,6 +128,7 @@ public slots:
   void invariomExport();
   QString translateSymm2MP(QString idbs);
 //  void unsetXDSetup();
+  void editInv(const QUrl & link );
   void loadDataBase();
   void exportMoProFiles();
   void updateBondActions();

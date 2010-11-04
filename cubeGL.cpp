@@ -1447,6 +1447,160 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
   }
 }
 
+/////////
+void CubeGL::editInv(const QUrl & link ){
+  int index=link.toString().toInt();  
+  extern QList<INP> xdinp;
+  extern molekul mol;
+// printf("hats geklappt %d?\n",index);
+//return ;
+  if (xdinp[index].OrdZahl<0)return;
+  int na=0;
+  for (int i=0; (i<xdinp.size())&&(xdinp[i].OrdZahl>=0); i++) na=i;
+  if (((int)index)>na) {
+    //	  printf ("index=%d na%d\n",index,na);
+    return;
+  }
+  //	  printf ("index=%d na%d\n",index,na);
+  static char PSE_Symbol[109][3] = {"H","He","Li","Be","B","C","N","O","F","Ne","Na","Mg","Al","Si","P","S","Cl","Ar",
+    "K","Ca","Sc","Ti","V","Cr","Mn","Fe","Co","Ni","Cu","Zn","Ga","Ge","As","Se","Br","Kr",
+    "Rb","Sr","Y","Zr","Nb","Mo","Tc","Ru","Rh","Pd","Ag","Cd","In","Sn","Sb","Te","J","Xe",
+    "Cs","Ba", "La","Ce","Pr","Nd","Pm","Sm","Eu","Gd","Tb","Dy","Ho","Er","Tm","Yb","Lu",
+    "Hf","Ta","W","Re","Os","Ir","Pt","Au","Hg","Tl","Pb","Bi","Po","At","Rn","Fr","Ra",
+    "Ac","Th","Pa","U","Np","Pu","Am","Cm","Bk","Cf","Es","Fm","Md","No","Lr","Ku","Ha","Rf","Ns","Hs","Mt"};
+
+  MyAtom invom;
+  double soll_abst,gg;
+  MyBond bond;
+  if (ce.size()==0)
+    for (int i=0;i<xdinp.size();i++){
+      invom.Label=xdinp[i].atomname;
+      invom.pos=xdinp[i].kart;
+      invom.an=xdinp[i].OrdZahl;
+      invom.part=xdinp[i].part;
+      invom.Symbol=PSE_Symbol[xdinp[i].OrdZahl];
+      ce.append(invom);
+    }
+  if ((bondList.size()!=0)) {
+    cl=bondList;
+    /*
+       for (int w=0; w<bondList.size(); w++){
+       cout<<bondList.at(w).ato1->Label.toStdString()<<"---"<<bondList.at(w).ato2->Label.toStdString()<< " "<< bondList.at(w).chi<< " "<<bondList.at(w).order<<endl;
+       }
+       cout<<"cl=bondList;"<<endl;
+       */
+  }
+  else {
+    for (int i=0;i<ce.size();i++) {
+      for (int j=i+1;j<ce.size();j++){
+	//int i=0;
+	if ((ce.at(i).an<0)||(ce.at(j).an<0)) continue;
+	if (ce.at(i).pos==ce.at(j).pos) continue;
+	if ((ce.at(i).part>0)&&(ce.at(j).part>0)&&(ce.at(j).part!=ce.at(i).part)) continue;
+	if ((ce.at(i).an<83)&&(ce.at(j).an<83)&&(ce.at(i).an>=0)&&(ce.at(j).an>=0)){
+	  soll_abst=((mol.Kovalenz_Radien[ce.at(i).an]+
+				  mol.Kovalenz_Radien[ce.at(j).an])/100.0
+			  -(0.08*fabs(((double)mol.ElNeg[ce.at(i).an]
+						  -mol.ElNeg[ce.at(j).an])/100.0)));
+	  gg=sqrt( Distance(ce.at(i).pos,ce.at(j).pos));
+	  if (gg<(soll_abst*1.2)) {
+	    bond.ato1=&ce.at(i);
+	    bond.ato2=&ce.at(j);
+	    bond.length=gg;
+	    bond.chi=soll_abst-gg;
+	    bond.order=(bond.chi<0.0847)?1:((bond.chi<0.184)?2:((bond.chi<0.27)?3:4));
+	    bond.order=((bond.ato2->Symbol=="H")||(bond.ato1->Symbol=="H"))?1:bond.order;
+	    //		    qDebug()<<"xx";
+	    cl.append(bond);
+	  }
+	}
+      }
+    }	
+  }
+  if (bondList.size()!=cl.size()) {	    
+    //	    qDebug()<<"bondList=cl"<<cl.size();
+    bondList=cl;
+  }
+  CEnvironment cel;
+  invom.Label=xdinp[index].atomname;
+  invom.pos=xdinp[index].kart;
+  invom.an=xdinp[index].OrdZahl;
+  invom.part=xdinp[index].part;
+  invom.Symbol=PSE_Symbol[xdinp[index].OrdZahl];
+  cel.append(invom);	  
+  for (int i=0;i<xdinp.size();i++){
+    if((xdinp[i].OrdZahl<0)||(xdinp[index].OrdZahl<0)) continue;
+    if ((xdinp[i].part>0)&&(xdinp[index].part>0)&&(xdinp[i].part!=xdinp[index].part)) continue;
+    if ((xdinp[i].OrdZahl<83)&&(xdinp[index].OrdZahl<83)&&(xdinp[i].OrdZahl>=0)&&(xdinp[index].OrdZahl>=0)){
+      soll_abst=((mol.Kovalenz_Radien[xdinp[i].OrdZahl]+
+			      mol.Kovalenz_Radien[xdinp[index].OrdZahl])
+		      -(0.08*fabs((double)mol.ElNeg[xdinp[i].OrdZahl]
+				      -mol.ElNeg[xdinp[index].OrdZahl])))*1.2;
+      gg=100.0*sqrt( Distance(xdinp[i].kart,xdinp[index].kart));
+      if ((gg<soll_abst)&&(!(xdinp[i].kart==cel[0].pos))){		
+	invom.Label=xdinp[i].atomname;
+	invom.pos=xdinp[i].kart;
+	invom.part=xdinp[i].part;
+	invom.an=xdinp[i].OrdZahl;
+	invom.Symbol=PSE_Symbol[xdinp[i].OrdZahl];
+	cel.append(invom);
+      }
+    }
+  }
+  int end=cel.size();
+    int *isInList=(int*)malloc(sizeof(int)*xdinp.size());
+    for (int i=0;i<xdinp.size();i++){
+      isInList[i]=0;
+      for (int j=0; j<end;j++){
+	if (cel[j].pos==xdinp[i].kart) isInList[i]=1;
+      }
+    }
+    for (int i=0;i<xdinp.size();i++){
+      for (int j=1; j<end;j++){
+	if(xdinp[i].OrdZahl<0) continue;
+	if (isInList[i]) continue;
+	if ((xdinp[i].part>0)&&(cel.at(j).part>0)&&(cel.at(j).part!=xdinp[i].part)) continue;
+	if ((xdinp[i].OrdZahl<83)&&(xdinp[i].OrdZahl>=0)){
+	  soll_abst=((mol.Kovalenz_Radien[xdinp[i].OrdZahl]+
+				  mol.Kovalenz_Radien[cel.at(j).an])
+			  -(0.08*fabs((double)mol.ElNeg[xdinp[i].OrdZahl]
+					  -mol.ElNeg[cel.at(j).an])))*1.2;
+	  gg=100.0*sqrt( Distance(xdinp[i].kart,cel.at(j).pos));
+	  if (gg<soll_abst){				  
+	    invom.Label=xdinp[i].atomname;
+	    invom.pos=xdinp[i].kart;
+	    invom.part=xdinp[i].part;
+	    invom.an=xdinp[i].OrdZahl;
+	    invom.Symbol=PSE_Symbol[xdinp[i].OrdZahl];
+	    cel.append(invom);
+	  }
+	}
+      }
+    }
+    free(isInList);
+
+    Connection cll;
+    for (int i=0; i<cl.size();i++)
+      for (int k=0; k<cel.size();k++)
+	for (int j=0; j<cel.size();j++){
+	  if ((cl.at(i).ato1->pos==cel.at(j).pos)&&(cl.at(i).ato2->pos==cel.at(k).pos)){
+	    if ((cel.at(0).part>0)&&((cel.at(0).part!=cl.at(i).ato1->part)||(cel.at(0).part!=cl.at(i).ato2->part)));
+	    else 
+	      cll.append(cl[i]);
+	  }
+	}
+    invDlg *id=new invDlg(&cel,&cll,dataBase);//TESTXDEDIT
+    id->update();
+    if (id->exec()==QDialog::Rejected)
+      for (int i=0;i<bondList.size();i++){
+	bondList[i].order=cl.at(i).order;
+      }
+    //qDebug()<<"test";
+    //qDebug()<<bondList.size()<<bondList[0].order;
+}
+  /////////
+
+
 void CubeGL::invariomExport(){  
   extern molekul mol;
   extern QList<INP> xdinp;
@@ -1463,10 +1617,13 @@ void CubeGL::invariomExport(){
   QDialog *invExportDlg =new QDialog(this);
   invExportDlg->setMinimumSize(400,300);  
   QTextBrowser *browser=new QTextBrowser;
+  browser->setOpenLinks(false);
   QDialogButtonBox *buttonBox = new QDialogButtonBox(QDialogButtonBox::Save | QDialogButtonBox::Cancel);
   connect(buttonBox, SIGNAL(accepted()), invExportDlg, SLOT(accept()));
   connect(buttonBox, SIGNAL(rejected()), invExportDlg, SLOT(reject()));
-  QPushButton *exportMoProbutton = new QPushButton("Export Invarioms to MoPro files//not finished yet");
+  connect(browser,SIGNAL(anchorClicked( const QUrl &)), this ,SLOT(editInv(const QUrl &)));
+  connect(browser,SIGNAL(anchorClicked( const QUrl &)), invExportDlg, SLOT(reject()));
+  QPushButton *exportMoProbutton = new QPushButton("Export Invarioms to MoPro files");
 //  exportMoProbutton->setEnabled(false);
   connect(exportMoProbutton,SIGNAL(clicked()),this,SLOT(exportMoProFiles()));
   QString text;
@@ -1535,10 +1692,14 @@ void CubeGL::invariomExport(){
       //qDebug()<<sel.size()<<knoepfe.size();
       knoepfe.append(sel);
       invariomsComplete.append(ina);
+      text+=QString("<a href=\"%1\">").arg(ix);
       if (dataBase.contains(ina)) text+="<font color=\"green\">";
-      else text+="<font color=\"red\">";
+      else {
+	text+="<font color=\"red\">";
+	exportMoProbutton->setEnabled(false);
+      }
       text+=invom.Label;
-      text+=": </font></b>";
+      text+=": </font></a></b>";
       text+=ina;
       text+="<br>";
     }

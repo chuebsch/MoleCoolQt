@@ -128,8 +128,8 @@ int ringCodeSort(int rg){// aus ringlort.cc (Invariomtool)
  return c;
 }
 
-QMap<MyAtom,int> ringCode;
-QMap<MyAtom,int> ringID;
+QMap<MyAtom,long long int> ringCode;
+QMap<MyAtom,long long int> ringID;
 QMap<MyAtom,double> planarity;
 
 double isPlanar(MyAtom core, Connection cl){
@@ -178,7 +178,7 @@ void inames::ringlord(Connection cl){//
   ringCode.clear();
 
   MyAtom const *A=NULL,*B=NULL, *C=NULL;
-  int ID=1;
+  long long int ID=1;
   Tripel tripel;
   QList<Tripel> tripels;
   tripels.clear();
@@ -221,6 +221,7 @@ void inames::ringlord(Connection cl){//
 	    ringID[*B]|=ID; 
 	    ringID[*C]|=ID; 
 	    ID<<=1;
+	    ID=(ID)?ID:1;
 //	  printf("Ich habe einen Dreiring gefunden!\n");
 //	  cout<<Rings.at(0).members.at(0).Label.toStdString()<<Rings.at(0).members.at(1).Label.toStdString()<<Rings.at(0).members.at(2).Label.toStdString()<<"!"<<ID<<">"<<Rings.at(0).ID<<endl;
 	  }
@@ -275,6 +276,7 @@ void inames::ringlord(Connection cl){//
 	secondCast[dabei.at(k)].taken=true;
       }
       ID<<=1; 
+      ID=(ID)?ID:1;
       //cout<<endl; 
     }
   }
@@ -413,6 +415,7 @@ QString inames::invName(MyAtom core,Connection &cl, CEnvironment &sel ,int rung)
     //cout <<cl.at(i).ato1->Label.toStdString()<<"---"<<cl.at(i).ato2->Label.toStdString()<<" "<<i<<endl;
     if (core.pos==cl.at(i).ato2->pos){
       if (ringCode.contains(*cl.at(i).ato1)){
+//        printf("%s %ld %ld %ld\n",core.Label.toStdString().c_str(),ringID[*cl.at(i).ato1],ringID[core],(ringID[*cl.at(i).ato1]&ringID[core]));
 	hand=QString("%1%2%3").arg((ringID[*cl.at(i).ato1]&ringID[core])?"#":"@").arg(ringCode[*cl.at(i).ato1]).arg(cl.at(i).ato1->Symbol);
 	if ((!(ringID[*cl.at(i).ato1]&ringID[core]))&&(core.Symbol=="O")){ 
 	  cl[i].order=3;//O@ immer 2fach 
@@ -428,6 +431,7 @@ QString inames::invName(MyAtom core,Connection &cl, CEnvironment &sel ,int rung)
     }
     else if (core.pos==cl.at(i).ato1->pos){
       if (ringCode.contains(*cl.at(i).ato2)){
+//        printf("%s !!%d %d %d\n",core.Label.toStdString().c_str(),ringID[*cl.at(i).ato1],ringID[core],(ringID[*cl.at(i).ato1]&ringID[core]));
 	hand=QString("%1%2%3").arg((ringID[*cl.at(i).ato2]&ringID[core])?"#":"@").arg(ringCode[*cl.at(i).ato2]).arg(cl.at(i).ato2->Symbol);
 	if ((!(ringID[*cl.at(i).ato1]&ringID[core]))&&(core.Symbol=="O")) {
 	  cl[i].order=3;//O@ immer 2fach 
@@ -521,10 +525,16 @@ QString inames::invName(MyAtom core,Connection &cl, CEnvironment &sel ,int rung)
       for (int w=1;w<5;w++)
 	chiral.append(sel.at(w));
       qSort(chiral.begin(),chiral.end(),anso);
-      if ((chiral.at(0).pos%chiral.at(1).pos)*chiral.at(2).pos >0.0)//spatprodukt
+      double chiralitaet = ((chiral.at(0).pos-sel.at(0).pos)%(chiral.at(1).pos-sel.at(0).pos))*(chiral.at(2).pos-sel.at(0).pos);
+      if (chiralitaet <0.0)//spatprodukt
 	nom.prepend("R-");
       else
 	nom.prepend("S-");
+/*      printf("[%s]: %s %s %s (%s) %f\n",sel.at(0).Label.toStdString().c_str(),
+		      chiral.at(0).Label.toStdString().c_str(),
+		      chiral.at(1).Label.toStdString().c_str(),
+		      chiral.at(2).Label.toStdString().c_str(),
+		      chiral.at(3).Label.toStdString().c_str(),chiralitaet);*/
     }
   }
   if (ringCode.contains(core)) nom.prepend(QString("%1-").arg(ringCode[core]));
