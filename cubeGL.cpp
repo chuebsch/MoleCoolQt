@@ -1811,6 +1811,52 @@ QString CubeGL::inv2moproaxes(int index){
             .arg(as2);
       return erg;
     }
+    if ((axcopy.contains("DUM"))&&(entries.at(j).Symmetry=="3m")&&(knoepfe.at(index).size()>3)) {
+      ind1=qMax(at1,at2);//der index der nicht dummy ist
+      at1=at2=-1;
+      int at3=-1;
+      for (int k=1; k< knoepfe.at(index).size();k++){//direkte Nachbarn finden
+        if ((at2!=-1)&&(at1!=-1)&&(knoepfe.at(index).at(k).an==ind1)) {at3=k;continue;}
+        if ((at2==-1)&&(at1!=-1)&&(knoepfe.at(index).at(k).an==ind1)) {at2=k;continue;}
+        if ((at1==-1)&&(knoepfe.at(index).at(k).an==ind1)) {at1=k;continue;}
+
+      }
+      as1=knoepfe.at(index).at(at1).Label;
+      as2=knoepfe.at(index).at(at2).Label;
+      QString as3 = knoepfe.at(index).at(at3).Label;
+      as1.remove(QRegExp("[)(]+"));
+      as2.remove(QRegExp("[)(]+"));
+      as3.remove(QRegExp("[)(]+"));
+
+      if (as1.contains('@')){
+	//wenn es '@' im Namen gibt dann resi und resi-Nr decodieren
+	QString anam =as1.section('@',0,0);
+	QString resinr =as1.section('@',1,1).section(QRegExp("[A-Za-z]+"),0,0);
+	as1=QString("%1_%2").arg(resinr).arg(anam);
+      }
+      if (as2.contains('@')){
+	//wenn es '@' im Namen gibt dann resi und resi-Nr decodieren
+	QString anam =as2.section('@',0,0);
+	QString resinr =as2.section('@',1,1).section(QRegExp("[A-Za-z]+"),0,0);
+	as2=QString("%1_%2").arg(resinr).arg(anam);
+      }
+      if (as3.contains('@')){
+	//wenn es '@' im Namen gibt dann resi und resi-Nr decodieren
+	QString anam =as3.section('@',0,0);
+	QString resinr =as3.section('@',1,1).section(QRegExp("[A-Za-z]+"),0,0);
+	as3=QString("%1_%2").arg(resinr).arg(anam);
+      }
+      erg = QString("%1%2%3  %4 %5 %6")
+            .arg("b")
+            .arg(axtok.at(0))
+            .arg(axtok.at(2))
+            .arg(as1)
+            .arg(as2)
+            .arg(as3);
+      return erg;
+
+
+    }
     for (int k=1; k< knoepfe.at(index).size();k++){//direkte Nachbarn finden
         if ((!ind1)&&(knoepfe.at(index).at(k).an==at1)) {ind1=k;continue;}
         if (knoepfe.at(index).at(k).an==at2) {ind2=k;continue;}

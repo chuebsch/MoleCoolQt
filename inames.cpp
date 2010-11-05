@@ -541,5 +541,6 @@ QString inames::invName(MyAtom core,Connection &cl, CEnvironment &sel ,int rung)
   //for (int i=0; i<sel.size();i++)
   while (erstesphaere!=sel.size()) sel.removeLast();//fuer ko systeme brauche ich nur erste nachbarssphaere 
   //cout<<i<<sel.at(i).Label.toStdString()<<endl;
+  if ((nom.startsWith("N@"))&&(planarity.value(core)>0.9)&&(arms.size()>=3)) nom.prepend("=-");
   return nom;
 }
