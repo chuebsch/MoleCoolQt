@@ -51,9 +51,11 @@ public:
   void moveY(double speed);
   void resetENV();
   QString inv2moproaxes(int index);
+  void inv2XDaxes(int index);
+  QString symm2Key(QString sym);
   QList<CEnvironment> knoepfe;
   int maxmol;
-  QString afilename;
+  QString afilename,CID;
   void checkTC();
   bool MIS,MILe;
   //  INP *xdinpC;
@@ -131,6 +133,7 @@ public slots:
   void editInv(const QUrl & link );
   void loadDataBase();
   void exportMoProFiles();
+  void exportXDFiles();
   void updateBondActions();
   void disSelection();
   void connectSelection();
@@ -141,6 +144,7 @@ signals:
   void message(const QString &);
   void bigmessage(const QString &);
   void reloadXD();
+  void reloadFile();
   void mconf();
 protected:
   void initializeGL();
@@ -166,6 +170,8 @@ private:
  // GLuint texture[1];
   QPoint lastPos;
   CEnvironment ce;
+  CEnvironment exportDummys;
+  QStringList exportLabels;
   Connection cl;
   QStringList dataBase;
   QList<DABA> entries;

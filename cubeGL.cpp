@@ -326,6 +326,7 @@ void  CubeGL::toggInvEdit(bool on){
 	  invom.an=xdinp[i].OrdZahl;
 	  invom.part=xdinp[i].part;
 	  invom.Symbol=PSE_Symbol[xdinp[i].OrdZahl];
+	  invom.index=i;
 	  ce.append(invom);
 	}
     }
@@ -965,16 +966,18 @@ void CubeGL::loadDataBase(){
              entry.h4m=tok.at(5).toDouble();
 
               } break;
-        case 4: entry.Symmetry=tok.at(1); break;
+        case 4: entry.Symmetry=tok.at(1).trimmed(); break;
         case 5: entry.CoordinateSystem=line; break;
         case 6: line.remove("Kappa=");
-                tok = line.split(";=",QString::SkipEmptyParts);
+		line.remove(";");
+                tok = line.split("=",QString::SkipEmptyParts);
                 entry.k1=tok.at(0).toDouble();
                 entry.k2=tok.at(1).toDouble();
                 entry.k3=tok.at(2).toDouble();
                 entry.k4=tok.at(3).toDouble();
                 entry.k5=tok.at(4).toDouble();
                 entry.k6=tok.at(5).toDouble();
+//		printf("tok.at(5) !%s!\n",tok.at(5).toStdString().c_str());
         //        printf("%d %d %f %f %f %f %f %f\n",entries.size(),dataBase.size(),entry.k1,entry.k2,entry.k3,entry.k4,entry.k5,entry.k6);
                 entries.append(entry);
              break;
@@ -984,7 +987,7 @@ void CubeGL::loadDataBase(){
 
     }
 
-  //qDebug()<<entries.size()<<dataBase.size();
+//  qDebug()<<entries.size()<<dataBase.size();
   }
 }
 
@@ -1279,6 +1282,7 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 	      invom.an=xdinp[i].OrdZahl;
 	      invom.part=xdinp[i].part;
 	      invom.Symbol=PSE_Symbol[xdinp[i].OrdZahl];
+	      invom.index=i;
 	      ce.append(invom);
 	    }
 	  if ((bondList.size()!=0)) {
@@ -1479,6 +1483,7 @@ void CubeGL::editInv(const QUrl & link ){
       invom.an=xdinp[i].OrdZahl;
       invom.part=xdinp[i].part;
       invom.Symbol=PSE_Symbol[xdinp[i].OrdZahl];
+      invom.index=i;
       ce.append(invom);
     }
   if ((bondList.size()!=0)) {
@@ -1624,8 +1629,13 @@ void CubeGL::invariomExport(){
   connect(browser,SIGNAL(anchorClicked( const QUrl &)), this ,SLOT(editInv(const QUrl &)));
   connect(browser,SIGNAL(anchorClicked( const QUrl &)), invExportDlg, SLOT(reject()));
   QPushButton *exportMoProbutton = new QPushButton("Export Invarioms to MoPro files");
+  QPushButton *exportXDbutton = new QPushButton("Export Invarioms to XD files");
 //  exportMoProbutton->setEnabled(false);
   connect(exportMoProbutton,SIGNAL(clicked()),this,SLOT(exportMoProFiles()));
+  connect(exportXDbutton,SIGNAL(clicked()),this,SLOT(exportXDFiles()));
+  connect(exportXDbutton,SIGNAL(clicked()),invExportDlg, SLOT(reject()));
+  connect(exportMoProbutton,SIGNAL(clicked()),invExportDlg, SLOT(reject()));
+
   QString text;
   //  extern Connection bondList;
   for (int ix=0;ix<asymmUnit.size();ix++){
@@ -1641,6 +1651,7 @@ void CubeGL::invariomExport(){
 	  invom.an=xdinp[i].OrdZahl;
 	  invom.part=xdinp[i].part;
 	  invom.Symbol=PSE_Symbol[xdinp[i].OrdZahl];
+	  invom.index=i;
 	  ce.append(invom);
 	}
     }
@@ -1686,6 +1697,7 @@ void CubeGL::invariomExport(){
     invom.an=xdinp[ix].OrdZahl;
     invom.part=xdinp[ix].part;
     invom.Symbol=PSE_Symbol[xdinp[ix].OrdZahl];
+    invom.index=ix;
     if (invom.an>-1 ){
       text+="<b>";
       ina=inames::invName(invom,bondList,sel,ix);      
@@ -1697,6 +1709,7 @@ void CubeGL::invariomExport(){
       else {
 	text+="<font color=\"red\">";
 	exportMoProbutton->setEnabled(false);
+	exportXDbutton->setEnabled(false);
       }
       text+=invom.Label;
       text+=": </font></a></b>";
@@ -1704,6 +1717,7 @@ void CubeGL::invariomExport(){
       text+="<br>";
     }
   }
+//  printf("%s \n ",dataBase.last().toStdString().c_str());
   browser->setHtml(text);
   invariomsUnique=invariomsComplete;
 #if (QT_VERSION >= 0x040500)
@@ -1723,6 +1737,7 @@ void CubeGL::invariomExport(){
   sss.addWidget(browser);
   sss.addWidget(buttonBox);
   sss.addWidget(exportMoProbutton);
+  sss.addWidget(exportXDbutton);
   invExportDlg->setLayout(&sss);
   invExportDlg->setWindowTitle("Export these Invaromnames to 'Invariome.in'");
   if (QDialog::Accepted==invExportDlg->exec()){
@@ -2380,8 +2395,616 @@ void CubeGL::exportMoProFiles(){
 	
         qDebug()<<"MoPro files succesfully written!";
     }
+    emit reloadFile();
 }
 
+void CubeGL::inv2XDaxes(int index){
+    QStringList axtok;
+    extern int dummax;
+    extern molekul mol;
+    extern QList<INP> asymmUnit;
+//    printf("%d %s %d\n",index,asymmUnit.at(index).atomname,asymmUnit.at(index).OrdZahl);
+    if (asymmUnit.at(index).OrdZahl<0) return; 
+    int j=dataBase.indexOf(invariomsComplete.at(index));
+    QString axcopy=entries.at(j).CoordinateSystem;
+    //KS: X:C(4) Y:C(7) AX2:C0.033974 AX1:C0.033938
+    axcopy.remove("KS: ");
+    axcopy.remove(QRegExp("\\(\\w+\\)"));
+    axcopy.replace(" ",":");
+ //   printf("{%s}\n",axcopy.toStdString().c_str());
+		
+    axtok=axcopy.split(":",QString::SkipEmptyParts);
+    //qDebug()<<axtok.size()<<axtok<<index<<invariomsComplete.at(index);
+    if (axtok.size()>3){
+      int at1=mol.Get_OZ(axtok.at(1));
+      int at2=mol.Get_OZ(axtok.at(3));
+      int ind1=-1,ind2=-1,r=0;//noch viel arbeit ......
+      if ((axcopy.contains("DUM"))&&(entries.at(j).Symmetry=="mm2")) {
+//	printf("_-^_^-_\n");
+	r=qMax(at1,at2);//non dummy atomic number
+	for (int k=1; k< knoepfe.at(index).size();k++){//direkte Nachbarn finden
+	  if ((ind1==-1)&&(knoepfe.at(index).at(k).an==r)) {ind1=knoepfe.at(index).at(k).index;continue;}
+	  if ((knoepfe.at(index).at(k).an==r)&&(knoepfe.at(index).at(k).index<(asymmUnit.size()-dummax))) {ind2=knoepfe.at(index).at(k).index;continue;}
+	}
+        MyAtom dummy;
+	V3 rechts,links,mitte,dc;
+	mol.frac2kart( asymmUnit.at(ind1).frac , rechts);
+	mol.frac2kart( asymmUnit.at(index).frac, mitte );
+	mol.frac2kart( asymmUnit.at(ind2).frac , links );
+	dc = mitte + Normalize(((rechts-mitte)+(links-mitte)));
+	mol.kart2frac(dc,dummy.pos);
+//nn	printf("heinzy%s %s %s %f %f %f\n", asymmUnit.at(ind1).atomname,asymmUnit.at(index).atomname,asymmUnit.at(ind2).atomname,asymmUnit.at(ind1).frac.x,asymmUnit.at(ind1).frac.y,asymmUnit.at(ind1).frac.z);
+	dummy.Label=QString("DUM%1").arg(exportDummys.size());
+	exportLabels.append(dummy.Label);
+	dummy.Symbol="DUM";
+	dummy.an=-1;
+	dummy.index=asymmUnit.size()-dummax+exportDummys.size();
+	exportDummys.append(dummy);
+	asymmUnit[index].nax=dummy.index;
+	asymmUnit[index].nay1=index;
+	asymmUnit[index].nay2=ind2;
+	asymmUnit[index].icor1= (axtok.at(0)=="X")? 1 : ((axtok.at(0)=="Y")? 2 : 3);
+	asymmUnit[index].icor2= (axtok.at(2)=="X")? 1 : ((axtok.at(2)=="Y")? 2 : 3);
+      return;
+      }
+      for (int k=1; k< knoepfe.at(index).size();k++){//direkte Nachbarn finden
+	if ((ind1==-1)&&(knoepfe.at(index).at(k).an==at1)) {ind1=knoepfe.at(index).at(k).index;continue;}
+	if ((knoepfe.at(index).at(k).an==at2)&&(knoepfe.at(index).at(k).index<(asymmUnit.size()-dummax))) {ind2=knoepfe.at(index).at(k).index;continue;}
+      }
+//      printf("-->%d %d %d %d?\n",ind1,ind2,asymmUnit.size(),dummax);
+      if ((ind2>(asymmUnit.size()-dummax))||(ind2<0)){
+	r=ind1;
+	for (int k=1; k< knoepfe.at(r).size();k++){
+	  if ((knoepfe.at(r).at(k).an==at2)&&(knoepfe.at(r).at(k).index!=ind1)&&(knoepfe.at(r).at(k).Label!=knoepfe.at(index).at(0).Label)) {
+	    ind2=knoepfe.at(r).at(k).index;
+          //qDebug()<<"oo"<<as1<<as2<<r<<k<<knoepfe.at(r).at(0).Label;
+          break;
+        }
+      }
+      if (ind2==-1){
+        //qDebug()<<as2;
+        for (int k=1; k< knoepfe.at(r).size();k++){
+          if ((knoepfe.at(r).at(k).index!=ind1)) {
+            ind2=knoepfe.at(r).at(k).index;
+            //qDebug()<<"aa"<<as1<<as2;
+            break;
+          }
+        }
+      }
+    }
+     /* printf("%s %s %d %s %s %d ===\n",
+		      asymmUnit.at(index).atomname,
+		      asymmUnit.at(asymmUnit.at(index).nax).atomname,
+		      asymmUnit.at(index).icor1,
+		      asymmUnit.at(asymmUnit.at(index).nay1).atomname,
+		      asymmUnit.at(asymmUnit.at(index).nay2).atomname,
+		      asymmUnit.at(index).icor2 );*/
+ //     printf("%d %d %d\n",index,ind1,ind2);
+      asymmUnit[index].nax=ind1;
+      asymmUnit[index].nay1=index;
+      asymmUnit[index].nay2=ind2;
+      asymmUnit[index].icor1= (axtok.at(0)=="X")? 1 : ((axtok.at(0)=="Y")? 2 : 3);
+      asymmUnit[index].icor2= (axtok.at(2)=="X")? 1 : ((axtok.at(2)=="Y")? 2 : 3);
+   /*   printf("%-9s %-9s %2d %-9s %-9s %2d ###\n",
+		      asymmUnit.at(index).atomname,
+		      asymmUnit.at(asymmUnit.at(index).nax).atomname,
+		      asymmUnit.at(index).icor1,
+		      asymmUnit.at(asymmUnit.at(index).nay1).atomname,
+		      asymmUnit.at(asymmUnit.at(index).nay2).atomname,
+		      asymmUnit.at(index).icor2 );*/
+
+    }
+}
+
+QString CubeGL::symm2Key(QString sym){
+  if (sym=="m") return "10 110 10011 0110011 100110011";//mz
+  if (sym=="mm2") return "10 001 10010 1001000 100100010";
+  if (sym=="3") return "10 001 10000 1000011 100001100";
+  if (sym=="3m") return "10 001 10000 1000010 100001000";
+  if (sym=="-1") return "10 000 11111 0000000 111111111";//-1
+  if (sym=="1") return "10 111 11111 1111111 111111111";//1
+  if (sym=="6") return "10 001 10000 1000000 100000000";
+  if (sym=="mx") return "10 011 10110 1011001 101100110";//mx
+  if (sym=="my") return "10 101 11010 1101010 110101010";//my
+  if (sym=="mz") return "10 110 10011 0110011 100110011";//mz
+  if (sym=="2x") return "10 100 10110 1100110 101100110";//2x
+  if (sym=="2y") return "10 010 11010 1010101 110101010";//2y
+  if (sym=="2z") return "10 001 10011 1001100 100110011";//2z
+  if (sym=="2mx") return "10 000 10110 1000000 101100110";
+  if (sym=="2my") return "10 000 11010 1000000 110101010";
+  if (sym=="2mz") return "10 000 10011 0000000 100110011";
+  if (sym=="m2m") return "10 000 10010 0000100 100100010";
+  if (sym=="2mm") return "10 000 10010 0000000 100100010";
+  if (sym=="4") return "10 001 10000 1000000 100000011";
+  if (sym=="-4") return "10 000 10000 0001100 100000011";
+  if (sym=="4/m") return "10 000 10000 0000000 100000011";
+  if (sym=="4mm") return "10 001 10000 1000000 100000010";
+  if (sym=="-42m") return "10 000 10000 1001000 100000010";
+  if (sym=="422") return "10 001 10000 1000000 100000010";
+  if (sym=="4/mmm") return "10 000 10000 0000000 100000010";
+  if (sym=="-3") return "10 000 10000 0000000 100001100";
+  if (sym=="3mx") return "10 001 10000 1000001 100000100";
+  if (sym=="3my") return "10 001 10000 1000010 100001000";
+  if (sym=="-1m") return "10 000 10000 0000000 100001000";
+  if (sym=="-6m2") return "10 000 10000 0000010 100000000";
+  printf( "%s ist nicht in der Liste!\n",sym.toStdString().c_str());
+  return "00 000 00000 0000000 000000000";
+} 
+
+void CubeGL::exportXDFiles(){
+    exportDummys.clear();
+    exportLabels.clear();
+    QDir md;
+    extern molekul mol;
+    extern QList<INP> asymmUnit;
+    extern int dummax;
+
+    const int vale[109]= {1 ,//H
+     2 ,//He
+     1 ,//Li
+     2 ,//Be
+     3 ,//B
+     4 ,//C
+     5 ,//N
+     6 ,//O
+     7 ,//F
+     8 ,//Ne
+     1 ,//Na
+     2 ,//Mg
+     3 ,//Al
+     4 ,//Si
+     5 ,//P
+     6 ,//S
+     7 ,//Cl
+     8 ,//Ar
+     1 ,//K
+     2 ,//Ca
+     3 ,//Sc
+     4 ,//Ti
+     5 ,//V
+     6 ,//Cr
+     7 ,//Mn
+     8 ,//Fe
+     9 ,//Co
+     10,//Ni
+     11,//Cu
+     12,//Zn
+     3 ,//Ga
+     4 ,//Ge
+     5 ,//As
+     6 ,//Se
+     7 ,//Br
+     8 ,//Kr
+     1 ,//Rb
+     2 ,//Sr
+     3 ,//Y
+     4 ,//Zr
+     5 ,//Nb
+     6 ,//Mo
+     7 ,//Tc
+     8 ,//Ru
+     9 ,//Rh
+     10,//Pd
+     11,//Ag
+     12,//Cd
+     3 ,//In
+     4 ,//Sn
+     5 ,//Sb
+     6 ,//Te
+     7 ,//I
+     8 ,//Xe
+     1 ,//Cs
+     2 ,//Ba
+     3 ,//La
+     4 ,//Cr
+     5 ,//Pr
+     6 ,//Nd
+     7 ,//Pm
+     8 ,//Sm
+     9 ,//Eu
+     10,//Gd
+     11,//Tb
+     12,//Dy
+     13,//Ho
+     14,//Er
+     15,//Tm
+     16,//Yb
+     17,//Lu
+     4 ,//Hf
+     5 ,//Ta
+     6 ,//W
+     7 ,//Re
+     8 ,//Os
+     9 ,//Ir
+     10,//Pt
+     11,//Au
+     12,//Hg
+     3 ,//Tl
+     4 ,//Pb
+     5 ,//Bi
+     6 ,//Po
+     7 ,//At
+     8 ,//Rn
+     1 ,//Fr
+     2 ,//Ra
+     3 ,//Ac
+     4 ,//Th
+     5 ,//Pa
+     6 ,//U
+     7 ,//Np
+     8 ,//Pu
+     9 ,//Am
+     10,//Cm
+     11,//Bk
+     12,//Cf
+     13,//Es
+     14,//Fm
+     15,//Md
+     16,//No
+     17,//Lr
+     4 ,//Rf
+     5 ,//Db
+     6 ,//Sg
+     7 ,//Bh
+     8 ,//Hs
+     9 };//Mt
+
+    static char PSE_Symbol[109][3] = {"H","He","Li","Be","B","C","N","O","F","Ne","Na","Mg","Al","Si","P","S","Cl","Ar",
+      "K","Ca","Sc","Ti","V","Cr","Mn","Fe","Co","Ni","Cu","Zn","Ga","Ge","As","Se","Br","Kr",
+      "Rb","Sr","Y","Zr","Nb","Mo","Tc","Ru","Rh","Pd","Ag","Cd","In","Sn","Sb","Te","J","Xe",
+      "Cs","Ba", "La","Ce","Pr","Nd","Pm","Sm","Eu","Gd","Tb","Dy","Ho","Er","Tm","Yb","Lu",
+      "Hf","Ta","W","Re","Os","Ir","Pt","Au","Hg","Tl","Pb","Bi","Po","At","Rn","Fr","Ra",
+      "Ac","Th","Pa","U","Np","Pu","Am","Cm","Bk","Cf","Es","Fm","Md","No","Lr","Ku","Ha","Rf","Ns","Hs","Mt"};
+
+    for (int i=0;i<asymmUnit.size();i++){
+      if (asymmUnit.at(i).OrdZahl<0) continue;
+      QString as=asymmUnit.at(i).atomname;
+      as.remove(QRegExp("[)(]+"));
+      if (as.contains('@')){
+	//wenn es '@' im Namen gibt dann resi und resi-Nr decodieren
+	QString anam =as.section('@',0,0);
+	QString resinr =as.section('@',1,1).section(QRegExp("[A-Za-z]+"),0,0);
+	as=QString("%1.%2").arg(anam).arg(resinr);
+//	printf("%s %d %s %d\n",asymmUnit.at(i).atomname,asymmUnit.at(i).OrdZahl,PSE_Symbol[asymmUnit.at(i).OrdZahl],strlen(PSE_Symbol[asymmUnit.at(i).OrdZahl]));
+      }
+      as.insert(strlen(PSE_Symbol[asymmUnit.at(i).OrdZahl]),"(");
+      as.append(")");
+      exportLabels.append(as);
+    }
+    md.mkdir("InvariomTransfer");
+    QList<double> corr3;
+    double issu=0.0,corr_3;
+    int sosu=0,anzahl=0;
+
+    for (int mi =0; mi < maxmol; mi++){
+      for (int i=0;i<asymmUnit.size();i++){
+//	printf("%-10s %d %d mi= %d maxmol= %d\n",asymmUnit.at(i).atomname,asymmUnit.at(i).molindex,asymmUnit.at(i).OrdZahl,mi,maxmol); 
+        if (asymmUnit.at(i).molindex!=(mi+1)) continue;
+        if (asymmUnit.at(i).OrdZahl<0) continue;
+        int z=dataBase.indexOf(invariomsComplete.at(i));
+        if (z>-1) issu+=entries.at(z).m0;
+        else issu+=vale[asymmUnit.at(i).OrdZahl];
+        sosu+=vale[asymmUnit.at(i).OrdZahl];
+        //if (asymmUnit.at(i).OrdZahl==0)
+        anzahl++;
+      }
+      corr_3=0;
+      if (anzahl) corr_3 = (sosu-issu)/anzahl;
+  //    printf("%d %d %f %f\n",anzahl,sosu,issu,corr_3);
+      corr3.append(corr_3);
+      sosu=0;
+      issu=0;
+      anzahl=0;
+    }
+    //qDebug()<<corr3.size()<<maxmol;
+//    QFile moprofile(QString("InvariomTransfer/%1.00").arg(afilename));
+//    QDir moprodir(QString("InvariomTransfer/%1.00").arg(afilename));
+    int ntabl=0;
+    QString hama;
+    QMap<int,int>itable;
+    QMap<int,int>jtable;
+    for (int i=0;i<asymmUnit.size();i++){
+      if (asymmUnit.at(i).OrdZahl<0) continue;
+      inv2XDaxes(i);
+      if (hama.contains(PSE_Symbol[asymmUnit.at(i).OrdZahl])) continue;
+      hama+=QString("!%1!").arg(PSE_Symbol[asymmUnit.at(i).OrdZahl]);
+      ntabl++;
+//      printf("++++%s %d %d\n",hama.toStdString().c_str(),ntabl,asymmUnit.at(i).OrdZahl);
+      itable[asymmUnit.at(i).OrdZahl]=ntabl;
+    }
+//    printf(" Labes Size = %d Dummys Size = %d\n",exportLabels.size(),exportDummys.size()); 
+    QFile inp("InvariomTransfer/xd.inp");
+    CID.truncate(8);
+    if (inp.open(QIODevice::WriteOnly)){
+      inp.write("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+      inp.write(QString("! <<< X D PARAMETER FILE >>> $Revision: 5.34 (Mar 05 2007)$          %1!\n")
+		      .arg(QDate::currentDate().toString("dd-MMM-yy")).toLatin1());
+      inp.write("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+      inp.write("XDPARFILE VERSION  2\n");
+      inp.write(QString("   %1  MODEL   4  2  1  0\n").arg(CID,-8).toLatin1());
+      inp.write("LIMITS nat  2000 ntx  31 lmx  4 nzz  30 nto  0 nsc  20 ntb  20 nov   2500\n");
+      inp.write(QString("USAGE  %1   2  4 %2   0   1   0   1 %3 %4     1   1   1 %5\n")
+		      .arg(asymmUnit.size()-dummax)
+		      .arg(invariomsUnique.size())
+		      .arg(ntabl)
+		      .arg(mol.zelle.symuncent)
+		      .arg(exportDummys.size()).toLatin1());
+       inp.write("  0.000000  0.000000  0.000000  0.000000  0.000000  0.000000  1.000000 0.100E+01\n");
+       inp.write(" -2.000000  0.000000  0.000000  0.000000  0.000000  0.333300\n");
+       for (int i=0; i<exportDummys.size();i++){
+	 inp.write(QString(" %1 %2 %3\n")
+			 .arg(exportDummys.at(i).pos.x,14,'f',6)
+			 .arg(exportDummys.at(i).pos.y,14,'f',6)
+			 .arg(exportDummys.at(i).pos.z,14,'f',6)
+			 .toLatin1());
+       }
+	for (int i=0; i<asymmUnit.size();i++){
+	  if (asymmUnit.at(i).OrdZahl!=-1){
+	    int j = invariomsUnique.indexOf(invariomsComplete.at(i));
+//	    format(a8,1x,2i2,i5,2i4,i2,2i3,i2,i3,i4,3f10.6,f7.4)
+	    jtable[j]=itable.value(asymmUnit.at(i).OrdZahl);
+	 //   printf("j = %d itbl = %d j(itbl)= %d\n",j ,itable.value(asymmUnit.at(i).OrdZahl),jtable.value(j));
+	    inp.write(QString("%1 %2 %3 %4 %5 %6 %7 %8 %9 %10 %11 %12 %13 %14 %15 %16\n")
+			    .arg(exportLabels.at(i),-9)
+			    .arg(asymmUnit.at(i).icor1,1)
+			    .arg(asymmUnit.at(i).icor2,1)
+			    .arg((asymmUnit.at(i).nax+1)*asymmUnit.at(i).lflag,4)
+			    .arg((asymmUnit.at(i).nay1+1),3)
+			    .arg((asymmUnit.at(i).nay2+1),3)
+			    .arg(((asymmUnit.at(i).uf.m12==asymmUnit.at(i).uf.m13)&&
+					    (asymmUnit.at(i).uf.m13==asymmUnit.at(i).uf.m23)&&
+					    (asymmUnit.at(i).uf.m12==0))?1:2,1)//jtf
+			    .arg(itable.value(asymmUnit.at(i).OrdZahl),2)//itbl
+			    .arg(j+1,2)//noofkappa
+			    .arg(4,1)//lmax
+			    .arg(1,2)//isy 
+			    .arg(0,3)//ichcon
+			    .arg(asymmUnit.at(i).frac.x,9,'f',6)
+			    .arg(asymmUnit.at(i).frac.y,9,'f',6)
+			    .arg(asymmUnit.at(i).frac.z,9,'f',6)
+			    .arg(1.000,6,'f',4)//pop
+			    .toLatin1());
+	    inp.write(QString(" %1 %2 %3 %4 %5 %6\n")
+			    .arg(asymmUnit.at(i).uf.m11,9,'f',6)
+			    .arg(asymmUnit.at(i).uf.m22,9,'f',6)
+			    .arg(asymmUnit.at(i).uf.m33,9,'f',6)
+			    .arg(asymmUnit.at(i).uf.m12,9,'f',6)
+			    .arg(asymmUnit.at(i).uf.m13,9,'f',6)
+			    .arg(asymmUnit.at(i).uf.m23,9,'f',6)		    
+			    .toLatin1());
+	    int z=dataBase.indexOf(invariomsComplete.at(i));
+	    if (z>-1){
+	      double mv=0;
+	      if ((asymmUnit.at(i).molindex-1)<corr3.size()) 
+		mv= entries.at(z).m0+corr3.at(asymmUnit.at(i).molindex-1);
+	      inp.write(QString(" %1 %2 %3 %4 %5 %6 %7 %8 %9 %10\n")
+			      .arg(mv,7,'f',4)
+			      .arg(entries.at(z).m1,7,'f',4)
+			      .arg(entries.at(z).d1p,7,'f',4)
+			      .arg(entries.at(z).d1m,7,'f',4)
+			      .arg(entries.at(z).d0,7,'f',4)
+			      .arg(entries.at(z).q0,7,'f',4)
+			      .arg(entries.at(z).q1p,7,'f',4)
+			      .arg(entries.at(z).q1m,7,'f',4)
+			      .arg(entries.at(z).q2p,7,'f',4)
+			      .arg(entries.at(z).q2m,7,'f',4)
+			      .toLatin1());
+	      inp.write(QString(" %1 %2 %3 %4 %5 %6 %7 %8 %9 %10\n")
+			      .arg(entries.at(z).o0,7,'f',4)
+			      .arg(entries.at(z).o1p,7,'f',4)
+			      .arg(entries.at(z).o1m,7,'f',4)
+			      .arg(entries.at(z).o2p,7,'f',4)
+			      .arg(entries.at(z).o2m,7,'f',4)
+			      .arg(entries.at(z).o3p,7,'f',4)
+			      .arg(entries.at(z).o3m,7,'f',4)
+			      .arg(entries.at(z).h0,7,'f',4)
+			      .arg(entries.at(z).h1p,7,'f',4)
+			      .arg(entries.at(z).h1m,7,'f',4)
+			      .toLatin1());
+	      inp.write(QString(" %1 %2 %3 %4 %5 %6\n")
+			      .arg(entries.at(z).h2p,7,'f',4)
+			      .arg(entries.at(z).h2m,7,'f',4)
+			      .arg(entries.at(z).h3p,7,'f',4)
+			      .arg(entries.at(z).h3m,7,'f',4)
+			      .arg(entries.at(z).h4p,7,'f',4)
+			      .arg(entries.at(z).h4m,7,'f',4)
+			      .toLatin1());
+	    }
+	    else{
+	      inp.write("  0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000\n");
+	      inp.write("  0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000\n");
+	      inp.write("  0.0000 0.0000 0.0000 0.0000 0.0000 0.0000\n");
+	    }
+	  }
+	}
+	
+        for (int i=0; i<invariomsUnique.size();i++){
+            int j=dataBase.indexOf(invariomsUnique.at(i));
+            if (j==-1) {
+                inp.write("  1  1.000000  1.000000  1.000000  1.000000  1.000000  1.000000\n");
+                continue;
+            }
+//	    printf("j = %d j(itbl)= %d\n",i ,jtable.value(i));
+            inp.write(QString("  %1 %2 %3 %4 %5 %6 %7\n")
+			    .arg(jtable.value(i))
+                            .arg(entries.at(j).k1,8,'f',6)
+                            .arg(entries.at(j).k2,8,'f',6)
+                            .arg(entries.at(j).k3,8,'f',6)
+                            .arg(entries.at(j).k4,8,'f',6)
+                            .arg(entries.at(j).k5,8,'f',6)
+                            .arg(entries.at(j).k6,8,'f',6)
+                            .toLatin1());
+
+        }
+	inp.write(" 0.0000E+00 0.0000E+00 0.0000E+00  0.0000E+00  0.0000E+00  0.0000E+00 0.0000E+00\n 0.0000E+00\n 0.100000E+01\n");
+	inp.close();
+    }
+    QFile mas("InvariomTransfer/xd.mas");
+    if (mas.open(QIODevice::WriteOnly)){
+      mas.write("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+      mas.write(QString("! <<< X D MASTER FILE >>> $Revision: 5.34 $   exported by MoleCoolQt %1!\n")
+		      .arg(QDate::currentDate().toString("dd-MMM-yy")).toLatin1());
+      mas.write("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+      mas.write(QString("TITLE %1\n").arg(CID).toLatin1());
+      mas.write(QString("CELL %1 %2 %3 %4 %5 %6 \n")
+		      .arg(mol.zelle.a)
+		      .arg(mol.zelle.b)
+		      .arg(mol.zelle.c)
+		      .arg(mol.zelle.al)
+		      .arg(mol.zelle.be)
+		      .arg(mol.zelle.ga)
+		      .toLatin1());
+      mas.write(QString("WAVE %1\n")
+		      .arg(mol.zelle.lambda).toLatin1());
+
+      mas.write(QString("LATT %1 %2\n")
+		      .arg((mol.zelle.centro)?"C":"A")
+		      .arg(mol.zelle.lattis)
+		      .toLatin1());
+      for (int i=1; i<mol.zelle.symuncent;i++){
+	mas.write(QString("SYMM %1").arg(mol.encodeSymm(i)).toLatin1());
+      }
+      mas.write("BANK CR\n");
+      mas.write("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+//      printf("xd.mas header is written now writing xdlsm module\n");
+      mas.write("MODULE *XDLSM\nSELECT *model 4 2 1 0 based_on F^2 test verbose 1\nSELECT  cycle -10 dampk 1. cmin 0.6 cmax 1. eigcut 1.d-09 convcrit 1.d-05\nSAVE  deriv *lsqmat *cormat\nSOLVE  *inv *diag *cond\n!-------------------------------------------------------------------------------\nSCAT CORE SPHV DEFV   1S  2S  3S  4S  2P  3P  4P  3D  4D  4F  5S  5P  6S  6P  5D  7S  6D  5F  DELF'   DELF''  NSCTL\n");
+//      SCAT core sphv defv 1s 2s 3s 4s 2p 3p 4p 3d 4d 4f 5s 5p 6s 6p 5d 7s 6d 5f Df' Df" nsctl
+//      C    CHFW CHFW CSZD    2  -2   0   0  -2   0   0   0   0   0   0   0   0   0   0   0   0   0  0.0033  0.0016  0.665
+
+      for (int i=1; i<=ntabl; i++){
+	mas.write(QString("%1    CHFW CHFW CSZD  %2 %3 %4 %5 %6 %7 %8 %9 %10 %11 %12 %13 %14 %15 %16 %17 %18 %19 %20 %21 %22\n")
+			.arg(XDBANK[itable.key(i)].pse)
+			.arg(XDBANK[itable.key(i)].s1,3)
+			.arg(XDBANK[itable.key(i)].s2,3)
+			.arg(XDBANK[itable.key(i)].s3,3)
+			.arg(XDBANK[itable.key(i)].s4,3)
+			.arg(XDBANK[itable.key(i)].p2,3)
+			.arg(XDBANK[itable.key(i)].p3,3)
+			.arg(XDBANK[itable.key(i)].p4,3)
+			.arg(XDBANK[itable.key(i)].d3,3)
+			.arg(XDBANK[itable.key(i)].d4,3)
+			.arg(XDBANK[itable.key(i)].f4,3)
+			.arg(XDBANK[itable.key(i)].s5,3)
+			.arg(XDBANK[itable.key(i)].p5,3)
+			.arg(XDBANK[itable.key(i)].s6,3)
+			.arg(XDBANK[itable.key(i)].p6,3)
+			.arg(XDBANK[itable.key(i)].d5,3)
+//      SCAT core sphv defv 1s 2s 3s 4s 2p 3p 4p 3d 4d 4f 5s 5p 6s 6p 5d 7s 6d 5f Df' Df" nsctl
+			.arg(XDBANK[itable.key(i)].s7,3)
+			.arg(XDBANK[itable.key(i)].d6,3)
+			.arg(XDBANK[itable.key(i)].f5,3)
+			.arg((mol.zelle.lambda-1.1262355<0)?XDBANK[itable.key(i)].fprimMo:XDBANK[itable.key(i)].fprimCu,7,'f',4)
+			//1.1262355 ist der Mittelwert aus Cu un Mo. 
+			.arg((mol.zelle.lambda-1.1262355<0)?XDBANK[itable.key(i)].fdprimMo:XDBANK[itable.key(i)].fdprimCu,7,'f',4)
+			//wenn man ihn von lambda abzieht ist bei positiven Werten die WL naeher bei Cu als bei Mo
+			.arg(XDBANK[itable.key(i)].nsctl/10.0,6,'f',3)
+			.toLatin1());
+//	printf("%s %d %f\n", XDBANK[itable.key(i)].pse, XDBANK[itable.key(i)].krad, XDBANK[itable.key(i)].nsctl); //
+      }
+      mas.write("END SCAT\n!-------------------------------------------------------------------------------\nATOM     ATOM0    AX1 ATOM1    ATOM2   AX2 R/L TP  TBL KAP LMX SITESYM  CHEMCON\n");
+//      printf("SCAT is written\n");
+      const char axl[3][2]={"X","Y","Z"};
+      for (int i=0; i< asymmUnit.size();i++){
+	if (asymmUnit.at(i).OrdZahl!=-1){
+	  int j = invariomsUnique.indexOf(invariomsComplete.at(i));
+	  int z = dataBase.indexOf(invariomsComplete.at(i));
+//	  printf("i=%d j=%d z=%d nax=%d nay1=%d nay2=%d icor1=%d icor2=%d OZ=%d\n",i,j,z,asymmUnit.at(i).nax,asymmUnit.at(i).nay1,asymmUnit.at(i).nay2,asymmUnit.at(i).icor1,asymmUnit.at(i).icor2,asymmUnit.at(i).OrdZahl);
+	//N(T)     C(A)      Z  N(T)     H(3)     Y   R   2   1   1   4    NO
+	//ATOM     ATOM0    AX1 ATOM1    ATOM2   AX2 R/L TP  TBL KAP LMX SITESYM  CHEMCON
+	  mas.write(QString("%1 %2 %3  %4 %5 %6   %7  %8 %9 %10 %11  _%12 %13\n")
+			  .arg(exportLabels.at(i),-8)
+			  .arg(exportLabels.at(asymmUnit.at(i).nax),-8)
+			  .arg(axl[asymmUnit.at(i).icor1-1],2)
+			  .arg(exportLabels.at(asymmUnit.at(i).nay1),-8)
+			  .arg(exportLabels.at(asymmUnit.at(i).nay2),-8)
+			  .arg(axl[asymmUnit.at(i).icor2-1],1)
+			  .arg((asymmUnit.at(i).lflag>0)?"R":"L")
+			  .arg(((asymmUnit.at(i).uf.m12==asymmUnit.at(i).uf.m13)&&
+					  (asymmUnit.at(i).uf.m13==asymmUnit.at(i).uf.m23)&&
+					  (asymmUnit.at(i).uf.m12==0))?1:2,2)
+			  .arg(itable.value(asymmUnit.at(i).OrdZahl),3)
+			  .arg(j+1,3)
+			  .arg(4,3)
+			  .arg(entries.at(z).Symmetry,-4)
+			  .arg(" ")
+			  .toLatin1());
+
+	}
+      }
+
+//    printf(" Labes Size = %d Dummys Size = %d\n",exportLabels.size(),exportDummys.size()); 
+      for (int j=0; j<exportDummys.size();j++){
+	 mas.write(QString("%1 %2 %3 %4\n")
+			 .arg(exportDummys.at(j).Label)
+			 .arg(exportDummys.at(j).pos.x,14,'f',6)
+			 .arg(exportDummys.at(j).pos.y,14,'f',6)
+			 .arg(exportDummys.at(j).pos.z,14,'f',6)
+			 .toLatin1());
+       }
+      mas.write("END ATOM\n!-------------------------------------------------------------------------------\n");
+//      printf("Atom table is written\n");
+      mas.write("KEEP KAPPA ");
+      for (int i=0; i<invariomsUnique.size();i++) {
+	if (i%38==37) mas.write("\nKEEP KAPPA ");
+	mas.write(QString("%1 ").arg(i+1).toLatin1());
+      }
+      mas.write("\nKEEP  charge group1\n! KEEP  rigid group1\n");
+
+      for (int i=0; i<asymmUnit.size(); i++){
+	if (asymmUnit.at(i).OrdZahl!=0) continue;
+	mas.write(QString("RESET BOND %1 %2 %3\n")
+			.arg(exportLabels.at(knoepfe.at(i).at(1).index))
+			.arg(exportLabels.at(i))
+			.arg(getHDist(i))
+			.toLatin1());
+
+      }
+      mas.write("WEIGHT  -2.0 .0 .0 .0 .0 0.3333\nSKIP  obs 0. 1.d10 *sigobs 3. 1.d06 sinthl 0. 2.\n");
+      mas.write("PRINT sinthl .0 2. obs 0. 15. delta 0. 10. *del% 80 100 extcn 80. 100. *abssc\n");
+      mas.write("!EXTCN  *iso aniso *type_1 type_2 type_3 distr_g *distr_l msc_0  msc_1\n");
+      mas.write("DMSDA  1.1  1.8\n FOUR  fmod1 4 2 0 0  fmod2 -1 2 0 0\n");
+      mas.write("!CON  num1 par1/iat1 num2 par2/iat2 ... = num0\n!------------------------------------------------------------------------------\nKEY     XYZ --U2-- ----U3---- ------U4------- M- -D- --Q-- ---O--- ----H----\n");
+//      printf("writing keytable\n");
+      for (int i=0; i<asymmUnit.size(); i++){
+	if (asymmUnit.at(i).OrdZahl<0)continue;
+	if (asymmUnit.at(i).OrdZahl==0)
+	  mas.write(QString("%1 000 100000 0000000000 000000000000000 00 000 00000 0000000 000000000 \n")
+			.arg(exportLabels.at(i),-7)
+			.toLatin1());
+	else
+	  mas.write(QString("%1 111 111111 0000000000 000000000000000 00 000 00000 0000000 000000000 \n")
+			.arg(exportLabels.at(i),-7)
+			.toLatin1());
+      }
+      for (int i=0; i<invariomsUnique.size();i++) {
+	mas.write("KAPPA   000000\n");
+      }
+      mas.write("EXTCN   0000000\nOVTHP   0\nSCALE   1\nEND KEY\n!------------------------------------------------------------------------------\nEND XDLSM\n");
+      mas.write("!Please replace the Key block above by the following block for symmetry constrained refinement\nKEY     XYZ --U2-- ----U3---- ------U4------- M- -D- --Q-- ---O--- ----H----\n");
+      for (int i=0; i<asymmUnit.size(); i++){
+	if (asymmUnit.at(i).OrdZahl<0)continue;
+	int z=dataBase.indexOf(invariomsComplete.at(i));
+	if (asymmUnit.at(i).OrdZahl==0)
+	mas.write(QString("%1 000 100000 0000000000 000000000000000 %2 \n")
+			.arg(exportLabels.at(i),-7)
+			.arg(symm2Key(entries.at(z).Symmetry))
+			.toLatin1());
+	else
+	mas.write(QString("%1 111 111111 0000000000 000000000000000 %2 \n")
+			.arg(exportLabels.at(i),-7)
+			.arg(symm2Key(entries.at(z).Symmetry))
+			.toLatin1());
+      }
+      for (int i=0; i<invariomsUnique.size();i++) {
+	mas.write("KAPPA   000000\n");
+      }
+      mas.write("EXTCN   0000000\nOVTHP   0\nSCALE   1\nEND KEY\n!------------------------------------------------------------------------------\nEND XDLSM\n!end of block!");
+
+      mas.close();
+    }
+    qDebug()<<"XD files succesfully written!";
+    emit reloadFile();
+}
 
 void CubeGL::wheelEvent(QWheelEvent *event){   
   int numDegrees = event->delta() / 8;

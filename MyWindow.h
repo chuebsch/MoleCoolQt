@@ -81,6 +81,7 @@ public slots:
      void syncAtomActs();
      void about();
      void reloadXDfiles();
+     void reloadFiles();
      void editXDmas();
      void restoreXDfiles();
      void resinp();

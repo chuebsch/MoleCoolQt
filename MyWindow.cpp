@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-QString rev="$Rev: 217 $";
+QString rev="$Rev: 218 $";
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -770,6 +770,8 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
 	  cubeGL, SLOT(loadDataBase()));
   connect(cubeGL, SIGNAL (reloadXD ()),
 	  this, SLOT(reloadXDfiles()));
+  connect(cubeGL, SIGNAL (reloadFile()),
+	  this, SLOT(reloadFiles()));
   workMenu->addAction(zoomInAct  );
   workMenu->addAction(zoomOutAct );
   workMenu->addAction(rotLeftAct );
@@ -1679,6 +1681,10 @@ void MyWindow::reloadXDfiles(){
   loadFile(QDir::currentPath()+"/xd.mas",mol.gd);
 }
 
+void MyWindow::reloadFiles(){
+  loadFile(dirName,mol.gd);
+}
+
 void MyWindow::restoreXDfiles(){
   QDir work=QDir(QDir::current());  
   QStringList filter;
@@ -1708,7 +1714,7 @@ void MyWindow::restoreXDfiles(){
 }
 
 void MyWindow::about(){  
-  QString date="$LastChangedDate: 2010-11-05 16:11:54 +0100 (Fr, 05 Nov 2010)$";
+  QString date="$LastChangedDate: 2010-11-05 22:57:07 +0100 (Fri, 05 Nov 2010)$";
   date.remove("LastChangedDate:");
   date.remove("$");
   QString bau_datum=QString(__TIME__ " " __DATE__);
@@ -2372,6 +2378,42 @@ void MyWindow::load_xdres(QString fileName) {
   masName=fileName;
   masName.chop(3);
   masName.append("mas");
+  mol.zelle.symmops.clear();
+  mol.zelle.trans.clear();
+  V3 nl(0,0,0);
+  mol.zelle.trans.append(nl);
+  mol.zelle.symmops.append(Matrix(1,0,0, 0,1,0, 0,0,1));
+  QStringList atypen;
+  {//MAS//
+  FILE *mas;
+  char line[120];
+  strcpy(line,"");
+
+  if (NULL==(mas=fopen(masName.toLocal8Bit(),"r"))) {QMessageBox::critical(this,"Read Error!",QString("read error %1!").arg(masName),QMessageBox::Ok);exit(1);}
+  while (line[0]!='C') {egal=fscanf(mas,"%[^\n\r]\n\r",line);if (line[0]=='T') sscanf(line,"TITLE %s",CID);}
+  sscanf(line,"CELL %lf%lf%lf%lf%lf%lf",&mol.zelle.a,&mol.zelle.b,&mol.zelle.c,&mol.zelle.al,&mol.zelle.be,&mol.zelle.ga);
+  setup_zelle();
+  while ((!feof(mas))&&(strstr(line,"SYMM")==NULL)) {egal=fscanf(mas,"%[^\n\r]\n\r",line);}
+  while (strstr(line,"SYMM")!=NULL){  
+     if (!mol.decodeSymmCard(line)){qDebug()<<line<<"Sorry, but I can't understand this SymmCard";exit(-1);}
+    egal=fscanf(mas,"%[^\n\r]\n\r",line);
+    //z++;
+  }
+
+  rewind(mas);
+  char Centr,gitt;
+  while (strstr(line,"LATT")==NULL) {egal=fscanf(mas,"%[^\n\r]\n\r",line);}
+  sscanf(line,"LATT %c %c",&Centr,&gitt) ;
+  mol.applyLatticeCentro(gitt,toupper(Centr)=='C');
+
+  while (strstr(line,"SCAT")==NULL) {egal=fscanf(mas,"%[^\n\r]\n\r",line);}
+  while (strstr(line,"END")==NULL){  
+    egal=fscanf(mas,"%[^\n\r]\n\r",line);
+    atypen.append(strtok(line," "));
+//    printf("=====>>>%s %d [%s]\n",atypen.last().toStdString().c_str(),atypen.size(),line);
+  }
+  fclose(mas);
+  }
   FILE *adp;
   {//RES  
   char line[85]="",dv[20],*dvv;
@@ -2412,7 +2454,7 @@ void MyWindow::load_xdres(QString fileName) {
       asymmUnit[i].nax =(0>asymmUnit[i].nax)?-asymmUnit[i].nax :asymmUnit[i].nax ;
       strcpy(dv,asymmUnit[i].atomname);
       strtok(dv,"(1234567890+- ");
-      asymmUnit[i].OrdZahl=mol.Get_OZ(dv);
+      asymmUnit[i].OrdZahl=mol.Get_OZ(atypen.at(asymmUnit[i].atomtype-1));
       egal=fscanf(adp,"%lf%lf%lf%lf%lf%lf\n\r",&asymmUnit[i].uf.m11,&asymmUnit[i].uf.m22,&asymmUnit[i].uf.m33,
 		      &asymmUnit[i].uf.m21,//21 == 12
 		      &asymmUnit[i].uf.m31,//31 == 13
@@ -2441,34 +2483,6 @@ void MyWindow::load_xdres(QString fileName) {
   fclose(adp);
  
   smx=atmax+dummax;
-  }
-  mol.zelle.symmops.clear();
-  mol.zelle.trans.clear();
-  V3 nl(0,0,0);
-  mol.zelle.trans.append(nl);
-  mol.zelle.symmops.append(Matrix(1,0,0, 0,1,0, 0,0,1));
-  {//MAS//
-  FILE *mas;
-  char line[120];
-  strcpy(line,"");
-
-  if (NULL==(mas=fopen(masName.toLocal8Bit(),"r"))) {QMessageBox::critical(this,"Read Error!",QString("read error %1!").arg(masName),QMessageBox::Ok);exit(1);}
-  while (line[0]!='C') {egal=fscanf(mas,"%[^\n\r]\n\r",line);if (line[0]=='T') sscanf(line,"TITLE %s",CID);}
-  sscanf(line,"CELL %lf%lf%lf%lf%lf%lf",&mol.zelle.a,&mol.zelle.b,&mol.zelle.c,&mol.zelle.al,&mol.zelle.be,&mol.zelle.ga);
-  setup_zelle();
-  while ((!feof(mas))&&(strstr(line,"SYMM")==NULL)) {egal=fscanf(mas,"%[^\n\r]\n\r",line);}
-  while (strstr(line,"SYMM")!=NULL){  
-     if (!mol.decodeSymmCard(line)){qDebug()<<line<<"Sorry, but I can't understand this SymmCard";exit(-1);}
-    egal=fscanf(mas,"%[^\n\r]\n\r",line);
-    //z++;
-  }
-
-  rewind(mas);
-  char Centr,gitt;
-  while (strstr(line,"LATT")==NULL) {egal=fscanf(mas,"%[^\n\r]\n\r",line);}
-  sscanf(line,"LATT %c %c",&Centr,&gitt) ;
-  mol.applyLatticeCentro(gitt,toupper(Centr)=='C');
-  fclose(mas);
   }
   //char dirnam[1500];
   {//xd_fft.out
@@ -4393,6 +4407,7 @@ void MyWindow::updateStatusBar() {
    sLabel->setText(label);   
    if ((cubeGL->afilename=="xd.res")||(cubeGL->afilename=="xd.mas")||(cubeGL->afilename=="xd.inp"))
      cubeGL->afilename=QString(CID);
+   cubeGL->CID=CID;
 }
 // Zeit in der Statusleiste
 
