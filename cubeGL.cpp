@@ -1800,9 +1800,34 @@ QString CubeGL::inv2moproaxes(int index){
         if ((at1==-1)&&(knoepfe.at(index).at(k).an==ind1)) {at1=k;continue;}
 
       }
+
+/*    if ((at1<0)||(at2<0)){
+      while ((r<knoepfe.size())&&(as1!=knoepfe.at(r).at(0).Label)) r++;
+
+      as2=QString("MIST");
+      for (int k=1; k< knoepfe.at(r).size();k++){
+        if ((knoepfe.at(r).at(k).an==at2)&&(knoepfe.at(r).at(k).Label!=as1)&&(knoepfe.at(r).at(k).Label!=knoepfe.at(index).at(0).Label)) {
+          as2=knoepfe.at(r).at(k).Label;
+          //qDebug()<<"oo"<<as1<<as2<<r<<k<<knoepfe.at(r).at(0).Label;
+          break;
+        }
+      }
+      if (as2=="MIST"){
+        //qDebug()<<as2;
+        for (int k=1; k< knoepfe.at(r).size();k++){
+          if ((knoepfe.at(r).at(k).Label!=as1)) {
+            as2=knoepfe.at(r).at(k).Label;
+            //qDebug()<<"aa"<<as1<<as2;
+            break;
+          }
+        }
+      }
+    }else{*/
+
       as1=knoepfe.at(index).at(at1).Label;
       as2=knoepfe.at(index).at(at2).Label;
 
+//    }
       as1.remove(QRegExp("[)(]+"));
       as2.remove(QRegExp("[)(]+"));
 
@@ -2411,7 +2436,7 @@ void CubeGL::inv2XDaxes(int index){
     axcopy.remove("KS: ");
     axcopy.remove(QRegExp("\\(\\w+\\)"));
     axcopy.replace(" ",":");
- //   printf("{%s}\n",axcopy.toStdString().c_str());
+//    printf("%s::=={%s}{%s}\n",asymmUnit.at(index).atomname,axcopy.toStdString().c_str(),entries.at(j).Symmetry.toStdString().c_str());
 		
     axtok=axcopy.split(":",QString::SkipEmptyParts);
     //qDebug()<<axtok.size()<<axtok<<index<<invariomsComplete.at(index);
@@ -2426,6 +2451,43 @@ void CubeGL::inv2XDaxes(int index){
 	  if ((ind1==-1)&&(knoepfe.at(index).at(k).an==r)) {ind1=knoepfe.at(index).at(k).index;continue;}
 	  if ((knoepfe.at(index).at(k).an==r)&&(knoepfe.at(index).at(k).index<(asymmUnit.size()-dummax))) {ind2=knoepfe.at(index).at(k).index;continue;}
 	}
+      if ((ind2>(asymmUnit.size()-dummax))||(ind2<0)){//endstaendige O's
+	r=ind1;
+	for (int k=1; k< knoepfe.at(r).size();k++){
+	  if ((knoepfe.at(r).at(k).an==at2)&&(knoepfe.at(r).at(k).index!=ind1)&&(knoepfe.at(r).at(k).index!=index)) {
+	    ind2=knoepfe.at(r).at(k).index;
+          break;
+        }
+      }
+      if (ind2==-1){
+        for (int k=1; k< knoepfe.at(r).size();k++){
+          if ((knoepfe.at(r).at(k).index!=ind1)&&(knoepfe.at(r).at(k).index!=index)) {
+            ind2=knoepfe.at(r).at(k).index;
+            break;
+          }
+        }
+      }
+        MyAtom dummy;
+	V3 rechts,links,mitte,dc;
+	mol.frac2kart( asymmUnit.at(ind1).frac , rechts);
+	mol.frac2kart( asymmUnit.at(index).frac, mitte );
+	mol.frac2kart( asymmUnit.at(ind2).frac , links );
+	dc = mitte + Normalize(((rechts-mitte)%(links-mitte)));
+	mol.kart2frac(dc,dummy.pos);
+//	printf("heinzy%s %s %s %f %f %f\n", asymmUnit.at(ind1).atomname,asymmUnit.at(index).atomname,asymmUnit.at(ind2).atomname,asymmUnit.at(ind1).frac.x,asymmUnit.at(ind1).frac.y,asymmUnit.at(ind1).frac.z);
+	dummy.Label=QString("DUM%1").arg(exportDummys.size());
+	exportLabels.append(dummy.Label);
+	dummy.Symbol="DUM";
+	dummy.an=-1;
+	dummy.index=asymmUnit.size()-dummax+exportDummys.size();
+	exportDummys.append(dummy);
+	asymmUnit[index].nax=dummy.index;
+	asymmUnit[index].nay1=index;
+	asymmUnit[index].nay2=r;
+	asymmUnit[index].icor1= (axtok.at(0)=="X")? 1 : ((axtok.at(0)=="Y")? 2 : 3);
+	asymmUnit[index].icor2= (axtok.at(2)=="X")? 1 : ((axtok.at(2)=="Y")? 2 : 3);
+      return;
+    }// endstaendige O's 
         MyAtom dummy;
 	V3 rechts,links,mitte,dc;
 	mol.frac2kart( asymmUnit.at(ind1).frac , rechts);
@@ -2447,26 +2509,25 @@ void CubeGL::inv2XDaxes(int index){
 	asymmUnit[index].icor2= (axtok.at(2)=="X")? 1 : ((axtok.at(2)=="Y")? 2 : 3);
       return;
       }
+  //    if ((axcopy.contains("DUM"))) {printf("daran liegts\n");exit(0);}
       for (int k=1; k< knoepfe.at(index).size();k++){//direkte Nachbarn finden
 	if ((ind1==-1)&&(knoepfe.at(index).at(k).an==at1)) {ind1=knoepfe.at(index).at(k).index;continue;}
 	if ((knoepfe.at(index).at(k).an==at2)&&(knoepfe.at(index).at(k).index<(asymmUnit.size()-dummax))) {ind2=knoepfe.at(index).at(k).index;continue;}
       }
-//      printf("-->%d %d %d %d?\n",ind1,ind2,asymmUnit.size(),dummax);
+
       if ((ind2>(asymmUnit.size()-dummax))||(ind2<0)){
 	r=ind1;
+//	printf("%d %d %d\n",index,ind1,ind2);
 	for (int k=1; k< knoepfe.at(r).size();k++){
-	  if ((knoepfe.at(r).at(k).an==at2)&&(knoepfe.at(r).at(k).index!=ind1)&&(knoepfe.at(r).at(k).Label!=knoepfe.at(index).at(0).Label)) {
+	  if ((knoepfe.at(r).at(k).an==at2)&&(knoepfe.at(r).at(k).index!=ind1)&&(knoepfe.at(r).at(k).index!=index)) {
 	    ind2=knoepfe.at(r).at(k).index;
-          //qDebug()<<"oo"<<as1<<as2<<r<<k<<knoepfe.at(r).at(0).Label;
           break;
         }
       }
       if (ind2==-1){
-        //qDebug()<<as2;
         for (int k=1; k< knoepfe.at(r).size();k++){
-          if ((knoepfe.at(r).at(k).index!=ind1)) {
+          if ((knoepfe.at(r).at(k).index!=ind1)&&(knoepfe.at(r).at(k).index!=index)) {
             ind2=knoepfe.at(r).at(k).index;
-            //qDebug()<<"aa"<<as1<<as2;
             break;
           }
         }
@@ -2537,7 +2598,7 @@ void CubeGL::exportXDFiles(){
     QDir md;
     extern molekul mol;
     extern QList<INP> asymmUnit;
-    extern int dummax;
+//    extern int dummax;
 
     const int vale[109]= {1 ,//H
      2 ,//He
@@ -2670,7 +2731,10 @@ void CubeGL::exportXDFiles(){
       as.insert(strlen(PSE_Symbol[asymmUnit.at(i).OrdZahl]),"(");
       as.append(")");
       exportLabels.append(as);
+     // printf("%d %s %s\n",exportLabels.size(), exportLabels.last().toStdString().c_str(),as.toStdString().c_str());
+
     }
+  //  printf("last %d %s\n",exportLabels.size(), exportLabels.last().toStdString().c_str());
     md.mkdir("InvariomTransfer");
     QList<double> corr3;
     double issu=0.0,corr_3;
@@ -2705,15 +2769,23 @@ void CubeGL::exportXDFiles(){
     QMap<int,int>jtable;
     for (int i=0;i<asymmUnit.size();i++){
       if (asymmUnit.at(i).OrdZahl<0) continue;
+//      printf("piep!\n");
       inv2XDaxes(i);
+//      printf("quieck!\n");
       if (hama.contains(PSE_Symbol[asymmUnit.at(i).OrdZahl])) continue;
       hama+=QString("!%1!").arg(PSE_Symbol[asymmUnit.at(i).OrdZahl]);
       ntabl++;
-//      printf("++++%s %d %d\n",hama.toStdString().c_str(),ntabl,asymmUnit.at(i).OrdZahl);
+   //   printf("++++%s %d %d\n",hama.toStdString().c_str(),ntabl,asymmUnit.at(i).OrdZahl);
       itable[asymmUnit.at(i).OrdZahl]=ntabl;
     }
-//    printf(" Labes Size = %d Dummys Size = %d\n",exportLabels.size(),exportDummys.size()); 
+//    printf(" Labels Size = %d Dummys Size = %d\n",exportLabels.size(),exportDummys.size()); 
     QFile inp("InvariomTransfer/xd.inp");
+    QString datum=QDate::currentDate().toString("dd-MMM-yy--HH-mm-ss");
+    if (inp.exists()) {
+      datum=QFileInfo("InvariomTransfer/xd.inp").lastModified().toString("dd-MMM-yy--HH-mm-ss"); 
+      inp.rename(QString("InvariomTransfer/xd_%1.inp").arg(datum));
+      inp.setFileName("InvariomTransfer/xd.inp");
+    }
     CID.truncate(8);
     if (inp.open(QIODevice::WriteOnly)){
       inp.write("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
@@ -2724,7 +2796,7 @@ void CubeGL::exportXDFiles(){
       inp.write(QString("   %1  MODEL   4  2  1  0\n").arg(CID,-8).toLatin1());
       inp.write("LIMITS nat  2000 ntx  31 lmx  4 nzz  30 nto  0 nsc  20 ntb  20 nov   2500\n");
       inp.write(QString("USAGE  %1   2  4 %2   0   1   0   1 %3 %4     1   1   1 %5\n")
-		      .arg(asymmUnit.size()-dummax)
+		      .arg(exportLabels.size()-exportDummys.size())
 		      .arg(invariomsUnique.size())
 		      .arg(ntabl)
 		      .arg(mol.zelle.symuncent)
@@ -2739,11 +2811,12 @@ void CubeGL::exportXDFiles(){
 			 .toLatin1());
        }
 	for (int i=0; i<asymmUnit.size();i++){
-	  if (asymmUnit.at(i).OrdZahl!=-1){
+	  if (asymmUnit.at(i).OrdZahl>-1){
 	    int j = invariomsUnique.indexOf(invariomsComplete.at(i));
 //	    format(a8,1x,2i2,i5,2i4,i2,2i3,i2,i3,i4,3f10.6,f7.4)
 	    jtable[j]=itable.value(asymmUnit.at(i).OrdZahl);
-	 //   printf("j = %d itbl = %d j(itbl)= %d\n",j ,itable.value(asymmUnit.at(i).OrdZahl),jtable.value(j));
+	    //printf("j = %d itbl = %d j(itbl)= %d\n",j ,itable.value(asymmUnit.at(i).OrdZahl),jtable.value(j));
+//	    printf("%s i=%d nax %d nay1 %d nay2 %d siz%d\n",exportLabels.at(i).toStdString().c_str(), i, asymmUnit.at(i).nax, asymmUnit.at(i).nay1, asymmUnit.at(i).nay2,asymmUnit.size());
 	    inp.write(QString("%1 %2 %3 %4 %5 %6 %7 %8 %9 %10 %11 %12 %13 %14 %15 %16\n")
 			    .arg(exportLabels.at(i),-9)
 			    .arg(asymmUnit.at(i).icor1,1)
@@ -2762,7 +2835,7 @@ void CubeGL::exportXDFiles(){
 			    .arg(asymmUnit.at(i).frac.x,9,'f',6)
 			    .arg(asymmUnit.at(i).frac.y,9,'f',6)
 			    .arg(asymmUnit.at(i).frac.z,9,'f',6)
-			    .arg(1.000,6,'f',4)//pop
+			    .arg(asymmUnit.at(i).amul,6,'f',4)//pop
 			    .toLatin1());
 	    inp.write(QString(" %1 %2 %3 %4 %5 %6\n")
 			    .arg(asymmUnit.at(i).uf.m11,9,'f',6)
@@ -2776,38 +2849,38 @@ void CubeGL::exportXDFiles(){
 	    if (z>-1){
 	      double mv=0;
 	      if ((asymmUnit.at(i).molindex-1)<corr3.size()) 
-		mv= entries.at(z).m0+corr3.at(asymmUnit.at(i).molindex-1);
+		mv= asymmUnit.at(i).amul*entries.at(z).m0+corr3.at(asymmUnit.at(i).molindex-1);
 	      inp.write(QString(" %1 %2 %3 %4 %5 %6 %7 %8 %9 %10\n")
 			      .arg(mv,7,'f',4)
-			      .arg(entries.at(z).m1,7,'f',4)
-			      .arg(entries.at(z).d1p,7,'f',4)
-			      .arg(entries.at(z).d1m,7,'f',4)
-			      .arg(entries.at(z).d0,7,'f',4)
-			      .arg(entries.at(z).q0,7,'f',4)
-			      .arg(entries.at(z).q1p,7,'f',4)
-			      .arg(entries.at(z).q1m,7,'f',4)
-			      .arg(entries.at(z).q2p,7,'f',4)
-			      .arg(entries.at(z).q2m,7,'f',4)
+			      .arg(asymmUnit.at(i).amul*entries.at(z).m1,7,'f',4)
+			      .arg(asymmUnit.at(i).amul*entries.at(z).d1p,7,'f',4)
+			      .arg(asymmUnit.at(i).amul*entries.at(z).d1m,7,'f',4)
+			      .arg(asymmUnit.at(i).amul*entries.at(z).d0,7,'f',4)
+			      .arg(asymmUnit.at(i).amul*entries.at(z).q0,7,'f',4)
+			      .arg(asymmUnit.at(i).amul*entries.at(z).q1p,7,'f',4)
+			      .arg(asymmUnit.at(i).amul*entries.at(z).q1m,7,'f',4)
+			      .arg(asymmUnit.at(i).amul*entries.at(z).q2p,7,'f',4)
+			      .arg(asymmUnit.at(i).amul*entries.at(z).q2m,7,'f',4)
 			      .toLatin1());
 	      inp.write(QString(" %1 %2 %3 %4 %5 %6 %7 %8 %9 %10\n")
-			      .arg(entries.at(z).o0,7,'f',4)
-			      .arg(entries.at(z).o1p,7,'f',4)
-			      .arg(entries.at(z).o1m,7,'f',4)
-			      .arg(entries.at(z).o2p,7,'f',4)
-			      .arg(entries.at(z).o2m,7,'f',4)
-			      .arg(entries.at(z).o3p,7,'f',4)
-			      .arg(entries.at(z).o3m,7,'f',4)
-			      .arg(entries.at(z).h0,7,'f',4)
-			      .arg(entries.at(z).h1p,7,'f',4)
-			      .arg(entries.at(z).h1m,7,'f',4)
+			      .arg(asymmUnit.at(i).amul*entries.at(z).o0,7,'f',4)
+			      .arg(asymmUnit.at(i).amul*entries.at(z).o1p,7,'f',4)
+			      .arg(asymmUnit.at(i).amul*entries.at(z).o1m,7,'f',4)
+			      .arg(asymmUnit.at(i).amul*entries.at(z).o2p,7,'f',4)
+			      .arg(asymmUnit.at(i).amul*entries.at(z).o2m,7,'f',4)
+			      .arg(asymmUnit.at(i).amul*entries.at(z).o3p,7,'f',4)
+			      .arg(asymmUnit.at(i).amul*entries.at(z).o3m,7,'f',4)
+			      .arg(asymmUnit.at(i).amul*entries.at(z).h0,7,'f',4)
+			      .arg(asymmUnit.at(i).amul*entries.at(z).h1p,7,'f',4)
+			      .arg(asymmUnit.at(i).amul*entries.at(z).h1m,7,'f',4)
 			      .toLatin1());
 	      inp.write(QString(" %1 %2 %3 %4 %5 %6\n")
-			      .arg(entries.at(z).h2p,7,'f',4)
-			      .arg(entries.at(z).h2m,7,'f',4)
-			      .arg(entries.at(z).h3p,7,'f',4)
-			      .arg(entries.at(z).h3m,7,'f',4)
-			      .arg(entries.at(z).h4p,7,'f',4)
-			      .arg(entries.at(z).h4m,7,'f',4)
+			      .arg(asymmUnit.at(i).amul*entries.at(z).h2p,7,'f',4)
+			      .arg(asymmUnit.at(i).amul*entries.at(z).h2m,7,'f',4)
+			      .arg(asymmUnit.at(i).amul*entries.at(z).h3p,7,'f',4)
+			      .arg(asymmUnit.at(i).amul*entries.at(z).h3m,7,'f',4)
+			      .arg(asymmUnit.at(i).amul*entries.at(z).h4p,7,'f',4)
+			      .arg(asymmUnit.at(i).amul*entries.at(z).h4m,7,'f',4)
 			      .toLatin1());
 	    }
 	    else{
@@ -2840,6 +2913,11 @@ void CubeGL::exportXDFiles(){
 	inp.close();
     }
     QFile mas("InvariomTransfer/xd.mas");
+    if (mas.exists()) {
+      datum=QFileInfo("InvariomTransfer/xd.mas").lastModified().toString("dd-MMM-yy--HH-mm-ss"); 
+      mas.rename(QString("InvariomTransfer/xd_%1.mas").arg(datum));
+      mas.setFileName("InvariomTransfer/xd.mas");
+    }
     if (mas.open(QIODevice::WriteOnly)){
       mas.write("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
       mas.write(QString("! <<< X D MASTER FILE >>> $Revision: 5.34 $   exported by MoleCoolQt %1!\n")
@@ -2905,7 +2983,7 @@ void CubeGL::exportXDFiles(){
 //      printf("SCAT is written\n");
       const char axl[3][2]={"X","Y","Z"};
       for (int i=0; i< asymmUnit.size();i++){
-	if (asymmUnit.at(i).OrdZahl!=-1){
+	if (asymmUnit.at(i).OrdZahl>-1){
 	  int j = invariomsUnique.indexOf(invariomsComplete.at(i));
 	  int z = dataBase.indexOf(invariomsComplete.at(i));
 //	  printf("i=%d j=%d z=%d nax=%d nay1=%d nay2=%d icor1=%d icor2=%d OZ=%d\n",i,j,z,asymmUnit.at(i).nax,asymmUnit.at(i).nay1,asymmUnit.at(i).nay2,asymmUnit.at(i).icor1,asymmUnit.at(i).icor2,asymmUnit.at(i).OrdZahl);
@@ -3001,8 +3079,8 @@ void CubeGL::exportXDFiles(){
       mas.write("EXTCN   0000000\nOVTHP   0\nSCALE   1\nEND KEY\n!------------------------------------------------------------------------------\nEND XDLSM\n!end of block!");
 
       mas.close();
-    }
-    qDebug()<<"XD files succesfully written!";
+      qDebug()<<"XD files succesfully written!";
+    }else qDebug()<<"Can not write XD files!";
     emit reloadFile();
 }
 

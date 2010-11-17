@@ -323,6 +323,7 @@ struct INP {
   int      lmax;             // lmax 
   int      isym;             // isym 
   int      ichcon;           // chemical constraint
+  double   amul;
   V3   frac;          // Fraktionelle Koordinaten in X-Richtung 
   Matrix uf;           // Temperaturparameter 
   Matrix u;

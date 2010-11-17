@@ -2434,7 +2434,7 @@ void MyWindow::load_xdres(QString fileName) {
     egal=fscanf(adp,"%[^\n\r]\n\r",line ); 
     if ((line[0]>='A')&&(!((line[0]=='N')&&(line[1]=='a')&&(line[2]=='N'))))  {
       asymmUnit.append(newAtom);
-      sscanf(line,"%s %d%d%d%d%d%d%d%d%d%d%d%lf%lf%lf",
+      sscanf(line,"%s %d%d%d%d%d%d%d%d%d%d%d%lf%lf%lf%lf",
 	     asymmUnit[i].atomname,
 	     &asymmUnit[i].icor1,
 	     &asymmUnit[i].icor2,
@@ -2449,7 +2449,8 @@ void MyWindow::load_xdres(QString fileName) {
 	     &asymmUnit[i].ichcon,
 	     &asymmUnit[i].frac.x,
 	     &asymmUnit[i].frac.y,
-             &asymmUnit[i].frac.z);
+             &asymmUnit[i].frac.z,
+	     &asymmUnit[i].amul);
       asymmUnit[i].lflag =(0>asymmUnit[i].nax)?-1:1;
       asymmUnit[i].nax =(0>asymmUnit[i].nax)?-asymmUnit[i].nax :asymmUnit[i].nax ;
       strcpy(dv,asymmUnit[i].atomname);

@@ -172,7 +172,7 @@ void inames::ringlord(Connection cl){//
    *      |  c 
    *      B/
    */
-  //printf ("I am the lord\n");
+//  printf ("I am the lord\n");
   ringID.clear();
   planarity.clear();
   ringCode.clear();
@@ -242,7 +242,7 @@ void inames::ringlord(Connection cl){//
   QList<Tripel> secondCast;
   for (int i=0; i<all.size(); i++) if (planarity[all.at(i)]>0.85) {
     firstCast.append(all.at(i));
-   // cout <<  "$$ "<< all.at(i).Label.toStdString()<<endl;
+//    cout <<  "$$ "<< all.at(i).Label.toStdString()<<endl;
   }
   for (int i=0; i<tripels.size(); i++) 
   if ((firstCast.contains(tripels.at(i).t[0]))&&(firstCast.contains(tripels.at(i).t[1]))&&(firstCast.contains(tripels.at(i).t[2]))) {
@@ -398,33 +398,35 @@ void inames::ringlord(Connection cl){//
 
 
 QString inames::invName(MyAtom core,Connection &cl, CEnvironment &sel ,int rung){
-  if (rung==0) ringlord(cl);  
-  int erstesphaere=0;
+  if (rung==0) ringlord(cl); 
+  CEnvironment erstesphaere;
   //cout<<"invName is running."<<rung<<endl;
   int tmp1;
   if (core.an<0) return QString("Not a real atom!"); 
   sel.clear();
 //  qDebug()<<core.Label<<cl.size()<<sel.size();
   QString nom=core.Symbol;
+  int OSollDoppel=-1;
   //cout <<core.Label.toStdString()<<"&&  "<<cl.size()<<endl;
   QVector<QString> arms;//Bildliche vorstellung: atom mit mehreren armen (bindungen mit nachbarn und ggf deren nachbarn dran)
   QString hand,digit; //wollte den schlechten gag von oben nur noch weiter treiben. (hand ist spaeter teil von arms )
   QVector<QString> fingers; //schenkelklopfer... uebernachste nachbarn... an der hand dran ...
   sel.append(core);
+  erstesphaere.append(core);
   for (int i=0; i<cl.size();i++){//1.for
     //cout <<cl.at(i).ato1->Label.toStdString()<<"---"<<cl.at(i).ato2->Label.toStdString()<<" "<<i<<endl;
     if (core.pos==cl.at(i).ato2->pos){
       if (ringCode.contains(*cl.at(i).ato1)){
 //        printf("%s %ld %ld %ld\n",core.Label.toStdString().c_str(),ringID[*cl.at(i).ato1],ringID[core],(ringID[*cl.at(i).ato1]&ringID[core]));
 	hand=QString("%1%2%3").arg((ringID[*cl.at(i).ato1]&ringID[core])?"#":"@").arg(ringCode[*cl.at(i).ato1]).arg(cl.at(i).ato1->Symbol);
-	if ((!(ringID[*cl.at(i).ato1]&ringID[core]))&&(core.Symbol=="O")){ 
-	  cl[i].order=3;//O@ immer 2fach 
-	}
       }else{
 	hand=botostr(cl.at(i).order);
 	hand+=cl.at(i).ato1->Symbol;
       }
-      if (!sel.contains(*cl.at(i).ato1)) sel.append(*cl.at(i).ato1);
+      if (!sel.contains(*cl.at(i).ato1)) {
+	sel.append(*cl.at(i).ato1);
+	erstesphaere.append(*cl.at(i).ato1);
+      }
       //cout<<cl.at(i).ato1->Label.toStdString()<<cl.at(i).ato2->Label.toStdString();
       tmp1=1;
 
@@ -433,14 +435,14 @@ QString inames::invName(MyAtom core,Connection &cl, CEnvironment &sel ,int rung)
       if (ringCode.contains(*cl.at(i).ato2)){
 //        printf("%s !!%d %d %d\n",core.Label.toStdString().c_str(),ringID[*cl.at(i).ato1],ringID[core],(ringID[*cl.at(i).ato1]&ringID[core]));
 	hand=QString("%1%2%3").arg((ringID[*cl.at(i).ato2]&ringID[core])?"#":"@").arg(ringCode[*cl.at(i).ato2]).arg(cl.at(i).ato2->Symbol);
-	if ((!(ringID[*cl.at(i).ato1]&ringID[core]))&&(core.Symbol=="O")) {
-	  cl[i].order=3;//O@ immer 2fach 
-	}
       }else{
 	hand=botostr(cl.at(i).order);
 	hand+=cl.at(i).ato2->Symbol;
       }
-      if (!sel.contains(*cl.at(i).ato2)) sel.append(*cl.at(i).ato2);
+      if (!sel.contains(*cl.at(i).ato2)) {
+	sel.append(*cl.at(i).ato2);
+	erstesphaere.append(*cl.at(i).ato2);
+      }
       //cout<<cl.at(i).ato1->Label.toStdString()<<cl.at(i).ato2->Label.toStdString();
       tmp1=2;
     } 
@@ -448,9 +450,14 @@ QString inames::invName(MyAtom core,Connection &cl, CEnvironment &sel ,int rung)
       // cout<<" dead ";
       continue;
     }
+	if ((ringCode.contains(*cl.at(i).ato1))&&(core.pos==cl.at(i).ato2->pos)&&(!(ringID[*cl.at(i).ato1]&ringID[core]))&&(core.Symbol=="O")){ 
+	  OSollDoppel=i;//O@ immer 2fach 
+	}
+	if ((ringCode.contains(*cl.at(i).ato2))&&(core.pos==cl.at(i).ato1->pos)&&(!(ringID[*cl.at(i).ato2]&ringID[core]))&&(core.Symbol=="O")) {
+	  OSollDoppel=i;
+	}
     //cout<<"alive ";
 //    if (!ringID[*cl.at(i).ato1]&ringID[core]) cl[i].order=1;
-   erstesphaere=sel.size();
     //printf("%d %d\n",cl.at(i).ato1->an,cl.at(i).ato2->an);
     if ((hand.contains("#"))||(!hand.contains("@")&&(2==cl.at(i).order))||((!hand.contains("@"))&&(core.Symbol=="H"))||((core.an!=14)&&((cl.at(i).ato1->an==14)||(cl.at(i).ato2->an==14)))||((core.an!=15)&&((cl.at(i).ato1->an==15)||(cl.at(i).ato2->an==15)))){ //meso
       hand+="[";    
@@ -506,6 +513,9 @@ QString inames::invName(MyAtom core,Connection &cl, CEnvironment &sel ,int rung)
   //cout << endl;
   //cout<<"before arm sort"<<endl;
 
+  if ((erstesphaere.size()<3)&&(OSollDoppel>=0)) {
+    cl[OSollDoppel].order=3;//O@ immer 2fach 
+  }
   qSort(arms.begin(), arms.end(), icmp);
   //  cout<<"before arm sort"<<endl;
   for (int i=0;i<arms.size();i++)
@@ -539,7 +549,8 @@ QString inames::invName(MyAtom core,Connection &cl, CEnvironment &sel ,int rung)
   }
   if (ringCode.contains(core)) nom.prepend(QString("%1-").arg(ringCode[core]));
   //for (int i=0; i<sel.size();i++)
-  while (erstesphaere!=sel.size()) sel.removeLast();//fuer ko systeme brauche ich nur erste nachbarssphaere 
+  sel.clear();
+  sel=erstesphaere;
   //cout<<i<<sel.at(i).Label.toStdString()<<endl;
   if ((nom.startsWith("N@"))&&(planarity.value(core)>0.9)&&(arms.size()>=3)) nom.prepend("=-");
   return nom;
