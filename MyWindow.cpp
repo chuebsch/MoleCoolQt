@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-QString rev="$Rev: 218 $";
+QString rev="$Rev: 221 $";
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -1714,7 +1714,7 @@ void MyWindow::restoreXDfiles(){
 }
 
 void MyWindow::about(){  
-  QString date="$LastChangedDate: 2010-11-05 22:57:07 +0100 (Fri, 05 Nov 2010)$";
+  QString date="$LastChangedDate: 2010-11-17 17:33:44 +0100 (Wed, 17 Nov 2010)$";
   date.remove("LastChangedDate:");
   date.remove("$");
   QString bau_datum=QString(__TIME__ " " __DATE__);
@@ -2153,6 +2153,8 @@ void MyWindow::load_MoPro(QString fileName) {
                         newAtom.frac.x=tok.at(5).toDouble();
                         newAtom.frac.y=tok.at(6).toDouble();
                         newAtom.frac.z=tok.at(7).toDouble();
+			newAtom.amul=tok.at(8).toDouble();
+			newAtom.imul=tok.at(9).toInt();
                         newAtom.nay1=tok.at(1).toInt();
                         resNr.append(tok.at(4).toInt());
                         maxResi=qMax(tok.at(4).toInt(),maxResi);
@@ -2392,6 +2394,8 @@ void MyWindow::load_xdres(QString fileName) {
   if (NULL==(mas=fopen(masName.toLocal8Bit(),"r"))) {QMessageBox::critical(this,"Read Error!",QString("read error %1!").arg(masName),QMessageBox::Ok);exit(1);}
   while (line[0]!='C') {egal=fscanf(mas,"%[^\n\r]\n\r",line);if (line[0]=='T') sscanf(line,"TITLE %s",CID);}
   sscanf(line,"CELL %lf%lf%lf%lf%lf%lf",&mol.zelle.a,&mol.zelle.b,&mol.zelle.c,&mol.zelle.al,&mol.zelle.be,&mol.zelle.ga);
+  while (line[0]!='W') {egal=fscanf(mas,"%[^\n\r]\n\r",line);}
+  sscanf(line,"WAVE %lf",&mol.zelle.lambda);
   setup_zelle();
   while ((!feof(mas))&&(strstr(line,"SYMM")==NULL)) {egal=fscanf(mas,"%[^\n\r]\n\r",line);}
   while (strstr(line,"SYMM")!=NULL){  
@@ -2672,7 +2676,7 @@ void MyWindow::load_sheldrick(QString fileName){
     bfl=isacommand(command);
     if (bfl) {
       if (bfl==10) {
-        sscanf(ext,"%*f %lf%lf%lf%lf%lf%lf\n",&mol.zelle.a,&mol.zelle.b,&mol.zelle.c,&mol.zelle.al,&mol.zelle.be,&mol.zelle.ga);
+        sscanf(ext,"%lf %lf%lf%lf%lf%lf%lf\n",&mol.zelle.lambda,&mol.zelle.a,&mol.zelle.b,&mol.zelle.c,&mol.zelle.al,&mol.zelle.be,&mol.zelle.ga);
 	setup_zelle();
       }
       if (bfl==52) {
@@ -2724,12 +2728,13 @@ void MyWindow::load_sheldrick(QString fileName){
 	else line2[0]='\0';
 	sprintf(llin,"%s%s",line,line2);
 	if (line2[0]){
-	  sscanf(line,"%s %d %lf %lf %lf %*f %lf %lf",
+	  sscanf(line,"%s %d %lf %lf %lf %lf %lf %lf",
 		 newAtom.atomname,
 		 &newAtom.atomtype,
 		 &newAtom.frac.x,
 		 &newAtom.frac.y,
 		 &newAtom.frac.z,
+		 &newAtom.amul,
 		 &newAtom.uf.m11,
 		 &newAtom.uf.m22);
 	  sscanf(line2,"%lf %lf %lf %lf",
@@ -2737,6 +2742,7 @@ void MyWindow::load_sheldrick(QString fileName){
 		 &newAtom.uf.m32,//32 ==23
 		 &newAtom.uf.m31,//31 == 13 
 		 &newAtom.uf.m21);//21 == 12
+	  newAtom.amul=getNum(newAtom.amul,fvar,Uiso);
 	  newAtom.uf.m23=newAtom.uf.m32;
 	  newAtom.uf.m13=newAtom.uf.m31;
 	  newAtom.uf.m12=newAtom.uf.m21;
@@ -2756,6 +2762,7 @@ void MyWindow::load_sheldrick(QString fileName){
 	    mol.pmin=(mol.pmin>newAtom.peakHeight)?newAtom.peakHeight:mol.pmin;
 	    mol.pmax=(mol.pmax<newAtom.peakHeight)?newAtom.peakHeight:mol.pmax;
 	  }
+
 	  newAtom.uf.m11=getNum(newAtom.uf.m11,fvar,Uiso);
 	  newAtom.uf.m33=newAtom.uf.m22=
 	  newAtom.uf.m31=newAtom.uf.m32=newAtom.uf.m21=0.00;
