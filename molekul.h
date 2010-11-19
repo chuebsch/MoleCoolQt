@@ -324,7 +324,7 @@ struct INP {
   int      isym;             // isym 
   int      ichcon;           // chemical constraint
   double   amul;
-  double   imul;
+  int   imul;
   V3   frac;          // Fraktionelle Koordinaten in X-Richtung 
   Matrix uf;           // Temperaturparameter 
   Matrix u;
@@ -411,7 +411,7 @@ class molekul {
     pmin=2000;
     pmax=-2000;
     HAWink=135;
-    gd=1.7;
+    gd=2.3;
     bonds_made=0;
     knopf_made=0;
     nListe=0;

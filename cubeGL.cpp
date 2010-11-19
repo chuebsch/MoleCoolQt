@@ -1752,6 +1752,8 @@ QString CubeGL::inv2moproaxes(int index){
     QStringList axtok;
     QString as1,as2;
     extern molekul mol;
+    extern int dummax;
+    extern QList<INP> asymmUnit;
     int j=dataBase.indexOf(invariomsComplete.at(index));
     if (j==-1) {
         //default
@@ -1785,12 +1787,13 @@ QString CubeGL::inv2moproaxes(int index){
     axcopy.remove(QRegExp("\\(\\w+\\)"));
     axcopy.replace(" ",":");
 
+    printf("%s::=={%s}{%s}\n",asymmUnit.at(index).atomname,axcopy.toStdString().c_str(),entries.at(j).Symmetry.toStdString().c_str());
     axtok=axcopy.split(":",QString::SkipEmptyParts);
     //qDebug()<<axtok.size()<<axtok<<index<<invariomsComplete.at(index);
     if (axtok.size()>3){
     int at1=mol.Get_OZ(axtok.at(1));
     int at2=mol.Get_OZ(axtok.at(3));
-    int ind1=0,ind2=0,r=0;
+    int ind1=-1,ind2=-1,r=0;
 
     if ((axcopy.contains("DUM"))&&(entries.at(j).Symmetry=="mm2")) {
       ind1=qMax(at1,at2);//der index der nicht dummy ist
@@ -1798,7 +1801,6 @@ QString CubeGL::inv2moproaxes(int index){
       for (int k=1; k< knoepfe.at(index).size();k++){//direkte Nachbarn finden
         if ((at1!=-1)&&(knoepfe.at(index).at(k).an==ind1)) {at2=k;continue;}
         if ((at1==-1)&&(knoepfe.at(index).at(k).an==ind1)) {at1=k;continue;}
-
       }
 
 /*    if ((at1<0)||(at2<0)){
@@ -1897,55 +1899,38 @@ QString CubeGL::inv2moproaxes(int index){
 
 
     }
-    for (int k=1; k< knoepfe.at(index).size();k++){//direkte Nachbarn finden
-        if ((!ind1)&&(knoepfe.at(index).at(k).an==at1)) {ind1=k;continue;}
-        if (knoepfe.at(index).at(k).an==at2) {ind2=k;continue;}
+    
+      for (int k=1; k< knoepfe.at(index).size();k++){//direkte Nachbarn finden
+	if ((ind1==-1)&&(knoepfe.at(index).at(k).an==at1)) {ind1=knoepfe.at(index).at(k).index;continue;}
+	if ((knoepfe.at(index).at(k).an==at2)&&(knoepfe.at(index).at(k).index<(asymmUnit.size()-dummax))) {ind2=knoepfe.at(index).at(k).index;continue;}
+      }
 
-    }
-    as1=knoepfe.at(index).at(ind1).Label;
-    as2=knoepfe.at(index).at(ind2).Label;
-    //qDebug()<<index<<ind1<<ind2;
-//      qDebug()<<knoepfe.at(index).at(0).Label<<as1<<as2<<ind1<<ind2;
-    if ((ind1<1)||(ind2<1)){
-      while ((r<knoepfe.size())&&(as1!=knoepfe.at(r).at(0).Label)) r++;
-
-      as2=QString("MIST");
-      for (int k=1; k< knoepfe.at(r).size();k++){
-        if ((knoepfe.at(r).at(k).an==at2)&&(knoepfe.at(r).at(k).Label!=as1)&&(knoepfe.at(r).at(k).Label!=knoepfe.at(index).at(0).Label)) {
-          as2=knoepfe.at(r).at(k).Label;
-          //qDebug()<<"oo"<<as1<<as2<<r<<k<<knoepfe.at(r).at(0).Label;
+      if ((ind2>(asymmUnit.size()-dummax))||(ind2<0)){
+	r=ind1;
+//	printf("%d %d %d\n",index,ind1,ind2);
+	for (int k=1; k< knoepfe.at(r).size();k++){
+	  if ((knoepfe.at(r).at(k).an==at2)&&(knoepfe.at(r).at(k).index!=ind1)&&(knoepfe.at(r).at(k).index!=index)) {
+	    ind2=knoepfe.at(r).at(k).index;
           break;
         }
       }
-      if (as2=="MIST"){
-        //qDebug()<<as2;
+      if (ind2==-1){
         for (int k=1; k< knoepfe.at(r).size();k++){
-          if ((knoepfe.at(r).at(k).Label!=as1)) {
-            as2=knoepfe.at(r).at(k).Label;
-            //qDebug()<<"aa"<<as1<<as2;
+          if ((knoepfe.at(r).at(k).index!=ind1)&&(knoepfe.at(r).at(k).index!=index)) {
+            ind2=knoepfe.at(r).at(k).index;
             break;
           }
         }
       }
     }
-    //qDebug()<<as1<<as2;
-    if ((as1==as2)||(knoepfe.at(index).at(0).Label==as1)||(knoepfe.at(index).at(0).Label==as2)){
-        QStringList nb,nnb;
-        for (int r=0;r<knoepfe.at(index).size();r++) nb.append(knoepfe.at(index).at(r).Label);
-        for (int r=0;r<knoepfe.at(ind1).size();r++) nnb.append(knoepfe.at(ind1).at(r).Label);
-        //qDebug()<<knoepfe.at(index).at(0).Label<<as1<<as2<<nb<<"!!!!\n"<<nnb;
-        for (int k=1; k< knoepfe.at(ind1).size();k++){
-        if ((knoepfe.at(ind1).at(k).Label!=knoepfe.at(index).at(0).Label)&&(knoepfe.at(ind1).at(k).Label!=as1)) {
-            as2=knoepfe.at(index).at(k).Label;
-            //qDebug()<<as1<<as2;
-            break;
-        }
-        }
-    }
-    //qDebug()<<ind1<<ind2;
+    
+    
 
+    as1=asymmUnit.at(ind1).atomname;
+    as2=asymmUnit.at(ind2).atomname;
     as1.remove(QRegExp("[)(]+"));
     as2.remove(QRegExp("[)(]+"));
+
     if (as1.contains('@')){
       //wenn es '@' im Namen gibt dann resi und resi-Nr decodieren
       QString anam =as1.section('@',0,0);
@@ -2230,6 +2215,7 @@ void CubeGL::exportMoProFiles(){
 		  resityp="MOL";
 		}
                 anam.remove(QRegExp("[)(]+"));
+		asymmUnit[i].amul*=asymmUnit.at(i).imul;
                 moprofile.write(QString("ATOM %1  %2 %3 %4 %5%6%7  %8 %9 %10\n")
                                 .arg(i+1,5)//1
                                 .arg(anam,-4)//2
@@ -2238,9 +2224,9 @@ void CubeGL::exportMoProFiles(){
 				.arg(asymmUnit.at(i).frac.x,10,'f',6)//5
 				.arg(asymmUnit.at(i).frac.y,10,'f',6)//6
 				.arg(asymmUnit.at(i).frac.z,10,'f',6)//7
-				.arg("1.0000")//8 pop //achtung hier sollten wir populationen haben 
+				.arg(asymmUnit.at(i).amul,6,'f',4)//8 pop //achtung hier sollten wir populationen haben 
 				                      //werden aber noch nicht eingelesen
-				.arg(1)//9 occ
+				.arg(asymmUnit.at(i).imul)//9 occ
 				.arg(PSE_Symbol[asymmUnit.at(i).OrdZahl])//10 elem
                                 .toLatin1());
 

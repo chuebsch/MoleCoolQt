@@ -2162,6 +2162,7 @@ QString molekul::symmcode2human(QStringList brauchSymm){
   erg.replace("3/1","3");
   erg.replace("4/1","4");
   erg.replace("5/1","5");
+  erg.replace(",,",",");
   return erg;
 }
 

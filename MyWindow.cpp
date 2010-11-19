@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-QString rev="$Rev: 222 $";
+QString rev="$Rev: 223 $";
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -1714,7 +1714,7 @@ void MyWindow::restoreXDfiles(){
 }
 
 void MyWindow::about(){  
-  QString date="$LastChangedDate: 2010-11-17 18:33:36 +0100 (Mi, 17 Nov 2010)$";
+  QString date="$LastChangedDate: 2010-11-17 20:43:33 +0100 (Wed, 17 Nov 2010)$";
   date.remove("LastChangedDate:");
   date.remove("$");
   QString bau_datum=QString(__TIME__ " " __DATE__);
@@ -4645,6 +4645,7 @@ void MyWindow::SDM(QStringList &brauchSymm,int packart){
   sdmItem.sn=0;
 
   for (int i=0; i<asymmUnit.size(); i++){
+    asymmUnit[i].imul=0;
     for (int j=0; j<=i; j++ ){
       double min=100000;
       for (int n=0;n<mol.zelle.symmops.size();  n++){
@@ -4661,6 +4662,10 @@ void MyWindow::SDM(QStringList &brauchSymm,int packart){
 	  sdmItem.a2=j;
 	  sdmItem.sn=n;
 	}
+	else if ((asymmUnit.at(i).OrdZahl>=0)&&(dk<=0.1)){
+	  //printf("%s===%s %d %3.0f %3.0f %3.0f\n",asymmUnit.at(i).atomname,asymmUnit.at(j).atomname,n,floorD.x,floorD.y,floorD.z);
+	  asymmUnit[i].imul++;
+	}
       }
       if ((packart==1)&&(asymmUnit[sdmItem.a1].OrdZahl>-1)&&(asymmUnit[sdmItem.a2].OrdZahl>-1)
       &&(asymmUnit[sdmItem.a1].part>-1)&&(asymmUnit[sdmItem.a2].part>-1)) dddd=mol.gd;
@@ -4673,7 +4678,9 @@ void MyWindow::SDM(QStringList &brauchSymm,int packart){
       }else sdmItem.covalent=false;
       sdm.append(sdmItem);
     } 
+//    printf("%s Site symmetry multiplicity %d\n",asymmUnit.at(i).atomname,asymmUnit.at(i).imul);
   }
+
  if (packart!=1){ 
     int someleft=0,nextmol=0,maxmol=1;
     for (int i=0; i<asymmUnit.size();i++) asymmUnit[i].molindex=-1;
