@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-QString rev="$Rev: 223 $";
+QString rev="$Rev: 224 $";
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -1714,7 +1714,7 @@ void MyWindow::restoreXDfiles(){
 }
 
 void MyWindow::about(){  
-  QString date="$LastChangedDate: 2010-11-17 20:43:33 +0100 (Wed, 17 Nov 2010)$";
+  QString date="$LastChangedDate: 2010-11-19 17:53:09 +0100 (Fri, 19 Nov 2010)$";
   date.remove("LastChangedDate:");
   date.remove("$");
   QString bau_datum=QString(__TIME__ " " __DATE__);
@@ -2765,7 +2765,9 @@ void MyWindow::load_sheldrick(QString fileName){
 
 	  newAtom.uf.m11=getNum(newAtom.uf.m11,fvar,Uiso);
 	  newAtom.uf.m33=newAtom.uf.m22=
-	  newAtom.uf.m31=newAtom.uf.m32=newAtom.uf.m21=0.00;
+	  newAtom.uf.m31=newAtom.uf.m13=
+	  newAtom.uf.m32=newAtom.uf.m23=
+	  newAtom.uf.m12=newAtom.uf.m21=0.00;
 	}
 	if (resNr>-1) {
 	  seReAct->setEnabled(true);

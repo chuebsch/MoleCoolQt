@@ -2002,9 +2002,9 @@ double CubeGL::getHDist(int index){
 
 void CubeGL::exportMoProFiles(){
     QDir md;
+    exportLabels.clear();
     extern molekul mol;
     extern QList<INP> asymmUnit;
-    extern int dummax;
     const int vale[109]= {1 ,//H
      2 ,//He
      1 ,//Li
@@ -2131,6 +2131,7 @@ void CubeGL::exportMoProFiles(){
 //	printf("%-10s %d %d mi= %d maxmol= %d\n",asymmUnit.at(i).atomname,asymmUnit.at(i).molindex,asymmUnit.at(i).OrdZahl,mi,maxmol); 
         if (asymmUnit.at(i).molindex!=(mi+1)) continue;
         if (asymmUnit.at(i).OrdZahl<0) continue;
+	exportLabels.append(asymmUnit.at(i).atomname);
         int z=dataBase.indexOf(invariomsComplete.at(i));
         if (z>-1) issu+=entries.at(z).m0;
         else issu+=vale[asymmUnit.at(i).OrdZahl];
@@ -2199,9 +2200,9 @@ void CubeGL::exportMoProFiles(){
                             .toLatin1());
 
         }
-        moprofile.write(QString("\nATOMS  %1\n").arg(asymmUnit.size()-dummax).toLatin1());
+        moprofile.write(QString("\nATOMS  %1\n").arg(exportLabels.size()).toLatin1());
         for (int i=0; i<asymmUnit.size();i++){
-            if (asymmUnit.at(i).OrdZahl!=-1){
+            if (asymmUnit.at(i).OrdZahl>-1){
                 QString anam,resinr,resityp;
                 if (QString(asymmUnit.at(i).atomname).contains('@')){
 		  //wenn es '@' im Namen gibt dann resi und resi-Nr decodieren
@@ -2930,7 +2931,7 @@ void CubeGL::exportXDFiles(){
       }
       mas.write("BANK CR\n");
       mas.write("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
-//      printf("xd.mas header is written now writing xdlsm module\n");
+     printf("xd.mas header is written now writing xdlsm module\n");
       mas.write("MODULE *XDLSM\nSELECT *model 4 2 1 0 based_on F^2 test verbose 1\nSELECT  cycle -10 dampk 1. cmin 0.6 cmax 1. eigcut 1.d-09 convcrit 1.d-05\nSAVE  deriv *lsqmat *cormat\nSOLVE  *inv *diag *cond\n!-------------------------------------------------------------------------------\nSCAT CORE SPHV DEFV   1S  2S  3S  4S  2P  3P  4P  3D  4D  4F  5S  5P  6S  6P  5D  7S  6D  5F  DELF'   DELF''  NSCTL\n");
 //      SCAT core sphv defv 1s 2s 3s 4s 2p 3p 4p 3d 4d 4f 5s 5p 6s 6p 5d 7s 6d 5f Df' Df" nsctl
 //      C    CHFW CHFW CSZD    2  -2   0   0  -2   0   0   0   0   0   0   0   0   0   0   0   0   0  0.0033  0.0016  0.665
@@ -2966,13 +2967,13 @@ void CubeGL::exportXDFiles(){
 //	printf("%s %d %f\n", XDBANK[itable.key(i)].pse, XDBANK[itable.key(i)].krad, XDBANK[itable.key(i)].nsctl); //
       }
       mas.write("END SCAT\n!-------------------------------------------------------------------------------\nATOM     ATOM0    AX1 ATOM1    ATOM2   AX2 R/L TP  TBL KAP LMX SITESYM  CHEMCON\n");
-//      printf("SCAT is written\n");
+      printf("SCAT is written\n");
       const char axl[3][2]={"X","Y","Z"};
       for (int i=0; i< asymmUnit.size();i++){
 	if (asymmUnit.at(i).OrdZahl>-1){
 	  int j = invariomsUnique.indexOf(invariomsComplete.at(i));
 	  int z = dataBase.indexOf(invariomsComplete.at(i));
-//	  printf("i=%d j=%d z=%d nax=%d nay1=%d nay2=%d icor1=%d icor2=%d OZ=%d\n",i,j,z,asymmUnit.at(i).nax,asymmUnit.at(i).nay1,asymmUnit.at(i).nay2,asymmUnit.at(i).icor1,asymmUnit.at(i).icor2,asymmUnit.at(i).OrdZahl);
+	  printf("i=%d j=%d z=%d nax=%d nay1=%d nay2=%d icor1=%d icor2=%d OZ=%d\n",i,j,z,asymmUnit.at(i).nax,asymmUnit.at(i).nay1,asymmUnit.at(i).nay2,asymmUnit.at(i).icor1,asymmUnit.at(i).icor2,asymmUnit.at(i).OrdZahl);
 	//N(T)     C(A)      Z  N(T)     H(3)     Y   R   2   1   1   4    NO
 	//ATOM     ATOM0    AX1 ATOM1    ATOM2   AX2 R/L TP  TBL KAP LMX SITESYM  CHEMCON
 	  mas.write(QString("%1 %2 %3  %4 %5 %6   %7  %8 %9 %10 %11  _%12 %13\n")
@@ -2992,6 +2993,7 @@ void CubeGL::exportXDFiles(){
 			  .arg(entries.at(z).Symmetry,-4)
 			  .arg(" ")
 			  .toLatin1());
+	  printf("peep\n!");
 
 	}
       }
