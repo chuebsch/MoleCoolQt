@@ -1787,7 +1787,7 @@ QString CubeGL::inv2moproaxes(int index){
     axcopy.remove(QRegExp("\\(\\w+\\)"));
     axcopy.replace(" ",":");
 
-    printf("%s::=={%s}{%s}\n",asymmUnit.at(index).atomname,axcopy.toStdString().c_str(),entries.at(j).Symmetry.toStdString().c_str());
+    //printf("%s::=={%s}{%s}\n",asymmUnit.at(index).atomname,axcopy.toStdString().c_str(),entries.at(j).Symmetry.toStdString().c_str());
     axtok=axcopy.split(":",QString::SkipEmptyParts);
     //qDebug()<<axtok.size()<<axtok<<index<<invariomsComplete.at(index);
     if (axtok.size()>3){
@@ -1853,7 +1853,7 @@ QString CubeGL::inv2moproaxes(int index){
             .arg(as2);
       return erg;
     }
-    if ((axcopy.contains("DUM"))&&(entries.at(j).Symmetry=="3m")&&(knoepfe.at(index).size()>3)) {
+    if ((axcopy.contains("DUM"))&&((entries.at(j).Symmetry=="3")||(entries.at(j).Symmetry=="3m"))&&(knoepfe.at(index).size()>3)) {
       ind1=qMax(at1,at2);//der index der nicht dummy ist
       at1=at2=-1;
       int at3=-1;
@@ -1889,7 +1889,7 @@ QString CubeGL::inv2moproaxes(int index){
 	as3=QString("%1_%2").arg(resinr).arg(anam);
       }
       erg = QString("%1%2%3  %4 %5 %6")
-            .arg("b")
+            .arg("3")
             .arg(axtok.at(0))
             .arg(axtok.at(2))
             .arg(as1)
@@ -2410,9 +2410,8 @@ void CubeGL::exportMoProFiles(){
     emit reloadFile();
 }
 
-void CubeGL::inv2XDaxes(int index){
+void CubeGL::inv2XDaxes(int index, int maxat){
     QStringList axtok;
-    extern int dummax;
     extern molekul mol;
     extern QList<INP> asymmUnit;
 //    printf("%d %s %d\n",index,asymmUnit.at(index).atomname,asymmUnit.at(index).OrdZahl);
@@ -2430,15 +2429,15 @@ void CubeGL::inv2XDaxes(int index){
     if (axtok.size()>3){
       int at1=mol.Get_OZ(axtok.at(1));
       int at2=mol.Get_OZ(axtok.at(3));
-      int ind1=-1,ind2=-1,r=0;//noch viel arbeit ......
+      int ind1=-1,ind2=-1,ind3=-1,r=0;//noch viel arbeit ......
       if ((axcopy.contains("DUM"))&&(entries.at(j).Symmetry=="mm2")) {
 //	printf("_-^_^-_\n");
 	r=qMax(at1,at2);//non dummy atomic number
 	for (int k=1; k< knoepfe.at(index).size();k++){//direkte Nachbarn finden
 	  if ((ind1==-1)&&(knoepfe.at(index).at(k).an==r)) {ind1=knoepfe.at(index).at(k).index;continue;}
-	  if ((knoepfe.at(index).at(k).an==r)&&(knoepfe.at(index).at(k).index<(asymmUnit.size()-dummax))) {ind2=knoepfe.at(index).at(k).index;continue;}
+	  if ((knoepfe.at(index).at(k).an==r)&&(knoepfe.at(index).at(k).index<(maxat))) {ind2=knoepfe.at(index).at(k).index;continue;}
 	}
-      if ((ind2>(asymmUnit.size()-dummax))||(ind2<0)){//endstaendige O's
+      if ((ind2>(maxat))||(ind2<0)){//endstaendige O's
 	r=ind1;
 	for (int k=1; k< knoepfe.at(r).size();k++){
 	  if ((knoepfe.at(r).at(k).an==at2)&&(knoepfe.at(r).at(k).index!=ind1)&&(knoepfe.at(r).at(k).index!=index)) {
@@ -2466,7 +2465,7 @@ void CubeGL::inv2XDaxes(int index){
 	exportLabels.append(dummy.Label);
 	dummy.Symbol="DUM";
 	dummy.an=-1;
-	dummy.index=asymmUnit.size()-dummax+exportDummys.size();
+	dummy.index=maxat+exportDummys.size();
 	exportDummys.append(dummy);
 	asymmUnit[index].nax=dummy.index;
 	asymmUnit[index].nay1=index;
@@ -2487,7 +2486,7 @@ void CubeGL::inv2XDaxes(int index){
 	exportLabels.append(dummy.Label);
 	dummy.Symbol="DUM";
 	dummy.an=-1;
-	dummy.index=asymmUnit.size()-dummax+exportDummys.size();
+	dummy.index=maxat+exportDummys.size();
 	exportDummys.append(dummy);
 	asymmUnit[index].nax=dummy.index;
 	asymmUnit[index].nay1=index;
@@ -2496,13 +2495,42 @@ void CubeGL::inv2XDaxes(int index){
 	asymmUnit[index].icor2= (axtok.at(2)=="X")? 1 : ((axtok.at(2)=="Y")? 2 : 3);
       return;
       }
-  //    if ((axcopy.contains("DUM"))) {printf("daran liegts\n");exit(0);}
+      if ((axcopy.contains("DUM"))&&((entries.at(j).Symmetry=="3")||(entries.at(j).Symmetry=="3m"))){
+	r=qMax(at1,at2);//non dummy atomic number
+
+	for (int k=1; k< knoepfe.at(index).size();k++){//direkte Nachbarn finden
+	  if (ind1==-1) {ind1=knoepfe.at(index).at(k).index;continue;}
+	  if (ind2==-1) {ind2=knoepfe.at(index).at(k).index;continue;}
+	  if (ind3==-1) {ind3=knoepfe.at(index).at(k).index;continue;}
+	}
+	V3 mitte, arm1, arm2, arm3, dc;
+        MyAtom dummy;
+	mol.frac2kart(asymmUnit.at(ind1).frac,arm1);
+	mol.frac2kart(asymmUnit.at(index).frac,mitte);
+	mol.frac2kart(asymmUnit.at(ind2).frac,arm2);
+	mol.frac2kart(asymmUnit.at(ind3).frac,arm3);
+	dc=mitte+Normalize(((arm1-mitte)+(arm2-mitte)+(arm3-mitte)));
+	mol.kart2frac(dc,dummy.pos);
+	dummy.Label=QString("DUM%1").arg(exportDummys.size());
+	exportLabels.append(dummy.Label);
+	dummy.Symbol="DUM";
+	dummy.an=-1;
+	dummy.index=maxat+exportDummys.size();
+	exportDummys.append(dummy);
+	asymmUnit[index].nax=dummy.index;
+	asymmUnit[index].nay1=index;
+	asymmUnit[index].nay2=ind2;
+	asymmUnit[index].icor1= (axtok.at(0)=="X")? 1 : ((axtok.at(0)=="Y")? 2 : 3);
+	asymmUnit[index].icor2= (axtok.at(2)=="X")? 1 : ((axtok.at(2)=="Y")? 2 : 3);
+      return;
+      }
+      if ((axcopy.contains("DUM"))) {printf("daran liegts: %s %s %s \n",axcopy.toStdString().c_str(),invariomsComplete.at(index).toStdString().c_str(),entries.at(j).Symmetry.toStdString().c_str());exit(0);}
       for (int k=1; k< knoepfe.at(index).size();k++){//direkte Nachbarn finden
 	if ((ind1==-1)&&(knoepfe.at(index).at(k).an==at1)) {ind1=knoepfe.at(index).at(k).index;continue;}
-	if ((knoepfe.at(index).at(k).an==at2)&&(knoepfe.at(index).at(k).index<(asymmUnit.size()-dummax))) {ind2=knoepfe.at(index).at(k).index;continue;}
+	if ((knoepfe.at(index).at(k).an==at2)&&(knoepfe.at(index).at(k).index<(maxat))) {ind2=knoepfe.at(index).at(k).index;continue;}
       }
 
-      if ((ind2>(asymmUnit.size()-dummax))||(ind2<0)){
+      if ((ind2>(maxat))||(ind2<0)){
 	r=ind1;
 //	printf("%d %d %d\n",index,ind1,ind2);
 	for (int k=1; k< knoepfe.at(r).size();k++){
@@ -2757,7 +2785,7 @@ void CubeGL::exportXDFiles(){
     for (int i=0;i<asymmUnit.size();i++){
       if (asymmUnit.at(i).OrdZahl<0) continue;
 //      printf("piep!\n");
-      inv2XDaxes(i);
+      inv2XDaxes(i,exportLabels.size()-exportDummys.size());
 //      printf("quieck!\n");
       if (hama.contains(PSE_Symbol[asymmUnit.at(i).OrdZahl])) continue;
       hama+=QString("!%1!").arg(PSE_Symbol[asymmUnit.at(i).OrdZahl]);
@@ -2973,7 +3001,17 @@ void CubeGL::exportXDFiles(){
 	if (asymmUnit.at(i).OrdZahl>-1){
 	  int j = invariomsUnique.indexOf(invariomsComplete.at(i));
 	  int z = dataBase.indexOf(invariomsComplete.at(i));
-	  printf("i=%d j=%d z=%d nax=%d nay1=%d nay2=%d icor1=%d icor2=%d OZ=%d\n",i,j,z,asymmUnit.at(i).nax,asymmUnit.at(i).nay1,asymmUnit.at(i).nay2,asymmUnit.at(i).icor1,asymmUnit.at(i).icor2,asymmUnit.at(i).OrdZahl);
+	  printf("i=%d j=%d z=%d nax=%d nay1=%d nay2=%d icor1=%d icor2=%d OZ=%d %s %s %d\n",i,j,z,
+			  asymmUnit.at(i).nax,
+			  asymmUnit.at(i).nay1,
+			  asymmUnit.at(i).nay2,
+			  asymmUnit.at(i).icor1,
+			  asymmUnit.at(i).icor2,
+			  asymmUnit.at(i).OrdZahl,
+			  axl[asymmUnit.at(i).icor1-1],
+			  axl[asymmUnit.at(i).icor2-1],
+			  exportLabels.size()
+			  );
 	//N(T)     C(A)      Z  N(T)     H(3)     Y   R   2   1   1   4    NO
 	//ATOM     ATOM0    AX1 ATOM1    ATOM2   AX2 R/L TP  TBL KAP LMX SITESYM  CHEMCON
 	  mas.write(QString("%1 %2 %3  %4 %5 %6   %7  %8 %9 %10 %11  _%12 %13\n")

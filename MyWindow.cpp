@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-QString rev="$Rev: 225 $";
+QString rev="$Rev: 226 $";
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -1714,7 +1714,7 @@ void MyWindow::restoreXDfiles(){
 }
 
 void MyWindow::about(){  
-  QString date="$LastChangedDate: 2010-11-24 15:48:07 +0100 (Mi, 24 Nov 2010)$";
+  QString date="$LastChangedDate: 2010-11-27 06:04:11 +0100 (Sat, 27 Nov 2010)$";
   date.remove("LastChangedDate:");
   date.remove("$");
   QString bau_datum=QString(__TIME__ " " __DATE__);
@@ -2236,6 +2236,7 @@ void MyWindow::load_MoPro(QString fileName) {
        else if ((axstr.at(i)=="3Zb")|| (axstr.at(i)=="-3Zb")) {asymmUnit[i].icor1=3; asymmUnit[i].icor2=1;gendum=4;}
        else if ((axstr.at(i)=="3bZ")|| (axstr.at(i)=="-3bZ")) {asymmUnit[i].icor1=2; asymmUnit[i].icor2=1;gendum=5;}
        else if ((axstr.at(i)=="3ZX")|| (axstr.at(i)=="-3ZX")) {asymmUnit[i].icor1=3; asymmUnit[i].icor2=1;gendum=3;}
+       else if ((axstr.at(i)=="3ZY")|| (axstr.at(i)=="-3ZY")) {asymmUnit[i].icor1=3; asymmUnit[i].icor2=2;gendum=3;}
        if (gendum>1){//wir haben eine dritte richtung
             if (ato3.at(i).contains(QRegExp("[A-Za-z]+"))){
              if (ato3.at(i).contains("_")){
@@ -2719,6 +2720,7 @@ void MyWindow::load_sheldrick(QString fileName){
       }
     }
     else {
+      newAtom.lflag=1;
       if (0<sscanf(line,"%s %d",dvv,&sorte)){
 	if (strchr(line,'=')) {
 	  line[79]=' ' ;

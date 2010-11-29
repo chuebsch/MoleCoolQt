@@ -51,7 +51,7 @@ public:
   void moveY(double speed);
   void resetENV();
   QString inv2moproaxes(int index);
-  void inv2XDaxes(int index);
+  void inv2XDaxes(int index,int maxat);
   QString symm2Key(QString sym);
   QList<CEnvironment> knoepfe;
   int maxmol;
