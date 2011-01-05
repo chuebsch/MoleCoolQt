@@ -825,7 +825,7 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
   dialogMenu->addAction(unfilterAct);
   dialogMenu->addSeparator();
   dialogMenu->addAction("Save current toggel states",cubeGL,SLOT(saveMISettings()));
-  dialogMenu->addAction("Load toggel states",cubeGL,SLOT(loadMISettings()));
+  dialogMenu->addAction("Load toggle states",cubeGL,SLOT(loadMISettings()));
   invariomMenu->addAction(invExpAct);
   invariomMenu->addAction(invEdiAct);
   invariomMenu->addAction(invLoadAct);
@@ -1109,6 +1109,15 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
    }
    settings->endArray();
   cubeGL->invertMouseZoom->setChecked( settings->value("InvertMouseZoom").toBool());
+  bool b;
+  if (settings->contains("BackgroundGradient")){
+    back_Grad->setChecked(b=settings->value("BackgroundGradient").toBool());
+    cubeGL->togglBGG(b);
+  }
+  if (settings->contains("UnitCell")){
+    togUnit->setChecked(b=settings->value("UnitCell").toBool());
+    cubeGL->setUnitCell(b);
+  }
   settings->endGroup();
   move( pos);
   if( size.isNull() )
@@ -1142,7 +1151,7 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
   connect(cubeGL,SIGNAL(bigmessage(const QString&)),this,SLOT(infoKanalNews(const QString&)));
   rev.remove("$");
   rev.remove("Rev: ");
-  setWindowTitle(QString("MoleCoolQt-Revison %1 ").arg(rev));
+  setWindowTitle(QString("MoleCoolQt-Revision %1 ").arg(rev));
   int argc=QCoreApplication::arguments().size();
   if (argc>1){
     cubeGL->updateGL();
@@ -4072,6 +4081,12 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
     if (mainWin)
       mainWin->updateRecentFileActions();
   }
+  
+  if (settings->contains("UnitCell")){
+    bool b;
+    togUnit->setChecked(b=settings->value("UnitCell").toBool());
+    cubeGL->setUnitCell(b);
+  }
   settings->endGroup();
   filtered=0;
   //  std::cout<<"finenn"<<std::endl;
@@ -4501,6 +4516,13 @@ void MyWindow::closeEvent(QCloseEvent *event)  {
    }
    settings->endArray();
    settings->setValue("InvertMouseZoom",(cubeGL->invertMouseZoom->checkState()==Qt::Checked));
+   settings->setValue("BackgroundGradient",(back_Grad->isChecked()));//TOGGLE STATES
+   settings->setValue("UnitCell",(togUnit->isChecked()));//TOGGLE STATES
+//   settings->setValue()//TOGGLE STATES
+//   settings->setValue()//TOGGLE STATES
+//   settings->setValue()//TOGGLE STATES
+//   settings->setValue()//TOGGLE STATES
+//   settings->setValue()//TOGGLE STATES
    settings->endGroup();
  //  printf("Adele\n");
    if ((cubeGL->moliso)&&(!cubeGL->moliso->faceFile.isEmpty())) {

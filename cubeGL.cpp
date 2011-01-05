@@ -137,6 +137,7 @@ void CubeGL::loadMISettings(){
   QString fn=QFileDialog::getOpenFileName(this, tr("Open MoleCoolQt MolIso Settings file "), "MoleCoolQt.moliso.ini",
 		                         "MoleCoolQt.moliso.ini (*.ini);;");
 
+  if (fn.isEmpty()) return;
   QFile miconf(fn);
   miconf.open(QIODevice::ReadOnly);
   QString all=miconf.readAll();
@@ -1964,9 +1965,15 @@ QString CubeGL::translateSymm2MP(QString idbs){
   QString mps="";
   idbs= idbs.trimmed();
   if (idbs=="m") mps="mz";
+  if (idbs=="mx") mps="mx";
+  if (idbs=="my") mps="my";
+  if (idbs=="mz") mps="mz";
   if (idbs=="1") mps="";
   if (idbs=="-1") mps="i";
-  if (idbs=="2") mps="2y";
+  if (idbs=="2") mps="2z";
+  if (idbs=="2x") mps="2x";
+  if (idbs=="2y") mps="2y";
+  if (idbs=="2z") mps="2z";
   if (idbs=="222") mps="222";
   if (idbs=="mm2") mps="mxmy";
   if (idbs=="mmm") mps="mmm";
@@ -2587,6 +2594,7 @@ QString CubeGL::symm2Key(QString sym){
   if (sym=="2x") return "10 100 10110 1100110 101100110";//2x
   if (sym=="2y") return "10 010 11010 1010101 110101010";//2y
   if (sym=="2z") return "10 001 10011 1001100 100110011";//2z
+  if (sym=="2") return  "10 001 10011 1001100 100110011";
   if (sym=="2mx") return "10 000 10110 1000000 101100110";
   if (sym=="2my") return "10 000 11010 1000000 110101010";
   if (sym=="2mz") return "10 000 10011 0000000 100110011";

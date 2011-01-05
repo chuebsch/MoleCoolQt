@@ -1030,8 +1030,8 @@ void xdEditDlg::accept () {
   for (int i=0;i<masli.size();i++){
     if (masli.at(i).contains("ATOM0")) flag=1;
     if (masli.at(i).contains("--U2--")) flag=2;
-    if((flag==1)&&(masli.at(i).startsWith(chm->at(0).Label))) masli[i]=sLabel.text()+"\n";
-    if((flag==2)&&(masli.at(i).startsWith(chm->at(0).Label))) masli[i]=keyline+"\n";
+    if((flag==1)&&(masli.at(i).startsWith(chm->at(0).Label))) masli[i] = sLabel.text()+((masli.at(i).contains('\r'))?"\r\n":"\n");
+    if((flag==2)&&(masli.at(i).startsWith(chm->at(0).Label))) masli[i] = keyline+((masli.at(i).contains('\r'))?"\r\n":"\n");
     if (masli.at(i).startsWith("END KEY"))flag=0;
     if (masli.at(i).startsWith("END ATOM")) {
       while (symmignore+di+dumcnt<alle->size()){
@@ -1047,7 +1047,16 @@ void xdEditDlg::accept () {
 	  kart.z+=zs;
 	  //	QMessageBox::information(this,"!!!!!!!!!!!",QString(tr("xs %1 ys %2 zs %3").arg(xs).arg(ys).arg(zs)),QMessageBox::Ok); 
 	  mol.kart2frac(kart,frac);
-	  masli.insert(i+dumcnt,QString("%1 %2 %3 %4 !%5 %6 %7 %8\n").arg(QString("DUM%1").arg(dumcnt)).arg(frac.x).arg(frac.y).arg(frac.z).arg(kart.x).arg(kart.y).arg(kart.z).arg(alle->at(symmignore+di+dumcnt).Label));
+	  masli.insert(i+dumcnt,QString("%1 %2 %3 %4 !%5 %6 %7 %8%9")
+			  .arg(QString("DUM%1").arg(dumcnt))
+			  .arg(frac.x)
+			  .arg(frac.y)
+			  .arg(frac.z)
+			  .arg(kart.x).
+			  arg(kart.y)
+			  .arg(kart.z)
+			  .arg(alle->at(symmignore+di+dumcnt).Label)
+			  .arg((masli.at(i).contains('\r'))?"\r\n":"\n"));
 	  dumcnt++;
 	}else symmignore++;
       }
