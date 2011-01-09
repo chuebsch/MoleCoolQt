@@ -4284,12 +4284,12 @@ void MyWindow::initLists(QList<INP> xd){
     //  {int Fehler=glGetError(); if (Fehler!=GL_NO_ERROR) { fprintf (stderr, "mol.axesoOpenGL Error: %s\n",gluErrorString(Fehler)); } }
   }
   else togAxen->setVisible(false);
-  if (cubeGL->drawUz) {
+  togUnit->setVisible(packAct->isVisible());
+  if (packAct->isVisible()) {
 
     //QMessageBox::information(this,"","unitcell",QMessageBox::Ok);
-    statusBar()->showMessage(tr("Draw unit cell.") );	
-    togUnit->setVisible(true);
-    togUnit->setChecked(true);
+    statusBar()->showMessage(tr("Draw unit cell.") );
+    //togUnit->setChecked(true);
     glNewList(cubeGL->bas+3, GL_COMPILE );{                          //Unit Zell
       glPushMatrix();{
 	//      glTranslated( -L/2.0, -L/2.0, -L/2.0 );
@@ -4298,7 +4298,7 @@ void MyWindow::initLists(QList<INP> xd){
       }glPopMatrix();    
     }glEndList();
     //  {int Fehler=glGetError(); if (Fehler!=GL_NO_ERROR) { fprintf (stderr, "mol.UnitZelloOpenGL Error: %s\n",gluErrorString(Fehler)); } }
-  }else togUnit->setVisible(false);
+  }
   if (mol.HAMax!=0.0){
 
     statusBar()->showMessage(tr("Draw H-bonds.") );	
