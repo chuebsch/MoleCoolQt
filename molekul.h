@@ -100,6 +100,7 @@ typedef struct MyAtom{
   int an;
   int part;
   int index;
+  int sg;
 }MyAtom;
 inline bool  operator ==  (const MyAtom &a1,const MyAtom &a2){
   return (a1.Label == a2.Label);

@@ -2423,8 +2423,8 @@ void MyWindow::load_xdres(QString fileName) {
   while (strstr(line,"SCAT")==NULL) {egal=fscanf(mas,"%[^\n\r]\n\r",line);}
   while (strstr(line,"END")==NULL){  
     egal=fscanf(mas,"%[^\n\r]\n\r",line);
-    atypen.append(strtok(line," "));
-//    printf("=====>>>%s %d [%s]\n",atypen.last().toStdString().c_str(),atypen.size(),line);
+    if (isalpha(line[0])) atypen.append(strtok(line," "));
+    printf("=====>>>%s %d [%s]\n",atypen.last().toStdString().c_str(),atypen.size(),line);
   }
   fclose(mas);
   }
@@ -4536,15 +4536,19 @@ void MyWindow::closeEvent(QCloseEvent *event)  {
 
 void MyWindow::readXDPartAux(){
   QFile aux("xd_part.aux");  
-  aux.open(QIODevice::ReadOnly);
+  bool b;
+  b= aux.open(QIODevice::ReadOnly);
+//  printf("hallo %d\n",b);
   QString auxTxt = aux.readAll(); 
   aux.close();
-  QStringList lines = auxTxt.split("\n");
+  QStringList lines = auxTxt.split("\n",QString::SkipEmptyParts);
+//  printf("%d %d \n",lines.size(),atmax);
   if ((lines.size()!=atmax+1)&&(lines.size()!=atmax)) return;
-  for (int j=0; j<atmax; j++){ 
+  for (int j=0; j < atmax; j++){ 
     if (asymmUnit[j].OrdZahl<0) continue;   
     QStringList token = lines.at(j).split(" ",QString::SkipEmptyParts);
     asymmUnit[j].part=token.at(2).toInt();
+   // printf("%d %s %s %s\n",asymmUnit[j].part,asymmUnit[j].atomname,token.at(0).toStdString().c_str(),token.at(2).toStdString().c_str());
   }
 }
 

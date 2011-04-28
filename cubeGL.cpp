@@ -327,6 +327,7 @@ void  CubeGL::toggInvEdit(bool on){
 	  invom.an=xdinp[i].OrdZahl;
 	  invom.part=xdinp[i].part;
 	  invom.Symbol=PSE_Symbol[xdinp[i].OrdZahl];
+	  invom.sg=xdinp[i].sg;
 	  invom.index=i;
 	  ce.append(invom);
 	}
@@ -342,6 +343,8 @@ void  CubeGL::toggInvEdit(bool on){
 	  if ((ce.at(i).an<0)||(ce.at(j).an<0)) continue;
 	  if (ce.at(i).pos==ce.at(j).pos) continue;
 	  if ((ce.at(i).part>0)&&(ce.at(j).part>0)&&(ce.at(j).part!=ce.at(i).part)) continue;
+	  if ((ce.at(i).part<0)&&(ce.at(j).part<0)&&(ce.at(j).part!=ce.at(i).part)) continue;
+	  if (((ce.at(i).part<0)||(ce.at(j).part<0))&&(ce.at(j).sg!=ce.at(i).sg)) continue;
 	  if ((ce.at(i).an<83)&&(ce.at(j).an<83)&&(ce.at(i).an>=0)&&(ce.at(j).an>=0)){
 	    soll_abst=((mol.Kovalenz_Radien[ce.at(i).an]+
 				    mol.Kovalenz_Radien[ce.at(j).an])/100.0
@@ -1302,6 +1305,8 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 		if ((ce.at(i).an<0)||(ce.at(j).an<0)) continue;
 		if (ce.at(i).pos==ce.at(j).pos) continue;
 		if ((ce.at(i).part>0)&&(ce.at(j).part>0)&&(ce.at(j).part!=ce.at(i).part)) continue;
+		if ((ce.at(i).part<0)&&(ce.at(j).part<0)&&(ce.at(j).part!=ce.at(i).part)) continue;
+		if (((ce.at(i).part<0)||(ce.at(j).part<0))&&(ce.at(j).sg!=ce.at(i).sg)) continue;
 		if ((ce.at(i).an<83)&&(ce.at(j).an<83)&&(ce.at(i).an>=0)&&(ce.at(j).an>=0)){
 		  soll_abst=((mol.Kovalenz_Radien[ce.at(i).an]+
 					  mol.Kovalenz_Radien[ce.at(j).an])/100.0
@@ -1404,9 +1409,10 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 	    for (int k=0; k<cel.size();k++)
 	      for (int j=0; j<cel.size();j++){
 		if ((cl.at(i).ato1->pos==cel.at(j).pos)&&(cl.at(i).ato2->pos==cel.at(k).pos)){
-		  if ((cel.at(0).part>0)&&((cel.at(0).part!=cl.at(i).ato1->part)||(cel.at(0).part!=cl.at(i).ato2->part)));
-		  else 
-		    cll.append(cl[i]);
+		  if ((cel.at(0).part>0)&&((cel.at(0).part!=cl.at(i).ato1->part)||(cel.at(0).part!=cl.at(i).ato2->part))) continue;
+		  if ((cel.at(i).part<0)&&(cel.at(j).part<0)&&(cel.at(j).part!=cel.at(i).part)) continue;
+		  if (((cel.at(i).part<0)||(cel.at(j).part<0))&&(cel.at(j).sg!=cel.at(i).sg)) continue;
+		  cll.append(cl[i]);
 		}
 	      }
 	  if (invEditAble) {
@@ -1503,6 +1509,8 @@ void CubeGL::editInv(const QUrl & link ){
 	if ((ce.at(i).an<0)||(ce.at(j).an<0)) continue;
 	if (ce.at(i).pos==ce.at(j).pos) continue;
 	if ((ce.at(i).part>0)&&(ce.at(j).part>0)&&(ce.at(j).part!=ce.at(i).part)) continue;
+	  if ((ce.at(i).part<0)&&(ce.at(j).part<0)&&(ce.at(j).part!=ce.at(i).part)) continue;
+	  if (((ce.at(i).part<0)||(ce.at(j).part<0))&&(ce.at(j).sg!=ce.at(i).sg)) continue;
 	if ((ce.at(i).an<83)&&(ce.at(j).an<83)&&(ce.at(i).an>=0)&&(ce.at(j).an>=0)){
 	  soll_abst=((mol.Kovalenz_Radien[ce.at(i).an]+
 				  mol.Kovalenz_Radien[ce.at(j).an])/100.0
@@ -1537,6 +1545,7 @@ void CubeGL::editInv(const QUrl & link ){
   for (int i=0;i<xdinp.size();i++){
     if((xdinp[i].OrdZahl<0)||(xdinp[index].OrdZahl<0)) continue;
     if ((xdinp[i].part>0)&&(xdinp[index].part>0)&&(xdinp[i].part!=xdinp[index].part)) continue;
+    //dk
     if ((xdinp[i].OrdZahl<83)&&(xdinp[index].OrdZahl<83)&&(xdinp[i].OrdZahl>=0)&&(xdinp[index].OrdZahl>=0)){
       soll_abst=((mol.Kovalenz_Radien[xdinp[i].OrdZahl]+
 			      mol.Kovalenz_Radien[xdinp[index].OrdZahl])

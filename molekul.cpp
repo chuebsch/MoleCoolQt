@@ -1223,7 +1223,7 @@ void molekul::make_bonds(QList<INP> xdinp){
       //sprintf(hjkl,"%d %d %i",xdinp[i].OrdZahl,xdinp[j].OrdZahl,Kovalenz_Radien[5]);
       //      QMessageBox::information(0,"xdinp.size()",hjkl,QMessageBox::Ok);
       if((xdinp[i].OrdZahl<0)||(xdinp[j].OrdZahl<0)) continue;
-      if (((xdinp[i].part<0)||(xdinp[j].part<0))&&(xdinp[i].sg!=xdinp[j].sg)) continue; //part negative
+      if (((xdinp[i].part<0)||(xdinp[j].part<0))&&((xdinp[i].sg!=xdinp[j].sg)||((xdinp[i].part!=xdinp[j].part)))) continue; //part negative
       if ((xdinp[i].part>0)&&(xdinp[j].part>0)&&(xdinp[i].part!=xdinp[j].part)) continue; //different part
       if ((xdinp[i].OrdZahl<83)&&(xdinp[j].OrdZahl<83)&&(xdinp[i].OrdZahl>=0)&&(xdinp[j].OrdZahl>=0)){
 	soll_abst=((Kovalenz_Radien[xdinp[i].OrdZahl]+
@@ -1234,7 +1234,16 @@ void molekul::make_bonds(QList<INP> xdinp){
 	if (gg<soll_abst) {
 	  bd[bcnt].a=i;	
 	  bd[bcnt].e=j;
-	  //	  printf("%s[%d]-%s[%d] %d\n",xdinp[bd[bcnt].a].atomname,bd[bcnt].a,xdinp[bd[bcnt].e].atomname,bd[bcnt].e,bcnt);
+/*	    printf("%s[%d](%d,%d)-%s[%d](%d,%d) %d\n",
+			    xdinp[bd[bcnt].a].atomname,
+			    bd[bcnt].a,
+			    xdinp[bd[bcnt].a].sg,
+			    xdinp[bd[bcnt].a].part,
+			    xdinp[bd[bcnt].e].atomname,
+			    bd[bcnt].e,
+			    xdinp[bd[bcnt].e].sg,
+			    xdinp[bd[bcnt].e].part,
+			    bcnt);*/
 	  bcnt++;
 	}//bindung
       }//Ordnungzahl-ok
