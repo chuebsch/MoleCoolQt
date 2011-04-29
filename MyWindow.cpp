@@ -2424,7 +2424,7 @@ void MyWindow::load_xdres(QString fileName) {
   while (strstr(line,"END")==NULL){  
     egal=fscanf(mas,"%[^\n\r]\n\r",line);
     if (isalpha(line[0])) atypen.append(strtok(line," "));
-    printf("=====>>>%s %d [%s]\n",atypen.last().toStdString().c_str(),atypen.size(),line);
+  //  printf("=====>>>%s %d [%s]\n",atypen.last().toStdString().c_str(),atypen.size(),line);
   }
   fclose(mas);
   }
@@ -3464,7 +3464,7 @@ void MyWindow::openFile() {
 		  "Gaussian COM-Files (*.com);;"
 		  "Gaussian FChk-Files (*.fchk);;"
 		  "CIF-Files (*.cif);;"
-		  "Protein Data Base file (*.pdb *.ent);;" );
+		  "Protein Data Base file (*.pdb *.ent);;" ); // */
   if (!fileName.isEmpty()) {
     loadFile(fileName);
   }

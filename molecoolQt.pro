@@ -11,7 +11,6 @@ win32: RC_FILE =molecoolQt.rc
 mac {
 ICON = molecoolQt.icns
 }
-# TRANSLATIONS = mcl_de.ts 
 
 # Input
 HEADERS += MyWindow.h cubeGL.h molekul.h invariomDlg.h inames.h  XDDlg.h highlighter.h doxd.h eacDlg.h moliso.h gradDlg.h molisoStartDlg.h
