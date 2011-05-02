@@ -189,7 +189,7 @@ void CubeGL::loadMISettings(){
 
 void CubeGL::setFont(){
   bool ok;
-  myFont = QFontDialog::getFont(&ok, myFont, this,"Change Label Font");
+  myFont = QFontDialog::getFont(&ok, myFont, this,"Change Label Font",QFontDialog::DontUseNativeDialog);
   updateGL();
 }
 
@@ -466,7 +466,8 @@ void CubeGL::loadTexture() {
 
 void CubeGL::changeBColor() {
   qreal bgRed,bgGreen,bgBlue,bgAlpha;
-  QColor bgcolor = QColorDialog::getColor(QColor((int)(bgCR*255),(int)(bgCG*255),(int)(bgCB*255),(int)(bgCA*255)), this);  
+  QColor bgcolor = QColorDialog::getColor(
+  QColor((int)(bgCR*255),(int)(bgCG*255),(int)(bgCB*255),(int)(bgCA*255)), this,"Change Background Color",QColorDialog::DontUseNativeDialog);
   if (bgcolor.isValid()) {
     bgcolor.getRgbF(&bgRed,&bgGreen,&bgBlue,&bgAlpha);
     bgCR=(GLclampf)bgRed;
@@ -480,13 +481,14 @@ void CubeGL::changeBColor() {
 
 void CubeGL::changeBondColor(){
   extern molekul mol;
-  mol.bondColor=QColorDialog::getColor(mol.bondColor,this);
+  mol.bondColor=QColorDialog::getColor(mol.bondColor,this,"Change Bond Color",QColorDialog::DontUseNativeDialog);
   updateGL();
 }
 
 void CubeGL::changeTColor() {
   qreal bgRed,bgGreen,bgBlue,bgAlpha;
-  QColor tcolor = QColorDialog::getColor(QColor((int)(tCR*255),(int)(tCG*255),(int)(tCB*255),(int)(tCA*255)), this);  
+  QColor tcolor = QColorDialog::getColor(QColor((int)(tCR*255),(int)(tCG*255),(int)(tCB*255),(int)(tCA*255)),
+                                         this,"Change Label Color",QColorDialog::DontUseNativeDialog);
   if (tcolor.isValid()) {
     tcolor.getRgbF(&bgRed,&bgGreen,&bgBlue,&bgAlpha);
     tCR=(GLclampf)bgRed;

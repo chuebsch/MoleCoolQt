@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-QString rev="$Rev: 239 $";
+QString rev="$Rev: 243 $";
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -1831,11 +1831,13 @@ void MyWindow::saveScene(){
 
   QList<QByteArray> supo = QImageWriter::supportedImageFormats ();
   QString formats;
+  QString selectedFilter;
   for (int i=0; i<supo.size(); i++)
     if ((!QString(supo.at(i)).contains("ps",Qt::CaseInsensitive)) &&
 		    (!QString(supo.at(i)).contains(QRegExp("[A-Z]"))))
       formats+=QString("%1-file (*.%1)%2").arg(QString(supo.at(i))).arg(((i+1)<supo.size())?";;":"");
-  QString fileName = QFileDialog::getSaveFileName(this,QString(tr("Save a screen shot in %1 fold screen resolution").arg(scalePic)), saveName,formats);
+  QString fileName = QFileDialog::getSaveFileName(this,
+  QString(tr("Save a screen shot in %1 fold screen resolution").arg(scalePic)), saveName,formats,&selectedFilter,QFileDialog::DontUseNativeDialog );
 /*						  "Joint Photographic Experts Group - file (*.jpg);;"
 						  "Windows Bitmap - file (*.bmp);;"
 						  "Portable Network Graphics - file (*.png);;"
@@ -3457,6 +3459,7 @@ void MyWindow::openFile() {
   cubeGL->drawUz=true;
   cubeGL->drawAx=false;
   removeDipoleMoments();
+  QString selectedFilter;
   fileName = QFileDialog::getOpenFileName(this, tr("Open stucture file "), dirName,
 		  "XD-Files (*.res *.inp *.mas);;"
 		  "SHELX-Files (*.res *.ins);;"
@@ -3464,7 +3467,7 @@ void MyWindow::openFile() {
 		  "Gaussian COM-Files (*.com);;"
 		  "Gaussian FChk-Files (*.fchk);;"
 		  "CIF-Files (*.cif);;"
-		  "Protein Data Base file (*.pdb *.ent);;" ); // */
+		  "Protein Data Base file (*.pdb *.ent);;",&selectedFilter,QFileDialog::DontUseNativeDialog ); // */
   if (!fileName.isEmpty()) {
     loadFile(fileName);
   }
@@ -4094,9 +4097,10 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
 
 void MyWindow::openDipoleFile() {
   QString fileName;
+  QString selectedFilter;
   fileName = QFileDialog::getOpenFileName(this, tr("Dipole Moments File "), dirName,
 		  "Dipole.in (*.in);;"
-		  "Any (*);;" );
+		  "Any (*);;",&selectedFilter,QFileDialog::DontUseNativeDialog  );
   if (!fileName.isEmpty()) {
     loadDipoleMoments(fileName);
   }    
