@@ -40,9 +40,6 @@ void MyWindow::setup_zelle(){
   mol.zelle.as=mol.zelle.c*mol.zelle.b*sin(mol.zelle.al/g2r)/mol.zelle.V;
   mol.zelle.bs=mol.zelle.c*mol.zelle.a*sin(mol.zelle.be/g2r)/mol.zelle.V;
   mol.zelle.cs=mol.zelle.a*mol.zelle.b*sin(mol.zelle.ga/g2r)/mol.zelle.V;
-  /*
-  printf("%f %f %f  %f %f %f  V %f\n",mol.zelle.a,mol.zelle.b,mol.zelle.c,mol.zelle.al,mol.zelle.be,mol.zelle.ga,mol.zelle.V);
-  printf("%f %f %f  %f %f %f  V %f\n",mol.zelle.a,mol.zelle.b,mol.zelle.c,mol.zelle.as,mol.zelle.bs,mol.zelle.cs,mol.zelle.phi);// */
 }
 char *egals;
 double L=10;
@@ -286,10 +283,6 @@ MyWindow::MyWindow( QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(pa
   togLuft                  = new QAction(tr("Toggle helices"), this);
   togElli                  = new QAction(tr("Toggle ADP's"), this);
   togHBond        = new QAction(tr("Toggle hydrogen bonds"), this);
-  /*
-  QAction *changeTextureAct = new QAction(tr("Loop background textures"), this);
-  QAction *loadTextureAct = new QAction(tr("Load background texture file"), this);
-  // */
   QAction *backColor       = new QAction(tr("Change background color"), this);
   QAction *labelColor      = new QAction(tr("Change label color"), this);
   QAction *labelFont       = new QAction(tr("Change label font"), this);  
@@ -306,7 +299,6 @@ MyWindow::MyWindow( QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(pa
   ydlStartAct =              new QAction(tr("Start rotation"),this);
   ydlStopAct =               new QAction(tr("Stop rotation"),this);
   togAxen =                  new QAction(tr("Toggle local coordinate systems"), this);
-  // changeTextureAct->setShortcut(Qt::Key_F5);
   act2 = fileMenu->addAction(QIcon(":/images/folder_page_white.png"),
 			     tr("&Open..."), this, SLOT(openFile() ),
 			     QKeySequence(tr("Ctrl+O", "File|Open")));
@@ -383,7 +375,6 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
   QAction *ccmpck=packMenu->addAction("Pack inside unit cell and complete AU");
   cubeGL->changeGDAct =packMenu->addAction(tr("Search radius is %1 Ang.  Change it").arg(mol.gd));
   connect(cubeGL->changeGDAct,SIGNAL(triggered()),this,SLOT(changeGD()));
-  //Sabinemysweetheart
   cctpck->setIcon(QIcon(":/images/unitcell.png"));
   molpck->setIcon(QIcon(":/images/compmol.png"));
   ccmpck->setIcon(QIcon(":/images/unitcellplus.png"));
@@ -574,8 +565,6 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
 			" If this is checked the atoms are visualized as ellipsoids if the structure provides thermal information.");
   QMenu *elliMenu = new QMenu("change ADP probability",this);
   elliMenu->setIcon(QIcon(":/images/adps.png"));
-  //elliMenu->setCheckable ( true );
-  //elliMenu->setChecked ( true );
   noElli    = elliMenu->addAction("no ellipsoids");
   elliMenu->addSeparator ();
   QAction *tenp     = elliMenu->addAction("10%");
@@ -748,12 +737,6 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
 	  cubeGL, SLOT(setFont()));
   connect(changeProbAct,SIGNAL(triggered()),
 	  this,SLOT(changeADP()));
-  /*
-  connect(changeTextureAct,SIGNAL(triggered()),
-	  cubeGL,SLOT(changeTexture()));
-  connect(loadTextureAct,SIGNAL(triggered()),
-	  cubeGL,SLOT(loadTexture()));
-  // */
   connect(togStat,SIGNAL(triggered()),
 	  this,SLOT(togglSt()));
   connect(wasistdasAct,SIGNAL(triggered()),
@@ -798,7 +781,6 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
   viewMenu->addAction(togAxen);
   viewMenu->addAction(togUnit);
   viewMenu->addAction(togElli);
-//  viewMenu->addAction(sma);
 
   viewMenu->addAction(togHBond);
   viewMenu->addAction(togLuft); 
@@ -812,10 +794,6 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
   viewMenu->addAction(viewAlong001);
   dialogMenu->addAction(backColor);        
   dialogMenu->addAction(back_Grad);
-  /*
-  dialogMenu->addAction(changeTextureAct);
-  dialogMenu->addAction(loadTextureAct);
-  // */
   dialogMenu->addAction(labelColor);
   dialogMenu->addAction(labelFont);
   dialogMenu->addAction(scalePicAct);
@@ -902,7 +880,6 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
   addToolBar(Qt::BottomToolBarArea,tb);
       
   toolFile = addToolBar(tr("File"));
-  //toolFile->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
   toolFile->setAllowedAreas(Qt::AllToolBarAreas );
   toolFile->addAction(act2);
   toolFile->addAction(createmoliso);
@@ -918,7 +895,6 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
 			 " By clicking right on the menu or tool bar region, you can toggel the tool bars.");
 
   toolSettings = addToolBar(tr("Settings"));
-  //toolSettings->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
   toolSettings->setMovable(true);
   toolSettings->addAction(editAtomAct);
   toolSettings->addAction(filterAct);
@@ -928,7 +904,6 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
   toolSettings->addAction(invExpAct);
   toolSettings->addAction(movLabAct);
   toolSettings->addAction(homeLabAct);
-//  toolSettings->addAction(atomClickAct);
   toolSettings->addAction(seReAct);
   toolSettings->addAction(movLeg);
   toolSettings->addAction(mildir);
@@ -971,7 +946,6 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
  "</table>" );
   toolMove->hide();
   toolView=addToolBar(tr("View"));
-  //toolView->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
   toolView->setMovable(true);
   toolView->addAction(togAtom);
   toolView->addAction(togElli);
@@ -1082,10 +1056,7 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
    cubeGL->MM[13]=0.0;
    cubeGL->MM[14]=-200.0;
    cubeGL->MM[15]=1.0;
-//   printf("hier war es \n");
   }
- // cubeGL->Tex1FileName= (QString)  settings->value("Tex1FileName").toString();
- // cubeGL->Tex2FileName= (QString)  settings->value("Tex2FileName").toString();
 
    int acsize = settings->beginReadArray("AtomColors");   
    for (int i = 0; i < acsize; ++i) {
@@ -1218,7 +1189,7 @@ void MyWindow::genMoliso() {
     lfaceFile=msgdlg->load_face_name;
     sfaceFile=msgdlg->save_face_name;
     adpName=msgdlg->adp_struct_name;
-    mol.initDir();//isof.toStdString().c_str());
+    mol.initDir();
   }
   else
   {
@@ -1326,7 +1297,6 @@ void MyWindow::genMoliso() {
   dock3->setFeatures(QDockWidget::DockWidgetMovable|QDockWidget::DockWidgetClosable);
   addDockWidget(Qt::LeftDockWidgetArea, dock3);
   cubeGL->moliso->readXDGridHeader(isof);
-//  printf("asymmUnit %d smx %d atmax%d \n",asymmUnit.size(),smx,atmax);
   mol.adp=0;
   L = 100.0/dimension(asymmUnit);
   if (smx>7){
@@ -1390,33 +1360,23 @@ void MyWindow::genMoliso() {
   movLeg->setVisible(true);
   mildir->setChecked ( true  );
   mildir->setVisible(true);
-  setCursor(Qt::ArrowCursor);/*
-  atomClickAct->setChecked ( false );
-  atomClickAct->setVisible ( false );
-  ignorant->setChecked ( false );
-  ignorant->setVisible ( false );*/
+  setCursor(Qt::ArrowCursor);
   dock->hide();
   dock2->hide();
   cubeGL->setVisible ( true );
   cubeGL->updateGL();
-//  dock->show();
-//  dock2->show();
   QMainWindow::tabifyDockWidget (dock2,dock3);
   QMainWindow::tabifyDockWidget (dock2,dock);
-//  dock->lower();
-//  dock2->lower();
   createmoliso->setVisible(false);
   noMoliso->setVisible(true);
 }
 
 void MyWindow::syncMconf(){
-//  disconnect(cubeGL,SIGNAL(mconf()))
     legendSize->setValue(cubeGL->milsize*30);
     strikesSldr->setValue(512-cubeGL->cdens);
     swidthSldr->setValue((cubeGL->cwid+1)*256/cubeGL->cdens);   
     zebraBox->setChecked(cubeGL->zebra);
     mt->setChecked(cubeGL->molisoTransparence);
-    /* hhh  */
   togAxen->setChecked(cubeGL->drawAx );
   togUnit->setChecked(cubeGL->drawUz );
   back_Grad->setChecked(cubeGL->back_grad );
@@ -1813,7 +1773,6 @@ void MyWindow::changeADP(){
     mol.adp=ad;
     update();
   }
-//  {int Fehler=glGetError(); if (Fehler!=GL_NO_ERROR) { fprintf (stderr, "(ADP)OpenGL Error: %s\n",gluErrorString(Fehler)); } }
 }
 
 void MyWindow::changeBondStrength(){
@@ -1920,11 +1879,9 @@ void Uf2Uo(const Matrix x, Matrix & y) {
   o.m32 = tau; 
   o.m33 = mol.zelle.c* mol.zelle.phi / sin(mol.zelle.ga /g2r);
  y=(o*w)*transponse(o);
- //printf("tau %9f phi %9f g2r %9f\n",tau,mol.zelle.phi,g2r);
 }
 
 void Usym (Matrix x,Matrix sym, Matrix & y){
-  //y=(transponse(sym)*x)*sym;
   y=(sym*x)*transponse(sym);
 }
 double xs=0,ys=0,zs=0;//GLOBAL def
@@ -1974,7 +1931,7 @@ void MyWindow::load_fchk(QString fileName){
 			     "Hf","Ta","W","Re","Os","Ir","Pt","Au","Hg","Tl","Pb","Bi","Po","At","Rn","Fr","Ra",
 			     "Ac","Th","Pa","U","Np","Pu","Am","Cm","Bk","Cf","Es","Fm","Md","No","Lr","Ku","Ha","Rf","Ns","Hs","Mt"};
   QFile fchk(fileName);
-  mol.initDir();//dirna.toStdString().c_str());
+  mol.initDir();
   fchk.open(QIODevice::ReadOnly);
   QString line;
   QStringList tok;
@@ -2088,7 +2045,6 @@ void MyWindow::load_MoPro(QString fileName) {
     xdMenu->setEnabled(false);
     mol.zelle.symmops.clear();
     mol.zelle.trans.clear();
-    //int ResiNr;
     seReAct->setEnabled(true);
     seReAct->setVisible(true);
     QFile mpf(fileName);
@@ -2116,7 +2072,6 @@ void MyWindow::load_MoPro(QString fileName) {
                     mol.zelle.be = tok.at(5).toDouble();
                     mol.zelle.ga = tok.at(6).toDouble();
                     mol.zelle.lambda=tok.at(7).toDouble();
-                    //qDebug()<<mol.zelle.a<<mol.zelle.b<<mol.zelle.c<<mol.zelle.al<<mol.zelle.be<<mol.zelle.ga;
                     habzell=true;
                     setup_zelle();
                 }
@@ -2152,7 +2107,6 @@ void MyWindow::load_MoPro(QString fileName) {
                 }
                 if ((tok.size()> 1)&&(tok.at(0).toUpper()=="ATOMS")){
                     atmax= tok.at(1).toInt();
-                    //qDebug()<<atmax;
                     for (int k=0;k<atmax;k++){
                         tok.clear();
                         tok=all.at(++li).split(" ",QString::SkipEmptyParts);
@@ -2282,7 +2236,6 @@ void MyWindow::load_MoPro(QString fileName) {
           }
 
        }
-//       qDebug()<<ato1.at(i);
        }else {
        asymmUnit[i].nax=ato1.at(i).toInt();
        }
@@ -2304,15 +2257,6 @@ void MyWindow::load_MoPro(QString fileName) {
        }else {
        asymmUnit[i].nay2=ato2.at(i).toInt();
        }
-       /*printf("§§%-8s %6d %6d %6d  %6d %6d %6d   %6d  %s\n",asymmUnit[i].atomname,i,
-asymmUnit[i].icor1,
-asymmUnit[i].icor2,
-asymmUnit[i].nax,
-asymmUnit[i].nay1,
-asymmUnit[i].nay2,
-gendum,
-axstr.at(i).toStdString().c_str());
-// */
 if (gendum==1){
 V3 mitte,rechts,links;
 mol.frac2kart(asymmUnit.at(asymmUnit.at(i).nax-1).frac,rechts);
@@ -2351,10 +2295,6 @@ newAtom.kart=mitte+0.5*Normalize(((arm2-mitte)+(arm3-mitte)));
 mol.kart2frac(newAtom.kart,newAtom.frac);
 newAtom.OrdZahl=-1;
 strncpy(newAtom.atomname,QString("DUM%1!%2").arg(dummax).arg(axstr.at(i)).toStdString().c_str(),38);
-/*qDebug()<<"Arm2"<<asymmUnit.at(asymmUnit.at(i).nay2-1).atomname
-<<"the atom"<<asymmUnit.at(asymmUnit.at(i).nay1-1).atomname
-<<"arm3 "<<asymmUnit.at(asymmUnit.at(i).na3-1).atomname
-<<asymmUnit.at(asymmUnit.at(i).nax-1).atomname;// */
 asymmUnit[i].nay2=dummax+atmax+1;
 dummax++;
 dummys.append(newAtom);
@@ -2413,7 +2353,6 @@ void MyWindow::load_xdres(QString fileName) {
   while (strstr(line,"SYMM")!=NULL){  
      if (!mol.decodeSymmCard(line)){qDebug()<<line<<"Sorry, but I can't understand this SymmCard";exit(-1);}
     egal=fscanf(mas,"%[^\n\r]\n\r",line);
-    //z++;
   }
 
   rewind(mas);
@@ -2426,7 +2365,6 @@ void MyWindow::load_xdres(QString fileName) {
   while (strstr(line,"END")==NULL){  
     egal=fscanf(mas,"%[^\n\r]\n\r",line);
     if (isalpha(line[0])) atypen.append(strtok(line," "));
-  //  printf("=====>>>%s %d [%s]\n",atypen.last().toStdString().c_str(),atypen.size(),line);
   }
   fclose(mas);
   }
@@ -2442,7 +2380,6 @@ void MyWindow::load_xdres(QString fileName) {
     egal=fscanf(adp,"%[^\n\r]\n\r",line);
  } 
   ;
-//  printf("Schit");
   sscanf(line,"%[^0123456789]%d",dv,&atmax);
   dvv=strrchr(line,' ');
   sscanf(dvv,"%d",&dummax);
@@ -2489,7 +2426,6 @@ void MyWindow::load_xdres(QString fileName) {
   egal=fscanf(adp,"%[^\n\r]\n\r",line);
   for (int j=i;j<dummax+i;j++){
     asymmUnit.append(newAtom);
-    //strcpy(xdinp[j].atomname,"DUM");
     sprintf(asymmUnit[j].atomname,"DUM%d",j-i);
     asymmUnit[j].OrdZahl=-1;
     egal=fscanf(adp,"%lf%lf%lf\n\r",
@@ -2501,7 +2437,6 @@ void MyWindow::load_xdres(QString fileName) {
  
   smx=atmax+dummax;
   }
-  //char dirnam[1500];
   {//xd_fft.out
     QString fftName=masName;
     fftName.chop(6);
@@ -2510,7 +2445,6 @@ void MyWindow::load_xdres(QString fileName) {
   char _line[120],_an[15];
   int ffix=0;
   int maxxp=0,mima=0;
-//  printf("gut\n");
   if (NULL!=(fft=fopen(fftName.toLocal8Bit(),"r"))){
     while ((!feof(fft))&&(NULL==strstr(_line,"HEIGHT"))&&(NULL==strstr(_line,"height"))) {
       egal=fscanf(fft,"%[^\n\r]\n\r",_line);
@@ -2524,8 +2458,8 @@ void MyWindow::load_xdres(QString fileName) {
       }     
     }
     if (!feof(fft)) {
-      egal=fscanf(fft,"%[^\n\r]\n\r",_line);//printf("?%s\n",_line);		            
-      egal=fscanf(fft,"%[^\n\r]\n\r",_line);//printf("?%s\n",_line);
+      egal=fscanf(fft,"%[^\n\r]\n\r",_line);
+      egal=fscanf(fft,"%[^\n\r]\n\r",_line);
       while ((!feof(fft))&&(NULL==strstr(_line,"----------")) &&(ffix<maxxp)&&((5==sscanf(_line,"%s %*s %*s %*s %*s %*s %lf %lf %lf %lf"
 			,_an
 			,&newAtom.frac.x 
@@ -2592,7 +2526,7 @@ if (!feof(cps))
 		    &asymmUnit[smx+i].uf.m31,&asymmUnit[smx+i].uf.m32,&asymmUnit[smx+i].uf.m33);
     egals=fgets(_line,92,cps);                                                       
     sscanf(_line,"%*s %lf %lf %lf",                                                  
-		    &asymmUnit[smx+i].uf.m11,&asymmUnit[smx+i].uf.m12,&asymmUnit[smx+i].uf.m13);///*
+		    &asymmUnit[smx+i].uf.m11,&asymmUnit[smx+i].uf.m12,&asymmUnit[smx+i].uf.m13);
     asymmUnit[smx+i].uf.m11-=asymmUnit[smx+i].kart.x;
     asymmUnit[smx+i].uf.m12-=asymmUnit[smx+i].kart.y;
     asymmUnit[smx+i].uf.m13-=asymmUnit[smx+i].kart.z;
@@ -2638,7 +2572,7 @@ double getNum(double v,double fv[20],double uiso){
 }
 int part=0;
 int isacommand(char command[8]){
-  const char bfl[83][5]={"ACTA", "AFIX", "AGS4", "ANIS", "BASF", "BIND", "BLOC", "BOND", "BUMP", "CELL", "CGLS", "CHIV", "CONF", "CONN", "DAMP", "DANG", //0-15
+  const char bfl[83][5]={"ACTA", "AFIX", "MPLA", "ANIS", "BASF", "BIND", "BLOC", "BOND", "BUMP", "CELL", "CGLS", "CHIV", "CONF", "CONN", "DAMP", "DANG", //0-15
 			 "DEFS", "DELU", "DFIX", "DISP", "EADP", "EGEN", "END",  "EQIV", "ESEL", "EXTI", "EXYZ", "FEND", "FLAT", "FMAP", "FRAG", "FREE", //16-31
 			 "FVAR", "GRID", "HFIX", "HKLF", "HOPE", "HTAB", "INIT", "ISOR", "LAST", "LATT", "LAUE", "LIST", "L.S.", "MERG", "MOLE", "MORE", //32-47
 			 "MOVE", "NCSY", "OMIT", "PART", "PATT", "PHAN", "PHAS", "PLAN", "PSEE", "REM",  "RESI", "RTAB", "SADI", "SAME", "SFAC", "SHEL", //48-63
@@ -2830,21 +2764,7 @@ void MyWindow::load_sheldrick(QString fileName){
       asymmUnit[i].u.m12=asymmUnit[i].u.m13=asymmUnit[i].u.m23=asymmUnit[i].u.m21=asymmUnit[i].u.m31=asymmUnit[i].u.m32=0.0;}
     else Uf2Uo(asymmUnit[i].uf,asymmUnit[i].u);
   }
-  growSymm(6);/*
-  for (int i=0; i<smx; i++){
-    mol.frac2kart(xdinp[i].frac,xdinp[i].kart);
-    if (xdinp[i].OrdZahl!=-1){
-      xs+=xdinp[i].kart.x;
-      ys+=xdinp[i].kart.y;
-      zs+=xdinp[i].kart.z;
-    }
-  }
-  xs/=(smx);ys/=(smx);zs/=(smx);
-  for (int i=0; i<smx; i++){
-    xdinp[i].kart.x-=xs;
-    xdinp[i].kart.y-=ys;
-    xdinp[i].kart.z-=zs;
-  }*/
+  growSymm(6);
 }//shelx
 
 //--------------------------------------------------------------------------------------------
@@ -2875,7 +2795,6 @@ int hatlokale=0;
 QList<int> anisIndex;
 void cifloop(const QString tag,const QString value,int loopat){
   static int ola=-1;
-//  std::cout<<"_________________\ntag:"<<tag.toStdString()<<std::endl<<"val:"<<value.toStdString()<<std::endl<<loopat<<std::endl;
   if (tag=="_symmetry_equiv_pos_as_xyz") {mol.decodeSymmCard(value);return;}
   if (tag=="_space_group_symop_operation_xyz") {mol.decodeSymmCard(value);return;}
   INP newAtom;
@@ -2933,7 +2852,6 @@ void MyWindow::load_cif(QString fileName) {
   mol.zelle.symmops.clear();
   mol.zelle.trans.clear();
   QFile ciff(fileName);
-  //cif_celler=0;
   ciff.open(QIODevice::ReadOnly);
   QString all=ciff.readAll();
   all.remove('\r');
@@ -2955,12 +2873,7 @@ void MyWindow::load_cif(QString fileName) {
     after.replace(QRegExp("\\s+"),"");
     all.replace(quotes[i],after);
   }
-//  quotes = all.split("\n;\n"));
-//  std::cout<<all.toStdString()<<std::endl;
   QStringList lines=all.split('\n',QString::SkipEmptyParts);
- /* for (int i=0; i<lines.size();i++){
-  std::cout<<lines.at(i).toStdString()<<std::endl;
-  }// */
   QStringList loopings;
   for (int i =0; i<lines.size();i++){
     if (lines.at(i).trimmed()=="loop_") {
@@ -2972,7 +2885,6 @@ void MyWindow::load_cif(QString fileName) {
       }
     }
     int loopat=0;
-//    if (!loopings.isEmpty()) qDebug()<<loopings;
     while ((!loopings.isEmpty())&&(i<lines.size())){
       if ((lines.at(i).trimmed().startsWith("_"))||(lines.at(i).trimmed().isEmpty())||(lines.at(i).trimmed()=="loop_")) loopings.clear();
       else {
@@ -2990,7 +2902,6 @@ void MyWindow::load_cif(QString fileName) {
 	else loopings.clear();
 	loopat++;
       }
-//      std::cout<<lines.at(i).toStdString()<<std::endl;
       if ((i<lines.size())&&(lines.at(i).trimmed()=="loop_")) {i--;break;}
     }
     if (i<lines.size()) cifcard(lines.at(i).trimmed());
@@ -3000,7 +2911,6 @@ void MyWindow::load_cif(QString fileName) {
     asymmUnit[i].lflag=1;
     if (asymmUnit[i].OrdZahl==-4) asymmUnit[i].OrdZahl=mol.Get_OZ(QString(asymmUnit[i].atomname));
     if ((asymmUnit[i].uf.m22==0.0)&&(asymmUnit[i].uf.m33==0.0)){
- //     printf("test\n");
       asymmUnit[i].u.m11=asymmUnit[i].u.m22=asymmUnit[i].u.m33=asymmUnit[i].uf.m11;
       asymmUnit[i].u.m12=asymmUnit[i].u.m13=asymmUnit[i].u.m23=asymmUnit[i].u.m21=asymmUnit[i].u.m31=asymmUnit[i].u.m32=0.0;}
     else Uf2Uo(asymmUnit[i].uf,asymmUnit[i].u);
@@ -3110,7 +3020,6 @@ void MyWindow::load_pdb(QString fileName){
   int dlen=ddd-fn;
   strncpy(dn,fn,dlen);
   dn[dlen]='\0';
-  //molekul mkl;
   mol.initDir();//dn);
   atmax=0;
   smx=0;
@@ -3118,19 +3027,9 @@ void MyWindow::load_pdb(QString fileName){
   newAtom.part=0;
   if ((adp=fopen(fn,"r"))==NULL) {fprintf(stderr,"Can't open %s!!!\n",fn);exit(2);}
   while (!feof(adp)) {
-    //fscanf(adp,"%[^\n]\n",line);
     egals=fgets(line,80,adp);
     if (strstr(line,"CRYST1")){
-      //int check=
       sscanf(line,"CRYST1 %lf %lf %lf %lf %lf %lf",&mol.zelle.a,&mol.zelle.b,&mol.zelle.c,&mol.zelle.al,&mol.zelle.be,&mol.zelle.ga);
-      /*	  QMessageBox::information(this,"Unit Cell",QString(tr("check: %1 <br> %2&Aring; %3&Aring; %4&Aring;   %5&deg; %6&deg; %7&deg;")
-		  .arg(check)
-		  .arg(zelle.a)
-		  .arg(zelle.b)
-		  .arg(zelle.c)
-		  .arg(zelle.al)
-		  .arg(zelle.be)
-		  .arg(zelle.ga)),QMessageBox::Ok);*/
     }
 
     if (strstr(line,"TITLE")){
@@ -3189,7 +3088,6 @@ void MyWindow::load_pdb(QString fileName){
 	 */
       //HETATM  972 3HMD PNI    26       1.453   8.392  80.001  1.00 14.87           H
 
-      //	  printf ("het %s %s %c %d \n",dummy, Ami3,chId,resNr);
       if (ttt<9) {
 	QMessageBox::critical(this,"Read Error!",QString(tr("read error near atom %1, only %2 tokens fit!").arg(i).arg(ttt)),QMessageBox::Ok);exit(23);}
       dummy[4]='\0'; 
@@ -3206,7 +3104,6 @@ void MyWindow::load_pdb(QString fileName){
     }
   } 
   smx=atmax;
-  //  double xs=0,ys=0,zs=0;
   for (int i=0; i<smx; i++){
     if (asymmUnit[i].OrdZahl!=-1){
       xs+=asymmUnit[i].kart.x;
@@ -3215,7 +3112,6 @@ void MyWindow::load_pdb(QString fileName){
     }
   }
   xs/=(smx);ys/=(smx);zs/=(smx);
-  //   //printf("---%f %f %f\n",xs,ys,zs);
   for (int i=0; i<smx; i++){
     asymmUnit[i].kart.x-=xs;
     asymmUnit[i].kart.y-=ys;
@@ -3239,7 +3135,6 @@ void MyWindow::load_gaus(QString fileName){
   int dlen=ddd-fn;
   strncpy(dn,fn,dlen);
   dn[dlen]='\0';
-  //molekul mkl;
   INP newAtom;
   newAtom.part=0;
   mol.initDir();//dn);
@@ -3287,7 +3182,6 @@ void MyWindow::load_gaus(QString fileName){
 		default: ;
 	}
 	asymmUnit[i-1].OrdZahl=mol.Get_OZ(asymmUnit[i-1].atomname);
-	//printf ("%s %d\n",asymmUnit[i-1].atomname,asymmUnit[i-1].OrdZahl);
 	if (asymmUnit[i-1].OrdZahl>-1) atmax++; else dummax++;
 	sprintf(asymmUnit[i-1].atomname,"%s(%d)",asymmUnit[i-1].atomname,i);
 	if (i>249) {fprintf(stderr,"Com-file reading accepts not more than 249 atoms!!\n");exit(0);}
@@ -3303,7 +3197,6 @@ void MyWindow::load_gaus(QString fileName){
       keineAbkuerzung=true;
     }
   if (!cartesian) {
-    //printf("Z-matrix\n");
     strcpy(line,"cordi");
     if (!keineAbkuerzung) {
       for (int j=0;j<(atmax+dummax);j++){
@@ -3324,15 +3217,14 @@ void MyWindow::load_gaus(QString fileName){
 	  while ((bn<bi)&& (strcmp(dvv,bname[bn]))) {bn++;}
 	  if (bn<bi) B[bn]=dd;
 	  while ((an<ai)&& (strcmp(dvv,aname[an]))) an++;
-	  if (an<ai) A[an]=dd;//printf("%s===%s %d\n",dvv,aname[an],an);
+	  if (an<ai) A[an]=dd;
 	  while ((dn<di)&& (strcmp(dvv,dname[dn]))) dn++;
-	  if (dn<di) D[dn]=dd;//printf("%s===%s %d\n",dvv,dname[dn],dn);
+	  if (dn<di) D[dn]=dd;
 	}
       }
     strcpy(line,"cordi");
     while ((strcmp(line,"\n"))&&(!feof(adp))){
       egals=fgets(line,181,adp);
-      //printf("BLOCK5: %s",line);
     }
     smx=atmax+dummax;
     asymmUnit[0].kart.x=0.0; 
@@ -3343,17 +3235,15 @@ void MyWindow::load_gaus(QString fileName){
     asymmUnit[1].kart.z=0.0;
     for (int j=2;j<smx;j++){
       h2=asymmUnit[j].kart=(asymmUnit[a[j-2]-1].kart-asymmUnit[b[j-1]-1].kart);
-      //Strecke ab->normieren mit laenge B multiplizieren um (ab X ad )-Achse und winkel A drehen dann um ab-Achse und winkel D drehen  
       asymmUnit[j].kart=Normalize(asymmUnit[j].kart);
       asymmUnit[j].kart*=B[j-1];
       if (j==2) {h1.x=0.0;h1.y=1.0;h1.z=0.0;}
       else
       {
 	h1=(asymmUnit[d[j-3]-1].kart-asymmUnit[b[j-1]-1].kart);
-	h1=Normalize(h1);//normier(&h1.x,&h1.y,&h1.z);
+	h1=Normalize(h1);
       }
-      //   //printf("h1 %f %f %f\n",h1.x,h1.y,h1.z);
-      h2=Normalize(h2);//normier(&h2.x,&h2.y,&h2.z);
+      h2=Normalize(h2);
       h3=h1%h2;
       h3*=-1.0;
       h3=Normalize(h3);
@@ -3403,15 +3293,10 @@ void MyWindow::load_gaus(QString fileName){
 
 
     }
-    //printf("_____\n");
-    //xxxx
-    //for (int j=0;j<atmax;j++)//printf("%-8s %15.9f %15.9f %15.9f\n",asymmUnit[j].atomname, asymmUnit[j].kart.x,asymmUnit[j].kart.y,asymmUnit[j].kart.z);
   }else{ 
     smx=atmax+dummax;mol.nListe=0;
-    //printf("%d %d %d\n",smx,atmax,dummax);
   }
 
-  //  double xs=0.0,ys=0.0,zs=0.0;
   for (int i=0;i<smx;i++)
     if (asymmUnit[i].OrdZahl>-1){
       xs+=asymmUnit[i].kart.x;
@@ -3427,9 +3312,7 @@ void MyWindow::load_gaus(QString fileName){
     asymmUnit[i].kart.z-=zs;
   }
 
-  //  dummax=0;
   fclose(adp);
-  // //printf("Gaussian file read!\n");
 
   packAct->setVisible(false);
   mol.zelle.a=1.0;
@@ -3451,7 +3334,6 @@ void MyWindow::load_gaus(QString fileName){
   cubeGL->resetENV();
   initLists(xdinp);
   cubeGL->setVisible ( true );
-  //printf("da---\n");
 }
 
 void MyWindow::openFile() {
@@ -3467,7 +3349,7 @@ void MyWindow::openFile() {
 		  "Gaussian COM-Files (*.com);;"
 		  "Gaussian FChk-Files (*.fchk);;"
 		  "CIF-Files (*.cif);;"
-		  "Protein Data Base file (*.pdb *.ent);;",&selectedFilter,QFileDialog::DontUseNativeDialog ); // */
+		  "Protein Data Base file (*.pdb *.ent);;",&selectedFilter,QFileDialog::DontUseNativeDialog ); 
   if (!fileName.isEmpty()) {
     loadFile(fileName);
   }
@@ -3476,10 +3358,6 @@ void MyWindow::openFile() {
 }
 
 void MyWindow::sortFilterDlg(){
-
-  // CEnvironment ce;
-  //Connection cl;
-
   sfdlg=new QDialog(this);
   model = new QStandardItemModel(0, (maxResi)?8:6);
   model->setHeaderData(0, Qt::Horizontal,  ("Atom name"));
@@ -3516,7 +3394,6 @@ void MyWindow::sortFilterDlg(){
   proxyView = new QTreeView();
   proxyView->setRootIsDecorated(false);
   proxyView->setAlternatingRowColors(true);
-  // proxyView->setModel(model);
   proxyView->setModel(proxyModel);
   proxyView->setSortingEnabled(true);
   proxyView->sortByColumn(1, Qt::AscendingOrder);
@@ -3568,7 +3445,6 @@ void MyWindow::sortFilterDlg(){
   proxyGroupBox->setLayout(proxyLayout);
 
   QVBoxLayout *mainLayout = new QVBoxLayout();
-  //mainLayout->addWidget(sourceGroupBox);
   mainLayout->addWidget(proxyGroupBox);
   mainLayout->insertLayout(-1,butLayout);
   sfdlg->setLayout(mainLayout);
@@ -3582,18 +3458,15 @@ void MyWindow::sortFilterDlg(){
 		  this, SLOT(valFilterChanged()));
   connect(regExpEdit, SIGNAL(textChanged(const QString &)),
 		  this, SLOT(textFilterChanged()));
-  //bool bast=
   connect(cancelBut,SIGNAL(pressed()),
 		  sfdlg,SLOT(close()));
 
   connect(okBut,SIGNAL(pressed()),
 		  this,SLOT(filterXD()));
-  //QMessageBox::information(this,"Button",QString(tr("Connection is %1").arg(bast)),QMessageBox::Ok);    
   textFilterChanged();
   valFilterChanged();
   sfdlg->setWindowTitle(("Custom Sort/Filter Model"));
   sfdlg->resize(800, 450);
-  // sfdlg->show();
   sfdlg->exec();
 }
 
@@ -3612,9 +3485,7 @@ void MyWindow::unFilter(){
       oxd.clear();}
       mol.bonds_made=0;
       mol.knopf_made=0;
-      //    printf("Test\n");
       initLists( xdinp);
-      //printf("Test\n");
       filtered=0;
       unfilterAct->setVisible(false);
       cubeGL->updateGL();
@@ -3622,7 +3493,6 @@ void MyWindow::unFilter(){
 }
 
 void MyWindow::filterXD(){
-  //printf("filtered %d !\n",filtered);
 
   unfilterAct->setVisible(true);
   if (!filtered){
@@ -3633,14 +3503,11 @@ void MyWindow::filterXD(){
   for (int i=0;((i<xdinp.size())&&(proxyModel->data(proxyModel->index(i, 3)).toInt()!=0));i++){
     fltrXdinp.append(xdinp[proxyModel->data(proxyModel->index(i, 1)).toInt()]);
   }
-  //printf("da %d\n",fltrXdinp.size());
   xdinp.clear();
   xdinp=fltrXdinp;
   mol.bonds_made=0;
   mol.knopf_made=0;
-  //printf("Test\n");
   initLists( fltrXdinp);
-  //printf("Test42\n");
   filtered=1;
   sfdlg->close();
   update();
@@ -3798,7 +3665,6 @@ void MyWindow::filterOtherFragments(){
     for (int i=0;i<xdinp.size();i++){
       if (mwi.contains(i)) fltrXdinp.append(xdinp[i]);
     }
-//    printf("hau die andern weg %d %d %d %d\n",xdinp.size(),fltrXdinp.size(),mwi.size(),bleibtda.size());
     xdinp.clear();
     xdinp=fltrXdinp;
     mol.bonds_made=0;
@@ -3817,14 +3683,12 @@ void MyWindow::textFilterChanged() {
 
 void MyWindow::valFilterChanged() {
   bool ok;
-  //   QMessageBox::information(this,"Raetsel",QString(tr("filterComboBox %1").arg(filterColumnComboBox->itemData(filterColumnComboBox->currentIndex()).toInt(&ok))),QMessageBox::Ok);  
   proxyModel->setMyIndex(filterColumnComboBox->itemData(filterColumnComboBox->currentIndex()).toInt(&ok));
   proxyModel->setFilterMinimum(fromEdit->text().toDouble());
   proxyModel->setFilterMaximum(toEdit->text().toDouble());
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// #include "mysortfilterproxymodel.h"
 
 MySortFilterProxyModel::MySortFilterProxyModel(QObject *parent) : QSortFilterProxyModel(parent) {
   myIndex=1;
@@ -3865,7 +3729,6 @@ bool MySortFilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &
   s+=sourceModel()->data(index1).toString();
   bool textMatch=s.contains(filterRegExp());
   return textMatch && valInRange(sourceModel()->data(index2).toDouble());
-  //  return valInRange(sourceModel()->data(index2).toDouble());
 }
 
 bool MySortFilterProxyModel::valInRange(const double &val) const {
@@ -3874,8 +3737,6 @@ bool MySortFilterProxyModel::valInRange(const double &val) const {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void MyWindow::setPackArt(int pa){
-  //packart=pa;
-  //  qDebug()<<pa;
   if (pa==1) mol.gd=gdedit->value();
   packdlg->accept();
   mol.bonds_made=0;
@@ -3885,8 +3746,6 @@ void MyWindow::setPackArt(int pa){
 }
 
 void MyWindow::setPackArt2(int pa){
-  //packart=pa;
-  //if (pa==1) mol.gd=gdedit->value();
   mol.bonds_made=0;
   mol.knopf_made=0;
   growSymm(pa);
@@ -3909,10 +3768,7 @@ void MyWindow::changeGD(){
 }
 
 void MyWindow::showPackDlg(){
-  //bool ok=true;
-  //if (packdlg->) delete packdlg();
   packdlg = new QDialog(this);
-  //packdlg->setMinimumSize(900,300);
   QToolButton *molpck,*cctpck,*ccmpck,*grdpck;
   QPushButton *dntpck;
   gdedit=new QDoubleSpinBox();
@@ -3923,7 +3779,6 @@ void MyWindow::showPackDlg(){
   gdedit->setSuffix(" Ang");
   gdedit->setValue(mol.gd);
   connect(gdedit,SIGNAL(valueChanged(double)),this,SLOT(setGD(double)));
-  // gdedit->setInputMask("d.dd");
   dntpck = new QPushButton();
   molpck = new QToolButton();
   cctpck = new QToolButton();
@@ -3975,7 +3830,6 @@ void MyWindow::showPackDlg(){
 }
 
 void MyWindow::loadFile(QString fileName,double GD){//empty
-  //xdMenu->hide();
   infoKanal->clear();
   QDir directory(fileName);
   dirName=directory.canonicalPath();
@@ -3993,9 +3847,6 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
   george=false;
   seReAct->setEnabled(false);
   seReAct->setVisible(false);
-  //xdSetupAct->setEnabled(false);
-  //cubeGL->unsetXDSetup();
-  // xdSetupAct->setChecked ( false );
   xdMenu->setEnabled(false);
   fck=false;
   togLuft->setVisible(false);
@@ -4066,10 +3917,8 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
       togAxen->setChecked ( cubeGL->drawAx );
       load_MoPro(fileName);
   }
-  //QMessageBox::information(this,"","ces!",QMessageBox::Ok);
   updateStatusBar();
   statusBar()->showMessage(tr("File succesfully loaded.") );
-  //QMessageBox::information(0,"smx","findChains begin",QMessageBox::Ok);
   // Zuletzt geffnete File setzen
   settings->beginGroup("Version 0.1");
   settings->setValue("lastFile", fileName );
@@ -4092,7 +3941,6 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
   }
   settings->endGroup();
   filtered=0;
-  //  std::cout<<"finenn"<<std::endl;
 }
 
 void MyWindow::openDipoleFile() {
@@ -4120,13 +3968,10 @@ void MyWindow::loadDipoleMoments(QString fileName){
   //                                                    DIPOLE                                                                      //
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//    
   QFile DIPF(fileName);//("Dipoles.in");
-  //    QList<V3> dipole,difarben;
   if (DIPF.open(QIODevice::ReadOnly)){
     QStringList zeiger,zeilen=QString(DIPF.readAll()).split("\n",QString::SkipEmptyParts);
-    //printf("XXX\n");
     for(int i=0; i<zeilen.size ();i++){
       zeiger=zeilen.at(i).split(QRegExp("[^\\-\\.0-9]+"),QString::SkipEmptyParts);
-      //      printf("-->%d %s\n",zeiger.size(),zeiger.at(0).toStdString().c_str());
       V3 dipl;
       QColor color;
       if (zeilen.at(i).contains("(")) dipl=V3(zeiger.at(0).toDouble(),zeiger.at(2).toDouble(),zeiger.at(4).toDouble());
@@ -4134,13 +3979,11 @@ void MyWindow::loadDipoleMoments(QString fileName){
       if (zeilen.at(i).contains("##")) {
 	dipl=V3(zeiger.at(0).toDouble(),zeiger.at(1).toDouble(),zeiger.at(2).toDouble());
 	color.setRgbF(zeiger.at(3).toDouble(),zeiger.at(4).toDouble(),zeiger.at(5).toDouble());
-	//	std::cout<<color.name().toStdString()<<std::endl;
 	cubeGL->farben.append(color);
       }
       if (zeilen.at(i).contains(QRegExp("color="))){
 	QString aname= zeilen.at(i).split(QRegExp("\""),QString::SkipEmptyParts).at(1);
 	color.setNamedColor(aname);
-	//	std::cout<<"test"<<color.name().toStdString()<<"!"<<aname.toStdString()<<std::endl;
 	cubeGL->farben.append(color);
       }      
       cubeGL->pole.append(dipl);
@@ -4175,61 +4018,47 @@ void MyWindow::initLists(QList<INP> xd){
  bool singleColorBonds_state = mol.singleColorBonds;
  bool tubifiedAtoms_state=mol.tubifiedAtoms;
   int adpstate=mol.adp;
-  //  {int Fehler=glGetError(); if (Fehler!=GL_NO_ERROR) { fprintf (stderr, "oOpenGL Error: %s\n",gluErrorString(Fehler)); } }
   int mx=xd.size();
   statusBar()->showMessage(tr("Draw Atoms.") );	
-  // fprintf(out,"1 %d %d\n",mol.bonds_made,mol.knopf_made);
 
 
   for (int j=0;j<mx;j++)               
     xd[j].labPos=xd[j].kart;
-  //QMessageBox::information(this,"","bbas",QMessageBox::Ok);
 
 
   if (cubeGL->bas) glDeleteLists(cubeGL->bas,10);
   cubeGL->bas=glGenLists(10);
-  //printf("%d <---\n",cubeGL->bas);
-  //mol=mkl;  
 
 
   glNewList(cubeGL->bas, GL_COMPILE );{                          //ATOME
     glPushMatrix();{
       glScaled( L, L, L );
       mol.intern=1;
-      //mol.adp=1;
       mol.atoms(xd,mol.proba);
     }glPopMatrix();    
   }glEndList();
 
 
-  //  {int Fehler=glGetError(); if (Fehler!=GL_NO_ERROR) { fprintf (stderr, "oOpenGL Error: %s\n",gluErrorString(Fehler)); } }
 
   glNewList(cubeGL->bas+8, GL_COMPILE );{       //bonds in single color
     glPushMatrix();{
       glScaled( L, L, L );
       mol.intern=1;
-      //      cubeGL->qglColor(mol.bondColor);
       mol.singleColorBonds=true;
       mol.bonds(xd);
     }glPopMatrix();    
   }glEndList();
-  //  {int Fehler=glGetError(); if (Fehler!=GL_NO_ERROR) { fprintf (stderr, "oOpenGL Error: %s\n",gluErrorString(Fehler)); } }
 
 
-  // printf("%d <---\n",cubeGL->bas);  
   glNewList(cubeGL->bas+7, GL_COMPILE );{                          //ATOME
     glPushMatrix();{
       glScaled( L, L, L );
       mol.intern=0;
-      //mol.adp=1;
       mol.atoms(xd,mol.proba);
     }glPopMatrix();    
   }glEndList();
-  //  {int Fehler=glGetError(); if (Fehler!=GL_NO_ERROR) { fprintf (stderr, "oOpenGL Error: %s\n",gluErrorString(Fehler)); } }
 
 
-  //printf("2\n");
-  //QMessageBox::information(this,"elliatom","ok",QMessageBox::Ok);	
   glNewList(cubeGL->bas+4, GL_COMPILE );{                          //ATOME
     glPushMatrix();{
       glScaled( L, L, L );
@@ -4237,24 +4066,18 @@ void MyWindow::initLists(QList<INP> xd){
       mol.atoms(xd,50);
     }glPopMatrix();    
   }glEndList();
-  //  {int Fehler=glGetError(); if (Fehler!=GL_NO_ERROR) { fprintf (stderr, "oOpenGL Error: %s\n",gluErrorString(Fehler)); } }
 
   glNewList(cubeGL->bas+9, GL_COMPILE );{       //Atome fuer tube syle
     glPushMatrix();{
       glScaled( L, L, L );
       mol.intern=1;
-      //mol.adp=1;
       mol.tubifiedAtoms=true;
       mol.atoms(xd,mol.proba);
     }glPopMatrix();    
   }glEndList();
   mol.tubifiedAtoms=false;
-  //  {int Fehler=glGetError(); if (Fehler!=GL_NO_ERROR) { fprintf (stderr, "oOpenGL Error: %s\n",gluErrorString(Fehler)); } }
 
 
-  // printf("3 %d\n",mol.bonds_made);
-  //statusBar()->showMessage(tr("Draw Bonds.") );	
-  //QMessageBox::information(this,"atom",QString(tr("atome %1 %2").arg(atmax).arg(smx)),QMessageBox::Ok);	
   glNewList(cubeGL->bas+1, GL_COMPILE );{                          //BONDS
     glPushMatrix();{
       glScaled( L, L, L );
@@ -4263,57 +4086,44 @@ void MyWindow::initLists(QList<INP> xd){
       mol.bonds(xd);
     }glPopMatrix();    
   }glEndList();
-  //  {int Fehler=glGetError(); if (Fehler!=GL_NO_ERROR) { fprintf (stderr, "mol.bondsoOpenGL Error: %s\n",gluErrorString(Fehler)); } }
 
 
   mol.adp=adpstate;
-  //  printf("4\n");
 
-  //QMessageBox::information(this,"bond","bond ok",QMessageBox::Ok);	
   if (cubeGL->drawAx) {
 
     statusBar()->showMessage(tr("Draw local coordinate systems.") );	
     togAxen->setVisible(true);
-    //QMessageBox::information(this,"dim","darf nich",QMessageBox::Ok);	
     glNewList(cubeGL->bas+2, GL_COMPILE );{                          //Axen
-      //glClear( GL_DEPTH_BUFFER_BIT);
       glDisable( GL_DEPTH_TEST ); 
       glPushMatrix();{
-	//      glTranslated( -L/2.0, -L/2.0, -L/2.0 );
 	glScaled( L, L, L );
 	mol.axes(xd); 
       }glPopMatrix();    
       glEnable( GL_DEPTH_TEST );
     }glEndList();
-    //  {int Fehler=glGetError(); if (Fehler!=GL_NO_ERROR) { fprintf (stderr, "mol.axesoOpenGL Error: %s\n",gluErrorString(Fehler)); } }
   }
   else togAxen->setVisible(false);
   togUnit->setVisible(packAct->isVisible());
   if (packAct->isVisible()) {
 
-    //QMessageBox::information(this,"","unitcell",QMessageBox::Ok);
     statusBar()->showMessage(tr("Draw unit cell.") );
-    //togUnit->setChecked(true);
     glNewList(cubeGL->bas+3, GL_COMPILE );{                          //Unit Zell
       glPushMatrix();{
-	//      glTranslated( -L/2.0, -L/2.0, -L/2.0 );
 	glScaled( L, L, L );           
 	mol.UnitZell(); 
       }glPopMatrix();    
     }glEndList();
-    //  {int Fehler=glGetError(); if (Fehler!=GL_NO_ERROR) { fprintf (stderr, "mol.UnitZelloOpenGL Error: %s\n",gluErrorString(Fehler)); } }
   }
   if (mol.HAMax!=0.0){
 
     statusBar()->showMessage(tr("Draw H-bonds.") );	
     glNewList(cubeGL->bas+5, GL_COMPILE );{                          //H...X-Bindungen
       glPushMatrix();{
-	//      glTranslated( -L/2.0, -L/2.0, -L/2.0 );
 	glScaled( L, L, L );
 	hbKanal->setHtml(mol.h_bonds(xd));
       }glPopMatrix();    
     }glEndList();
-    //  {int Fehler=glGetError(); if (Fehler!=GL_NO_ERROR) { fprintf (stderr, "mol.h_bondsoOpenGL Error: %s\n",gluErrorString(Fehler)); } }
     if (!hbKanal->toPlainText().isEmpty()){
       dock2->show();
       dock2->raise();
@@ -4328,7 +4138,6 @@ void MyWindow::initLists(QList<INP> xd){
       mol.drawSline(mol.vL,mol.nListe);
       glPopMatrix();
     }glEndList();
-    //  {int Fehler=glGetError(); if (Fehler!=GL_NO_ERROR) { fprintf (stderr, "mol.h_bondswSlineOpenGL Error: %s\n",gluErrorString(Fehler)); } }
   }
   for (int i=0; i<mx; i++)
     xdinp[i]=xd[i];
@@ -4354,7 +4163,6 @@ void MyWindow::updateRecentFileActions() {
   for (int j = numRecentFiles; j < MaxRecentFiles; ++j)
     recentFileActs[j]->setVisible(false);
 
-  //separatorAct->setVisible(numRecentFiles > 0);
 
   settings.endGroup();
 }
@@ -4377,18 +4185,15 @@ void MyWindow::zoomIn() {
 void MyWindow::zoomOut() {
 
   cubeGL->zoom(-0.1);
-  //editor->setAlignment(Qt::AlignRight);
 }
 
 void MyWindow::rotLeft() {
   cubeGL->rotY(0.1);
-  //editor->setAlignment(Qt::AlignJustify);
 }
 
 void MyWindow::rotRight() {
  double spd=speedSldr->value()/63.0;
   cubeGL->rotY(-0.1*spd);
-  //editor->setAlignment(Qt::AlignCenter);
 }
 
 void MyWindow::moveR(){
@@ -4434,13 +4239,11 @@ void MyWindow::updateStatusBar(const QString& s) {
 
 void MyWindow::updateStatusBar() {
   QString label =   QString(tr("%1 @ %2").arg(CID).arg(dirName.mid(dirName.lastIndexOf('/')+1)));//
-    //  QMessageBox::information(this,"Compound ID",QString(tr("CID %1 ").arg(CID)),QMessageBox::Ok);
    sLabel->setText(label);   
    if ((cubeGL->afilename=="xd.res")||(cubeGL->afilename=="xd.mas")||(cubeGL->afilename=="xd.inp"))
      cubeGL->afilename=QString(CID);
    cubeGL->CID=CID;
 }
-// Zeit in der Statusleiste
 
 void MyWindow::paintEvent(QPaintEvent *){
    if (cubeGL->stereo_mode==1) cubeGL->minus->setChecked((geometry().y()+cubeGL->y())%2);
@@ -4450,19 +4253,14 @@ void MyWindow::paintEvent(QPaintEvent *){
    if (cubeGL->stereo_mode==1) cubeGL->minus->setChecked((geometry().y()+cubeGL->y())%2);
 }
 void MyWindow::updateTime() {
-   // Aktuelles Datum und Uhrzeit
    QDateTime Time = QDateTime::currentDateTime();
-   // Formatieren
    QString text = Time.toString("dd.MM.yyyy hh:mm:ss");
-   // Anzahl der Ziffern setzen
    time->setNumDigits(text.size()+1);
    time->display(text);
 
 }
 
-// Wird ausgefhrt, bevor das Fenster geschlossen wird
 void MyWindow::closeEvent(QCloseEvent *event)  {
-//  printf("Tschuessle\n");
    settings->beginGroup("Version 0.1");
    settings->setValue("size", size() );
    settings->setValue("position", pos() );
@@ -4496,8 +4294,6 @@ void MyWindow::closeEvent(QCloseEvent *event)  {
    settings->setValue("singleColorBonds",mol.singleColorBonds);   
    settings->setValue("LabelFont",cubeGL->myFont);
    settings->setValue("MolisoLegendFont",cubeGL->MLegendFont);
-//   settings->setValue("Tex1FileName",cubeGL->Tex1FileName);
-//   settings->setValue("Tex2FileName",cubeGL->Tex2FileName);
    settings->beginWriteArray("AtomColors",107);   
    for (int i = 0; i < 107; ++i) {
      settings->setArrayIndex(i);
@@ -4522,37 +4318,25 @@ void MyWindow::closeEvent(QCloseEvent *event)  {
    settings->setValue("InvertMouseZoom",(cubeGL->invertMouseZoom->checkState()==Qt::Checked));
    settings->setValue("BackgroundGradient",(back_Grad->isChecked()));//TOGGLE STATES
    settings->setValue("UnitCell",(togUnit->isChecked()));//TOGGLE STATES
-//   settings->setValue()//TOGGLE STATES
-//   settings->setValue()//TOGGLE STATES
-//   settings->setValue()//TOGGLE STATES
-//   settings->setValue()//TOGGLE STATES
-//   settings->setValue()//TOGGLE STATES
    settings->endGroup();
- //  printf("Adele\n");
    if ((cubeGL->moliso)&&(!cubeGL->moliso->faceFile.isEmpty())) {
-    // printf("aDele\n");
       destroyMoliso();
    }
    event->accept();
-   //if(out) fclose(out);
-  // printf("adele\n");
 }
 
 void MyWindow::readXDPartAux(){
   QFile aux("xd_part.aux");  
   bool b;
   b= aux.open(QIODevice::ReadOnly);
-//  printf("hallo %d\n",b);
   QString auxTxt = aux.readAll(); 
   aux.close();
   QStringList lines = auxTxt.split("\n",QString::SkipEmptyParts);
-//  printf("%d %d \n",lines.size(),atmax);
   if ((lines.size()!=atmax+1)&&(lines.size()!=atmax)) return;
   for (int j=0; j < atmax; j++){ 
     if (asymmUnit[j].OrdZahl<0) continue;   
     QStringList token = lines.at(j).split(" ",QString::SkipEmptyParts);
     asymmUnit[j].part=token.at(2).toInt();
-   // printf("%d %s %s %s\n",asymmUnit[j].part,asymmUnit[j].atomname,token.at(0).toStdString().c_str(),token.at(2).toStdString().c_str());
   }
 }
 
@@ -4582,7 +4366,7 @@ void MyWindow::makeXDPartAux(){
   if ((!asymmUnit.isEmpty())&&(atmax)){
     const double TOLERANZ = 0.001;
     QStringList befehle;
-    befehle  <<"ACTA" << "AFIX" << "AGS4" << "ANIS" << "BASF" << "BIND" << "BLOC" << "BOND" << "BUMP" << "CELL" << "CGLS" << "CHIV" << "CONF" << "CONN" << "DAMP" << "DANG" <<
+    befehle  <<"ACTA" << "AFIX" << "MPLA" << "ANIS" << "BASF" << "BIND" << "BLOC" << "BOND" << "BUMP" << "CELL" << "CGLS" << "CHIV" << "CONF" << "CONN" << "DAMP" << "DANG" <<
 			 "DEFS" << "DELU" << "DFIX" << "DISP" << "EADP" << "EGEN" << "END" <<  "EQIV" << "ESEL" << "EXTI" << "EXYZ" << "FEND" << "FLAT" << "FMAP" << "FRAG" << "FREE" << 
 			 "FVAR" << "GRID" << "HFIX" << "HKLF" << "HOPE" << "HTAB" << "INIT" << "ISOR" << "LAST" << "LATT" << "LAUE" << "LIST" << "L.S." << "MERG" << "MOLE" << "MORE" << 
 			 "MOVE" << "NCSY" << "OMIT" << "PART" << "PATT" << "PHAN" << "PHAS" << "PLAN" << "PSEE" << "REM" <<  "RESI" << "RTAB" << "SADI" << "SAME" << "SFAC" << "SHEL" << 
@@ -4652,17 +4436,6 @@ inline int trindex(int i,int j){
   return (I*(I+1)/2-I+J-1);
 }
 
-/*   struct SdmItem{
-     double d;
-     int a1,a2,sn;
-     V3 floorD;
-     bool covalent;
-   };
-
-inline bool operator < (const SdmItem &a1, const SdmItem &a2){
-  return (a1.d<a2.d);
-}
-*/
 void MyWindow::SDM(QStringList &brauchSymm,int packart){
   // George Sheldrick Seminar ideas
   printf("starte SDM %d %d \n",mol.zelle.symmops.size(),asymmUnit.size());
@@ -4671,7 +4444,6 @@ void MyWindow::SDM(QStringList &brauchSymm,int packart){
   double dk,dddd;
   V3 prime,dp,D,floorD;
   QList<SdmItem> sdm;
-  //QStringList brauchSymm;
   QString bs;
   SdmItem sdmItem;
   sdmItem.a1=0;
@@ -4697,7 +4469,6 @@ void MyWindow::SDM(QStringList &brauchSymm,int packart){
 	  sdmItem.sn=n;
 	}
 	else if ((asymmUnit.at(i).OrdZahl>=0)&&(dk<=0.1)){
-	  //printf("%s===%s %d %3.0f %3.0f %3.0f\n",asymmUnit.at(i).atomname,asymmUnit.at(j).atomname,n,floorD.x,floorD.y,floorD.z);
 	  asymmUnit[i].imul++;
 	}
       }
@@ -4712,7 +4483,6 @@ void MyWindow::SDM(QStringList &brauchSymm,int packart){
       }else sdmItem.covalent=false;
       sdm.append(sdmItem);
     } 
-//    printf("%s Site symmetry multiplicity %d\n",asymmUnit.at(i).atomname,asymmUnit.at(i).imul);
   }
 
  if (packart!=1){ 
@@ -4748,7 +4518,6 @@ void MyWindow::SDM(QStringList &brauchSymm,int packart){
 	floorD=V3(floor(D.x),floor(D.y),floor(D.z));	 
 	dp=D - floorD - V3(0.5,0.5,0.5);
 	if ((n==0)&&(V3(0,0,0)==floorD)) continue;
-//	printf("%d/%d %d/%d %d %d %f %f %f\n",n,mol.zelle.symmops.size(),k,sdm.size(),sdm.at(k).a2,sdm.at(k).a1,floorD.x, floorD.y, floorD.z);
 	dk=fl(dp.x,dp.y,dp.z);
 	dddd=(sdm.at(k).d+0.02);
 	if ( (dk>0.01)&&(dddd>=dk)) {
@@ -4760,28 +4529,6 @@ void MyWindow::SDM(QStringList &brauchSymm,int packart){
       } 
     }
   }
-
-  /* AUSGABE DER SDM */
-  /*
-     for ( int i=0; i<asymmUnit.size(); i++){
-     if (asymmUnit[i].OrdZahl<0)continue;
-     printf("%-12s ",asymmUnit[i].atomname);
-     for (int j=0; j<=i; j++){ 
-     if (sdm.at(trindex(i,j)).covalent)printf("\e[44m\e[93m");
-     printf("%8.2f", sdm.at(trindex(i,j)).d);
-     if (sdm.at(trindex(i,j)).covalent)printf("\e[0m");
-     }
-     printf("\n              ");
-     for (int j=0; j<=i; j++) {
-  //       printf("\e[1%02dm\e[34m",sdm.at(trindex(i,j)).sn%8);
-  printf("%3d_%1.0f%1.0f%1.0f ", sdm.at(trindex(i,j)).sn+1, 5-sdm.at(trindex(i,j)).floorD.x,5-sdm.at(trindex(i,j)).floorD.y,5-sdm.at(trindex(i,j)).floorD.z);
-  } 
-  printf("\n");
-  }
-  printf("                ");
-  for (int i=0; i<asymmUnit.size(); i++)
-  if (asymmUnit[i].OrdZahl>=0)printf("%-7s ",asymmUnit[i].atomname);
-  printf("\n");// */
 
   qSort(sdm.begin(),sdm.end());
   ///Hier der geheime UNIQE algo von George zum testen; PK und HL von XD haben OrdZahl==-3
@@ -4795,71 +4542,6 @@ void MyWindow::SDM(QStringList &brauchSymm,int packart){
 	flags[sdm.at(i).a1]=1;
       }
     }
-  //hier will ich das molekuel erweitern wenn es noch weitere sphaeren hat die nicht direct an die au gebunden sind...
-  /*
-  int s,h,k,l,gibscho=0,symmgroup;
-  for (int j=0; j<brauchSymm.size();j++){
-    sscanf(brauchSymm[j].toLatin1(),"%d_%1d%1d%1d:%d",&s,&h,&k,&l,&symmgroup);
-    h-=5;
-    k-=5;
-    l-=5;
-    s--;
-    for (int i=0;i<asymmUnit.size();i++){
-      if ((asymmUnit[i].molindex==symmgroup)&&(asymmUnit[i].OrdZahl>-1)) {
-	prime=mol.zelle.symmops[s]*asymmUnit[i].frac+mol.zelle.trans.at(s)+V3(h,k,l);
-	for (int n=0;n<mol.zelle.symmops.size(); n++){
-	  for (int k=0; k<asymmUnit.size();k++){
-	    V3 dprime=mol.zelle.symmops.at(n) * asymmUnit[k].frac + mol.zelle.trans.at(n);
-	    D=prime - dprime + V3(0.5,0.5,0.5);
-	    floorD=V3(floor(D.x),floor(D.y),floor(D.z));	 
-	    if ((floorD==V3(0,0,0))&&(n==0)) continue;
-	    dp=D - floorD - V3(0.5,0.5,0.5);
-	    dddd=(mol.Kovalenz_Radien[asymmUnit[i].OrdZahl]+ mol.Kovalenz_Radien[asymmUnit[k].OrdZahl])*0.012;
-	    dk=fl(dp.x,dp.y,dp.z);
-	    if ((dk>0.01)&&(dddd>dk)){  
-	      bs=QString("%1_%2%3%4:%5,").arg(n+1).arg(5-(int)floorD.x).arg(5-(int)floorD.y).arg(5-(int)floorD.z).arg(asymmUnit[i].molindex);
-	      if  (!brauchSymm.contains(bs)) {
-		brauchSymm.append(bs);
-	      }
-	    }
-	  }
-	}
-      }
-    }
-  }
-  // */
-  /*
-  if ((!brauchSymm.isEmpty())&&(brauchSymm.size()*asymmUnit.size()<10000)) //wenn man noch nichts gefunden hat wird man hier auch nie was finden!!!
-    for (int i=0;i < asymmUnit.size();i++){
-      if (asymmUnit[i].OrdZahl<0)continue;
-      if (asymmUnit[i].molindex<1)continue;
-      for (int k=0;k <= i;k++){
-	if (asymmUnit[k].OrdZahl<0)continue;
-	if (asymmUnit[k].molindex<1)continue;
-	for (int j=0; j < sdm.size(); j++){
-	  if (asymmUnit[k].molindex!=asymmUnit[sdm.at(j).a1].molindex)continue;
-	  if (((packart==1)||(sdm.at(j).covalent))&&(!((sdm.at(j).sn==0)&&(sdm.at(j).floorD==V3(0,0,0))))){
-	    for (int n=0;n<mol.zelle.symmops.size();  n++){
-	      prime=mol.zelle.symmops.at(n) * asymmUnit[i].frac + mol.zelle.trans.at(n);
-	      V3 dprime=mol.zelle.symmops.at(sdm.at(j).sn) * asymmUnit[k].frac + mol.zelle.trans.at(sdm.at(j).sn)-sdm.at(j).floorD;
-	      D=prime - dprime + V3(0.5,0.5,0.5);
-	      floorD=V3(floor(D.x),floor(D.y),floor(D.z));	 
-	      if ((floorD==V3(0,0,0))&&(n==0)) continue;
-	      dp=D - floorD - V3(0.5,0.5,0.5);
-	      dddd=(mol.Kovalenz_Radien[asymmUnit[i].OrdZahl]+ mol.Kovalenz_Radien[asymmUnit[k].OrdZahl])*0.012;
-	      dk=fl(dp.x,dp.y,dp.z);
-	      if ((dk>0.01)&&(dddd>dk)){  
-		bs=QString("%1_%2%3%4:%5,").arg(n+1).arg(5-(int)floorD.x).arg(5-(int)floorD.y).arg(5-(int)floorD.z).arg(asymmUnit[i].molindex);
-		if  (!brauchSymm.contains(bs)) {
-		  brauchSymm.append(bs);
-		}
-	      }
-	    } 
-	  }
-	}
-      }
-    }// */
-  //bsx=brauchSymm;   
   while (brauchSymm.contains("1_555:")){
     brauchSymm.removeAt(brauchSymm.indexOf(QRegExp("1_555:\\d+")));
   }
@@ -4867,9 +4549,6 @@ void MyWindow::SDM(QStringList &brauchSymm,int packart){
 }
 
 void MyWindow::growSymm(int packart,int packatom){
-  //  printf("Grow !%d\n",packart);
-  //  dock->hide();
-  //  dock2->hide();
   QTime speedTest;
   speedTest.start();
   cubeGL->setVisible(false);
@@ -4899,9 +4578,6 @@ void MyWindow::growSymm(int packart,int packatom){
   if (packart) {
     unFilter();
     double SUCHRAD=mol.gd;
-//    V3 *xdsymm;
-    //char *sn, brauchSymm[600][9],bs[20];
-//    if ((xdsymm=(V3*)malloc(sizeof(V3)*(asymmUnit.size())))==NULL) {perror("INP");exit(4);}
     if (packart==4){//packe die Zelle
       V3 prime,floorD;
       for (int i=0; i<asymmUnit.size();i++)
@@ -4947,11 +4623,9 @@ void MyWindow::growSymm(int packart,int packatom){
 	    }
 	}
       }
-      //qDebug()<<xdinp.size()<<brauchSymm.size();
       statusBar()->showMessage(tr("Neighbor search is finished"));
 
     }
-    //4
     if (packart==3){//packe und schneide die Zelle
       V3 prime,floorD;
       double dawars=1000.0,dl;
@@ -4966,7 +4640,6 @@ void MyWindow::growSymm(int packart,int packatom){
 	      if ((xdinp[i].OrdZahl*xdinp[g].OrdZahl<0)) continue;
 	      dl=fl(prime.x-xdinp[g].frac.x, prime.y-xdinp[g].frac.y, prime.z-xdinp[g].frac.z);
 	      dawars=(dl<dawars)?dl:dawars;
-	      //	    if (dawars<0.01) break;
 	    }
 	    if (dawars<0.1) continue; // */
 	    bs=QString("%1_%2%3%4:%5,").arg(n+1).arg(5-(int)floorD.x).arg(5-(int)floorD.y).arg(5-(int)floorD.z).arg(asymmUnit.at(i).molindex);
@@ -4977,8 +4650,6 @@ void MyWindow::growSymm(int packart,int packatom){
 	    newAtom.frac=prime;
 	    newAtom.OrdZahl=asymmUnit[i].OrdZahl;
 	    newAtom.molindex=asymmUnit[i].molindex;
-	    //	  char namedum[80];
-	    //	  strncpy(namedum,asymmUnit[i].atomname,70);
 	    sprintf(newAtom.atomname,"%s'",asymmUnit[i].atomname);//,strtok(namedum,"'"));//,n+1);_%d",namedum,lzz);
 	    newAtom.sg=1;
 	    if ((asymmUnit[i].u.m12==0.0)&&(asymmUnit[i].u.m23==0.0)&&(asymmUnit[i].u.m13==0.0)){
@@ -4993,145 +4664,10 @@ void MyWindow::growSymm(int packart,int packatom){
 	    smx++;
 	  }
       }
-      //
-      //
-      /*
-	 for (int n=0;n<mol.zelle.symmops.size();n++) {
-	 int movx=0,movy=0,movz=0;
-	 if (mol.zelle.tx.contains(n)) movx+=1;
-	 if (mol.zelle.ty.contains(n)) movy+=1;
-	 if (mol.zelle.tz.contains(n)) movz+=1;
-	 for (int h=minG;h<maxG;h++)
-	 for (int k=minG;k<maxG;k++)
-	 for (int l=minG;l<maxG;l++)
-	 for (int i=0;i<asymmUnit.size();i++) {
-	 if (asymmUnit[i].OrdZahl<0) continue;
-	 if ((h==0)&&(k==0)&&(l==0)&&(n==0)) continue;
-	 xdsymm[i]=mol.zelle.symmops[n]*asymmUnit[i].frac+mol.zelle.trans.at(n)+V3(h+movx,k+movy,l+movz);
-	 if ((xdsymm[i].x>=-0.01)&&(xdsymm[i].x<=1.01)&&
-	 (xdsymm[i].y>=-0.01)&&(xdsymm[i].y<=1.01)&&
-	 (xdsymm[i].z>=-0.01)&&(xdsymm[i].z<=1.01)){
-	 double dawars=1000.0;
-	 for (int g=0; g<asymmUnit.size();g++){
-	 if ((asymmUnit[i].OrdZahl<0)||(asymmUnit[g].OrdZahl<0)) continue;
-	 double dl=fl(xdsymm[i].x-asymmUnit[g].frac.x,
-	 xdsymm[i].y-asymmUnit[g].frac.y,
-	 xdsymm[i].z-asymmUnit[g].frac.z);
-	 dawars=(dl<dawars)?dl:dawars;
-	 }
-	 if (dawars<0.01) continue;
-	 if ((xdsymm=(V3*)realloc(xdsymm,sizeof(V3)*(asymmUnit.size()+5)))==NULL) {perror("V3 realloc");exit(5);}
-	 bs=QString("%1_%2%3%4,").arg(n+1).arg(5+h+movx).arg(5+k+movy).arg(5+l+movz);
-	 if (!brauchSymm.contains(bs)) brauchSymm.append(bs);
-	 newAtom.part=0;
-	 newAtom.frac=xdsymm[i];
-	 newAtom.OrdZahl=asymmUnit[i].OrdZahl;
-	 newAtom.molindex=asymmUnit[i].molindex;
-	 char namedum[80];
-	 strncpy(namedum,asymmUnit[i].atomname,70);
-	 sprintf(newAtom.atomname,"%s_%d",namedum,brauchSymm.size()/6);//,strtok(namedum,"'"));//,n+1);
-	 if ((asymmUnit[i].u.m12==0.0)&&(asymmUnit[i].u.m23==0.0)&&(asymmUnit[i].u.m13==0.0)){
-	 newAtom.uf.m11=newAtom.u.m11=newAtom.u.m22=newAtom.u.m33=asymmUnit[i].uf.m11;
-	 newAtom.u.m12=newAtom.u.m13=newAtom.u.m23=newAtom.u.m21=newAtom.u.m31=newAtom.u.m32=0.0;
-	 }
-	 else {
-	 Usym(asymmUnit[i].uf,mol.zelle.symmops[n],newAtom.uf);
-	 Uf2Uo(newAtom.uf,newAtom.u);
-	 }
-	 xdinp.append(newAtom);
-	 smx++;
-	 }
-	 }
-	 }
-      // */
       infoKanalNews(QString("Used Symmetry:<br>%1").arg(mol.symmcode2human(brauchSymm)));
       printf("%d\n",smx);
     } 
-    //3
-    /*
-       if (packart==1){//Im suchradius nach nachbarn suchen
-       qDebug()<<"KaeseKuchenPferdeMelkmaschine";
-       for (int n=0;n<mol.zelle.symmops.size();n++) {//n
-       for (int h=minG;h<maxG;h++){
-       for (int k=minG;k<maxG;k++){
-       for (int l=minG;l<maxG;l++){
-       for (int i=0;i<asymmUnit.size();i++) {
-       if ((h==0)&&(k==0)&&(l==0)&&(n==0)) continue;
-       if (asymmUnit[i].OrdZahl<0) continue;
-       xdsymm[i]=mol.zelle.symmops.at(n)*asymmUnit[i].frac+mol.zelle.trans.at(n)+V3(h+movx,k+movy,l+movz);
-       for (int j=0;j<asymmUnit.size(); j++){
-       if (asymmUnit[j].OrdZahl<0) continue;
-       if ((i==j)&&(!h)&&(!k)&&(!l)) continue;
-       double laen=fl(xdsymm[i].x-asymmUnit[j].frac.x,xdsymm[i].y-asymmUnit[j].frac.y,xdsymm[i].z-asymmUnit[j].frac.z);
-       if ((laen>0.2)&&(laen<SUCHRAD)){
-       bs=QString("%1_%2%3%4,").arg(n+1).arg(5+h+movx).arg(5+k+movy).arg(5+l+movz);
-       if (!brauchSymm.contains(bs)) brauchSymm.append(bs);
-       }
-       }
-       }
-       }
-       }
-       }
-
-       }
-       statusBar()->showMessage(QString(tr("Symmetry operations: %1").arg(brauchSymm)));
-       int s,h,k,l,gibscho=0,symmgroup;
-       infoKanalNews(QString("Used Symmetry:<br>%1").arg(mol.symmcode2human(brauchSymm)));
-       for (int j=0;j<brauchSymm.size();j++){
-       sscanf(brauchSymm[j].toLatin1(),"%d_%1d%1d%1d:%d",&s,&h,&k,&l,&symmgroup);
-       h-=5;
-       k-=5;
-       l-=5;
-       s--;
-       for (int i=0;i<asymmUnit.size();i++) 
-       if ((asymmUnit[i].molindex==symmgroup)&&(asymmUnit[i].OrdZahl>-1)){
-       newAtom.frac=mol.zelle.symmops.at(s)*asymmUnit[i].frac+mol.zelle.trans.at(s)+V3(h,k,l);
-       sprintf(newAtom.atomname,"%s_%d",asymmUnit[i].atomname,j+1);
-       newAtom.OrdZahl=asymmUnit[i].OrdZahl;
-       newAtom.molindex=asymmUnit[i].molindex;
-       if ((asymmUnit[i].u.m12==0.0)&&(asymmUnit[i].u.m23==0.0)&&(asymmUnit[i].u.m13==0.0)){
-       newAtom.u.m11=newAtom.u.m22=newAtom.u.m33=asymmUnit[i].uf.m11;
-       newAtom.u.m12=newAtom.u.m13=newAtom.u.m23=newAtom.u.m21=newAtom.u.m31=newAtom.u.m32=0.0;}
-       else {
-       Usym(asymmUnit[i].uf,mol.zelle.symmops[s],newAtom.uf);
-       Uf2Uo(newAtom.uf,newAtom.u);}
-       gibscho=0;
-       for(int gbt=0;gbt<xdinp.size();gbt++){
-       if (xdinp.at(gbt).OrdZahl<0) continue;
-       if (fl(newAtom.frac.x-xdinp[gbt].frac.x,newAtom.frac.y-xdinp[gbt].frac.y,newAtom.frac.z-xdinp[gbt].frac.z)<0.2) gibscho=1;
-       }
-       if (!gibscho) {
-       xdinp.append(newAtom);
-       }
-       }
-       }
-       statusBar()->showMessage(tr("Neighbor search is finished"));
-       } // */ 
     if ((packart==5)&&(packatom>-1)){//expand around given atom
-      /*
-	 for (int n=0;n<mol.zelle.symmops.size();n++) {//n
-	 int movx=0,movy=0,movz=0;
-	 if (mol.zelle.tx.contains(n)) movx+=1;
-	 if (mol.zelle.ty.contains(n)) movy+=1;
-	 if (mol.zelle.tz.contains(n)) movz+=1;
-	 for (int h=minG;h<maxG;h++){
-	 for (int k=minG;k<maxG;k++){
-	 for (int l=minG;l<maxG;l++){
-	 for (int i=0;i<asymmUnit.size();i++) {
-	 if ((h+movx==0)&&(k+movy==0)&&(l+movz==0)&&(n==0)) continue;
-	 if (asymmUnit[i].OrdZahl<0) continue;
-	 xdsymm[i]=mol.zelle.symmops.at(n)*asymmUnit[i].frac+mol.zelle.trans.at(n)+V3(h+movx,k+movy,l+movz);
-	 if ((i==packatom)&&(!h)&&(!k)&&(!l)) continue;
-	 double laen=fl(xdsymm[i].x-expander.x,xdsymm[i].y-expander.y,xdsymm[i].z-expander.z);
-	 if ((laen>0.2)&&(laen<SUCHRAD)){
-	 bs=QString("%1_%2%3%4:%5,").arg(n+1).arg(5+h+movx).arg(5+k+movy).arg(5+l+movz).arg(asymmUnit[i].molindex);
-	 if (!brauchSymm.contains(bs)) brauchSymm.append(bs);
-	 }
-	 }
-	 }
-	 }
-	 } 
-	 }// */
       V3 prime,floorD,D;
       double dk;
       for (int n=0; n<mol.zelle.symmops.size();n++){
@@ -5245,7 +4781,6 @@ void MyWindow::growSymm(int packart,int packatom){
   }
   xs/=(atoms);ys/=(atoms);zs/=(atoms);
 
-  //  qDebug()<<atoms<<smx<<xs<<ys<<zs;
   for (int i=0; i<smx; i++){
     xdinp[i].kart.x-=xs;
     xdinp[i].kart.y-=ys;
@@ -5265,8 +4800,6 @@ void MyWindow::growSymm(int packart,int packatom){
 	xdinp[i].ax2= xdinp[i].ax3 %xdinp[i].ax1;
 	xdinp[i].ax2=Normalize(xdinp[i].ax2);
 
- //       printf("A---%d->%d %d->%d %d %d \n",i,asymmUnit[i].nax,asymmUnit[i].nay1,asymmUnit[i].nay2, asymmUnit[i].icor1,asymmUnit[i].icor2);
-//       printf("B---%d->%d %d->%d %d %d %f %f %f\n",i,xdinp[i].nax,xdinp[i].nay1,xdinp[i].nay2, xdinp[i].icor1,xdinp[i].icor2, Norm(xdinp[i].ax1),Norm(xdinp[i].ax2),Norm(xdinp[i].ax3));
         int probe = xdinp[i].icor1-xdinp[i].icor2;
 	probe=(probe<0)?(probe+3)%2:probe%2;
 	if (probe) xdinp[i].lflag*=-1;
@@ -5283,7 +4816,6 @@ void MyWindow::growSymm(int packart,int packatom){
   uz6f.x=0.0;  uz6f.y=1.0;  uz6f.z=1.0;
   uz7f.x=1.0;  uz7f.y=1.0;  uz7f.z=1.0;
   V3 Vs;
-  //  printf("xs %f ys %f zs %f\n",xs,ys,zs);
   Vs.x=xs;
   Vs.y=ys;
   Vs.z=zs;
@@ -5297,7 +4829,6 @@ void MyWindow::growSymm(int packart,int packatom){
   mol.frac2kart(uz7f,mol.uz7k);mol.uz7k=mol.uz7k-Vs;//
 
   if ((Norm(atom1Pos)>0)&&(Norm(atom2Pos)>0)){
-    //    printf("wir haben Surfaze\n");
     Matrix OM;//,OM1[9],OM2[9],OM3[9];
     V3 r1,r2,r3,t1,t2,t3;
     double l1,l2,kl1,kl2;
@@ -5370,10 +4901,6 @@ void MyWindow::growSymm(int packart,int packatom){
     }
 
     Vs=atom1Pos-xdinp[idx1].kart;
-    /*printf("%d %s\n",idx1,xdinp[idx1].atomname);
-      printf("%f %f %f\n",atom1Pos.x,atom1Pos.y,atom1Pos.z);
-      printf("%f %f %f\n",xdinp[idx1].kart.x,xdinp[idx1].kart.y,xdinp[idx1].kart.z);
-      printf("%f %f %f\n",Vs.x,Vs.y,Vs.z);*/
     for(int i=0; i<smx;i++){
       xdinp[i].kart+=Vs;
       Usym(xdinp[i].u,OM,xdinp[i].u);
@@ -5413,7 +4940,6 @@ void MyWindow::growSymm(int packart,int packatom){
     mol.uz7k=mol.uz7k+Vs;
   }
 
-  //QMessageBox::information(this,"Filename",QString(tr("do net%1").arg(xdinp[0].OrdZahl)),QMessageBox::Ok);
   double dim=dimension(xdinp);
   if (Norm(atom1Pos)==0) L=100.0/dim;
   if (mol.nListe>2) {
@@ -5438,5 +4964,4 @@ void MyWindow::growSymm(int packart,int packatom){
   dock->show();
   dock->setMaximumWidth(width()/5);
   printf("growSymm %d milliseconds with packart = %d\n",speedTest.restart(),packart);
-  // dock->setSizePolicy();
 }

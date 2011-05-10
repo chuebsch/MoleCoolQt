@@ -97,6 +97,7 @@ typedef struct MyAtom{
   QString Label;
   QString Symbol;
   V3 pos;
+double screenX,screenY;
   int an;
   int part;
   int index;
@@ -343,6 +344,7 @@ struct INP {
   double peakHeight;
   int molindex;
   int sg;
+  double screenX,screenY;
   uint GLname;
 }; 
 struct Cell {

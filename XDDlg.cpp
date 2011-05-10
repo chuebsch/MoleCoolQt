@@ -24,6 +24,7 @@ XDDlg::XDDlg(CEnvironment ch,Connection cll,CEnvironment lc,CEnvironment *all,QW
    imFokus=-1;
 }
 void XDDlg::initializeGL(){
+//  printf("init GL\n");
   glEnable(GL_LINE_SMOOTH);  
   glHint(GL_LINE_SMOOTH_HINT,GL_NICEST);
   //glEnable(GL_POLYGON_SMOOTH);   
@@ -65,6 +66,7 @@ void XDDlg::initializeGL(){
    gluLookAt(0.0, 200, 50 ,   0.0, 0.0, 0.0,   0.0, -100, 400 );
    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
     setMouseTracking ( true );
+//  printf("init GL!\n");
 }
 void XDDlg::resizeGL(int width, int height){
   glViewport(0, 0, width, height);        
@@ -92,28 +94,62 @@ extern void __RotateCS( double c, double s, double& X, double& Y );
 extern void glTranslateL( const double dx, const double dy, const double dz );
 extern void glRotateL( const double dang, const double x, const double y, const double z );
 
+#ifndef POStO2d
+#define POStO2d 1
+
+static inline void transform_point(GLdouble out[4], const GLdouble m[16], const GLdouble in[4]) {
+#define M(row,col)  m[col*4+row]
+    out[0] =
+        M(0, 0) * in[0] + M(0, 1) * in[1] + M(0, 2) * in[2] + M(0, 3) * in[3];
+    out[1] =
+        M(1, 0) * in[0] + M(1, 1) * in[1] + M(1, 2) * in[2] + M(1, 3) * in[3];
+    out[2] =
+        M(2, 0) * in[0] + M(2, 1) * in[1] + M(2, 2) * in[2] + M(2, 3) * in[3];
+    out[3] =
+        M(3, 0) * in[0] + M(3, 1) * in[1] + M(3, 2) * in[2] + M(3, 3) * in[3];
+#undef M
+}
+
+static inline bool  posTo2D(V3 obj,
+           const GLdouble model[16], const GLdouble proj[16],
+           const GLint viewport[4],
+           GLdouble * winx, GLdouble * winy) {
+   GLdouble in[4], out[4];
+
+   in[0] = obj.x;
+   in[1] = obj.y;
+   in[2] = obj.z;
+   in[3] = 1.0;
+   transform_point(out, model, in);
+   transform_point(in, proj, out);
+
+   if (in[3] == 0.0) return false;
+
+   in[0] /= in[3];
+   in[1] /= in[3];
+   in[2] /= in[3];
+
+   *winx = viewport[0] + (1 + in[0]) * viewport[2] / 2;
+   *winy = viewport[1] + (1 - in[1]) * viewport[3] / 2;
+   return true;
+
+}
+#endif
+
 void XDDlg::mousePressEvent(QMouseEvent *event){
+  double nahda=200.0,da=0;
+  int nahdai=-1;
+  //bool changed=false;
+  for (int j=0; j<ce.size();j++){
+    da=(((ce.at(j).screenX-event->x())*( ce.at(j).screenX-event->x()))+ 
+		    ((ce.at(j).screenY-event->y())*( ce.at(j).screenY-event->y())));
+    nahdai=(da<nahda)?j:nahdai;
+    nahda=qMin(nahda,da);
+  }
    lastPos = event->pos();
-   if (1){
-     GLint hits;
-     glSelectBuffer(MAXSELECT, selectBuf);
-     (void)glRenderMode(GL_SELECT);
-     glInitNames();
-     glPushName(~0);
-     glPushMatrix();
-     glViewport(0, 0,width(),height());        
-     glGetIntegerv(GL_VIEWPORT, vp);
-     glMatrixMode(GL_PROJECTION);
-     glLoadIdentity();
-     gluPickMatrix(event->x()+5, height()-(event->y()+5), 8, 8, vp);
-     gluPerspective( 29.0, (double)width()/height(), 5.0, 8000.0 );
-     glMatrixMode(GL_MODELVIEW);
-     draw();
-     glPopMatrix();
-     hits = glRenderMode(GL_RENDER); 
-     if (hits <= 0) {;//emit message("");      
-     }else if ((int)selectBuf[(hits-1)*4+3]<ce.size()) {
-       GLuint index=selectBuf[(hits-1)*4+3];
+     if (nahdai <= 0) {;//emit message("");      
+     }else if (nahdai<ce.size()) {
+       GLuint index=nahdai;
        //if(!dummyMode)emit message(ce.at(index).Label);
        if(dummyMode){
 	 if ((dummyMode==3)&&(ce.at(index).an<0)) {
@@ -168,40 +204,32 @@ void XDDlg::mousePressEvent(QMouseEvent *event){
        }
        updateGL();
      }
-   }
 }
 void XDDlg::mouseMoveEvent(QMouseEvent *event){
    GLfloat dx = GLfloat(event->x() - lastPos.x()) / width();
    GLfloat dy = GLfloat(event->y() - lastPos.y()) / height();
    
+  double nahda=200.0,da=0;
+  int nahdai=-1;
+  //bool changed=false;
+  for (int j=0; j<ce.size();j++){
+    da=((ce.at(j).screenX-event->x())*( ce.at(j).screenX-event->x()))+ 
+		    ((ce.at(j).screenY-event->y())*( ce.at(j).screenY-event->y()));
+    nahdai=(da<nahda)?j:nahdai;
+    nahda=qMin(nahda,da);
+  }
    if (!event->buttons()) {
-//     printf("Test-2345 \n");
-     GLint hits;
-     glSelectBuffer(MAXSELECT, selectBuf);
-    (void)glRenderMode(GL_SELECT);
-    glInitNames();
-    glPushName(~0);
-    glPushMatrix();
-     glViewport(0, 0, width(), height());        
-     glGetIntegerv(GL_VIEWPORT, vp);
-     glMatrixMode(GL_PROJECTION);
-     glLoadIdentity();
-     gluPickMatrix(event->x()+5, height()-(event->y()+5), 8, 8, vp);
-     gluPerspective( 29.0, (double)width()/height(), 5.0, 8000.0 );
-     glMatrixMode(GL_MODELVIEW);
-     //     glLoadMatrixf(MM);
-     draw();
-    glPopMatrix();
-    hits = glRenderMode(GL_RENDER); 
-    updateGL();
-    if ((hits <= 0)||(ce.size()<(int)selectBuf[(hits-1)*4+3])) {
+    if ((nahdai < 0)||(ce.size()<nahdai)) {
       imFokus=-1; 
 //      emit message("");
+	updateGL();
     } else 
     {      
-      GLuint index=selectBuf[(hits-1)*4+3];
+      GLuint index=nahdai;
       if (((int) index)<ce.size()) {
         imFokus=index;
+	
+	updateGL();
 //	emit message(ce.at(index).Label);
       }
     }
@@ -488,7 +516,6 @@ void XDDlg::draw(){
   glScaled( L, L, L );
   glColor4f(0.6,0.6,0.6,1.0);
   for (int i=0; i<cl.size();i++){
-  glLoadName(ce.size());
     vec.x=(cl.at(i).ato2->pos.y-cl.at(i).ato1->pos.y);
     vec.y=(cl.at(i).ato1->pos.x-cl.at(i).ato2->pos.x);
     vec.z=0;
@@ -510,7 +537,6 @@ void XDDlg::draw(){
     for (int i=0;i<ce.size();i++){
       extern molekul  mol;
       glPushMatrix () ; 
-      glLoadName(i);
       double rad=0;
       if (ce.at(i).an>=0) rad=mol.Kovalenz_Radien[ce.at(i).an]/(10*L);              
       rad+=0.1;      
@@ -528,7 +554,6 @@ void XDDlg::draw(){
     gluSphere(q,1.0,48,48);//Atom als Kugel zeichnen
     glPopMatrix();
     }
-    glLoadName(ce.size());
     QFont myFont= QFont("Arial", 14, -1, false);  
     glDisable(GL_LIGHTING);
     glDisable( GL_DEPTH_TEST ); 
@@ -547,7 +572,6 @@ void XDDlg::draw(){
     for (int i=0; i<3;i++){
       glEnable( GL_DEPTH_TEST ); 
       glEnable(GL_LIGHTING);
-      glLoadName(ce.size());      
       if (locCo.at(i).Label=="Y") glColor4f(0.0f,1.0f,0.0f,1.0f);
       else if (locCo.at(i).Label=="Z") glColor4f(0.0f,0.0f,1.0f,1.0f);
       else glColor4f(1.0f,0.0f,0.0f,1.0f);
@@ -605,9 +629,20 @@ void XDDlg::draw(){
   glClear( GL_DEPTH_BUFFER_BIT);
   //  glColor3f(0.0,0.0,0.0);
   myFont= QFont("Arial", 24, -1, false);  
+
+  GLdouble model[16];
+  GLdouble proj[16];
+  GLint viewport[4];
+  glGetIntegerv(GL_VIEWPORT, viewport);
+  glGetDoublev( GL_PROJECTION_MATRIX , (double*)proj );
+  glGetDoublev( GL_MODELVIEW_MATRIX, (double*)model );
   for (int j=0;j<ce.size();j++){
     if (imFokus==j)  glColor3f(0.4,0.9,0.2); else glColor3f(0.0,0.0,0.0);
     renderText( ce.at(j).pos.x+mitsav.x,ce.at(j).pos.y+mitsav.y,ce.at(j).pos.z+mitsav.z, ce.at(j).Label,myFont);
+//    printf("render %d %d\n",j,ce.size());
+    if (!posTo2D(ce.at(j).pos+mitsav,model,proj,viewport, &ce[j].screenX, &ce[j].screenY))
+    {ce[j].screenX=-200; ce[j].screenY=-200;}
+
   }
   glPopMatrix();
   glPopMatrix();
@@ -672,6 +707,7 @@ void xdEditDlg::setKeyLine(const QString &s){
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 xdEditDlg::xdEditDlg(CEnvironment *ch,const Connection *cll,CEnvironment *all): QDialog(){
   keyLineEdit = new QLineEdit("",this);
+//  printf("dialog?\n");
   connect(keyLineEdit, SIGNAL(textChanged(const QString &)),
 	  this, SLOT(setKeyLine(const QString &)));
   setMinimumSize(1050,400);

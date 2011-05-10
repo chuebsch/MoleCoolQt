@@ -90,26 +90,26 @@ void MolisoStartDlg::sfchange(const QString &s){
 void MolisoStartDlg::brwsIso(){
   iedit->setText(QFileDialog::getOpenFileName(this, tr("Open iso-grid file "), iso_grid_name,
 					     "XD-3D-Grid-Files (*.grd);;"
-					     "GAUSSIAN Cube-Files (*.cube *.cub);;" ));
+					     "GAUSSIAN Cube-Files (*.cube *.cub);;" ,&selectedFilter,QFileDialog::DontUseNativeDialog ));
 
   iso_grid_name  = iedit->text();
 }
 void MolisoStartDlg::brwsMap(){
   medit->setText(QFileDialog::getOpenFileName(this, tr("Open map-grid file "), map_grid_name,
 					     "XD-3D-Grid-Files (*.grd);;"
-					     "GAUSSIAN Cube-Files (*.cube *.cub);;" ));
+					     "GAUSSIAN Cube-Files (*.cube *.cub);;",&selectedFilter,QFileDialog::DontUseNativeDialog  ));
   map_grid_name  = medit->text();
 }
 
 void MolisoStartDlg::brwslFace(){
   lfedit->setText(QFileDialog::getOpenFileName(this, tr("Open MolIso-surface-file "), load_face_name,
-					     "MolIso-surface-file (*.face *);;" ));
+					     "MolIso-surface-file (*.face *);;" ,&selectedFilter,QFileDialog::DontUseNativeDialog ));
   load_face_name = lfedit->text();
 }
 
 void MolisoStartDlg::brwssFace(){
   sfedit->setText(QFileDialog::getSaveFileName(this, tr("Open MolIso-surface-file "), save_face_name,
-                                             "MolIso-surface-file (*.face *);;" ));
+                                             "MolIso-surface-file (*.face *);;" ,&selectedFilter,QFileDialog::DontUseNativeDialog ));
   save_face_name = sfedit->text();
 }
 
@@ -118,7 +118,7 @@ void MolisoStartDlg::brwsADP(){
 					      "XD-Files (*.res *.inp *.mas);;"
 					      "SHELX-Files (*.res *.ins);;"
 					      "CIF-Files (*.cif);;"
-					      "Protein Data Base file (*.pdb *.ent);;" ));
+					      "Protein Data Base file (*.pdb *.ent);;" ,&selectedFilter,QFileDialog::DontUseNativeDialog ));
   adp_struct_name= aedit->text();
 }
 

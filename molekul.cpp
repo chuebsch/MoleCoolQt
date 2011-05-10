@@ -879,7 +879,6 @@ void molekul::atoms(QList<INP> xdinp,const int proba){//ADP Schwingungsellipsoid
   int mylod =lod;
   for (int j=0;j<xdinp.size();j++){//for atmax
     if (!dratom){
-    glLoadName(firstHL+j);
       glPushMatrix () ;
     glTranslated(xdinp[j].kart.x,xdinp[j].kart.y,xdinp[j].kart.z) ;
       double rad=arad[xdinp[j].OrdZahl];
@@ -1005,7 +1004,6 @@ void molekul::atoms(QList<INP> xdinp,const int proba){//ADP Schwingungsellipsoid
       glPopMatrix(); 
   }else {
     glPushMatrix () ;
-    glLoadName(xdinp[j].GLname);
     glTranslated(xdinp[j].kart.x,xdinp[j].kart.y,xdinp[j].kart.z) ;
     GLUquadricObj *q = gluNewQuadric();
     gluQuadricNormals(q, GL_SMOOTH);   
@@ -1035,7 +1033,6 @@ void molekul::axes(QList<INP> xdinp) {
     if ((fabs(Norm(xdinp[j].ax1)-1.0)>0.01)|| 
 	(fabs(Norm(xdinp[j].ax2)-1.0)>0.01)|| 
 	(fabs(Norm(xdinp[j].ax3)-1.0)>0.01))continue;
-    glLoadName(j);
     glPushMatrix();
     glBegin(GL_LINES);
     if (xdinp[j].icor1==2) glColor4f(0.0f,1.0f,0.0f,0.5f);
@@ -1074,7 +1071,6 @@ void molekul::UnitZell2(int zz)
 
       glDisable(GL_LIGHTING);  
       glLineWidth(2);
-      glLoadName(4444);
       glPushMatrix();
 
       glBegin(GL_LINES);
@@ -1144,7 +1140,6 @@ void molekul::UnitZell2(int zz)
 void molekul::UnitZell(void) {
   glDisable(GL_LIGHTING);
   glLineWidth(2);
-  glLoadName((GLuint)-1);
       glPushMatrix();
       glBegin(GL_LINES);
       glColor4f(1.0f,0.0f,0.0f,1.0);
@@ -1345,7 +1340,6 @@ void molekul::bonds(QList<INP> xdinp){
  
   if (!bonds_made) make_bonds(xdinp);
   for (int k=0;k<bcnt;k++){
-    glLoadName(bd[k].a+firstHL);
     if (!singleColorBonds) glColor4fv(Acol[xdinp[bd[k].a].OrdZahl]); 
     vec=kreuzX(xdinp[bd[k].a].kart.x-xdinp[bd[k].e].kart.x,xdinp[bd[k].a].kart.y-xdinp[bd[k].e].kart.y,xdinp[bd[k].a].kart.z-xdinp[bd[k].e].kart.z,
 	       0.0f,0.0f,1.0f);                 //Achse senkrecht zur Ebene Ursprung, Bindungs-Ende, Z-Achse 
@@ -1552,7 +1546,6 @@ hbonds.append("<h2>Hydrogen Bonds</h2><table border=1><tr><th>Donator---Hydrogen
 	    kk=sqrt(Distance(xdinp[Don].kart,xdinp[Hyd].kart));
 	    hbonds.append(QString("<tr><td>%1---%2...%3</td><td>%4</td><td>%5</td><td>%6</td><td>%7&deg;</td></tr>").arg(xdinp[Don].atomname).arg(xdinp[Hyd].atomname).arg(xdinp[Acc].atomname).arg(kk).arg(gg).arg(ll).arg(hb_wink));
 	    glPushMatrix();
-	    glLoadName(xdinp.size()+1);
 	    glTranslated (xdinp[j].kart.x,xdinp[j].kart.y,xdinp[j].kart.z);//z 	    
 	    vec=kreuzX(xdinp[i].kart.x-xdinp[j].kart.x,xdinp[i].kart.y-xdinp[j].kart.y,xdinp[i].kart.z-xdinp[j].kart.z,
 		       0.0f,0.0f,1.0f); 
@@ -1597,7 +1590,6 @@ void molekul::cbonds(QList<INP> xdinp){
     int j=cBonds.at(k).e;
     float gg=sqrt( Distance(xdinp[i].kart,xdinp[j].kart));
     glPushMatrix();
-    glLoadName(xdinp.size()+1);
     glTranslated (xdinp[j].kart.x,xdinp[j].kart.y,xdinp[j].kart.z);//z 	    
     vec=kreuzX(xdinp[i].kart.x-xdinp[j].kart.x,xdinp[i].kart.y-xdinp[j].kart.y,xdinp[i].kart.z-xdinp[j].kart.z,
 		    0.0f,0.0f,1.0f); 
@@ -1627,7 +1619,6 @@ void molekul::labels( QList<INP> xdinp)
   //float matrix[16];    
   glPushMatrix();{ 
     for (int j=0;j<xdinp.size();j++){
-      glLoadName(j); 
       //renderText( xdinp[j].kart.x,xdinp[j].kart.y,xdinp[j].kart.z, xdinp[j].atomname,myFont);
     } 
     
@@ -1740,7 +1731,6 @@ void molekul::drawSline(V3 *vL,int N){
   V3 nv1,v1,v2,lnv;
   GLfloat nv2;
   int arc=-55;
-  glLoadName((GLuint)-1);
   glColor3f(0.9f,0.3f,0.5f);
   //  
   glDisable(GL_LIGHTING);

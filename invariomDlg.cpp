@@ -117,9 +117,52 @@ extern void __RotateCS( double c, double s, double& X, double& Y );
  extern void glTranslateL( const double dx, const double dy, const double dz );
 extern void glRotateL( const double dang, const double x, const double y, const double z );
 
+#ifndef POStO2d
+#define POStO2d 1
+
+static inline void transform_point(GLdouble out[4], const GLdouble m[16], const GLdouble in[4]) {
+#define M(row,col)  m[col*4+row]
+    out[0] =
+        M(0, 0) * in[0] + M(0, 1) * in[1] + M(0, 2) * in[2] + M(0, 3) * in[3];
+    out[1] =
+        M(1, 0) * in[0] + M(1, 1) * in[1] + M(1, 2) * in[2] + M(1, 3) * in[3];
+    out[2] =
+        M(2, 0) * in[0] + M(2, 1) * in[1] + M(2, 2) * in[2] + M(2, 3) * in[3];
+    out[3] =
+        M(3, 0) * in[0] + M(3, 1) * in[1] + M(3, 2) * in[2] + M(3, 3) * in[3];
+#undef M
+}
+
+static inline bool  posTo2D(V3 obj,
+           const GLdouble model[16], const GLdouble proj[16],
+           const GLint viewport[4],
+           double * winx, double * winy) {
+   GLdouble in[4], out[4];
+
+   in[0] = obj.x;
+   in[1] = obj.y;
+   in[2] = obj.z;
+   in[3] = 1.0;
+   transform_point(out, model, in);
+   transform_point(in, proj, out);
+
+   if (in[3] == 0.0) return false;
+
+   in[0] /= in[3];
+   in[1] /= in[3];
+   in[2] /= in[3];
+
+   *winx = viewport[0] + (1 + in[0]) * viewport[2] / 2;
+   *winy = viewport[1] + (1 - in[1]) * viewport[3] / 2;
+   return true;
+
+}
+#endif
+
 void invariomDlg::mousePressEvent(QMouseEvent *event){
    lastPos = event->pos();
 }
+
 void invariomDlg::mouseMoveEvent(QMouseEvent *event){
    GLfloat dx = GLfloat(
       event->x() - lastPos.x()) / width();
@@ -135,28 +178,31 @@ void invariomDlg::mouseMoveEvent(QMouseEvent *event){
    }
    lastPos = event->pos();
 }
+
 void invariomDlg::wheelEvent(QWheelEvent *event){
+  double nahda=1000.0,da=0;
+  int nahdai=-1;
+  //bool changed=false;
+  for (int j=0; j<cl.size();j++){
+    int a1=-1,a2=-1;
+    double mx,my;
+    a1=ce.indexOf(*cl[j].ato1);
+    a2=ce.indexOf(*cl[j].ato2);
+    if ((a1>-1)&&(a2 >-1)) {
+      mx=(ce.at(a1).screenX+ce.at(a2).screenX)*.5;
+      my=(ce.at(a1).screenY+ce.at(a2).screenY)*.5;
+
+
+    da=(((mx-event->x())*( mx-event->x()))+ 
+		    ((my-event->y())*( my-event->y())));
+    nahdai=(da<nahda)?j:nahdai;
+    nahda=qMin(nahda,da);
+    }
+  }
   int numDegrees = event->delta() / 8;
   int numSteps = numDegrees / 15;  
-  GLint hits;
-  glSelectBuffer(MAXSELECT, selectBuf);
-  (void)glRenderMode(GL_SELECT);
-  glInitNames();
-  glPushName(~0);
-  glPushMatrix();
-  glViewport(0, 0,width(),height());        
-  glGetIntegerv(GL_VIEWPORT, vp);
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  gluPickMatrix(event->x(), height()-event->y(), 8, 8, vp);
-  gluPerspective( 29.0, (double)width()/height(), 50.0, 8000.0 );
-  glMatrixMode(GL_MODELVIEW);
-  draw();
-  glPopMatrix();
-  hits = glRenderMode(GL_RENDER); 
-  if (hits <= 0) {      
-  }else if ((int)selectBuf[(hits-1)*4+3]<cl.size()) {
-    GLuint index=selectBuf[(hits-1)*4+3];
+  if ((nahdai>-1)&&(nahdai<cl.size())) {
+    GLuint index=nahdai;
     int bo=cl.at(index).order;
     //    std::cout<<bo<<" A "<<index<<" "<<cl.size()<<std::endl;
     if ((cl.at(index).ato1->Symbol!="H")&&(cl.at(index).ato2->Symbol!="H")){
@@ -206,12 +252,19 @@ void invariomDlg::draw(){
     default :glColor3f(0.0,0.0,0.0);
     }
     bool trans=((!sel.contains(*cl.at(i).ato1))||(!sel.contains(*cl.at(i).ato2)));
-    glLoadName(i);
     vec.x=(cl.at(i).ato2->pos.y-cl.at(i).ato1->pos.y);
     vec.y=(cl.at(i).ato1->pos.x-cl.at(i).ato2->pos.x);
     vec.z=0;
     vec=Normalize(vec);
-    glPushMatrix();	
+    glPushMatrix();
+/*    
+    int a1=-1,a2=-1;
+    a1=ce.indexOf(*cl[i].ato1);
+    a2=ce.indexOf(*cl[i].ato2);
+    if ((a1>-1)&&(a2 >-1)) {
+    posTo2D(cl.at(i).ato1->pos+mitsav,model,proj,viewport, &ce[a1].screenX, &ce[a1].screenY);
+    posTo2D(cl.at(i).ato2->pos+mitsav,model,proj,viewport, &ce[a2].screenX, &ce[a2].screenY);
+    }*/
     glTranslated (mitsav.x,mitsav.y,mitsav.z);
     glTranslated (cl.at(i).ato2->pos.x,cl.at(i).ato2->pos.y,cl.at(i).ato2->pos.z);//Anfangspunkt 	
     wink=acos(((cl.at(i).ato1->pos.z-cl.at(i).ato2->pos.z)/
@@ -231,7 +284,6 @@ void invariomDlg::draw(){
     //  printf("Atome %d, %s\n",i,ce.at(i).Label.toStdString().c_str());
     extern molekul  mol;
     glPushMatrix () ; 
-    glLoadName(cl.size());
     //    std::cout<<ce.at(i).Label.toStdString ()<<" "<< ce.at(i).an<<" "<<ce.at(i).pos.x<<" "<< ce.at(i).pos.y<<" "<< ce.at(i).pos.z <<std::endl;
     double rad=mol.Kovalenz_Radien[ce.at(i).an]/(10*L);              
     rad+=0.1;
@@ -261,10 +313,19 @@ void invariomDlg::draw(){
   glPushMatrix();
   glClear( GL_DEPTH_BUFFER_BIT);
   glColor3f(0.0,0.0,0.0);
+  GLdouble model[16];
+  GLdouble proj[16];
+  GLint viewport[4];
+  glGetIntegerv(GL_VIEWPORT, viewport);
+  glGetDoublev( GL_PROJECTION_MATRIX , (double*)proj );
+  glGetDoublev( GL_MODELVIEW_MATRIX, (double*)model );
+
   QFont myFont= QFont("Arial", 24, -1, false);  
   for (int j=0;j<ce.size();j++){
-    //glLoadName(j);
     renderText( ce.at(j).pos.x+mitsav.x,ce.at(j).pos.y+mitsav.y,ce.at(j).pos.z+mitsav.z, ce.at(j).Label,myFont);
+    if (!posTo2D(ce.at(j).pos+mitsav,model,proj,viewport, &ce[j].screenX, &ce[j].screenY))
+    {ce[j].screenX=-200; ce[j].screenY=-200;}
+
   }
   glPopMatrix();
   
@@ -572,27 +633,30 @@ void invariomDlg::contextMenuEvent(QContextMenuEvent *event) {
    connect( &b3, SIGNAL(triggered () ),
 	    this, SLOT(to3() ));
    QMenu menu(this);
-   GLint hits;
-   glSelectBuffer(MAXSELECT, selectBuf);
-   (void)glRenderMode(GL_SELECT);
-   glInitNames();
-   glPushName(~0);
-   glPushMatrix();
-   glViewport(0, 0,width(),height());        
-   glGetIntegerv(GL_VIEWPORT, vp);
-   glMatrixMode(GL_PROJECTION);
-   glLoadIdentity();
-   gluPickMatrix(event->x(), height()-event->y(), 8, 8, vp);
-   gluPerspective( 29.0, (double)width()/height(), 50.0, 8000.0 );
-   glMatrixMode(GL_MODELVIEW);
-   draw();
-   glPopMatrix();
-   hits = glRenderMode(GL_RENDER); 
-   if (hits <= 0) {
+  double nahda=1000.0,da=0;
+  int nahdai=-1;
+  //bool changed=false;
+  for (int j=0; j<cl.size();j++){
+    int a1=-1,a2=-1;
+    double mx,my;
+    a1=ce.indexOf(*cl[j].ato1);
+    a2=ce.indexOf(*cl[j].ato2);
+    if ((a1>-1)&&(a2 >-1)) {
+      mx=(ce.at(a1).screenX+ce.at(a2).screenX)*.5;
+      my=(ce.at(a1).screenY+ce.at(a2).screenY)*.5;
+
+
+    da=(((mx-event->x())*( mx-event->x()))+ 
+		    ((my-event->y())*( my-event->y())));
+    nahdai=(da<nahda)?j:nahdai;
+    nahda=qMin(nahda,da);
+    }
+  }
+   if (nahdai < 0) {
      menu.addAction(&X);      
    }
-   else if ((int)selectBuf[(hits-1)*4+3]<cl.size()) {
-     index=selectBuf[(hits-1)*4+3];
+   else if (nahdai<cl.size()) {
+     index=nahdai;
      //     int bo=cl.at(index).order;
      if ((cl.at(index).ato1->Symbol!="H")&&(cl.at(index).ato2->Symbol!="H")){  
      menu.addAction(&b1);

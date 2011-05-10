@@ -7,6 +7,7 @@ Q_OBJECT
   QLineEdit *iedit,*aedit,*medit,*lfedit,*sfedit;
   QRadioButton *lfcbx,*sfcbx;
   QCheckBox *mcbx,*acbx;
+  QString selectedFilter;
   void loadSettings();
   int checker;
   public:

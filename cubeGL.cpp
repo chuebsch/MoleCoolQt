@@ -50,6 +50,46 @@ CubeGL::CubeGL(QWidget *parent) : QGLWidget(parent) {
    mil.y=-0.3;
 }
 
+#ifndef POStO2d
+#define POStO2d 1
+
+static inline void transform_point(GLdouble out[4], const GLdouble m[16], const GLdouble in[4]) {
+#define M(row,col)  m[col*4+row]
+    out[0] =
+        M(0, 0) * in[0] + M(0, 1) * in[1] + M(0, 2) * in[2] + M(0, 3) * in[3];
+    out[1] =
+        M(1, 0) * in[0] + M(1, 1) * in[1] + M(1, 2) * in[2] + M(1, 3) * in[3];
+    out[2] =
+        M(2, 0) * in[0] + M(2, 1) * in[1] + M(2, 2) * in[2] + M(2, 3) * in[3];
+    out[3] =
+        M(3, 0) * in[0] + M(3, 1) * in[1] + M(3, 2) * in[2] + M(3, 3) * in[3];
+#undef M
+}
+static inline bool  posTo2D(V3 obj,
+           const GLdouble model[16], const GLdouble proj[16],
+           const GLint viewport[4],
+           GLdouble * winx, GLdouble * winy) {
+   GLdouble in[4], out[4];
+
+   in[0] = obj.x;
+   in[1] = obj.y;
+   in[2] = obj.z;
+   in[3] = 1.0;
+   transform_point(out, model, in);
+   transform_point(in, proj, out);
+
+   if (in[3] == 0.0) return false;
+
+   in[0] /= in[3];
+   in[1] /= in[3];
+   in[2] /= in[3];
+
+   *winx = viewport[0] + (1 + in[0]) * viewport[2] / 2;
+   *winy = viewport[1] + (1 - in[1]) * viewport[3] / 2;
+   return true;
+
+}
+#endif 
 void CubeGL::noneCull(bool b){
   if (b) faceCull=0;
   updateGL();
@@ -1015,88 +1055,37 @@ void CubeGL::rotCenter(){
 }
 
 void CubeGL::mousePressEvent(QMouseEvent *event) {
+  double nahda=200.0,da=0;
+  int nahdai=-1;
+  //bool changed=false;
+  extern QList<INP> xdinp;
+  for (int j=0; j<xdinp.size();j++){
+    da=(((xdinp.at(j).screenX-event->x())*( xdinp.at(j).screenX-event->x()))+ 
+		    ((xdinp.at(j).screenY-event->y())*( xdinp.at(j).screenY-event->y())));
+    nahdai=(da<nahda)?j:nahdai;
+    nahda=qMin(nahda,da);
+  }
   lastPos = event->pos();
   //printf("Event %d %d \n",lastPos.x(),lastPos.y());
   static GLuint ppp=0,pp=0,p=0;   
   molekul m;	
   if (event->buttons() & Qt::MidButton){
-    GLint hits;
-    glSelectBuffer(MAXSELECT, selectBuf);
-    (void)glRenderMode(GL_SELECT);
-    glInitNames();
-    glPushName(~0);
-    glPushMatrix();
-    if (stereo_mode<2)  glViewport(0, 0, _win_width, _win_height);        
-    else glViewport(0, 0, _win_width/2, _win_height);
-    glGetIntegerv(GL_VIEWPORT, vp);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    if (stereo_mode<2) {
-      gluPickMatrix(event->x(), _win_height-event->y(), 8, 8, vp);
-      gluPerspective( 29.0, (double)_win_width/_win_height, 50.0, 8000.0 );
-    }
-    else {
-      gluPickMatrix(event->x() % (_win_width/2), _win_height-event->y(), 8, 8, vp);
-      gluPerspective( 29.0, (double)(_win_width / 2.0)/_win_height, 50.0, 8000.0 );
-    }
-    glMatrixMode(GL_MODELVIEW);
-    glGetDoublev(GL_MODELVIEW_MATRIX,MM);
-    draw();
-    glPopMatrix();
-    hits = glRenderMode(GL_RENDER); 
-    extern QList<INP> xdinp;
-    //extern double L;
-    //extern molekul mol;
-    updateGL();
-    if (hits <= 0) {      
-    }else 
-      if ((int)selectBuf[(hits-1)*4+3]<xdinp.size()) {
-	GLuint index=selectBuf[(hits-1)*4+3];
-	if (index==((GLuint)-1))return;
-	rotze=((int)index<xdinp.size())?index:-1;  
-	if (rotze>-1) rCenter->setVisible(true);
-	updateGL();
+    if (nahdai<xdinp.size()) {
+      GLuint index=nahdai;
+      if (index==((GLuint)-1))return;
+      rotze=((int)index<xdinp.size())?index:-1;  
+      if (rotze>-1) rCenter->setVisible(true);
+      updateGL();
 
-      }
+    }
   }
   if((reSe | moveLab| invEditAble | atomsClickable| xdSetupMode) && (event->buttons() & Qt::LeftButton)){
 
-//    printf("Test\n");
-    GLint hits;
-    //QString text[4]={"label","yellow","blue","green"};
-    //GLfloat MM[16];
-    //glGetDoublev(GL_MODELVIEW_MATRIX,MM); 
-    glSelectBuffer(MAXSELECT, selectBuf);
-    (void)glRenderMode(GL_SELECT);
-    //SelectMode=1;
-    glInitNames();
-    glPushName(~0);
-    //WIN_COL[0]=1.0;
-    glPushMatrix();
-    if (stereo_mode<2)  glViewport(0, 0, _win_width, _win_height);        
-    else glViewport(0, 0, _win_width/2, _win_height);
-    glGetIntegerv(GL_VIEWPORT, vp);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluPickMatrix(event->x(), _win_height-event->y(), 8, 8, vp);
-    if (stereo_mode<2) gluPerspective( 29.0, (double)_win_width/_win_height, 50.0, 8000.0 );
-    else gluPerspective( 29.0, (double)(_win_width / 2.0)/_win_height, 50.0, 8000.0 );
-    glMatrixMode(GL_MODELVIEW);
-    glGetDoublev(GL_MODELVIEW_MATRIX,MM);
-    //     glLoadMatrixd(MM);
-    draw();
-    glPopMatrix();
-    hits = glRenderMode(GL_RENDER); 
-
-    //    extern int dummax;
-    extern QList<INP> xdinp;
-    extern double L;
-    extern molekul mol;
-    updateGL();
-    if (hits <= 0) {      
-    }else 
-      if ((int)selectBuf[(hits-1)*4+3]<xdinp.size()) {
-	GLuint index=selectBuf[(hits-1)*4+3];
+    if (nahdai<xdinp.size()) {
+      extern QList<INP> xdinp;
+      extern double L;
+      extern molekul mol;
+	GLuint index=nahdai;
 //	printf("hits = %d index = %d xdinp.size = %d %d %d %d\n",hits,index,xdinp.size(),p,pp,ppp);
 	if (index==((GLuint)-1))return;
 	double w=0,dw=0;
@@ -1140,9 +1129,6 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 	  labToMove=index;
 	}
 	if (atomsClickable){
-	  //	  QMessageBox::information(this,"Clicking...",
-	//  printf("index %d %d\n",index,xdinp.size());
-	//  printf("xdinp[index].sg = %d\n",xdinp[index].sg);
 	  if ((xdinp[index].atomname[0]=='Q')||
 			  ((xdinp[index].atomname[0]=='H')&&(xdinp[index].atomname[1]=='L')) ||
 			  ((xdinp[index].atomname[0]=='P')&&(xdinp[index].atomname[1]=='K'))){
@@ -1265,12 +1251,12 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 	if ((xdinp.size())&&((invEditAble)||(xdSetupMode))) {
 	  if (xdinp[index].OrdZahl<0)return;
 	  int na=0;
-	  for (int i=0; (i<xdinp.size())&&(xdinp[i].OrdZahl>=0); i++) na=i;
+	  for (int i=0; (i<xdinp.size())&&(xdinp[i].OrdZahl>=0); i++) na++;
 	  if (((int)index)>na) {
-	    //	  printf ("index=%d na%d\n",index,na);
+	//    	  printf ("index=%d na%d\n",index,na);
 	    return;
 	  }
-	  //	  printf ("index=%d na%d\n",index,na);
+//	  	  printf ("index=%d na%d\n",index,na);
 	  static char PSE_Symbol[109][3] = {"H","He","Li","Be","B","C","N","O","F","Ne","Na","Mg","Al","Si","P","S","Cl","Ar",
 	    "K","Ca","Sc","Ti","V","Cr","Mn","Fe","Co","Ni","Cu","Zn","Ga","Ge","As","Se","Br","Kr",
 	    "Rb","Sr","Y","Zr","Nb","Mo","Tc","Ru","Rh","Pd","Ag","Cd","In","Sn","Sb","Te","J","Xe",
@@ -1404,7 +1390,7 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 	    }
 	  }
 	  Connection cll;
-	  //printf("Tollllllll: bind %d inv%d ato%d  smx%d  \n",cl.size(),cel.size(),ce.size(),smx);
+//	  printf("Tollllllll: bind %d inv%d ato%d  \n",cl.size(),cel.size(),ce.size());
 
 
 	  for (int i=0; i<cl.size();i++)
@@ -1412,8 +1398,8 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 	      for (int j=0; j<cel.size();j++){
 		if ((cl.at(i).ato1->pos==cel.at(j).pos)&&(cl.at(i).ato2->pos==cel.at(k).pos)){
 		  if ((cel.at(0).part>0)&&((cel.at(0).part!=cl.at(i).ato1->part)||(cel.at(0).part!=cl.at(i).ato2->part))) continue;
-		  if ((cel.at(i).part<0)&&(cel.at(j).part<0)&&(cel.at(j).part!=cel.at(i).part)) continue;
-		  if (((cel.at(i).part<0)||(cel.at(j).part<0))&&(cel.at(j).sg!=cel.at(i).sg)) continue;
+		  if ((cel.at(k).part<0)&&(cel.at(j).part<0)&&(cel.at(j).part!=cel.at(k).part)) continue;
+		  if (((cel.at(k).part<0)||(cel.at(j).part<0))&&(cel.at(j).sg!=cel.at(k).sg)) continue;
 		  cll.append(cl[i]);
 		}
 	      }
@@ -1424,8 +1410,8 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 	      for (int i=0;i<bondList.size();i++){
 		bondList[i].order=cl.at(i).order;
 	      }
-	    //qDebug()<<"test";
-	    //qDebug()<<bondList.size()<<bondList[0].order;
+//	    qDebug()<<"test";
+//	    qDebug()<<bondList.size()<<bondList[0].order;
 	  }
 	  if (xdSetupMode){
 	    CEnvironment all;	  
@@ -3183,32 +3169,19 @@ void CubeGL::contextMenuEvent(QContextMenuEvent *event) {
     connect( &hideThisFragment, SIGNAL(triggered () ), parent(), SLOT(filterThisFragment() ));
     connect( &hideOtherFragments, SIGNAL(triggered () ), parent(), SLOT(filterOtherFragments()));
     QMenu menu(this);
-    GLint hits;
-    glSelectBuffer(MAXSELECT, selectBuf);
-    (void)glRenderMode(GL_SELECT);
-    glInitNames();
-    glPushName(~0);
-    glPushMatrix();
-    if (stereo_mode<2)  glViewport(0, 0, _win_width, _win_height);        
-    else glViewport(0, 0, _win_width/2, _win_height);
-    glGetIntegerv(GL_VIEWPORT, vp);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    if (stereo_mode<2) {
-      gluPickMatrix(event->x(), _win_height-event->y(), 8, 8, vp);
-      gluPerspective( 29.0, (double)_win_width/_win_height, 50.0, 8000.0 );
+    double nahda=200.0,da=0;
+    int nahdai=-1;
+    //bool changed=false;
+    extern QList<INP> xdinp;
+    for (int j=0; j<xdinp.size();j++){
+      da=(((xdinp.at(j).screenX-event->x())*( xdinp.at(j).screenX-event->x()))+ 
+		      ((xdinp.at(j).screenY-event->y())*( xdinp.at(j).screenY-event->y())));
+      nahdai=(da<nahda)?j:nahdai;
+      nahda=qMin(nahda,da);
     }
-    else {
-      gluPickMatrix(event->x() % (_win_width/2), _win_height-event->y(), 8, 8, vp);
-      gluPerspective( 29.0, (double)(_win_width / 2.0)/_win_height, 50.0, 8000.0 );
-    }
-    glMatrixMode(GL_MODELVIEW);
-    draw();
-    glPopMatrix();
-    hits = glRenderMode(GL_RENDER); 
-    if (hits<=0) {expandatom=-1;}else
-      if ((int)selectBuf[(hits-1)*4+3]<xdinp.size()) {
-	expandatom =selectBuf[(hits-1)*4+3];
+
+    expandatom=nahdai;
+      if (expandatom<xdinp.size()) {
 	if (expandatom<0) {expandatom=-1;return;}
 	//      printf("expandatom %d\n",expandatom);
 	//     int bo=cl.at(index).order;
@@ -3286,48 +3259,28 @@ void CubeGL::setAtomsClickable(bool on){
 }
 
 void CubeGL::mouseMoveEvent(QMouseEvent *event) {
+  double nahda=200.0,da=0;
+  int nahdai=-1;
+  //bool changed=false;
+  extern QList<INP> xdinp;
+  for (int j=0; j<xdinp.size();j++){
+    da=(((xdinp.at(j).screenX-event->x())*( xdinp.at(j).screenX-event->x()))+ 
+			((xdinp.at(j).screenY-event->y())*( xdinp.at(j).screenY-event->y())));
+    nahdai=(da<nahda)?j:nahdai;
+    nahda=qMin(nahda,da);
+  }
+
   GLfloat dx = GLfloat(
 		  event->x() - lastPos.x()) / width();
   GLfloat dy = GLfloat(
 		  event->y() - lastPos.y()) / height();
   if ((!moai)&&(!event->buttons())) {
-    //        printf("Test\n");
-    GLint hits;
-    //QString text[4]={"label","yellow","blue","green"};
-    //GLfloat MM[16];
-    //glGetDoublev(GL_MODELVIEW_MATRIX,MM); 
-    glSelectBuffer(MAXSELECT, selectBuf);
-    (void)glRenderMode(GL_SELECT);
-    //SelectMode=1;
-    glInitNames();
-    glPushName(~0);
-    //WIN_COL[0]=1.0;
-    glPushMatrix();
-    if (stereo_mode<2)  glViewport(0, 0, _win_width, _win_height);        
-    else glViewport(0, 0, _win_width/2, _win_height);
-    glGetIntegerv(GL_VIEWPORT, vp);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    if (stereo_mode<2) {
-      gluPickMatrix(event->x(), _win_height-event->y(), 8, 8, vp);
-      gluPerspective( 29.0, (double)_win_width/_win_height, 50.0, 8000.0 );
-    }
-    else {
-      gluPickMatrix(event->x() % (_win_width/2), _win_height-event->y(), 8, 8, vp);
-      gluPerspective( 29.0, (double)(_win_width / 2.0)/_win_height, 50.0, 8000.0 );
-    }
-    glMatrixMode(GL_MODELVIEW);
-    //     glLoadMatrixd(MM);
-    draw();
-    glPopMatrix();
-    hits = glRenderMode(GL_RENDER);
-    extern QList<INP> xdinp;
-    updateGL();
-    if ((hits <= 0)||(xdinp.size()<(int)selectBuf[(hits-1)*4+3])) {imFokus=-1; emit message("");}
-    else {
-      imFokus=selectBuf[(hits-1)*4+3];
-      //  printf("Test,%d %d\n",imFokus,hits);
-      if (imFokus>=0) emit message(xdinp[selectBuf[(hits-1)*4+3]].atomname);
+    if (imFokus!=nahdai){
+      imFokus=nahdai;
+//      printf("nahda %d %s\n",nahdai,(imFokus>=0)?xdinp[imFokus].atomname:"");
+      if (imFokus>=0) emit message(xdinp[imFokus].atomname);
+      else emit message("");
+      updateGL();
     }
   }
   if (event->buttons() & Qt::MidButton){
@@ -3856,6 +3809,25 @@ if (!selectedAtoms.isEmpty()){
 	  }    
 	}glPopMatrix();
       }
+    {
+        glPushMatrix();
+        glScaled(L,L,L);{
+
+            GLdouble model[16];
+            GLdouble proj[16];
+            GLint viewport[4];
+            glGetIntegerv(GL_VIEWPORT, viewport);
+            glGetDoublev( GL_PROJECTION_MATRIX , (double*)proj );
+            glGetDoublev( GL_MODELVIEW_MATRIX, (double*)model );
+            for (int j=0;j<xdinp.size();j++){
+	      if (((iSel)&&(mol.firstHL<=j)&&(mol.lastHL>=j))||(!iSel)){
+		if (!posTo2D(xdinp.at(j).kart,model,proj,viewport, &xdinp[j].screenX, &xdinp[j].screenY))
+                {xdinp[j].screenX=-200; xdinp[j].screenY=-200;}
+            }
+	    }
+        }
+        glPopMatrix();
+    }
     } 
   }
   //  printf("%d %d %d\n",bas,ibas,mibas);
@@ -3885,7 +3857,7 @@ void CubeGL::dieDiPole(){
     gg=sqrt(Norm(p));{
       if (Norm(vec)==0) vec=V3(1.0,0,0);
       glPushMatrix();
-      glLoadName((GLuint)-1);
+      //glLoadName((GLuint)-1);
       if (fsz>i)qglColor(farben.at(i)); 
       else glColor3f(0.4,0.3,0.1);
       glRotatef(wink,vec.x,vec.y,vec.z); // drehen
