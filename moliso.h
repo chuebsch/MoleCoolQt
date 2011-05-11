@@ -153,7 +153,5 @@ class MolIso{
   void createSurface(QString isoFileName, QString mapFileName, QString &storeFaceName);
   void legende();
   void Farbverlauf (GLfloat wrt);
-  //  static void labelLegende(double mini ,double maxi,QFont font );
-  //  static void Farbverlauf (GLfloat mini, GLfloat maxi ,int FARBEN,GLfloat wrt);
 };
 #endif

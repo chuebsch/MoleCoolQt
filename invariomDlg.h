@@ -60,7 +60,6 @@ Q_OBJECT
   QLabel legend;
   QStringList base;
   invDlg(CEnvironment *ch,const Connection *cl,QStringList _base);
-    // void keyPressEvent(QKeyEvent *event);
   invariomDlg *id;
   public slots:
   void updateLabel(){

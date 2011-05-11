@@ -23,7 +23,6 @@ Q_OBJECT
   QPushButton *f1, *f2, *f3, *f4, *f5, *f6,*f7,*f8;
   QSlider *s1,*s2,*s3,*s4,*s5,*s6,*s7;
   gradientWidget *g1,*g2,*g3,*g4, *g5, *g6, *g7;
-//  double exmin,exmax;
   QLineEdit *isoValuesEdit;
   QDoubleSpinBox *mxedit,*miedit; 
   QCheckBox *mmcb;

@@ -46,7 +46,6 @@ GradDlg::GradDlg(MolIso *_mi){
   mimala->addWidget(mxedit);
 
   connect(mmcb,SIGNAL(stateChanged ( int )),this,SLOT(mmstate(int)));
-  //  connect(f2,SIGNAL(pressed()),this,SLOT(changeF2()));
   connect(f1,SIGNAL(pressed()),this,SLOT(changeF1()));
   connect(f2,SIGNAL(pressed()),this,SLOT(changeF2()));
   connect(f3,SIGNAL(pressed()),this,SLOT(changeF3()));
@@ -115,7 +114,6 @@ GradDlg::GradDlg(MolIso *_mi){
   QVBoxLayout *gla=new QVBoxLayout();
   QVBoxLayout *la=new QVBoxLayout();
   gg=new QLinearGradient(0,0,0,1);
-  //  printf("bla\n");
   gg->setColorAt(1.0,QColor::fromRgbF(mi->farbe[0][0],mi->farbe[0][1],mi->farbe[0][2],mi->farbe[0][3]));
   gg->setColorAt(0.8,QColor::fromRgbF(mi->farbe[1][0],mi->farbe[1][1],mi->farbe[1][2],mi->farbe[1][3]));
   gg->setColorAt(0.6,QColor::fromRgbF(mi->farbe[2][0],mi->farbe[2][1],mi->farbe[2][2],mi->farbe[2][3]));
@@ -155,7 +153,6 @@ GradDlg::GradDlg(MolIso *_mi){
   la->addWidget(g1);
   la->addWidget(s1);
   hla->addLayout(la);
-//  hla->addWidget(f8);
   hla->addWidget(gw);
 
   connect(cmbx,SIGNAL( currentIndexChanged (int)),this,SLOT(changeCSteps(int)));
@@ -447,9 +444,6 @@ void  GradDlg::changeS7(int value){
 }
 void GradDlg::updateColors(){
  delete gg;
-//  delete burste;
-//  delete pl;
- // delete f8;
   gg=new QLinearGradient(0,0,0,1);
   for (int i=0; i< mi->Farben; i++)
     gg->setColorAt(1.0-(i/(mi->Farben-1.0)),QColor::fromRgbF(mi->farbe[i][0],mi->farbe[i][1],mi->farbe[i][2],mi->farbe[i][3]));
@@ -457,18 +451,8 @@ void GradDlg::updateColors(){
   gw = new gradientWidget(*gg);
   gw->setMinimumHeight(67*mi->Farben);
   gw->setMinimumWidth(60);
-//  pl =new QPalette();
-//  burste= new QBrush(*gg);
-//  pl->setBrush(QPalette::Button,*burste);
-//  f8=new QPushButton("OK");
-//  f8->setMinimumHeight(67*mi->Farben);
-//  f8->setPalette(*pl);
- // connect(f8,SIGNAL(pressed()),this,SLOT(accept()));
- // hla->addWidget(f8);
   hla->addWidget(gw);
-  //  printf("Height %d\n",height());
   setMinimumHeight(205+mi->Farben*68);
-//  setMaximumHeight(185+mi->Farben*68);
 g1->setColor(mi->qtFarbe(0));
 g2->setColor(mi->qtFarbe(1));
 g3->setColor(mi->qtFarbe(2));
@@ -597,7 +581,6 @@ void GradDlg::loadSettings(){
   settings.beginGroup("Version 0.1");
   valuesString=settings.value("Iso-Values").toString();
   int gsize = settings.beginReadArray("GradientColors");   
-  //printf("gsize %d\n",gsize);
   gsize=(gsize>7)?6:gsize;
   gsize=(gsize<2)?6:gsize;
   for (int i = 0; i < gsize; i++) {
@@ -615,7 +598,6 @@ void GradDlg::loadSettings(){
 void GradDlg::accept(){  
   QSettings settings(QSettings::IniFormat,  QSettings::UserScope ,"Christian_B._Huebschle", "MoleCoolQt" );
   settings.beginGroup("Version 0.1");
-  //  printf("FarbeN %d \n", mi->Farben);
   settings.setValue("Iso-Values",isoValuesEdit->text());
   settings.beginWriteArray("GradientColors",mi->Farben);   
   for (int i = 0; i < mi->Farben; i++) {
@@ -637,7 +619,6 @@ void GradDlg::accept(){
   QStringList sl=isoValuesEdit->text().split(QRegExp("\\s+"),QString::SkipEmptyParts);
   for (int i=0;i<sl.size();i++) {
       mi->isoValues.append(sl.at(i).toDouble());
-     // qDebug()<<mi->isoValues.last();
   }
   done(QDialog::Accepted);
 }

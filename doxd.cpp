@@ -11,8 +11,6 @@ Doxd::Doxd(void){
   runner = new QProcess();
   QStringList env=runner->systemEnvironment();//
   runner->setWorkingDirectory(QDir::currentPath());
-  //runner->setStandardOutputFile("C:/Invariomdemo/stdout.txt");
-  //runner->setStandardErrorFile("C:/Invariomdemo/stderr.txt");
   settings = new QSettings(QSettings::IniFormat,  QSettings::UserScope ,"Christian_B._Huebschle", "MoleCoolQt" );
   settings->beginGroup("XDSettings");  
   xd_data_dir = settings->value("XD_DATA_DIR","").toString();
@@ -42,7 +40,6 @@ Doxd::Doxd(void){
   if (idx>-1) env.removeAt(idx);
   env.append("XD_DATADIR="+xd_data_dir);
   runner->setEnvironment(env);
-  // connect(runner,SIGNAL(started ()),this,SLOT(jobstart()));
   connect(runner,SIGNAL(finished(int,QProcess::ExitStatus)),this, SLOT(jobdone(int,QProcess::ExitStatus)));
 }
 void Doxd::presentDialog(){
@@ -67,7 +64,6 @@ void Doxd::jobstart(){
 }
 void Doxd::jobdone( int exitCode, QProcess::ExitStatus exitStatus ){
   if ((exitCode!=1)||(exitStatus!=0)){;}//empty
-  //  QMessageBox::information(0,"XD-JOB",QString("Job done! ExitCode: %1<br>(%2)").arg(exitCode).arg(exitStatus),QMessageBox::Ok);  
   QDir work=QDir(QDir::current());  
   QStringList filter;
   filter << "*.out";  
@@ -101,7 +97,6 @@ void Doxd::jobdone( int exitCode, QProcess::ExitStatus exitStatus ){
     connect(&next, SIGNAL(clicked() ), this, SLOT(findNext()));
     connect(&prev, SIGNAL(clicked() ), this, SLOT(findPrev()));    
     connect(search, SIGNAL(textChanged(const QString&)),this,SLOT(findText()));
-    //connect(search, SIGNAL(returnPressed()), this, SLOT(findNext()));
     editor->setReadOnly(true);
     QFont font;
     font.setFamily("Courier");
@@ -121,7 +116,6 @@ void Doxd::jobdone( int exitCode, QProcess::ExitStatus exitStatus ){
     outpview->setWindowTitle(out.at(0));
     outpview->exec();
   }
-  //  QMessageBox::information(0,"xdprop",QString("Job done! ExitCode:%1<br> %2<br>%3").arg(exitCode).arg(runner->workingDirectory()).arg(QString(runner->readAllStandardOutput ())),QMessageBox::Ok);  
 }
 void Doxd::findNext(){
   searchchanged(false,false);
@@ -170,7 +164,6 @@ void Doxd::runXdProp(QString cid, QString mid){
   args<<cid;
   if (!mid.isEmpty())args<<mid;
   runner->start(xdPropPath,args);  
-  //  QMessageBox::information(0,"xdprop",QString("Job %1 %2 %3").arg(xdPropPath).arg(cid).arg(gut),QMessageBox::Ok);  
 }
 settingsDlg::settingsDlg(QString xd_data_dir,QString xdLsmPath,QString xdPropPath): QDialog(){
   QLabel *datl  = new QLabel("XD_DATADIR");

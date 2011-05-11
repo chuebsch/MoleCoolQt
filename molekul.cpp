@@ -52,7 +52,7 @@ void molekul::ellipse(int style){
   if ((style&ATOM_STYLE_SOLID)&& ( style&ATOM_STYLE_SPHERE)){
     GLUquadricObj *q = gluNewQuadric();
     gluQuadricNormals(q, GL_SMOOTH);   
-    //gluQuadricTexture(q,GL_TRUE);
+
     gluSphere(q,0.96,36,36);    
    }
   if (style&ATOM_STYLE_RINGS){
@@ -532,7 +532,7 @@ void molekul::ellipse(int style){
   glEnd();
   }
   
-  //glColor4fv(color);
+
 }
 void dCube(GLfloat rad){
   glBegin(GL_QUADS);
@@ -696,7 +696,7 @@ double molekul::dieder(V3 a,V3 b, V3 c){
   B[0]=-b.y*c.z + b.z*c.y;
   B[1]= b.x*c.z - b.z*c.x;
   B[2]=-b.x*c.y + b.y*c.x;
-  //  printf("A%f B%f\n",sqrt(A[0]*A[0]+A[1]*A[1]+A[2]*A[2]),sqrt(B[0]*B[0]+B[1]*B[1]+B[2]*B[2]));
+
   erg=(A[0]*B[0]+A[1]*B[1]+A[2]*B[2])/(sqrt(A[0]*A[0]+A[1]*A[1]+A[2]*A[2])*sqrt(B[0]*B[0]+B[1]*B[1]+B[2]*B[2]));
   erg=acos(erg)/M_PI*180.0f;
  return (sig>0)?(erg):(-erg);
@@ -726,7 +726,7 @@ void molekul::initDir(){
   intern=0;
   proba=50;
   lod=3;
-  //  acnn=0;
+
 }//Init Dir
 int molekul::Get_OZ(const QString S1){
 
@@ -750,7 +750,7 @@ int molekul::Get_OZ(const char * S1){//109 Elemente solltenReichen zumindest fue
 			     "Cs","Ba", "La","Ce","Pr","Nd","Pm","Sm","Eu","Gd","Tb","Dy","Ho","Er","Tm","Yb","Lu",
 			     "Hf","Ta","W","Re","Os","Ir","Pt","Au","Hg","Tl","Pb","Bi","Po","At","Rn","Fr","Ra",
 			     "Ac","Th","Pa","U","Np","Pu","Am","Cm","Bk","Cf","Es","Fm","Md","No","Lr","Ku","Ha","Rf","Ns","Hs","Mt"};
-  //  printf("Token [%s] %d %s\n",S1,(!strcmp(PSE_Symbol[21],S1)),PSE_Symbol[21]);
+
   for (int i=0;i<109;i++) if (!strcmp(PSE_Symbol[i],s1))return i;//Je hoeher die Ordnungzahl desto laenger dauerts Halt!! Dumm aber einfach.
  return -1;
 }
@@ -778,7 +778,7 @@ double * molekul::jacobi(double a[3][3], double d[3]) {
 	sm += fabs(a[ip-1][iq-1]);       
     } 
 
-    //printf("sm =%20.19f\n",sm);
+
 
     if (float(sm) == 0.0) { 
       if ((v[0][0]+v[1][1]+v[2][2])!=3.0) {
@@ -788,7 +788,7 @@ double * molekul::jacobi(double a[3][3], double d[3]) {
       erg[3]=(v[1][0]-v[0][1])/(2.0*sin(erg[0]));
       erg[0]*=180.0/M_PI;}
       else {erg[0]=0.0;erg[1]=1.0;erg[2]=0.0;erg[3]=0.0; }
-      //printf("%d??ERG:%f %f %f %f\n",i,Ato4d(erg));
+
 /*  printf("=a======================================\n%8.5f %8.5f %8.5f \n%8.5f %8.5f %8.5f \n%8.5f %8.5f %8.5f \n%8.5f %8.5f %8.5f\n========================================\n",
 		  d[0],d[1],d[2],v[0][0],v[0][1],v[0][2]
 		  ,v[1][0],v[1][1],v[1][2]
@@ -801,7 +801,7 @@ double * molekul::jacobi(double a[3][3], double d[3]) {
     else tresh=0.000001;  
     for (ip=1;ip<=n-1;ip++) { 
       for (iq=ip+1;iq<=n;iq++) { 
-	//printf("\np:%i q:%i i:%i nrot:%i\n",ip,iq,i,nrot);
+
 	g=100.0*fabs(a[ip-1][iq-1]);  
 	if ((i > 4) && ((fabs(d[ip-1])+g) == fabs(d[ip-1])) && ((fabs(d[iq-1])+g) == fabs(d[iq-1]))) {a[ip-1][iq-1]=0.0;}
 	else if (fabs(a[ip-1][iq-1]) >= tresh) { 
@@ -822,22 +822,22 @@ double * molekul::jacobi(double a[3][3], double d[3]) {
 	  a[ip-1][iq-1]=0.0;
 	  for (j=1;j<=ip-1;j++) { 
            ROTATE(a,j-1,ip-1,j-1,iq-1)
-	      //printf("%i %i %i %i",j,ip,j,iq);
+
 	      } 
 	  for (j=ip+1;j<=iq-1;j++) { 
            ROTATE(a,ip-1,j-1,j-1,iq-1)
-	      //printf("%i %i %i %i ",ip,j,j,iq);
+
 	      } 
 	  for (j=iq+1;j<=n;j++) {  
            ROTATE(a,ip-1,j-1,iq-1,j-1)
-	      //printf("%i %i %i %i",ip,j,iq,j);
+
 	      } 
 	  for (j=1;j<=n;j++) { 
            ROTATE(v,j-1,ip-1,j-1,iq-1)
 	      } 
 	  ++(nrot);	  
-	  //    printf("U|\n%f %f %f  \n%f %f %f\n%f %f %f\nV|\n%f %f %f  \n%f %f %f\n%f %f %f\n\n",a[0][0],a[1][0],a[2][0],a[0][1],a[1][1],a[2][1],a[0][2],a[1][2],a[2][2],v[0][0],v[1][0],v[2][0],v[0][1],v[1][1],v[2][1],v[0][2],v[1][2],v[2][2]);
-	} //else ;//printf("nix:%f p%i q%i",fabs(a[ip-1][iq-1]),ip,iq);
+
+	}
       } 
     } 
     for (ip=1;ip<=n;ip++) { 
@@ -883,7 +883,7 @@ void molekul::atoms(QList<INP> xdinp,const int proba){//ADP Schwingungsellipsoid
     glTranslated(xdinp[j].kart.x,xdinp[j].kart.y,xdinp[j].kart.z) ;
       double rad=arad[xdinp[j].OrdZahl];
       if (tubifiedAtoms) rad = bondStrength;
-      //printf("%s %d \n",xdinp[j].atomname,xdinp[j].OrdZahl);
+
       if ((adp)&&(xdinp[j].OrdZahl>-1)) {//adp
 	a[0][0]=xdinp[j].u.m11;
 	a[0][1]=xdinp[j].u.m12;
@@ -894,13 +894,13 @@ void molekul::atoms(QList<INP> xdinp,const int proba){//ADP Schwingungsellipsoid
 	a[2][0]=xdinp[j].u.m31;
 	a[2][1]=xdinp[j].u.m32;
 	a[2][2]=xdinp[j].u.m33;
-	//	fprintf(out,"!%18.9f %18.9f %18.9f   %18.9f %18.9f %18.9f \n",a[0][0],a[1][1],a[2][2] ,a[0][1],a[0][2],a[1][2]);
+
 	erg=jacobi(a,EV);
-//	printf("%s %18.9f %18.9f %18.9f  erg %18.9f %18.9f %18.9f %18.9f \n",xdinp[j].atomname,EV[0],EV[1],EV[2],erg[0],erg[1],erg[2],erg[3]);
+
 	EV[0]=(EV[0]>0.001)?EV[0]:0.001;
 	EV[1]=(EV[1]>0.001)?EV[1]:0.001;
 	EV[2]=(EV[2]>0.001)?EV[2]:0.001;
-	glRotated(Ato4d(erg));//Orientierung der Ellipsoidej].kart[0],xdinp[j].kart[1],xdinp[j].kart[2]);
+	glRotated(Ato4d(erg));
 	switch (proba ) {
 	case 10 :{ glScaled(0.76*sqrt(EV[0]),0.76*sqrt(EV[1]),0.76*sqrt(EV[2]));break;}   //Hauptachsen der Eliipsoide 10% Wahrscheinlichkeit
 	case 30 :{ glScaled(1.19*sqrt(EV[0]),1.19*sqrt(EV[1]),1.19*sqrt(EV[2]));break;}   //Hauptachsen der Eliipsoide 30% Wahrscheinlichkeit
@@ -970,7 +970,7 @@ void molekul::atoms(QList<INP> xdinp,const int proba){//ADP Schwingungsellipsoid
 	    Erg[0]*=180.0/M_PI;
 	  } */
 	  glScaled(0.20,0.20,0.20);
-//	  glRotated(Ato4d(Erg));
+
 // */
 	}else 
 	glScaled(0.14,0.14,0.14);
@@ -978,14 +978,14 @@ void molekul::atoms(QList<INP> xdinp,const int proba){//ADP Schwingungsellipsoid
 
       GLUquadricObj *q = gluNewQuadric();
       gluQuadricNormals(q, GL_SMOOTH);   
-      //gluQuadricTexture(q,GL_TRUE);
+
       glColor4fv(Acol[xdinp[j].OrdZahl]); 
       if (xdinp[j].part) glMaterialfv( GL_FRONT_AND_BACK, GL_EMISSION, white );
       else glMaterialfv( GL_FRONT_AND_BACK, GL_EMISSION, black );
-      //fprintf(out,"%f %f %fRAD %f %d\n",xdinp[j].kart.x,xdinp[j].kart.y,xdinp[j].kart.z,rad,mylod);
-      //glDisable(GL_BLEND);
+
+
       if ((rad>0)&&(xdinp[j].OrdZahl>-1)) {
-        //printf("Rad %f %d\n",rad,mylod);
+
 	if (adp&&intern) ellipse(aStyle[xdinp[j].OrdZahl]);else
 	  if ((!adp)||((aStyle[xdinp[j].OrdZahl]&ATOM_STYLE_SPHERE)&&(!(aStyle[xdinp[j].OrdZahl]&ATOM_STYLE_SOLID))))gluSphere(q,0.96,6*mylod,6*mylod);//Atom als Kugel zeichnen
 	if (xdinp[j].atomname[0]=='D') printf("%s %f \n",xdinp[j].atomname,rad);
@@ -1143,7 +1143,7 @@ void molekul::UnitZell(void) {
       glPushMatrix();
       glBegin(GL_LINES);
       glColor4f(1.0f,0.0f,0.0f,1.0);
-      //      printf("^^^ %f %f %f\n",uz0k.x,uz0k.y,uz0k.z);
+
       glVertex3d(uz0k.x,uz0k.y,uz0k.z);
       glVertex3d(uz1k.x,uz1k.y,uz1k.z);
       
@@ -1198,25 +1198,25 @@ void molekul::UnitZell(void) {
 }
 
 void molekul::make_bonds(QList<INP> xdinp){
-  //  printf("make bonds %d\n",xdinp.size()*10);
-  //  char hjkl[80];
 
-  //  sprintf(hjkl,"%d %d %p",xdinp.size()*10,sizeof(bindi),bd);
-  //  QMessageBox::information(0,"xdinp.size()",hjkl,QMessageBox::Ok);
+
+
+
+
   double gg,soll_abst;
   bcnt=0;
   bd=NULL;
   if (NULL==(bd=(bindi*)malloc(sizeof(bindi)*(xdinp.size()*10))))return;
 
-  //sprintf(hjkl,"%d %d %p",xdinp.size(),sizeof(bindi),bd);
-  //QMessageBox::information(0,"xdinp.size()",hjkl,QMessageBox::Ok);
-  //  printf("noch gut\n");
+
+
+
   for (int i=0;i<xdinp.size();i++) {
     for (int j=0;j<xdinp.size();j++) {
       if (i==j) continue;
 
-      //sprintf(hjkl,"%d %d %i",xdinp[i].OrdZahl,xdinp[j].OrdZahl,Kovalenz_Radien[5]);
-      //      QMessageBox::information(0,"xdinp.size()",hjkl,QMessageBox::Ok);
+
+
       if((xdinp[i].OrdZahl<0)||(xdinp[j].OrdZahl<0)) continue;
       if (((xdinp[i].part<0)||(xdinp[j].part<0))&&((xdinp[i].sg!=xdinp[j].sg)||((xdinp[i].part!=xdinp[j].part)))) continue; //part negative
       if ((xdinp[i].part>0)&&(xdinp[j].part>0)&&(xdinp[i].part!=xdinp[j].part)) continue; //different part
@@ -1246,27 +1246,27 @@ void molekul::make_bonds(QList<INP> xdinp){
   }//i
   
 
-  //sprintf(hjkl,"bcnt %d %d [%d] %p",bcnt,sizeof(bindi),xdinp.size()*10,bd);
-  //  QMessageBox::information(0,"xdinp.size()",hjkl,QMessageBox::Ok);
-  // printf("~~make bonds %d\n",bcnt);
+
+
+
   bd=(bindi*)realloc(bd,sizeof(bindi)*bcnt);  
-  //  QMessageBox::information(0,"xdinp.size()",hjkl,QMessageBox::Ok);
+
   bonds_made=1;
-  //  printf("make bonds %d\n",bcnt);
+
 
 }
 
 void molekul::make_knopf(QList<INP> xd){
-  //  FILE *lis=fopen("quark.txt","w");
-  //int lzmax=0;
+
+
   if (!bonds_made) make_bonds(xd);
   if (!knopf_made) {
     Knopf=(knpf*)malloc(sizeof(knpf)*xd.size());
-    //QMessageBox::information(0,"xdinp.size()",QString("xdinp.size() %1 bcnt %2 ").arg(xdinp.size()).arg(bcnt),QMessageBox::Ok);
+
     for (int i=0; i<xd.size(); i++) Knopf[i].lz=0;
     for (int i=0;i<bcnt;i++){
-      //      fprintf(lis,"%d %d %d %d %d\n",bd[i].a,bd[i].e,xdinp.size(),i,Knopf[bd[i].a].lz);fflush(lis);
-      //  lzmax=(lzmax>Knopf[bd[i].a].lz)?lzmax:Knopf[bd[i].a].lz;
+
+
       Knopf[bd[i].a].lig[Knopf[bd[i].a].lz++]=bd[i].e;
       Knopf[bd[i].a].bnr[Knopf[bd[i].a].lz-1]=i;
       Knopf[bd[i].a].bgrad[Knopf[bd[i].a].lz-1]=(((Kovalenz_Radien[xd[bd[i].a].OrdZahl]/100.0+
@@ -1276,18 +1276,18 @@ void molekul::make_knopf(QList<INP> xd){
 						 sqrt(Distance (xd[bd[i].a].kart, xd[bd[i].e].kart)));
     }
   }
-  //fclose(lis);
-  //    QMessageBox::information(0,"xdinp.size()","knopfmadert A",QMessageBox::Ok);
+
+
   extern QList<INP> xdinp;
   for (int i=0; i<xdinp.size(); i++) {
     xdinp[i].firstNeighbors=Knopf[i].lz;
     xdinp[i].secondNeighbors=0;
     for (int j=0;j<Knopf[i].lz;j++){
       xdinp[i].secondNeighbors+=Knopf[Knopf[i].lig[j]].lz;
-      //printf("%s: %d ",xdinp[Knopf[i].lig[j]].atomname,Knopf[Knopf[i].lig[j]].lz);
+
     }
     xdinp[i].secondNeighbors-=xdinp[i].firstNeighbors;
-    //printf("= %d for %s\n",xdinp[i].secondNeighbors, xdinp[i].atomname);
+
   }
   knopf_made=1;
 }
@@ -1310,7 +1310,7 @@ void molekul::countMols(QList<INP> & xdinp){
 	  if ((xdinp[Knopf[i].lig[j]].molindex==maxmol)&&(xdinp[i].molindex==0)) {
 	    //alle nachbarn anschauen ob sie ein molindex == maxmol haben falls das
 	    //betrachtete atom noch nicht zugeordnet ist.
-	    //    printf("%s is part of molecule %d \n",xdinp[i].atomname,maxmol);
+
 	    xdinp[i].molindex=maxmol;
 	    nochjemand++;//wir haben nochjemand gefunden der im selben molekuel noch keinen molindex > 0 hatte
 	  }
@@ -1327,23 +1327,23 @@ void molekul::countMols(QList<INP> & xdinp){
   }while (nextmol);
   printf ("The structure contains %d molecules\n",maxmol);
 }
-  //QMessageBox::information(0,"xdinp.size()","knopfmadert",QMessageBox::Ok);
+
 void molekul::bonds(QList<INP> xdinp){
-  //  glEnable( GL_BLEND); 
+
   //BINDUNGEN ab hier
   double gg;
   float wink;
   V3 vec;
   glDisable(GL_CULL_FACE);
-  //  int bnr=xdinp.size();
-  //  printf("noch gut\n");
+
+
  
   if (!bonds_made) make_bonds(xdinp);
   for (int k=0;k<bcnt;k++){
     if (!singleColorBonds) glColor4fv(Acol[xdinp[bd[k].a].OrdZahl]); 
     vec=kreuzX(xdinp[bd[k].a].kart.x-xdinp[bd[k].e].kart.x,xdinp[bd[k].a].kart.y-xdinp[bd[k].e].kart.y,xdinp[bd[k].a].kart.z-xdinp[bd[k].e].kart.z,
 	       0.0f,0.0f,1.0f);                 //Achse senkrecht zur Ebene Ursprung, Bindungs-Ende, Z-Achse 
-    //vec=(xdinp[bd[k].a].kart-xdinp[bd[k].e].kart)%VZ;
+
     if (Norm(vec)==0.0) vec=V3(1.0,0.0,0.0);
     vec=Normalize(vec);
     glPushMatrix();	
@@ -1352,60 +1352,60 @@ void molekul::bonds(QList<INP> xdinp){
     /*printf("Bond %d w%f %f %f %f  dis%f\n",k,wink,xdinp[bd[k].a].kart.x-xdinp[bd[k].e].kart.x,xdinp[bd[k].a].kart.y-xdinp[bd[k].e].kart.y,xdinp[bd[k].a].kart.z-xdinp[bd[k].e].kart.z,
 	   //vec.x,vec.y,vec.z,
 	   Norm(vec));*/
-    //    if (k==37) glColor3f(0.0,0.7,0.7);
+
     glRotatef((float)wink,(float)vec.x,(float)vec.y,(float)vec.z); // drehen    
     GLUquadricObj *q = gluNewQuadric();
     gluQuadricNormals(q, GL_SMOOTH);   // ein Zylinder
     gluQuadricTexture(q,GL_TRUE);
     gg=100.0*sqrt( Distance(xdinp[bd[k].a].kart,xdinp[bd[k].e].kart));
-    //glDisable(GL_BLEND);
+
     gluCylinder(q, bondStrength, bondStrength, (float)gg/(200.0f), 8, 5); 
-    //glEnable(GL_BLEND);
+
     glPopMatrix();
   }	
   glEnable(GL_CULL_FACE);
 }
 
 int molekul::highlightResi(QList<INP> xdinp,int inv,GLfloat L,bool el){
-  //  printf("ist %d max %d\n",inv,xdinp.size());fflush(stdout);
+
   if ((inv<0)||(inv>=xdinp.size())){
     firstHL=0;
     lastHL=0;
    return 0;
   }
-  //printf ("do is %d %d\n ",inv,xdinp.size() );
+
   QList<INP> xx; 
   firstHL=-1;
   lastHL=0;
   static int iit=21;
   char *tok,nme[80];
   int ri,rii=0,Ri;
-  //printf("hallo!\n");
+
   strcpy(nme,xdinp[inv].atomname);
   tok=strtok(nme,"@");
-  //printf(tok);
+
   tok=strtok(NULL,"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_");
-  //printf("%-20s : [%s]\n",xdinp[inv].atomname,tok);
+
   ri=atoi(tok);
   for (int i=0;i<xdinp.size();i++){
     strcpy(nme,xdinp[i].atomname);
     tok=strtok(nme,"@");
-    //printf(tok);
+
     tok=strtok(NULL,"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_");
-    //printf("< %-20s : [%s]\n",xdinp[i].atomname,tok);
+
     Ri=atoi(tok);
     if (ri==Ri){
       xx.append(xdinp[i]);
       rii++;
       firstHL=(firstHL==-1)?i:firstHL;
       lastHL=i;
-      //intf("%s \n",xdinp[i].atomname);
+
     }
-    //printf("\n");
+
   }
   if (rii) {  
     static molekul m;
-    if (iit) m.initDir();//"");
+    if (iit) m.initDir();
     copyAcol(m.Acol,m.arad,m.aStyle);
     m.firstHL=firstHL;
     m.lastHL=lastHL;
@@ -1428,7 +1428,7 @@ int molekul::highlightResi(QList<INP> xdinp,int inv,GLfloat L,bool el){
     glPopMatrix(); 
   }
   firstHL=(firstHL==-1)?0:firstHL;
-  //printf("etzt is %d %d",firstHL,lastHL);
+
  return lastHL-firstHL;
 }
 void molekul::highlightInv(QList<INP> xdinp,int inv,GLfloat L){ 
@@ -1441,9 +1441,9 @@ void molekul::highlightInv(QList<INP> xdinp,int inv,GLfloat L){
   {
   int al,ab;
   float ag;
-  //printf("\n");
-  //  for (int i=0; i<Knopf[inv].lz;i++) printf("%s %f| ",xdinp[Knopf[inv].lig[i]].atomname,Knopf[inv].bgrad[i]);  
-  //printf("\n");
+
+
+
   for (int i=0; i<Knopf[inv].lz-1;i++)
     for (int j=0; j<Knopf[inv].lz-1;j++)
       if ((xdinp[Knopf[inv].lig[j]].OrdZahl)&&(xdinp[Knopf[inv].lig[j+1]].OrdZahl)&&(Knopf[inv].bgrad[j]<Knopf[inv].bgrad[j+1])){
@@ -1459,40 +1459,40 @@ void molekul::highlightInv(QList<INP> xdinp,int inv,GLfloat L){
       }
   }
 
-  //for (int i=0; i<Knopf[inv].lz;i++) printf("%s| ",xdinp[Knopf[inv].lig[i]].atomname);
+
 
     kla=0;
   for (tok=strtok(ivname,"01235.");tok&&ci<40;tok=strtok(NULL,"01235.")){
-    if (ci&&strchr(tok,'[')) {nextSphere[fst++]=1;kla=1;}// printf("(");}
+    if (ci&&strchr(tok,'[')) {nextSphere[fst++]=1;kla=1;}
     else if (ci&&!kla) {nextSphere[fst++]=0;}
-    if (strchr(tok,']')) {kla=0;}// printf(")");}    
-    //    printf("%s!%c%d! ",tok,(kla)?'>':'<',(ci)?fst:-1);
+    if (strchr(tok,']')) {kla=0;}
+
     ci++;
   }
-  //printf("\n");
-  //for (int i=0; i<fst;i++) printf("%d ",nextSphere[i]);
-  //printf(" %s\n",xdinp[inv].invariomname);
+
+
+
   int acnt=0;
   QList<INP> xx;
-  //printf("%s, ",xdinp[inv].atomname);
+
   xx.append(xdinp[inv]);
   acnt++;
   for (int i=0 ; i<Knopf[inv].lz;i++){
-    //bondlist[bi++]=Knopf[inv].bnr[i];
-    //printf("%s, ",xdinp[Knopf[inv].lig[i]].atomname);
-    //atomlist[acnt++]=Knopf[inv].lig[i];
+
+
+
     xx.append(xdinp[Knopf[inv].lig[i]]);
     acnt++;
     if (nextSphere[i])
       for (int j=0 ; j<Knopf[Knopf[inv].lig[i]].lz;j++){
 	if (strcmp(xdinp[inv].atomname,xdinp[Knopf[Knopf[inv].lig[i]].lig[j]].atomname)){
-	  //printf("_%s, ",xdinp[Knopf[Knopf[inv].lig[i]].lig[j]].atomname);
-	  // atomlist[acnt++]=Knopf[Knopf[inv].lig[i]].lig[j];	
-	  //bondlist[bi++]=Knopf[Knopf[inv].lig[i]].bnr[j];
+
+
+
 	  xx.append(xdinp[Knopf[Knopf[inv].lig[i]].lig[j]]);
 	  acnt++;
 
-	  //printf("%s, ",xx[acnt-1].atomname);
+
 	}
       }
   }
@@ -1513,7 +1513,7 @@ QString molekul::h_bonds(QList<INP> xdinp) {
   glEnable(GL_TEXTURE_2D);
   QString hbonds;
 /*  FILE *out=fopen("Hbonds.txt","w");*/
-  //FILE *out=stdout;
+
   double gg=0,kk=0,ll=0;
   float wink,hb_wink;
   V3 vec;
@@ -1530,13 +1530,13 @@ QString molekul::h_bonds(QList<INP> xdinp) {
 hbonds.append("<h2>Hydrogen Bonds</h2><table border=1><tr><th>Donator---Hydrogen...Acceptor</th><th>Don--Hyd [&Aring;]</th><th> Hyd--Acc [&Aring;]</th><th>Don--Acc [&Aring;]</th><th>D--H-----A </th></tr>");
   for (int i=0;i<xdinp.size();i++) {
     for (int j=i+1;j<xdinp.size();j++) {
-      //printf("%d %d %s %s \n",i,j,xdinp[i].atomname,xdinp[j].atomname);
+
       if (((xdinp[i].OrdZahl==0)&&(ElNeg[xdinp[j].OrdZahl]>240))||
 	  ((xdinp[j].OrdZahl==0)&&(ElNeg[xdinp[i].OrdZahl]>240))) {      
 	Hyd=(xdinp[i].OrdZahl==0)?i:j;
 	Acc=(xdinp[i].OrdZahl==0)?j:i;
 	Don=(Knopf[Hyd].lz)?Knopf[Hyd].lig[0]:0;	
-	//	printf("%d %d %d\n",Don,Hyd,Acc);
+
 	gg=sqrt( Distance(xdinp[i].kart,xdinp[j].kart));
 	
 	if (gg<=HAMax){
@@ -1549,7 +1549,7 @@ hbonds.append("<h2>Hydrogen Bonds</h2><table border=1><tr><th>Donator---Hydrogen
 	    glTranslated (xdinp[j].kart.x,xdinp[j].kart.y,xdinp[j].kart.z);//z 	    
 	    vec=kreuzX(xdinp[i].kart.x-xdinp[j].kart.x,xdinp[i].kart.y-xdinp[j].kart.y,xdinp[i].kart.z-xdinp[j].kart.z,
 		       0.0f,0.0f,1.0f); 
-	    //(xdinp[i].kart-xdinp[j].kart)%VZ;    //Achse senkrecht zur Ebene Ursprung, Bindungs-Ende, Z-Achse 	    
+
 	    wink=winkel(xdinp[i].kart-xdinp[j].kart,VZ);               // Winkel zwischen Bindungs-Richtung und Z-Achse	    
 	    glRotatef(wink,vec.x,vec.y,vec.z); // drehen
 	    GLUquadricObj *q = gluNewQuadric();
@@ -1564,13 +1564,13 @@ hbonds.append("<h2>Hydrogen Bonds</h2><table border=1><tr><th>Donator---Hydrogen
       }
     }
   }
-//glDisable( GL_BLEND); 
+
   glDisable(GL_ALPHA_TEST);
 
   glDisable(GL_TEXTURE_2D);
-  //printf("done well.\n");
+
   
-  //printf("done weller.\n");
+
   
    glEnable(   GL_CULL_FACE);
   if (hbonds.contains("deg;")) hbonds.append("</table><br>");
@@ -1593,9 +1593,9 @@ void molekul::cbonds(QList<INP> xdinp){
     glTranslated (xdinp[j].kart.x,xdinp[j].kart.y,xdinp[j].kart.z);//z 	    
     vec=kreuzX(xdinp[i].kart.x-xdinp[j].kart.x,xdinp[i].kart.y-xdinp[j].kart.y,xdinp[i].kart.z-xdinp[j].kart.z,
 		    0.0f,0.0f,1.0f); 
-    //(xdinp[i].kart-xdinp[j].kart)%VZ;    //Achse senkrecht zur Ebene Ursprung, Bindungs-Ende, Z-Achse 	    
+
     wink=winkel(xdinp[i].kart-xdinp[j].kart,VZ);               // Winkel zwischen Bindungs-Richtung und Z-Achse	    
-//    printf("%d %d %f %f \n",i,j,wink,gg);
+
     glRotatef(wink,vec.x,vec.y,vec.z); // drehen
     GLUquadricObj *q = gluNewQuadric();
     gluQuadricNormals(q, GL_SMOOTH);   // ein Zylinder
@@ -1616,10 +1616,10 @@ void molekul::labels( QList<INP> xdinp)
   //LABELS
   glDisable( GL_LIGHTING );
   glDisable( GL_DEPTH_TEST ); 
-  //float matrix[16];    
+
   glPushMatrix();{ 
     for (int j=0;j<xdinp.size();j++){
-      //renderText( xdinp[j].kart.x,xdinp[j].kart.y,xdinp[j].kart.z, xdinp[j].atomname,myFont);
+
     } 
     
     }glPopMatrix(); 
@@ -1631,7 +1631,7 @@ V3 *  molekul::smoothPoints(V3 *vListe, int N){
   //berecnet aus N puntkten N-1 neue Punkte um Kurven etwas abzurunden
   V3 v1,v2,*newP,ppP,laP=V3(0,0,0);
   int ende=0,stopped=1;
-  //nL=NULL;
+
   int newN,ni,ai;
   ppP.x=0;
   ppP.y=0;
@@ -1644,21 +1644,21 @@ V3 *  molekul::smoothPoints(V3 *vListe, int N){
 	  vListe[i].z=0.0;
     }    
   }
-  //  printf("Pointer to vListe:= %p %d\n",vListe,2*N-2);
+
   newP=(V3*)malloc(sizeof(V3)*(N-2));
-  //for (int i=0; i<N; i++) printf("uLI[%d]: %f %f %f \n",i,vListe[i].x,vListe[i].y,vListe[i].z);
+
   while (ende<N-2){ 
     for (int i=ende+1; i<N-1; i++){
       if (((vListe[i-1].x+vListe[i-1].y+vListe[i-1].z)==0.0)||
 	  ((vListe[i].x+vListe[i].y+vListe[i].z)==0.0)||
 	  ((vListe[i+1].x+vListe[i+1].y+vListe[i+1].z)==0.0)) {
-	//printf("stopper\n");
+
 	if ((vListe[i-1].x+vListe[i-1].y+vListe[i-1].z)==0) {
 	  newP[i-1].x=0.0;
 	  newP[i-1].y=0.0;
 	  newP[i-1].z=0.0;
 	} else newP[i-1]=laP;
-	//ppP=laP;
+
 	ende=i;
 	stopped=1;
 	break; 
@@ -1669,28 +1669,28 @@ V3 *  molekul::smoothPoints(V3 *vListe, int N){
 	vListe[i]-1/7.0*v2-1/7.0*v1;    
       newP[i-1].rc=vListe[i].rc;
       ppP=vListe[i]+1/7.0*v1+1/7.0*v2;
-      //if (stopped) newP[i-1]=ppP;
+
       laP=vListe[i+1];
       ende=i;
       stopped=0;
     }
-    //printf ("ENDE %d %d\n",ende,N-1);
+
   }
-  // for (int i=0; i<N; i++) printf("vLI[%d]: %f %f %f \n",i,vListe[i].x,vListe[i].y,vListe[i].z);
+
   newN=2*N-2;
   ni=0;ai=0;
-  //printf("jut wa %d!\n",newN);
+
   if (NULL==(nL=(V3*)malloc(sizeof(V3)*newN))) {perror("sch...\n");exit(0);}
-  //printf("Ooch jut wa!\n");
+
   for (int i=0; i<newN; i++){
-    //printf("diagnose: %d ni%d ai%d i%d %c %f %f\n",((i-2)%3),ni,ai,i,((i-2)%3)?'N':'P',((i-2)%3)?newP[ni].z:vListe[ai].z,vListe[ai].z);
-    //printf("vLI[%d]: %f %f %f \n",ai,vListe[ai].x,vListe[ai].y,vListe[ai].z);
+
+
     nL[i]=((i)%2)?newP[ni++]:vListe[ai++];
   }
   nL[newN-1]= vListe[N-1];
-  //printf("Imma no jut wa %d %d!\n",ai+1,N);  
-  //for (int i=0;i<newN; i++) printf("LI[%d]: %f %f %f\n",i,nL[i].x,nL[i].y,nL[i].z);
-  //printf("Jetze aba jut wa!\n");
+
+
+
   free(newP);
   nListe=newN;
   free(vListe);
@@ -1713,21 +1713,21 @@ void molekul::Farbverlauf (GLfloat wrt,GLfloat min,GLfloat max){
   nwrt-=(0.2*lauf);
   nwrt/=(0.2);
   
-  //qDebug("wrt %f %f min %f max %f nwrt %f 0.2 %f lauf %d",wrt, nwrt, min, max,nwrt,0.2,lauf);
-  //  printf("%d %f %f %f\n",lauf,0.2,nwrt,wrt);
+
+
   ff[0]=(1.0-nwrt)*farbe[lauf][0]+farbe[lauf+1][0]*nwrt;
   ff[1]=(1.0-nwrt)*farbe[lauf][1]+farbe[lauf+1][1]*nwrt;
   ff[2]=(1.0-nwrt)*farbe[lauf][2]+farbe[lauf+1][2]*nwrt;
   ff[3]=1.0;
- //qDebug("%f %f %f-%f->w%f mi%f ma%f", ff[0],ff[1],ff[2],(1.0-nwrt/0.2)*farbe[lauf][1]+nwrt/0.2*farbe[lauf+1][1],nwrt,min,max);
+
   glColor4dv(ff);
 
-  //printf("DAOKf2\n");
+
  return;
 }
 void molekul::drawSline(V3 *vL,int N){
-  //  glColor3f(0,0,0);
-  //  FILE *XX=fopen("norma.txt","w");
+
+
   V3 nv1,v1,v2,lnv;
   GLfloat nv2;
   int arc=-55;
@@ -1738,7 +1738,7 @@ void molekul::drawSline(V3 *vL,int N){
   glLightModeli(  GL_LIGHT_MODEL_TWO_SIDE, 1 );
   glBegin(GL_LINE_STRIP);
   for (int i=0;i<N;i++){
-    //if ((i%2)==1) glColor3f(1,0,0); else glColor3f(0,0,1);
+
     if ((arc!=vL[i].rc)||((vL[i].x+vL[i].y+vL[i].z)==0.0)) {
       glEnd();
       switch (vL[i].rc){
@@ -1751,8 +1751,8 @@ void molekul::drawSline(V3 *vL,int N){
     }
     if ((vL[i].x+vL[i].y+vL[i].z)==0.0) 
       continue;
-    //if (vL[i].rc==1) glColor3f(0,0,1);
-    //if (vL[i].rc==2) glColor3f(1,0,0);
+
+
     if ((i>1)&&(i<N-2)) {
       nv1=(((vL[i-2]-vL[i])+(vL[i-1]-vL[i]))%((vL[i+1]-vL[i])+(vL[i+2]-vL[i])));
       nv2=Norm(nv1);
@@ -1786,15 +1786,15 @@ void molekul::drawSline(V3 *vL,int N){
     if(fvl)Farbverlauf((float)i,0,N);
       glNormal3f(lnv.x,lnv.y,lnv.z);
       glVertex3f(v1.x,v1.y,v1.z);
-      //glColor3f(0.2f,0.3f,0.5f);
+
       glVertex3f(v2.x,v2.y,v2.z);
     }
-    //    if (i>N-100)glColor3f(0.2f,0.9f,0.0f);else
+
     glColor3f(0.2f,0.3f,0.5f);
   }
   glEnd();
   glLineWidth(1);
-  //  fclose(XX);
+
   glEnable(GL_LIGHTING);
 }
 V3* molekul::addToList(V3 *vL,QList<INP> xdinp,int atom,int N,int rc){
@@ -1803,41 +1803,41 @@ V3* molekul::addToList(V3 *vL,QList<INP> xdinp,int atom,int N,int rc){
   vL[N].y=xdinp[atom].kart.y;
   vL[N].z=xdinp[atom].kart.z;
   vL[N].rc=rc;
-  //printf("Atom %s zur Liste hinzugefuegt %p %d !\n",xdinp[atom].atomname,vL,N);
-  //for (int i=0;i<N+1; i++) printf("LI[%d]: %f %f %f\n",i,vL[i].x,vL[i].y,vL[i].z);
+
+
  return vL;
 }
 void molekul::findChains(QList<INP> xdinp){
-//  printf("aaa\n");
-  //QMessageBox::information(0,"xdinp.size()","findChains beginA",QMessageBox::Ok);
+
+
   if (!bonds_made) make_bonds(xdinp);
-  //QMessageBox::information(0,"xdinp.size()","findChains beginB",QMessageBox::Ok);
-//  printf("aaA\n");
+
+
   if (!knopf_made) make_knopf(xdinp);
 
-//  QMessageBox::information(0,"xdinp.size()","findChains beginC",QMessageBox::Ok);
-//  printf("aAa\n");
-//  FILE *rama=fopen("ramachandran.txt","w");
+
+
+
   QString rama;
   int lastI=-100,lastJ=0,j,k,l=0,h=0;  
   int rc=0;;
   char match[25],match1[25],match2[25];
   for (int i=0; i<xdinp.size(); i++){
     if (xdinp[i].OrdZahl==6) {//N
-      //    strcpy(match1,"");j=0;
+
 
       if ((Knopf[i].lz)&&(xdinp[Knopf[i].lig[0]].OrdZahl==5)) h=Knopf[i].lig[0];
       for (int n=0;n<Knopf[i].lz;n++){
-	//	match1[n]=((char)xdinp[Knopf[i].lig[n]].OrdZahl+64);
-	//match1[n+1]='\0';
+
+
 	j=Knopf[i].lig[n];
 	
-	//strcpy(match2,"");
-	//	printf("%d~%d ",j,Knopf[i].lz);
+
+
 	if ((xdinp[j].OrdZahl==5))//C 	
 	  for (int m=0;m<Knopf[j].lz;m++){
-	    //  match2[m]=((char)xdinp[Knopf[j].lig[m]].OrdZahl+64);
-	    //match2[m+1]='\0';	  
+
+
 	    k=Knopf[j].lig[m]; 
 	    strcpy(match,"");
 	    for (int o=0;o<Knopf[k].lz;o++){
@@ -1845,7 +1845,7 @@ void molekul::findChains(QList<INP> xdinp){
 	      match[o+1]='\0';
 	      if ((xdinp[k].OrdZahl==5)&&(xdinp[Knopf[k].lig[o]].OrdZahl==6)) l=Knopf[k].lig[o]; 
 	    }
-	    //	    printf("%d %d %d %s\n",i,j,k,match);
+
 	    for (int w=0;w<Knopf[i].lz;w++){
 	      match1[w]=((char)xdinp[Knopf[i].lig[w]].OrdZahl+64);
 	      match1[w+1]='\0';
@@ -1855,9 +1855,9 @@ void molekul::findChains(QList<INP> xdinp){
 	      match2[v+1]='\0';
 	    }
 	      //if (xdinp[Knopf[k].lig[o]].OrdZahl==7)
-	    //l=Knopf[k].lig[o];     
-	      //printf("%d  %s-%s-%s-%s##%s##%s##%s\n",Knopf[k].lz,match1,match2,match,xdinp[i].atomname,xdinp[j].atomname,xdinp[k].atomname,xdinp[l].atomname);       
-	    //if ((strstr(match2,"EFF"))||(strstr(match2,"FEF"))||(strstr(match2,"FFE")))lastI=i;
+
+
+
 	    if ((strchr(xdinp[i].atomname,'G'))&&
 		(!strstr(xdinp[i].atomname,"Glu"))&&
 		(!strstr(xdinp[i].atomname,"Gln"))&&
@@ -1868,7 +1868,7 @@ void molekul::findChains(QList<INP> xdinp){
 	      double ll=0;
 	      if (nListe) ll=sqrt( Distance(vL[nListe-1],xdinp[j].kart));
 		if ((nListe)&&((3.9<ll)||(3.7>ll))){
-		  //printf("A Chain end found.\n");
+
 		  vL=(V3*)realloc(vL,sizeof(V3)*(++nListe)); 
 		  vL[nListe-1].x=0; 
 		  vL[nListe-1].y=0; 
@@ -1894,8 +1894,8 @@ void molekul::findChains(QList<INP> xdinp){
                 if ((phi<-30)&&(phi>-90)&&(psi<0)&&(psi>-60)) rc=1;
                 else if ((phi<-20)&&(phi>-170)&&(psi<170)&&(psi>0)) rc=2;
                 else rc=0;
-		//printf("A peptide group[%d]: %s-%s-%s=O [%d %d %d ] %s %s %s  %f %f\n",nListe,xdinp[i].atomname,xdinp[j].atomname,xdinp[l].atomname,i,j,k,
-		//     match,match1,match2,ll,l2);
+
+
 		lastJ=j;
 		while (nListe<3) vL=addToList(vL,xdinp,j,nListe++,rc);			    
 		vL=addToList(vL,xdinp,j,nListe++,rc);			    
@@ -1907,7 +1907,7 @@ void molekul::findChains(QList<INP> xdinp){
   }
   if(nListe) {vL=addToList(vL,xdinp,lastJ,nListe++,rc);vL=addToList(vL,xdinp,lastJ,nListe++,rc);}
 
-  //QMessageBox::information(0,"xdinp.size()","findChains end",QMessageBox::Ok);
+
   if (!rama.isEmpty()){
     QFile ramaf("ramachandran.txt");
     if (ramaf.open(QIODevice::WriteOnly)){
@@ -1915,7 +1915,7 @@ void molekul::findChains(QList<INP> xdinp){
       ramaf.close();
     }
   }
-  //  printf("%f ---> %f\n",mini,maxi);   
+
 }
 void molekul::frac2kart (V3 x, V3 & y){
 //x ist fraktionell, y wird kartesisch
@@ -1996,11 +1996,11 @@ void molekul::copyAcol(GLfloat _Acol[108][4],GLfloat _arad[108],int _aStyle[108]
   }
 }
 bool molekul::decodeSymmCard(const QString symmCard){
-//  std::cout<<"-->"<<symmCard.toStdString()<<"<<--"<<std::endl;
+
   QString sc=symmCard.toUpper().remove("SYMM").trimmed();  
   sc.remove("'");
   sc.remove(" ");
-//  std::cout<<"-->"<<sc.toStdString()<<"<<--"<<std::endl;
+
   QStringList axe=sc.split(",");
   QStringList bruch;
   if (axe.size()!=3) return false;
@@ -2080,7 +2080,7 @@ QString molekul::encodeSymm(int s){
                .arg(zaehler.z)
                .arg(nenner.z)
                .arg(symstrZ));
-    //erg.remove(QRegExp("0/+"));
+
     erg.remove(QRegExp("0/\\d"));
     erg.replace(" +","  ");
     erg.replace("1/1","1");
@@ -2169,7 +2169,7 @@ bool molekul::applyLatticeCentro(const QChar latt,const bool centro){
   int z=zelle.symuncent=zelle.symmops.size();
   zelle.centro=centro;
   zelle.lattis=latt;
-//  qDebug()<<zelle.centro<<centro<<zelle.lattis;
+
   Matrix inv(-1.0,0.0,0.0, 0.0,-1.0,0.0, 0.0,0.0,-1.0);
   if (centro) 
     for (int i=0; i<z;i++){

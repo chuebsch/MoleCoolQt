@@ -27,11 +27,8 @@ CubeGL::CubeGL(QWidget *parent) : QGLWidget(parent) {
    moveLab=false;
    moveLeg=false;
    elli=true;
-   //texti=0;
    moliso=NULL;
    mlsc=1.0;
-   //Tex1FileName="";
-   //Tex2FileName="";
    invEditAble=false;
    xdSetupMode=false;
    Luftschlange=true;
@@ -123,7 +120,6 @@ void CubeGL::setContourCnt(int cnt){
 void CubeGL::setContourWidth(int width){
     cwid=(cdens*width/256);
     awidth=width;
-//    printf("%d %d %d\n",cwid,width,(cwid+1)*256/cdens);
     updateGL();
 }
 
@@ -229,7 +225,11 @@ void CubeGL::loadMISettings(){
 
 void CubeGL::setFont(){
   bool ok;
+#if (QT_VERSION >= 0x040500)
   myFont = QFontDialog::getFont(&ok, myFont, this,"Change Label Font",QFontDialog::DontUseNativeDialog);
+#else
+  myFont = QFontDialog::getFont(&ok, myFont, this,"Change Label Font");
+#endif
   updateGL();
 }
 
@@ -308,14 +308,6 @@ void CubeGL::homeLabels(){
   updateGL();
 }
 
- /*
-void CubeGL::changeTexture(){
-  texti=(texti+1)%3;
-  //  QMessageBox::information(this,"Textur number",QString("No. %1").arg(texti),QMessageBox::Ok);  
-  updateGL();
-}
-*/
-
 void  CubeGL::togglBGG(bool on){
   back_grad=on;
   updateGL();
@@ -333,7 +325,6 @@ void  CubeGL::setNoBond(bool on){
 
 void  CubeGL::setEllipsoidNoUpdate(bool on){
   elli=on;  
- // updateGL();
 }
 
 void  CubeGL::setEllipsoid(bool on){
@@ -359,7 +350,6 @@ void  CubeGL::toggInvEdit(bool on){
     double soll_abst,gg;
     MyBond bond;
     if (ce.size()==0){
-      //      qDebug()<<"lhkmnsdfmfgn,";
       for (int i=0;i<xdinp.size();i++)
 	if (xdinp[i].OrdZahl>-1) {
 	  invom.Label=xdinp[i].atomname;
@@ -374,12 +364,10 @@ void  CubeGL::toggInvEdit(bool on){
     }
     if ((bondList.size()!=0)) {
       cl=bondList;
-      // qDebug()<<bondList.size();
     }
     else {
       for (int i=0;i<ce.size();i++) {
 	for (int j=i+1;j<ce.size();j++){
-	  //int i=0;
 	  if ((ce.at(i).an<0)||(ce.at(j).an<0)) continue;
 	  if (ce.at(i).pos==ce.at(j).pos) continue;
 	  if ((ce.at(i).part>0)&&(ce.at(j).part>0)&&(ce.at(j).part!=ce.at(i).part)) continue;
@@ -398,7 +386,6 @@ void  CubeGL::toggInvEdit(bool on){
 	      bond.chi=soll_abst-gg;
 	      bond.order=(bond.chi<0.0847)?1:((bond.chi<0.184)?2:((bond.chi<0.27)?3:4));
 	      bond.order=((bond.ato1->Symbol=="H")||(bond.ato2->Symbol=="H"))?1:bond.order;
-	      //	      qDebug()<<bond.ato1->Label<<bond.ato1->part<<"---"<<bond.ato2->Label<<bond.ato2->part;
 	      cl.append(bond);
 	    }
 	  }
@@ -453,8 +440,6 @@ void  CubeGL::setHydrogenBond(bool on){
 
 void CubeGL::setupTexture(){
   extern molekul mol;
-  //deleteTexture(tex[0]);
-  //deleteTexture(tex[1]);
   deleteTexture(mol.adpwall);
   deleteTexture(mol.hbtex);
 
@@ -468,46 +453,16 @@ void CubeGL::setupTexture(){
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
 
-//awh!=_win_width*_win_heightawh!=_win_width*_win_heig  qDebug("Texturen geladen%d %d",mol.adpwall,mol.hbtex);
-  /*
-  if (!Tex1FileName.isEmpty()){
-    tex[0] = bindTexture(QImage(Tex1FileName),GL_TEXTURE_2D);     
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-  }
-
-  if (!Tex2FileName.isEmpty()){
-    tex[1] = bindTexture(QImage(Tex2FileName),GL_TEXTURE_2D);   
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-  }
-  */
+  
 }
-
-/*
-void CubeGL::loadTexture() {
-
-  QMessageBox::StandardButton B= QMessageBox::question(this,tr("Backgrond Texture Dialog"),
-						       tr("Recent textures: <p>Primary texture:<br><img src=\"%1\" width=\"150\" height=\"150\"><p>Secondary texture:<br><img src=\"%2\" width=\"150\" height=\"150\"> <p><b>Would you like to load a new primary teture?</b>").arg(Tex1FileName).arg(Tex2FileName),QMessageBox::Yes|QMessageBox::No);  
-  if (B==QMessageBox::No) return;
-  Tex2FileName=Tex1FileName;
-  Tex1FileName=QFileDialog::getOpenFileName(this, tr("Open background texture file %1").arg(B),Tex1FileName,
-					    "Joint Photographic Experts Group - file (*.jpg);;"
-					    "Windows Bitmap - file (*.bmp);;"
-					    "Portable Network Graphics - file (*.png);;"
-					    "Portable Pixmap - file (*.ppm)" );
-
-  //setupTexture();
-  updateGL();
-
-}*/
 
 void CubeGL::changeBColor() {
   qreal bgRed,bgGreen,bgBlue,bgAlpha;
-  QColor bgcolor = QColorDialog::getColor(
-  QColor((int)(bgCR*255),(int)(bgCG*255),(int)(bgCB*255),(int)(bgCA*255)), this,"Change Background Color",QColorDialog::DontUseNativeDialog);
+#if (QT_VERSION >= 0x040500)
+  QColor bgcolor = QColorDialog::getColor( QColor((int)(bgCR*255),(int)(bgCG*255),(int)(bgCB*255),(int)(bgCA*255)), this,"Change Background Color",QColorDialog::DontUseNativeDialog);
+#else
+  QColor bgcolor = QColorDialog::getColor( QColor((int)(bgCR*255),(int)(bgCG*255),(int)(bgCB*255),(int)(bgCA*255)), this);
+#endif
   if (bgcolor.isValid()) {
     bgcolor.getRgbF(&bgRed,&bgGreen,&bgBlue,&bgAlpha);
     bgCR=(GLclampf)bgRed;
@@ -521,14 +476,21 @@ void CubeGL::changeBColor() {
 
 void CubeGL::changeBondColor(){
   extern molekul mol;
+#if (QT_VERSION >= 0x040500)
   mol.bondColor=QColorDialog::getColor(mol.bondColor,this,"Change Bond Color",QColorDialog::DontUseNativeDialog);
+#else
+  mol.bondColor=QColorDialog::getColor(mol.bondColor,this);
+#endif
   updateGL();
 }
 
 void CubeGL::changeTColor() {
   qreal bgRed,bgGreen,bgBlue,bgAlpha;
-  QColor tcolor = QColorDialog::getColor(QColor((int)(tCR*255),(int)(tCG*255),(int)(tCB*255),(int)(tCA*255)),
-                                         this,"Change Label Color",QColorDialog::DontUseNativeDialog);
+#if (QT_VERSION >= 0x040500)
+  QColor tcolor = QColorDialog::getColor(QColor((int)(tCR*255),(int)(tCG*255),(int)(tCB*255),(int)(tCA*255)), this,"Change Label Color",QColorDialog::DontUseNativeDialog);
+#else
+  QColor tcolor = QColorDialog::getColor(QColor((int)(tCR*255),(int)(tCG*255),(int)(tCB*255),(int)(tCA*255)), this);
+#endif
   if (tcolor.isValid()) {
     tcolor.getRgbF(&bgRed,&bgGreen,&bgBlue,&bgAlpha);
     tCR=(GLclampf)bgRed;
@@ -541,7 +503,6 @@ void CubeGL::changeTColor() {
 void CubeGL::initializeGL() {
   glEnable(GL_LINE_SMOOTH);   
   glHint(GL_LINE_SMOOTH_HINT,GL_NICEST);
-  //glEnable(GL_POLYGON_SMOOTH);   
   const GLfloat  position[] = {100.0f, 100.0f,100.0f,0.0f};
   const GLfloat  diffuse[]  = { 1.0, 1.0, 1.0, 1.0 };
   const GLfloat  specular[] = { 1.0, 1.0, 1.0, 1.0 };
@@ -560,7 +521,6 @@ void CubeGL::initializeGL() {
 
   glLightfv( GL_LIGHT2, GL_DIFFUSE,  diffuse );  
 
-  //glDisable(GL_FOG);
   glFogi(GL_FOG_MODE,GL_LINEAR);
   glFogi(GL_FOG_START,140);
   glFogi(GL_FOG_END,260);
@@ -582,7 +542,6 @@ void CubeGL::initializeGL() {
   glEnable(GL_NORMALIZE);
   glClearColor(bgCR,bgCG,bgCB,bgCA);
 
-   //glClearDepth(1.0f);
    glEnable(GL_DEPTH_TEST );
    glDepthFunc(GL_LEQUAL);
    glEnable(GL_CULL_FACE);
@@ -596,15 +555,13 @@ void CubeGL::initializeGL() {
   setupTexture();
   //888
   
-  //  QFile bld("hirnzirrose");
-  // bld.open(QIODevice::Append);
   if (!xdinp.isEmpty()) {
     int adpstate=mol.adp;
     glLoadMatrixd(MM);
    if ((moliso)&&(moliso->mibas)){
       moliso->loadMI(moliso->faceFile); 
    }
-   //if (!bas) bas=glGenLists(8);
+
       glNewList(bas, GL_COMPILE );{                          //ATOME
 	glPushMatrix();{
 	  glScaled( L, L, L );
@@ -620,14 +577,14 @@ bool before=  mol.singleColorBonds;
     glPushMatrix();{
       glScaled( L, L, L );
       mol.intern=1;
-//      cubeGL->qglColor(mol.bondColor);
+
       mol.singleColorBonds=true;
       mol.bonds(xdinp);
     }glPopMatrix();
   }glEndList();
   mol.singleColorBonds=before;
 
-      //  bld.write(QString("!!-> %1 %2 ERROR%3 \n").arg(mibas).arg(bas).arg((char*)gluErrorString(glGetError())).toLatin1());
+
       glNewList(bas+7, GL_COMPILE );{                          //ATOME
 	glPushMatrix();{
 	  glScaled( L, L, L );
@@ -649,14 +606,14 @@ bool before=  mol.singleColorBonds;
     glPushMatrix();{
       glScaled( L, L, L );
       mol.intern=1;
-      //mol.adp=1;
+
        mol.tubifiedAtoms=true;
       mol.atoms(xdinp,mol.proba);
     }glPopMatrix();
   }glEndList();
   mol.tubifiedAtoms=before;
 
-      // bld.write(QString("!!-> %1 %2 ERROR%3 \n").arg(mibas).arg(bas).arg((char*)gluErrorString(glGetError())).toLatin1());
+
       glNewList(bas+1, GL_COMPILE );{                          //BONDS
 	glPushMatrix();{
 	  glScaled( L, L, L );
@@ -667,10 +624,10 @@ bool before=  mol.singleColorBonds;
 
       if (drawAx) {
 	glNewList(bas+2, GL_COMPILE );{                          //Axen
-	  //glClear( GL_DEPTH_BUFFER_BIT);
+
 	  glDisable( GL_DEPTH_TEST ); 
 	  glPushMatrix();{
-	    //      glTranslated( -L/2.0, -L/2.0, -L/2.0 );
+
 	    glScaled( L, L, L );
 	    mol.axes(xdinp); 
 	  }glPopMatrix();    
@@ -678,10 +635,10 @@ bool before=  mol.singleColorBonds;
 	}glEndList();
       }
 
-      // bld.write(QString("!!-> %1 %2 axERROR%3 \n").arg(mibas).arg(bas).arg((char*)gluErrorString(glGetError())).toLatin1());
+
       glNewList(bas+3, GL_COMPILE );{                          //Unit Zell
 	glPushMatrix();{
-	  //      glTranslated( -L/2.0, -L/2.0, -L/2.0 );
+
 	  glScaled( L, L, L );           
 	  mol.UnitZell(); 
 	}glPopMatrix();    
@@ -690,14 +647,14 @@ bool before=  mol.singleColorBonds;
       if (mol.HAMax!=0.0){
 	glNewList(bas+5, GL_COMPILE );{                          //H...X-Bindungen
 	  glPushMatrix();{
-	    //      glTranslated( -L/2.0, -L/2.0, -L/2.0 );
+
 	    glScaled( L, L, L );
 	    mol.h_bonds(xdinp); 
 	  }glPopMatrix();    
 	}glEndList();
       }
 
-      // bld.write(QString("!!-> %1 %2 ERROR%3 \n").arg(mibas).arg(bas).arg((char*)gluErrorString(glGetError())).toLatin1());
+
       if (mol.nListe>2){
 	glNewList(bas+6, GL_COMPILE );{        //helices
 	  glPushMatrix();
@@ -706,25 +663,16 @@ bool before=  mol.singleColorBonds;
 	  glPopMatrix();
 	}glEndList();
       }
-
-      //      bld.write(QString("-> %1 %2 %3 \n").arg(mibas).arg(bas).arg(ibas).toLatin1());
-      //      bld.close();  
     if (iSel){
-      //qDebug()<<"before"<<mol.firstHL<<mol.lastHL;
       if (ibas) glDeleteLists(ibas,1);
       ibas=glGenLists(1);    
-      //for (int i=0;i<maxResi;i++)
       glNewList(ibas, GL_COMPILE );
       extern QList<INP> xdinp;
       extern double L;
       extern molekul mol;
       mol.intern=1;
        mol.highlightResi(xdinp,mol.firstHL,L,elli);
-      glEndList();	    /*
-      QFile qf("murx.txt");
-      qf.open(QIODevice::Append);
-      qf.write(QString("\nmolhl %1 %2 %3 sum %4 sum %5 \n").arg(mol.firstHL).arg(mol.lastHL).arg(mol.smx).arg(summe).arg(mol.lastHL-mol.firstHL).toLatin1());
-      qf.close();*/
+      glEndList();	    
     }
     if (cbas){
       glDeleteLists(cbas,1);
@@ -736,13 +684,7 @@ bool before=  mol.singleColorBonds;
       glEndList();
     }
       mol.adp=adpstate;      ;
-      // printf("initGLed\n");
-
-      //bld.write(QString("initGLed!!-> %1 %2 ERROR%3 \n").arg(mibas).arg(bas).arg((char*)gluErrorString(glGetError())).toLatin1());
-
-      //bld.close();
   }
-
 }
 
 void CubeGL::resizeGL(int width, int height) {
@@ -777,7 +719,6 @@ void glRotateL( const double dang, const double x, const double y, const double 
   s = sin(dang*M_PI/180);
   const double c = cos(dang*M_PI/180);
   glGetDoublev( GL_MODELVIEW_MATRIX, (double*)mat );
-  //  glGetDoublev( GL_PROJECTION_MATRIX, (double*)mat );
 
 
   if( x!=0.0 ){
@@ -809,7 +750,6 @@ void CubeGL::paintGL() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glViewport(0, 0, _win_width, _win_height);        
     glDisable(GL_STENCIL_TEST);
-//  if (stereo_mode==3) minussign=-1;
   if (!stereo_mode){ 
     glGetIntegerv(GL_VIEWPORT, vp);
     glMatrixMode(GL_PROJECTION);
@@ -844,10 +784,8 @@ void CubeGL::paintGL() {
     glDisable(GL_DITHER);
     glDisable(GL_BLEND);
     glShadeModel(GL_SMOOTH);
-    //glDisable(0x809D);//  GL_MULTISAMPLE_ARB * / 
     glDisable(0x809D); // GL_MULTISAMPLE_ARB * / 
 
-    //glDisable(GL_STENCIL_TEST);
     glClearStencil(0);
     glColorMask(false,false,false,false);
     glDepthMask(false);
@@ -858,7 +796,6 @@ void CubeGL::paintGL() {
     glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
     glLineWidth(1.0);
-//    printf("%d %d %d %d \n",viewport[0],viewport[1],viewport[2],viewport[3]);
     glBegin(GL_LINES);
     int h = viewport[3], w=viewport[2];
     int y;
@@ -889,7 +826,6 @@ void CubeGL::paintGL() {
     gluPerspective( 29.0, (double)_win_width/_win_height, 5.0, 8000.0 );
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-//    glTranslateL(0,0,-150);
     bool warLabel = drawLa;
     drawLa=false;
     glRotateL(minussign*-1.5,0,1,0);
@@ -901,7 +837,6 @@ void CubeGL::paintGL() {
     glPopMatrix();
     drawLa= warLabel;
     glPushMatrix();
-//    glTranslateL(0,0,-150);
     glRotateL(minussign*1.5,0,1,0);
     glEnable(GL_STENCIL_TEST);
     glStencilFunc(GL_EQUAL, 0, 1);
@@ -918,36 +853,20 @@ void CubeGL::paintGL() {
       gluPerspective( 29.0, (double)(_win_width/2.0)/_win_height, 5.0, 8000.0 );
       glMatrixMode(GL_MODELVIEW);
       glPushMatrix();
-      //glTranslateL(0,0,-150);
       glRotateL(1.5*minussign,0,1,0);
-      /*  glEnable(GL_STENCIL_TEST);
-	  glStencilFunc(GL_EQUAL, 1, 1);
-	  glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-	  glEnable(GL_STENCIL_TEST);// */
       draw();
       glPopMatrix();
       glPopMatrix();
 
       glPushMatrix();
-      //  glViewport(0, 0, _win_width, _win_height);        
-      //  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-      //  glTranslated(0,0,-5);
       glViewport( _win_width / 2 , 0,_win_width / 2,_win_height );        
       glMatrixMode(GL_PROJECTION);
       glLoadIdentity();
       gluPerspective( 29.0, (double)(_win_width/2.0)/_win_height, 5.0, 8000.0 );
       glMatrixMode(GL_MODELVIEW);
       glPushMatrix();
-      //glTranslateL(0,0,-150);
       glRotateL(-1.5*minussign,0,1,0);
-      /*  glEnable(GL_STENCIL_TEST);
-	  glStencilFunc(GL_EQUAL, 0, 1);
-	  glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-	  glEnable(GL_STENCIL_TEST);// */
-//    bool warLabel = drawLa;
-//    drawLa=false;
       draw();
-//    drawLa= warLabel;
       glPopMatrix();
       glPopMatrix();
     }
@@ -957,7 +876,6 @@ void CubeGL::loadDataBase(){
   QString fileName = QFileDialog::getOpenFileName(this,QString(tr("Open invariom data base.")), "DABA.txt","All files (*)" );
   if (!fileName.isEmpty()){
     QFile daba(fileName);
-    //cout<<fileName.toStdString()<<endl;
     daba.open(QIODevice::ReadOnly);
     DABA entry;
 
@@ -974,7 +892,6 @@ void CubeGL::loadDataBase(){
       }
       if ((lineCntr>-1)&&(lineCntr<7)){
       line.remove(QRegExp("[\n\r]"));
-      //printf("test %d (%s)\n",lineCntr,line.toStdString().c_str());
         QStringList tok=line.split(" ",QString::SkipEmptyParts);
         switch(lineCntr){
         case 1: if (tok.size()>9) {
@@ -1023,8 +940,6 @@ void CubeGL::loadDataBase(){
                 entry.k4=tok.at(3).toDouble();
                 entry.k5=tok.at(4).toDouble();
                 entry.k6=tok.at(5).toDouble();
-//		printf("tok.at(5) !%s!\n",tok.at(5).toStdString().c_str());
-        //        printf("%d %d %f %f %f %f %f %f\n",entries.size(),dataBase.size(),entry.k1,entry.k2,entry.k3,entry.k4,entry.k5,entry.k6);
                 entries.append(entry);
              break;
         }
@@ -1033,12 +948,10 @@ void CubeGL::loadDataBase(){
 
     }
 
-//  qDebug()<<entries.size()<<dataBase.size();
   }
 }
 
 void CubeGL::resetENV(){
-  //  qDebug()<<"reset Environ";
   ce.clear();
   bondList.clear();
   cl.clear();
@@ -1057,7 +970,6 @@ void CubeGL::rotCenter(){
 void CubeGL::mousePressEvent(QMouseEvent *event) {
   double nahda=200.0,da=0;
   int nahdai=-1;
-  //bool changed=false;
   extern QList<INP> xdinp;
   for (int j=0; j<xdinp.size();j++){
     da=(((xdinp.at(j).screenX-event->x())*( xdinp.at(j).screenX-event->x()))+ 
@@ -1066,7 +978,6 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
     nahda=qMin(nahda,da);
   }
   lastPos = event->pos();
-  //printf("Event %d %d \n",lastPos.x(),lastPos.y());
   static GLuint ppp=0,pp=0,p=0;   
   molekul m;	
   if (event->buttons() & Qt::MidButton){
@@ -1086,7 +997,6 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
       extern double L;
       extern molekul mol;
 	GLuint index=nahdai;
-//	printf("hits = %d index = %d xdinp.size = %d %d %d %d\n",hits,index,xdinp.size(),p,pp,ppp);
 	if (index==((GLuint)-1))return;
 	double w=0,dw=0;
 	if (((GLuint) ppp)>((GLuint)xdinp.size())) {
@@ -1114,11 +1024,10 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 	}
 	if ((reSe)&&(strchr(xdinp[index].atomname,'@'))){
 	  iSel=1;
-	  //invClick=index;
 	  {
 	    if (ibas) glDeleteLists(ibas,1);
 	    ibas=glGenLists(1);    
-	    //for (int i=0;i<maxResi;i++)
+
 	    glNewList(ibas, GL_COMPILE );
 	    mol.highlightResi(xdinp,index,L,elli);
 	    glEndList();	    
@@ -1169,24 +1078,6 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 			    .arg(xdinp[index].part)
 			    .arg(xdinp[index].peakHeight,0,'f',3));
 
-	    /*	    std::cout<<QString("Geometry:<table><tr><td><b>%1</b></td><td align=\"left\"></td></tr><tr><td><b>%2--%3</b></td><td align=\"left\">%4 &Aring;</td></tr><tr><td><b>%5--%6--%7</b></td><td align=\"left\">%8&deg;</td></tr><tr><td><b>%9--%10--%11--%12 </b></td><td align=\"left\">%13&deg;</td></tr><tr><td>PART</td><td align=\"left\">%14</td></tr><tr><td>Charge Density: </td><td align=\"left\">%15 e &sdot; &Aring;<sup>-3</sub></td></tr><table>")
-		    .arg((xdinp[index].atomname))                         //1
-		    .arg((xdinp[index].atomname))			        //2
-		    .arg((xdinp[p].atomname))						//3
-		    .arg(sqrt(Distance(xdinp[index].kart,xdinp[p].kart)),0,'f',5) //4
-		    .arg((xdinp[pp].atomname))			                        //5
-		    .arg((xdinp[p].atomname))			                        //6
-		    .arg((xdinp[index].atomname))			        //7
-		    .arg(w,0,'f',3)			                                                //8
-		    .arg((xdinp[ppp].atomname))			                        //9
-		    .arg((xdinp[pp].atomname))			                        //10
-		    .arg((xdinp[p].atomname))			                        //11
-		    .arg((xdinp[index].atomname))			        //12
-		    .arg(dw,0,'f',3)
-		    .arg(xdinp[index].part)
-		    .arg(xdinp[index].peakHeight,0,'f',3)
-		    .toStdString()<<std::endl;;
-		    */
 
 
 	  }else {
@@ -1206,7 +1097,6 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 			    .arg(dw,0,'f',3)
 			    .arg(xdinp[index].part));
 	  }
-	  //				   ,QMessageBox::Ok);
 	  ppp=pp;
 	  pp=p;
 	  p=index;
@@ -1236,14 +1126,6 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 	    selectedAtoms.last().GLname=index;
 	    updateGL();
 	  }
-	  /*
-	  printf("Selected Atoms:\n");
-	  for (int i=0; i<selectedAtoms.size();i++) {
-	    printf(" %s,",selectedAtoms.at(i).atomname);
-	    
-	  }
-	  printf("\n\n");
-	  */ 
 	  updateBondActions();
 	}
 
@@ -1253,10 +1135,8 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 	  int na=0;
 	  for (int i=0; (i<xdinp.size())&&(xdinp[i].OrdZahl>=0); i++) na++;
 	  if (((int)index)>na) {
-	//    	  printf ("index=%d na%d\n",index,na);
 	    return;
 	  }
-//	  	  printf ("index=%d na%d\n",index,na);
 	  static char PSE_Symbol[109][3] = {"H","He","Li","Be","B","C","N","O","F","Ne","Na","Mg","Al","Si","P","S","Cl","Ar",
 	    "K","Ca","Sc","Ti","V","Cr","Mn","Fe","Co","Ni","Cu","Zn","Ga","Ge","As","Se","Br","Kr",
 	    "Rb","Sr","Y","Zr","Nb","Mo","Tc","Ru","Rh","Pd","Ag","Cd","In","Sn","Sb","Te","J","Xe",
@@ -1279,17 +1159,10 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 	    }
 	  if ((bondList.size()!=0)) {
 	    cl=bondList;
-	    /*
-	       for (int w=0; w<bondList.size(); w++){
-	       cout<<bondList.at(w).ato1->Label.toStdString()<<"---"<<bondList.at(w).ato2->Label.toStdString()<< " "<< bondList.at(w).chi<< " "<<bondList.at(w).order<<endl;
-	       }
-	       cout<<"cl=bondList;"<<endl;
-	       */
 	  }
 	  else {
 	    for (int i=0;i<ce.size();i++) {
 	      for (int j=i+1;j<ce.size();j++){
-		//int i=0;
 		if ((ce.at(i).an<0)||(ce.at(j).an<0)) continue;
 		if (ce.at(i).pos==ce.at(j).pos) continue;
 		if ((ce.at(i).part>0)&&(ce.at(j).part>0)&&(ce.at(j).part!=ce.at(i).part)) continue;
@@ -1308,7 +1181,6 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 		    bond.chi=soll_abst-gg;
 		    bond.order=(bond.chi<0.0847)?1:((bond.chi<0.184)?2:((bond.chi<0.27)?3:4));
 		    bond.order=((bond.ato2->Symbol=="H")||(bond.ato1->Symbol=="H"))?1:bond.order;
-		    //		    qDebug()<<"xx";
 		    cl.append(bond);
 		  }
 		}
@@ -1316,7 +1188,6 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 	    }	
 	  }
 	  if (bondList.size()!=cl.size()) {	    
-	    //	    qDebug()<<"bondList=cl"<<cl.size();
 	    bondList=cl;
 	  }
 	  CEnvironment cel;
@@ -1390,7 +1261,6 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 	    }
 	  }
 	  Connection cll;
-//	  printf("Tollllllll: bind %d inv%d ato%d  \n",cl.size(),cel.size(),ce.size());
 
 
 	  for (int i=0; i<cl.size();i++)
@@ -1410,14 +1280,11 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 	      for (int i=0;i<bondList.size();i++){
 		bondList[i].order=cl.at(i).order;
 	      }
-//	    qDebug()<<"test";
-//	    qDebug()<<bondList.size()<<bondList[0].order;
 	  }
 	  if (xdSetupMode){
 	    CEnvironment all;	  
 	    MyAtom xdall;
 	    //	    printf
-	 //   qDebug("Here I am atmax=%d  \n",xdinp.size());
 	    for (int i=0; i<xdinp.size(); i++){
 	      xdall.Label=xdinp[i].atomname;
 	      xdall.pos=xdinp[i].kart;
@@ -1429,11 +1296,7 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 
 	    }
 
-	   //   qDebug()<<"soso"<<xdall.an<<xdall.Symbol;
-	    //	    printf("Hi, its me %d %d %d\n",cel.size(),cll.size(),all.size());
 	    xdEditDlg *id=new xdEditDlg(&cel,&cll,&all);
-	    //	    printf("Hi, its me again\n");
-        //qDebug("Here I am atmax=%d  \n",xdinp.size());
 	    id->update();
 	    if (QDialog::Accepted==id->exec()) emit reloadXD() ;
 	  }
@@ -1451,16 +1314,12 @@ void CubeGL::editInv(const QUrl & link ){
   int index=link.toString().toInt();  
   extern QList<INP> xdinp;
   extern molekul mol;
-// printf("hats geklappt %d?\n",index);
-//return ;
   if (xdinp[index].OrdZahl<0)return;
   int na=0;
   for (int i=0; (i<xdinp.size())&&(xdinp[i].OrdZahl>=0); i++) na=i;
   if (((int)index)>na) {
-    //	  printf ("index=%d na%d\n",index,na);
     return;
   }
-  //	  printf ("index=%d na%d\n",index,na);
   static char PSE_Symbol[109][3] = {"H","He","Li","Be","B","C","N","O","F","Ne","Na","Mg","Al","Si","P","S","Cl","Ar",
     "K","Ca","Sc","Ti","V","Cr","Mn","Fe","Co","Ni","Cu","Zn","Ga","Ge","As","Se","Br","Kr",
     "Rb","Sr","Y","Zr","Nb","Mo","Tc","Ru","Rh","Pd","Ag","Cd","In","Sn","Sb","Te","J","Xe",
@@ -1483,17 +1342,10 @@ void CubeGL::editInv(const QUrl & link ){
     }
   if ((bondList.size()!=0)) {
     cl=bondList;
-    /*
-       for (int w=0; w<bondList.size(); w++){
-       cout<<bondList.at(w).ato1->Label.toStdString()<<"---"<<bondList.at(w).ato2->Label.toStdString()<< " "<< bondList.at(w).chi<< " "<<bondList.at(w).order<<endl;
-       }
-       cout<<"cl=bondList;"<<endl;
-       */
   }
   else {
     for (int i=0;i<ce.size();i++) {
       for (int j=i+1;j<ce.size();j++){
-	//int i=0;
 	if ((ce.at(i).an<0)||(ce.at(j).an<0)) continue;
 	if (ce.at(i).pos==ce.at(j).pos) continue;
 	if ((ce.at(i).part>0)&&(ce.at(j).part>0)&&(ce.at(j).part!=ce.at(i).part)) continue;
@@ -1512,7 +1364,6 @@ void CubeGL::editInv(const QUrl & link ){
 	    bond.chi=soll_abst-gg;
 	    bond.order=(bond.chi<0.0847)?1:((bond.chi<0.184)?2:((bond.chi<0.27)?3:4));
 	    bond.order=((bond.ato2->Symbol=="H")||(bond.ato1->Symbol=="H"))?1:bond.order;
-	    //		    qDebug()<<"xx";
 	    cl.append(bond);
 	  }
 	}
@@ -1520,7 +1371,6 @@ void CubeGL::editInv(const QUrl & link ){
     }	
   }
   if (bondList.size()!=cl.size()) {	    
-    //	    qDebug()<<"bondList=cl"<<cl.size();
     bondList=cl;
   }
   CEnvironment cel;
@@ -1598,8 +1448,6 @@ void CubeGL::editInv(const QUrl & link ){
       for (int i=0;i<bondList.size();i++){
 	bondList[i].order=cl.at(i).order;
       }
-    //qDebug()<<"test";
-    //qDebug()<<bondList.size()<<bondList[0].order;
 }
   /////////
 
@@ -1628,20 +1476,18 @@ void CubeGL::invariomExport(){
   connect(browser,SIGNAL(anchorClicked( const QUrl &)), invExportDlg, SLOT(reject()));
   QPushButton *exportMoProbutton = new QPushButton("Export Invarioms to MoPro files");
   QPushButton *exportXDbutton = new QPushButton("Export Invarioms to XD files");
-//  exportMoProbutton->setEnabled(false);
   connect(exportMoProbutton,SIGNAL(clicked()),this,SLOT(exportMoProFiles()));
   connect(exportXDbutton,SIGNAL(clicked()),this,SLOT(exportXDFiles()));
   connect(exportXDbutton,SIGNAL(clicked()),invExportDlg, SLOT(reject()));
   connect(exportMoProbutton,SIGNAL(clicked()),invExportDlg, SLOT(reject()));
 
   QString text;
-  //  extern Connection bondList;
   for (int ix=0;ix<asymmUnit.size();ix++){
     MyAtom invom;
     double soll_abst,gg;
     MyBond bond;
     if (ce.size()==0){
-      //      qDebug()<<"lhkmnsdfmfgn,";
+
       for (int i=0;i<xdinp.size();i++)
 	if (xdinp[i].OrdZahl>-1) {
 	  invom.Label=xdinp[i].atomname;
@@ -1655,12 +1501,12 @@ void CubeGL::invariomExport(){
     }
     if ((bondList.size()!=0)) {
       cl=bondList;
-      // qDebug()<<bondList.size();
+
     }
     else {
       for (int i=0;i<ce.size();i++) {
 	for (int j=i+1;j<ce.size();j++){
-	  //int i=0;
+
 	  if ((ce.at(i).an<0)||(ce.at(j).an<0)) continue;
 	  if (ce.at(i).pos==ce.at(j).pos) continue;
 	  if ((ce.at(i).part>0)&&(ce.at(j).part>0)&&(ce.at(j).part!=ce.at(i).part)) continue;
@@ -1677,7 +1523,7 @@ void CubeGL::invariomExport(){
 	      bond.chi=soll_abst-gg;
 	      bond.order=(bond.chi<0.0847)?1:((bond.chi<0.184)?2:((bond.chi<0.27)?3:4));
 	      bond.order=((bond.ato1->Symbol=="H")||(bond.ato2->Symbol=="H"))?1:bond.order;
-	      //	      qDebug()<<bond.ato1->Label<<bond.ato1->part<<"---"<<bond.ato2->Label<<bond.ato2->part;
+
 	      cl.append(bond);
 	    }
 	  }
@@ -1699,7 +1545,7 @@ void CubeGL::invariomExport(){
     if (invom.an>-1 ){
       text+="<b>";
       ina=inames::invName(invom,bondList,sel,ix);      
-      //qDebug()<<sel.size()<<knoepfe.size();
+
       knoepfe.append(sel);
       invariomsComplete.append(ina);
       text+=QString("<a href=\"%1\">").arg(ix);
@@ -1715,7 +1561,6 @@ void CubeGL::invariomExport(){
       text+="<br>";
     }
   }
-//  printf("%s \n ",dataBase.last().toStdString().c_str());
   browser->setHtml(text);
   invariomsUnique=invariomsComplete;
 #if (QT_VERSION >= 0x040500)
@@ -1772,10 +1617,6 @@ QString CubeGL::inv2moproaxes(int index){
 	QString resinr =as2.section('@',1,1).section(QRegExp("[A-Za-z]+"),0,0);
 	as2=QString("%1_%2").arg(resinr).arg(anam);
       }
-	/*
-        as1.remove(QRegExp("@.+$"));
-        as2.remove(QRegExp("@.+$"));
-	*/
         return QString(" XY  %1 %2").arg(as1).arg(as2);//
       }
     }
@@ -1785,9 +1626,7 @@ QString CubeGL::inv2moproaxes(int index){
     axcopy.remove(QRegExp("\\(\\w+\\)"));
     axcopy.replace(" ",":");
 
-    //printf("%s::=={%s}{%s}\n",asymmUnit.at(index).atomname,axcopy.toStdString().c_str(),entries.at(j).Symmetry.toStdString().c_str());
     axtok=axcopy.split(":",QString::SkipEmptyParts);
-    //qDebug()<<axtok.size()<<axtok<<index<<invariomsComplete.at(index);
     if (axtok.size()>3){
     int at1=mol.Get_OZ(axtok.at(1));
     int at2=mol.Get_OZ(axtok.at(3));
@@ -1801,33 +1640,9 @@ QString CubeGL::inv2moproaxes(int index){
         if ((at1==-1)&&(knoepfe.at(index).at(k).an==ind1)) {at1=k;continue;}
       }
 
-/*    if ((at1<0)||(at2<0)){
-      while ((r<knoepfe.size())&&(as1!=knoepfe.at(r).at(0).Label)) r++;
-
-      as2=QString("MIST");
-      for (int k=1; k< knoepfe.at(r).size();k++){
-        if ((knoepfe.at(r).at(k).an==at2)&&(knoepfe.at(r).at(k).Label!=as1)&&(knoepfe.at(r).at(k).Label!=knoepfe.at(index).at(0).Label)) {
-          as2=knoepfe.at(r).at(k).Label;
-          //qDebug()<<"oo"<<as1<<as2<<r<<k<<knoepfe.at(r).at(0).Label;
-          break;
-        }
-      }
-      if (as2=="MIST"){
-        //qDebug()<<as2;
-        for (int k=1; k< knoepfe.at(r).size();k++){
-          if ((knoepfe.at(r).at(k).Label!=as1)) {
-            as2=knoepfe.at(r).at(k).Label;
-            //qDebug()<<"aa"<<as1<<as2;
-            break;
-          }
-        }
-      }
-    }else{*/
-
       as1=knoepfe.at(index).at(at1).Label;
       as2=knoepfe.at(index).at(at2).Label;
 
-//    }
       as1.remove(QRegExp("[)(]+"));
       as2.remove(QRegExp("[)(]+"));
 
@@ -1905,7 +1720,6 @@ QString CubeGL::inv2moproaxes(int index){
 
       if ((ind2>(asymmUnit.size()-dummax))||(ind2<0)){
 	r=ind1;
-//	printf("%d %d %d\n",index,ind1,ind2);
 	for (int k=1; k< knoepfe.at(r).size();k++){
 	  if ((knoepfe.at(r).at(k).an==at2)&&(knoepfe.at(r).at(k).index!=ind1)&&(knoepfe.at(r).at(k).index!=index)) {
 	    ind2=knoepfe.at(r).at(k).index;
@@ -1941,19 +1755,13 @@ QString CubeGL::inv2moproaxes(int index){
       QString resinr =as2.section('@',1,1).section(QRegExp("[A-Za-z]+"),0,0);
       as2=QString("%1_%2").arg(resinr).arg(anam);
     }
-    /*
-    as1.remove(QRegExp("@.+$"));
-    as2.remove(QRegExp("@.+$"));
-    */
     erg = QString("%1%2%3  %4 %5")
-          .arg(" ")
-          .arg(axtok.at(0))
-          .arg(axtok.at(2))
-          .arg(as1)
-          .arg(as2);
-    //qDebug()<<erg;
-    //exit(11);
-      }
+	    .arg(" ")
+	    .arg(axtok.at(0))
+	    .arg(axtok.at(2))
+	    .arg(as1)
+	    .arg(as2);
+    }
     return erg;
 
 }
@@ -1996,7 +1804,6 @@ double CubeGL::getHDist(int index){
     QString tok=axtok.last();
     int atyp=mol.Get_OZ(tok.remove(QRegExp("[-.0-9]+")));
     double a1_dist=axtok.last().remove(QRegExp("[A-Za-z]+")).toDouble();
-//    printf ("==>>> %d %f\n",atyp,a1_dist);
     a1_dist=(((37+mol.Kovalenz_Radien[atyp]) / 100.0) - 
 		    (0.08 * fabs(((double)220-mol.ElNeg[atyp])/100.0)))-a1_dist;
 
@@ -2132,7 +1939,6 @@ void CubeGL::exportMoProFiles(){
 
     for (int mi =0; mi < maxmol; mi++){
       for (int i=0;i<asymmUnit.size();i++){
-//	printf("%-10s %d %d mi= %d maxmol= %d\n",asymmUnit.at(i).atomname,asymmUnit.at(i).molindex,asymmUnit.at(i).OrdZahl,mi,maxmol); 
         if (asymmUnit.at(i).molindex!=(mi+1)) continue;
         if (asymmUnit.at(i).OrdZahl<0) continue;
 	exportLabels.append(asymmUnit.at(i).atomname);
@@ -2145,13 +1951,11 @@ void CubeGL::exportMoProFiles(){
       }
       corr_3=0;
       if (anzahl) corr_3 = (sosu-issu)/anzahl;
-  //    printf("%d %d %f %f\n",anzahl,sosu,issu,corr_3);
       corr3.append(corr_3);
       sosu=0;
       issu=0;
       anzahl=0;
     }
-    //qDebug()<<corr3.size()<<maxmol;
     QFile moprofile(QString("InvariomTransfer/%1.00").arg(afilename));
     QDir moprodir(QString("InvariomTransfer/%1.00").arg(afilename));
     if (moprofile.open(QIODevice::WriteOnly)){
@@ -2180,17 +1984,7 @@ void CubeGL::exportMoProFiles(){
         }
         moprofile.write("\nSCALE  1   1.0000\n\nFMULT     1.00000\n\nUOVER     0.00000   ISO\n\nSOLVT     0.00000    50.00000\n\nEXTIN  0.00000   GAUSSIAN      ISOT  TTYP1      !  G*10^4\n\n");
         moprofile.write("DUMMY 0\n\n");
-        /*
-        moprofile.write(QString("DUMMY %1\n").arg(dummax).toLatin1());
-        if (dummax) for (int i=0; i<asymmUnit.size();i++){
-            if (asymmUnit.at(i).OrdZahl==-1)
-                moprofile.write(QString("  DUM %1 %2 %3 %4 0\n")
-                                .arg(asymmUnit.at(i).frac.x,11,'f',6)
-                                .arg(asymmUnit.at(i).frac.y,11,'f',6)
-                                .arg(asymmUnit.at(i).frac.z,11,'f',6)
-                                .arg(strtok(asymmUnit[i].atomname,"!")).toLatin1());
-        }
-        */
+        
         moprofile.write(QString("\nKAPPA  %1\n").arg(invariomsUnique.size()).toLatin1());
         for (int i=0; i<invariomsUnique.size();i++){
             int j=dataBase.indexOf(invariomsUnique.at(i));
@@ -2326,12 +2120,6 @@ void CubeGL::exportMoProFiles(){
 				  .arg(resinr)
 				  .toLatin1());
 
-/*		  printf("->=>> %d %d %s\n", i,z,
-				  QString("SYMPLM %1 %2 %3\n")
-				  .arg(symm)
-				  .arg(anam)
-				  .arg(resinr).toStdString().c_str()
-			);  // */ 
 		}
 	      }
 	    }
@@ -2402,7 +2190,6 @@ void CubeGL::exportMoProFiles(){
 		  rest.write(QString("URATIO %1 %2 %3 %4 %5 0.01! %6\n")
 				  .arg(anam,8).arg(resinr,8).arg(anam2,8).arg(resinr2,8).arg(
 					  (2==invariomsComplete.at(i).count('h')?"1.5":"1.2")).arg(invariomsComplete.at(i)).toLatin1());
-//	    qDebug()<<knoepfe.at(i).at(1).Label <<knoepfe.at(i).at(0).Label<<getHDist(i);
 	  }
 
 	  rest.close();
@@ -2418,7 +2205,6 @@ void CubeGL::inv2XDaxes(int index, int maxat){
     QStringList axtok;
     extern molekul mol;
     extern QList<INP> asymmUnit;
-//    printf("%d %s %d\n",index,asymmUnit.at(index).atomname,asymmUnit.at(index).OrdZahl);
     if (asymmUnit.at(index).OrdZahl<0) return; 
     int j=dataBase.indexOf(invariomsComplete.at(index));
     QString axcopy=entries.at(j).CoordinateSystem;
@@ -2427,16 +2213,13 @@ void CubeGL::inv2XDaxes(int index, int maxat){
     axcopy.remove(QRegExp("\\(\\w+\\)"));
     axcopy.replace(" ",":");
 
-//    printf("%s::=={%s}{%s}\n",asymmUnit.at(index).atomname,axcopy.toStdString().c_str(),entries.at(j).Symmetry.toStdString().c_str());
     printf("%s %d %d\n",asymmUnit.at(index).atomname,maxat,exportDummys.size());		
     axtok=axcopy.split(":",QString::SkipEmptyParts);
-    //qDebug()<<axtok.size()<<axtok<<index<<invariomsComplete.at(index);
     if (axtok.size()>3){
       int at1=mol.Get_OZ(axtok.at(1));
       int at2=mol.Get_OZ(axtok.at(3));
       int ind1=-1,ind2=-1,ind3=-1,r=0;//noch viel arbeit ......
       if ((axcopy.contains("DUM"))&&(entries.at(j).Symmetry=="mm2")) {
-//	printf("_-^_^-_\n");
 	r=qMax(at1,at2);//non dummy atomic number
 	for (int k=1; k< knoepfe.at(index).size();k++){//direkte Nachbarn finden
 	  if ((ind1==-1)&&(knoepfe.at(index).at(k).an==r)) {ind1=knoepfe.at(index).at(k).index;continue;}
@@ -2465,7 +2248,6 @@ void CubeGL::inv2XDaxes(int index, int maxat){
 	mol.frac2kart( asymmUnit.at(ind2).frac , links );
 	dc = mitte + Normalize(((rechts-mitte)%(links-mitte)));
 	mol.kart2frac(dc,dummy.pos);
-//	printf("heinzy%s %s %s %f %f %f\n", asymmUnit.at(ind1).atomname,asymmUnit.at(index).atomname,asymmUnit.at(ind2).atomname,asymmUnit.at(ind1).frac.x,asymmUnit.at(ind1).frac.y,asymmUnit.at(ind1).frac.z);
 	dummy.Label=QString("DUM%1").arg(exportDummys.size());
 	exportLabels.append(dummy.Label);
 	dummy.Symbol="DUM";
@@ -2486,7 +2268,6 @@ void CubeGL::inv2XDaxes(int index, int maxat){
 	mol.frac2kart( asymmUnit.at(ind2).frac , links );
 	dc = mitte + Normalize(((rechts-mitte)+(links-mitte)));
 	mol.kart2frac(dc,dummy.pos);
-//nn	printf("heinzy%s %s %s %f %f %f\n", asymmUnit.at(ind1).atomname,asymmUnit.at(index).atomname,asymmUnit.at(ind2).atomname,asymmUnit.at(ind1).frac.x,asymmUnit.at(ind1).frac.y,asymmUnit.at(ind1).frac.z);
 	dummy.Label=QString("DUM%1").arg(exportDummys.size());
 	exportLabels.append(dummy.Label);
 	dummy.Symbol="DUM";
@@ -2537,7 +2318,6 @@ void CubeGL::inv2XDaxes(int index, int maxat){
 
       if ((ind2>(maxat))||(ind2<0)){
 	r=ind1;
-//	printf("%d %d %d\n",index,ind1,ind2);
 	for (int k=1; k< knoepfe.at(r).size();k++){
 	  if ((knoepfe.at(r).at(k).an==at2)&&(knoepfe.at(r).at(k).index!=ind1)&&(knoepfe.at(r).at(k).index!=index)) {
 	    ind2=knoepfe.at(r).at(k).index;
@@ -2553,26 +2333,11 @@ void CubeGL::inv2XDaxes(int index, int maxat){
         }
       }
     }
-     /* printf("%s %s %d %s %s %d ===\n",
-		      asymmUnit.at(index).atomname,
-		      asymmUnit.at(asymmUnit.at(index).nax).atomname,
-		      asymmUnit.at(index).icor1,
-		      asymmUnit.at(asymmUnit.at(index).nay1).atomname,
-		      asymmUnit.at(asymmUnit.at(index).nay2).atomname,
-		      asymmUnit.at(index).icor2 );*/
- //     printf("%d %d %d\n",index,ind1,ind2);
       asymmUnit[index].nax=ind1;
       asymmUnit[index].nay1=index;
       asymmUnit[index].nay2=ind2;
       asymmUnit[index].icor1= (axtok.at(0)=="X")? 1 : ((axtok.at(0)=="Y")? 2 : 3);
       asymmUnit[index].icor2= (axtok.at(2)=="X")? 1 : ((axtok.at(2)=="Y")? 2 : 3);
-   /*   printf("%-9s %-9s %2d %-9s %-9s %2d ###\n",
-		      asymmUnit.at(index).atomname,
-		      asymmUnit.at(asymmUnit.at(index).nax).atomname,
-		      asymmUnit.at(index).icor1,
-		      asymmUnit.at(asymmUnit.at(index).nay1).atomname,
-		      asymmUnit.at(asymmUnit.at(index).nay2).atomname,
-		      asymmUnit.at(index).icor2 );*/
 
     }
 }
@@ -2619,7 +2384,6 @@ void CubeGL::exportXDFiles(){
     QDir md;
     extern molekul mol;
     extern QList<INP> asymmUnit;
-//    extern int dummax;
 
     const int vale[109]= {1 ,//H
      2 ,//He
@@ -2747,15 +2511,12 @@ void CubeGL::exportXDFiles(){
 	QString anam =as.section('@',0,0);
 	QString resinr =as.section('@',1,1).section(QRegExp("[A-Za-z]+"),0,0);
 	as=QString("%1.%2").arg(anam).arg(resinr);
-//	printf("%s %d %s %d\n",asymmUnit.at(i).atomname,asymmUnit.at(i).OrdZahl,PSE_Symbol[asymmUnit.at(i).OrdZahl],strlen(PSE_Symbol[asymmUnit.at(i).OrdZahl]));
       }
       as.insert(strlen(PSE_Symbol[asymmUnit.at(i).OrdZahl]),"(");
       as.append(")");
       exportLabels.append(as);
-     // printf("%d %s %s\n",exportLabels.size(), exportLabels.last().toStdString().c_str(),as.toStdString().c_str());
 
     }
-  //  printf("last %d %s\n",exportLabels.size(), exportLabels.last().toStdString().c_str());
     md.mkdir("InvariomTransfer");
     QList<double> corr3;
     double issu=0.0,corr_3;
@@ -2763,7 +2524,6 @@ void CubeGL::exportXDFiles(){
 
     for (int mi =0; mi < maxmol; mi++){
       for (int i=0;i<asymmUnit.size();i++){
-//	printf("%-10s %d %d mi= %d maxmol= %d\n",asymmUnit.at(i).atomname,asymmUnit.at(i).molindex,asymmUnit.at(i).OrdZahl,mi,maxmol); 
         if (asymmUnit.at(i).molindex!=(mi+1)) continue;
         if (asymmUnit.at(i).OrdZahl<0) continue;
         int z=dataBase.indexOf(invariomsComplete.at(i));
@@ -2775,31 +2535,23 @@ void CubeGL::exportXDFiles(){
       }
       corr_3=0;
       if (anzahl) corr_3 = (sosu-issu)/anzahl;
-  //    printf("%d %d %f %f\n",anzahl,sosu,issu,corr_3);
       corr3.append(corr_3);
       sosu=0;
       issu=0;
       anzahl=0;
     }
-    //qDebug()<<corr3.size()<<maxmol;
-//    QFile moprofile(QString("InvariomTransfer/%1.00").arg(afilename));
-//    QDir moprodir(QString("InvariomTransfer/%1.00").arg(afilename));
     int ntabl=0;
     QString hama;
     QMap<int,int>itable;
     QMap<int,int>jtable;
     for (int i=0;i<asymmUnit.size();i++){
       if (asymmUnit.at(i).OrdZahl<0) continue;
-//      printf("piep!\n");
       inv2XDaxes(i,exportLabels.size()-exportDummys.size());
-//      printf("quieck!\n");
       if (hama.contains(PSE_Symbol[asymmUnit.at(i).OrdZahl])) continue;
       hama+=QString("!%1!").arg(PSE_Symbol[asymmUnit.at(i).OrdZahl]);
       ntabl++;
-   //   printf("++++%s %d %d\n",hama.toStdString().c_str(),ntabl,asymmUnit.at(i).OrdZahl);
       itable[asymmUnit.at(i).OrdZahl]=ntabl;
     }
-//    printf(" Labels Size = %d Dummys Size = %d\n",exportLabels.size(),exportDummys.size()); 
     QFile inp("InvariomTransfer/xd.inp");
     QString datum=QDate::currentDate().toString("dd-MMM-yy--HH-mm-ss");
     if (inp.exists()) {
@@ -2836,8 +2588,6 @@ void CubeGL::exportXDFiles(){
 	    int j = invariomsUnique.indexOf(invariomsComplete.at(i));
 //	    format(a8,1x,2i2,i5,2i4,i2,2i3,i2,i3,i4,3f10.6,f7.4)
 	    jtable[j]=itable.value(asymmUnit.at(i).OrdZahl);
-	    //printf("j = %d itbl = %d j(itbl)= %d\n",j ,itable.value(asymmUnit.at(i).OrdZahl),jtable.value(j));
-//	    printf("%s i=%d nax %d nay1 %d nay2 %d siz%d\n",exportLabels.at(i).toStdString().c_str(), i, asymmUnit.at(i).nax, asymmUnit.at(i).nay1, asymmUnit.at(i).nay2,asymmUnit.size());
 	    inp.write(QString("%1 %2 %3 %4 %5 %6 %7 %8 %9 %10 %11 %12 %13 %14 %15 %16\n")
 			    .arg(exportLabels.at(i),-9)
 			    .arg(asymmUnit.at(i).icor1,1)
@@ -2918,7 +2668,6 @@ void CubeGL::exportXDFiles(){
                 inp.write("  1  1.000000  1.000000  1.000000  1.000000  1.000000  1.000000\n");
                 continue;
             }
-//	    printf("j = %d j(itbl)= %d\n",i ,jtable.value(i));
             inp.write(QString("  %1 %2 %3 %4 %5 %6 %7\n")
 			    .arg(jtable.value(i))
                             .arg(entries.at(j).k1,8,'f',6)
@@ -2965,7 +2714,6 @@ void CubeGL::exportXDFiles(){
       }
       mas.write("BANK CR\n");
       mas.write("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
-//     printf("xd.mas header is written now writing xdlsm module\n");
       mas.write("MODULE *XDLSM\nSELECT *model 4 2 1 0 based_on F^2 test verbose 1\nSELECT  cycle -10 dampk 1. cmin 0.6 cmax 1. eigcut 1.d-09 convcrit 1.d-05\nSAVE  deriv *lsqmat *cormat\nSOLVE  *inv *diag *cond\n!-------------------------------------------------------------------------------\nSCAT CORE SPHV DEFV   1S  2S  3S  4S  2P  3P  4P  3D  4D  4F  5S  5P  6S  6P  5D  7S  6D  5F  DELF'   DELF''  NSCTL\n");
 //      SCAT core sphv defv 1s 2s 3s 4s 2p 3p 4p 3d 4d 4f 5s 5p 6s 6p 5d 7s 6d 5f Df' Df" nsctl
 //      C    CHFW CHFW CSZD    2  -2   0   0  -2   0   0   0   0   0   0   0   0   0   0   0   0   0  0.0033  0.0016  0.665
@@ -2998,26 +2746,13 @@ void CubeGL::exportXDFiles(){
 			//wenn man ihn von lambda abzieht ist bei positiven Werten die WL naeher bei Cu als bei Mo
 			.arg(XDBANK[itable.key(i)].nsctl/10.0,6,'f',3)
 			.toLatin1());
-//	printf("%s %d %f\n", XDBANK[itable.key(i)].pse, XDBANK[itable.key(i)].krad, XDBANK[itable.key(i)].nsctl); //
       }
       mas.write("END SCAT\n!-------------------------------------------------------------------------------\nATOM     ATOM0    AX1 ATOM1    ATOM2   AX2 R/L TP  TBL KAP LMX SITESYM  CHEMCON\n");
-//      printf("SCAT is written\n");
       const char axl[3][2]={"X","Y","Z"};
       for (int i=0; i< asymmUnit.size();i++){
 	if (asymmUnit.at(i).OrdZahl>-1){
 	  int j = invariomsUnique.indexOf(invariomsComplete.at(i));
 	  int z = dataBase.indexOf(invariomsComplete.at(i));
-	/*  printf("i=%d j=%d z=%d nax=%d nay1=%d nay2=%d icor1=%d icor2=%d OZ=%d %s %s %d\n",i,j,z,
-			  asymmUnit.at(i).nax,
-			  asymmUnit.at(i).nay1,
-			  asymmUnit.at(i).nay2,
-			  asymmUnit.at(i).icor1,
-			  asymmUnit.at(i).icor2,
-			  asymmUnit.at(i).OrdZahl,
-			  axl[asymmUnit.at(i).icor1-1],
-			  axl[asymmUnit.at(i).icor2-1],
-			  exportLabels.size()
-			  );// */
 	//N(T)     C(A)      Z  N(T)     H(3)     Y   R   2   1   1   4    NO
 	//ATOM     ATOM0    AX1 ATOM1    ATOM2   AX2 R/L TP  TBL KAP LMX SITESYM  CHEMCON
 	  mas.write(QString("%1 %2 %3  %4 %5 %6   %7  %8 %9 %10 %11  _%12 %13\n")
@@ -3037,12 +2772,10 @@ void CubeGL::exportXDFiles(){
 			  .arg(entries.at(z).Symmetry,-4)
 			  .arg(" ")
 			  .toLatin1());
-//	  printf("peep\n!");
 
 	}
       }
 
-//    printf(" Labes Size = %d Dummys Size = %d\n",exportLabels.size(),exportDummys.size()); 
       for (int j=0; j<exportDummys.size();j++){
 	 mas.write(QString("%1 %2 %3 %4\n")
 			 .arg(exportDummys.at(j).Label)
@@ -3052,7 +2785,6 @@ void CubeGL::exportXDFiles(){
 			 .toLatin1());
        }
       mas.write("END ATOM\n!-------------------------------------------------------------------------------\n");
-//      printf("Atom table is written\n");
       mas.write("KEEP KAPPA ");
       for (int i=0; i<invariomsUnique.size();i++) {
 	if (i%38==37) mas.write("\nKEEP KAPPA ");
@@ -3074,7 +2806,6 @@ void CubeGL::exportXDFiles(){
       mas.write("!EXTCN  *iso aniso *type_1 type_2 type_3 distr_g *distr_l msc_0  msc_1\n");
       mas.write("DMSDA  1.1  1.8\n FOUR  fmod1 4 2 0 0  fmod2 -1 2 0 0\n");
       mas.write("!CON  num1 par1/iat1 num2 par2/iat2 ... = num0\n!------------------------------------------------------------------------------\nKEY     XYZ --U2-- ----U3---- ------U4------- M- -D- --Q-- ---O--- ----H----\n");
-//      printf("writing keytable\n");
       for (int i=0; i<asymmUnit.size(); i++){
 	if (asymmUnit.at(i).OrdZahl<0)continue;
 	if (asymmUnit.at(i).OrdZahl==0)
@@ -3122,7 +2853,6 @@ void CubeGL::wheelEvent(QWheelEvent *event){
   if (iSel){
     if (ibas) glDeleteLists(ibas,1);
     ibas=glGenLists(1);    
-    //for (int i=0;i<maxResi;i++)
     glNewList(ibas, GL_COMPILE );
     extern QList<INP> xdinp;
     extern double L;
@@ -3130,7 +2860,6 @@ void CubeGL::wheelEvent(QWheelEvent *event){
     if (numSteps>0)mol.highlightResi(xdinp,mol.firstHL-1,L,elli);
     else mol.highlightResi(xdinp,mol.lastHL+1,L,elli);
     glEndList();	    
-    //printf("gut ?%d\n",ibas);
     updateGL();
   }else{
     int d = myFont.pointSize();
@@ -3171,7 +2900,6 @@ void CubeGL::contextMenuEvent(QContextMenuEvent *event) {
     QMenu menu(this);
     double nahda=200.0,da=0;
     int nahdai=-1;
-    //bool changed=false;
     extern QList<INP> xdinp;
     for (int j=0; j<xdinp.size();j++){
       da=(((xdinp.at(j).screenX-event->x())*( xdinp.at(j).screenX-event->x()))+ 
@@ -3183,8 +2911,6 @@ void CubeGL::contextMenuEvent(QContextMenuEvent *event) {
     expandatom=nahdai;
       if (expandatom<xdinp.size()) {
 	if (expandatom<0) {expandatom=-1;return;}
-	//      printf("expandatom %d\n",expandatom);
-	//     int bo=cl.at(index).order;
 	expandAct.setText(tr("Expand %1 Ang. arround %2.").arg(mol.gd).arg(xdinp.at(expandatom).atomname));
 	hideThisAct.setText(tr("Hide %1 ").arg(xdinp.at(expandatom).atomname));
 	menu.addAction(&expandAct);
@@ -3232,7 +2958,6 @@ void CubeGL::moveY(double speed){
 
 void CubeGL::moveX(double speed){
   glTranslateL(speed,0.0,0.0);
-  //  QMessageBox::information(this,"Px move","xmoved",QMessageBox::Ok);
   updateGL();  
 }
 
@@ -3243,7 +2968,6 @@ void CubeGL::rotX(double speed){
 
 void CubeGL::fontSizeUp() {
   myFont.setPointSize(myFont.pointSize()+1);
-  //  QMessageBox::information(this,"PFUND","Font Geändert",QMessageBox::Ok);
   updateGL();
 }
 
@@ -3261,7 +2985,6 @@ void CubeGL::setAtomsClickable(bool on){
 void CubeGL::mouseMoveEvent(QMouseEvent *event) {
   double nahda=200.0,da=0;
   int nahdai=-1;
-  //bool changed=false;
   extern QList<INP> xdinp;
   for (int j=0; j<xdinp.size();j++){
     da=(((xdinp.at(j).screenX-event->x())*( xdinp.at(j).screenX-event->x()))+ 
@@ -3277,7 +3000,6 @@ void CubeGL::mouseMoveEvent(QMouseEvent *event) {
   if ((!moai)&&(!event->buttons())) {
     if (imFokus!=nahdai){
       imFokus=nahdai;
-//      printf("nahda %d %s\n",nahdai,(imFokus>=0)?xdinp[imFokus].atomname:"");
       if (imFokus>=0) emit message(xdinp[imFokus].atomname);
       else emit message("");
       updateGL();
@@ -3299,36 +3021,15 @@ void CubeGL::mouseMoveEvent(QMouseEvent *event) {
       V2[0]=ML[0] *V1[0]+ML[1] *V1[1]+ML[2] *V1[2];
       V2[1]=ML[4] *V1[0]+ML[5] *V1[1]+ML[6] *V1[2];
       V2[2]=ML[8] *V1[0]+ML[9] *V1[1]+ML[10]*V1[2];
-      //       printf("%f %f %f\n",mlsc,ML[14],(double)_win_width/_win_height);
-      //       V2[0]/=V2[3]/width();
-      //V2[1]/=V2[3]/height();
 
-      //       xdinp[labToMove].labPos+=v2;
-      //qDebug()<<labToMove<<V2[0]<<V2[1]<<V2[2];
       xdinp[labToMove].labPos+=V3(V2[0],V2[1],V2[2]);
     }else if (moveLeg){
-      //         qDebug()<<"movLeg"<<moveLeg;
       if (horizont) {
 	mil.y+=dx*3.15*(double)_win_width/_win_height;
 	mil.x-=dy*3.15;
-	//qDebug()<<mlsc<<mlsc*3.15;
-	//	 printf("H %f %f \n",mil.x,mil.y);
-	/*	 if ((mil.x>1.6)||(mil.x<-1.6)||(mil.y>1.2)||(mil.y<-2.99)) {
-		 horizont=false;
-	//	   double dm=mil.x;
-	mil.x=0;
-	mil.y=-1.0;
-	}*/
       }else{
 	mil.x+=dx*3.15*(double)_win_width/_win_height;
 	mil.y-=dy*3.15;
-	//	 	 printf("V %f %f \n",mil.x,mil.y);
-	/*	 if ((mil.x>2.90)||(mil.x<-2.99)||(mil.y>-0.25)||(mil.y<-1.6)) {
-		 horizont=true;
-	//	   double dm=mil.x;
-	mil.x=0;
-	mil.y=-1.0;
-	}*/
       }
     }else{
       glRotateL(dy*360.0,1.0f,0.0f,0.0f);
@@ -3363,22 +3064,12 @@ void CubeGL::toggleMolisoLegendDirection(){
 
 void CubeGL::setMatrix(){
   glMatrixMode(GL_MODELVIEW);
-  //  GLdouble mm[16];
-  //  glGetDoublev(GL_MODELVIEW_MATRIX,mm);
-  /*  printf("Die Mmatrix ist:\n%9.6f %9.6f %9.6f %9.6f\n%9.6f %9.6f %9.6f %9.6f\n%9.6f %9.6f %9.6f %9.6f\n%9.6f %9.6f %9.6f %9.6f\n",
-      mm[0],mm[1],mm[2],mm[3],
-      mm[4],mm[5],mm[6],mm[7],
-      mm[8],mm[9],mm[10],mm[11],
-      mm[12],mm[13],mm[14],mm[15]);*/
-  //  GLdouble sum9 = MM[0]+ MM[1]+ MM[2]+  MM[4]+ MM[5]+ MM[6]+   MM[8]+ MM[9]+ MM[10];
-  GLdouble det=
+    GLdouble det=
 	  MM[0]*MM[5]*MM[10] - MM[8]*MM[5]*MM[2]+
 	  MM[1]*MM[6]*MM[8]  - MM[9]*MM[6]*MM[0]+
 	  MM[2]*MM[4]*MM[9]  - MM[10]*MM[4]*MM[1];
-  //  printf("Stetze die Matrix det %f\n",det);
   if ((det>0.1)&&(det<9.0)) glLoadMatrixd(MM);
   else {
-    //  printf("else\n"); 
     MM[0]=1;
     MM[1]=0;
     MM[2]=0;
@@ -3398,19 +3089,7 @@ void CubeGL::setMatrix(){
     glLoadIdentity();
     glLoadMatrixd(MM);
   }
-  /*  glGetDoublev(GL_MODELVIEW_MATRIX,mm);
-      printf("Die neue Mmatrix ist:\n%9.6f %9.6f %9.6f %9.6f\n%9.6f %9.6f %9.6f %9.6f\n%9.6f %9.6f %9.6f %9.6f\n%9.6f %9.6f %9.6f %9.6f\n",
-      mm[0],mm[1],mm[2],mm[3],
-      mm[4],mm[5],mm[6],mm[7],
-      mm[8],mm[9],mm[10],mm[11],
-      mm[12],mm[13],mm[14],mm[15]);
-      det=
-      mm[0]*mm[5]*mm[10] - mm[8]*mm[5]*mm[2]+
-      mm[1]*mm[6]*mm[8]  - mm[9]*mm[6]*mm[0]+
-      mm[2]*mm[4]*mm[9]  - mm[10]*mm[4]*mm[1];
-      glScaled(1.0/det,1.0/det,1.0/det);*/
-  //  {int Fehler=glGetError(); if (Fehler!=GL_NO_ERROR) { fprintf (stderr, "3OpenGL Error: %s\n",gluErrorString(Fehler)); } }
-  updateGL();
+    updateGL();
 }
 
 void CubeGL::zalman(){
@@ -3447,7 +3126,6 @@ void CubeGL::showMatrix(){
   qDebug()<<QCoreApplication::libraryPaths () <<QImageWriter::supportedImageFormats ();
 #endif   
 #ifdef _WIN32
-  //qDebug()<<QCoreApplication::libraryPaths () <<QImageWriter::supportedImageFormats ();
 #else
   QList<QByteArray> supo = QImageWriter::supportedImageFormats ();
   for (int i=0; i<supo.size();i++) printf("%s\n",QString(supo.at(i)).toStdString().c_str());
@@ -3600,9 +3278,6 @@ void CubeGL::draw() {
   glPushMatrix();
   if (back_grad&&(rmode==GL_RENDER)){
     double mat[16];
-    //  if (texti==0) glBindTexture(GL_TEXTURE_2D, tex[0]);
-    //  if (texti==1) glBindTexture(GL_TEXTURE_2D, tex[1]);
-    //  if (texti!=2) glEnable(GL_TEXTURE_2D);
     //  else
     glDisable(GL_TEXTURE_2D);
     glEnable(GL_BLEND);
@@ -3721,8 +3396,6 @@ if (!selectedAtoms.isEmpty()){
 		case 6: {glCallList(moliso->mibas+5);break;}
 		default: qDebug()<<"Impossible Orientation!!!";exit(1);
 	}      
-	//else glCallList(mibas);
-	// */
 	glDisable(GL_TEXTURE_1D);
 	glDisable(   GL_CULL_FACE);
 	glCullFace(GL_BACK);
@@ -3730,13 +3403,11 @@ if (!selectedAtoms.isEmpty()){
 
 
 	if (MILe){
-	  //    printf("4ok\n");
 	  GLfloat fw;
 	  glPushMatrix();
 	  double mat[16];
 	  glEnable(GL_COLOR_MATERIAL);
 	  glGetDoublev( GL_MODELVIEW_MATRIX, (double*)mat );
-	  //      printf("4+ok\n");
 	  glLoadIdentity();
 	  glDisable( GL_LIGHTING ); 
 	  glDisable( GL_DEPTH_TEST ); 
@@ -3769,13 +3440,12 @@ if (!selectedAtoms.isEmpty()){
 	    if (horizont) renderText(mil.y+0.33*i*milsize+0.01,mil.x+0.07*milsize,-6.1,lab ,MLegendFont);
 	    else{
 	      if (mil.x<0) renderText(mil.x+0.07*milsize,mil.y+0.33*i*milsize+0.01,-6.1,lab,MLegendFont);
-	      else {//renderText(mil.x-0.05-(R.width()/300.0),mil.y+0.33*i+0.01,-6.1,lab ,MLegendFont);
+	      else {
 		renderText(mil.x-(3.5/_win_height *R.width()),mil.y+0.33*i*milsize+0.01,-6.1,lab ,MLegendFont);
 	      }
 	    }	  
 	  }
 
-	  //	printf("%f  %d %d %d %d \n",fw,R.x(),R.y(),R.width(),R.height());
 	  glEnable( GL_LIGHTING ); 
 	  glEnable( GL_DEPTH_TEST ); 
 	  glLoadMatrixd(mat);
@@ -3792,13 +3462,13 @@ if (!selectedAtoms.isEmpty()){
 	dieDiPole();
 	glPopMatrix();
       }
-      if ((drawLa)) //glCallList(bas+7);
+      if ((drawLa))
       {	
 	glClear( GL_DEPTH_BUFFER_BIT);
 	glPushMatrix();{
 	  glScaled(L,L,L);
 	  for (int j=0;j<xdinp.size();j++){
-	    //	    glLoadName(j);
+
 	    if (imFokus==j) qglColor(Qt::yellow); else  glColor4f(tCR,tCG,tCB,tCA);
 	    if (((iSel)&&(mol.firstHL<=j)&&(mol.lastHL>=j))||(!iSel)){
 	      if (xdinp[j].OrdZahl<0) renderText( xdinp[j].labPos.x,xdinp[j].labPos.y,xdinp[j].labPos.z, xdinp[j].atomname,nonAtomFont);
@@ -3830,16 +3500,8 @@ if (!selectedAtoms.isEmpty()){
     }
     } 
   }
-  //  printf("%d %d %d\n",bas,ibas,mibas);
-  /*
-     if ((ibas)&&(iSel)){
-     glEnable(GL_COLOR_MATERIAL);
-     glCallList(ibas);
-     glColor4f(0.6,0.6,0.6,0.3);
-     glDisable(GL_COLOR_MATERIAL);
-     } else {glEnable(GL_COLOR_MATERIAL);}  
-     */
-  glPopMatrix();
+
+    glPopMatrix();
 }
 
 void CubeGL::dieDiPole(){
@@ -3857,13 +3519,13 @@ void CubeGL::dieDiPole(){
     gg=sqrt(Norm(p));{
       if (Norm(vec)==0) vec=V3(1.0,0,0);
       glPushMatrix();
-      //glLoadName((GLuint)-1);
+
       if (fsz>i)qglColor(farben.at(i)); 
       else glColor3f(0.4,0.3,0.1);
       glRotatef(wink,vec.x,vec.y,vec.z); // drehen
       GLUquadricObj *q = gluNewQuadric();
       gluQuadricNormals(q, GL_SMOOTH); 
-      //   printf ("%f\n",gg);
+
       gluCylinder(q, 0.02, 0.02, (float)gg*.9, 8, 50);
       glPopMatrix();
     }
@@ -3890,8 +3552,8 @@ void CubeGL::updateBondActions(){
   centerSelection->setVisible(!selectedAtoms.isEmpty());
   extern molekul mol;
   delCoordi->setVisible(!mol.cBonds.isEmpty());
-  //hideNotSelection->setVisible(!selectedAtoms.isEmpty());
-  //unhide->setVisible(hiddenThings);
+
+
   if (selectedAtoms.size()!=2){
     addBond->setVisible(false);
     killBond->setVisible(false);
@@ -3951,7 +3613,7 @@ void CubeGL::connectSelection(){
     glPushMatrix();{
       glScaled( L, L, L );
       mol.intern=1;
-      //      cubeGL->qglColor(mol.bondColor);
+
       mol.singleColorBonds=true;
       mol.bonds(xdinp);
     }glPopMatrix();
@@ -3997,7 +3659,7 @@ void CubeGL::disConnectSelection(){
     glPushMatrix();{
       glScaled( L, L, L );
       mol.intern=1;
-      //      cubeGL->qglColor(mol.bondColor);
+
       mol.singleColorBonds=true;
       mol.bonds(xdinp);
     }glPopMatrix();

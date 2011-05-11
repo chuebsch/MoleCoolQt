@@ -4,9 +4,6 @@ MolisoStartDlg::MolisoStartDlg(){
   loadSettings();
   setMinimumSize(QSize(550,200));
   QLabel *isol= new QLabel("Iso-Grid-File");
-  //QLabel *mapl= new QLabel("Map-Grid-File");
-  //QLabel *adpl= new QLabel("ADP-structure-File");
-  //QLabel *facl= new QLabel("MolIso-Surface-File");
   mcbx= new QCheckBox("Map-Grid-File");
   lfcbx = new QRadioButton("Load MolIso-Surface-File");
   sfcbx = new QRadioButton("Save MolIso-Surface-File");
@@ -44,14 +41,10 @@ MolisoStartDlg::MolisoStartDlg(){
   connect(lfedit,SIGNAL(textEdited ( const QString)),this,SLOT(lfchange(const QString)));
   connect(sfedit,SIGNAL(textEdited ( const QString)),this,SLOT(sfchange(const QString)));
   QGridLayout *gl = new QGridLayout();
-//  medit->setEnabled(false);
-//  mapl->setEnabled(false);
-//  mbrws->setEnabled(false);
   gl->addWidget(isol,0,0,1,2);
   gl->addWidget(iedit,0,2,1,1);
   gl->addWidget(ibrws,0,3,1,1);
   gl->addWidget(mcbx,1,0,1,1);
-//  gl->addWidget(mapl,1,1,1,1);
   gl->addWidget(medit,1,2,1,1);
   gl->addWidget(mbrws,1,3,1,1);
   gl->addWidget(lfcbx,2,0,1,1);
@@ -62,7 +55,6 @@ MolisoStartDlg::MolisoStartDlg(){
   gl->addWidget(sfedit,3,2,1,1);
   gl->addWidget(sfbrws,3,3,1,1);
   gl->addWidget(acbx,4,0,1,1);
-//  gl->addWidget(adpl,3,1,1,1);
   gl->addWidget(aedit,4,2,1,1);
   gl->addWidget(abrws,4,3,1,1);
   gl->addWidget(doit,5,3,1,1);

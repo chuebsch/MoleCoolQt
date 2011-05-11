@@ -25,6 +25,5 @@ Q_OBJECT
   void ichange(const QString &s);
   void lfchange(const QString &s);
   void sfchange(const QString &s);
-  //  void change(const QString &s);
   
 };

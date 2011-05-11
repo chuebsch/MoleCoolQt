@@ -7,7 +7,6 @@ extern int egal;
 QStringList allLab;
 XDDlg::XDDlg(CEnvironment ch,Connection cll,CEnvironment lc,CEnvironment *all,QWidget *parent,xdEditDlg *invD): QGLWidget(parent){
    setFormat(QGLFormat(QGL::DoubleBuffer | QGL::DepthBuffer) );
-//   qDebug()<<"34";
    papi=invD;
    locCo=lc;
    alle=all;
@@ -24,10 +23,8 @@ XDDlg::XDDlg(CEnvironment ch,Connection cll,CEnvironment lc,CEnvironment *all,QW
    imFokus=-1;
 }
 void XDDlg::initializeGL(){
-//  printf("init GL\n");
   glEnable(GL_LINE_SMOOTH);  
   glHint(GL_LINE_SMOOTH_HINT,GL_NICEST);
-  //glEnable(GL_POLYGON_SMOOTH);   
   const GLfloat  position[] = {100.0f, 100.0f,100.0f,0.0f};
   const GLfloat  diffuse[]  = { 1.0, 1.0, 1.0, 1.0 };
   const GLfloat  specular[] = { 1.0, 0.9, 0.9, 1.0 };
@@ -48,7 +45,6 @@ void XDDlg::initializeGL(){
 
   glEnable( GL_LIGHTING );
   glEnable( GL_LIGHT0 );
-  //  glEnable( GL_BLEND);
   glDisable(GL_BLEND);
   glAlphaFunc ( GL_GREATER, 0.01f ) ;
   glBlendFunc ( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA ) ;
@@ -66,7 +62,6 @@ void XDDlg::initializeGL(){
    gluLookAt(0.0, 200, 50 ,   0.0, 0.0, 0.0,   0.0, -100, 400 );
    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
     setMouseTracking ( true );
-//  printf("init GL!\n");
 }
 void XDDlg::resizeGL(int width, int height){
   glViewport(0, 0, width, height);        
@@ -139,7 +134,6 @@ static inline bool  posTo2D(V3 obj,
 void XDDlg::mousePressEvent(QMouseEvent *event){
   double nahda=200.0,da=0;
   int nahdai=-1;
-  //bool changed=false;
   for (int j=0; j<ce.size();j++){
     da=(((ce.at(j).screenX-event->x())*( ce.at(j).screenX-event->x()))+ 
 		    ((ce.at(j).screenY-event->y())*( ce.at(j).screenY-event->y())));
@@ -147,10 +141,9 @@ void XDDlg::mousePressEvent(QMouseEvent *event){
     nahda=qMin(nahda,da);
   }
    lastPos = event->pos();
-     if (nahdai <= 0) {;//emit message("");      
+     if (nahdai <= 0) {
      }else if (nahdai<ce.size()) {
        GLuint index=nahdai;
-       //if(!dummyMode)emit message(ce.at(index).Label);
        if(dummyMode){
 	 if ((dummyMode==3)&&(ce.at(index).an<0)) {
 	   if (duminuse.contains(ce.at(index).Label,Qt::CaseInsensitive)){
@@ -185,10 +178,8 @@ void XDDlg::mousePressEvent(QMouseEvent *event){
 	   emit message(QString("You clicked on %1. and %2").arg(ce.at(oldindex).Label).arg(ce.at(index).Label));
 	   MyAtom newDummy;
 	   QString prev=alle->at(alle->size()-1).Label;
-	   //QMessageBox::information(this,"LeftHand",QString(tr("%1 ").arg(prev)),QMessageBox::Ok);
 	   prev.remove(0,3);
 	   int num = prev.toInt();
-	   //	 QMessageBox::information(this,"LeftHand",QString(tr("%1 %2").arg(num+1).arg(prev)),QMessageBox::Ok);
 	   newDummy.Label="dum"+QString::number(num+1);
 	   if (dummyMode==1)newDummy.pos=Normalize(dpos)+ce.at(0).pos;
 	   if (dummyMode==2)newDummy.pos=(Normalize(ce.at(index).pos-ce.at(0).pos)%dpos)+ce.at(0).pos;
@@ -211,7 +202,6 @@ void XDDlg::mouseMoveEvent(QMouseEvent *event){
    
   double nahda=200.0,da=0;
   int nahdai=-1;
-  //bool changed=false;
   for (int j=0; j<ce.size();j++){
     da=((ce.at(j).screenX-event->x())*( ce.at(j).screenX-event->x()))+ 
 		    ((ce.at(j).screenY-event->y())*( ce.at(j).screenY-event->y()));
@@ -221,7 +211,6 @@ void XDDlg::mouseMoveEvent(QMouseEvent *event){
    if (!event->buttons()) {
     if ((nahdai < 0)||(ce.size()<nahdai)) {
       imFokus=-1; 
-//      emit message("");
 	updateGL();
     } else 
     {      
@@ -230,11 +219,9 @@ void XDDlg::mouseMoveEvent(QMouseEvent *event){
         imFokus=index;
 	
 	updateGL();
-//	emit message(ce.at(index).Label);
       }
     }
    }
-   // */
    if ((event->buttons() & Qt::LeftButton)) {
      glRotateL(dy*360.0,1.0f,0.0f,0.0f);
      glRotateL(dx*360.0,0.0f,1.0f,0.0f);
@@ -414,30 +401,21 @@ void xdEditDlg::molman(QString text){
   case 20:keyline.replace(46,30,QString("10 000 10000 0000000 100001000"));break;
   case 24:keyline.replace(46,30,QString("10 000 10000 0000010 100000000"));break;
   case 0: 
-	  //msgBox.setWindowTitle("MoleCoolMan");
-	  //msgBox.setText("<b>MoleCoolMan believes that there is<br>"+belief+"</b><br>"+text+"<br>"+((scd)?keyline:"Key line will not be changed!"));
-	  //msgBox.setIconPixmap(QPixmap(":/images/molecoolman01_100.png"));
-	  //msgBox.exec();
 	  break;
   case 888:keyline.replace(46,30,QString("10 001 10000 1000000 100000000"));break;
   default:QMessageBox::critical(this,"MoleCoolMan sucks!",QString(tr("Sorry but there is another programming bug!")),QMessageBox::Ok); 
   }
   messi.setText("Maybe there is<br><b>"+belief+"</b><br>"+text+"<br>"+((scd)?"":"<font color=red size=+3>Key line will not be changed!</font>"));
-/* */
   keyLineEdit->setText(keyline);
-//  statlab2.setText(keyline);
 }
 QString  xdEditDlg::checkSymmOnAx(V3 ax, double TOL){
   QString st="";
-//  const double TOL=0.03;
   M9 dm;
-  //  QMessageBox::information(this,"TEST",QString(tr("TEST 1")),QMessageBox::Ok); 
   CEnvironment sym(*chm);
   CEnvironment asym(*chm);
   V3 sp;
   int relatm=0;
   int cend=chm->size();;
-  //  QMessageBox::information(this,"TEST",QString(tr("TEST %1").arg(cend)),QMessageBox::Ok);  
   for (int j=0;j<cend;j++){ 
     if (asym[j].an>-1)relatm++;
     asym[j].pos+=(chm->at(0).pos*-1.0);
@@ -452,18 +430,12 @@ QString  xdEditDlg::checkSymmOnAx(V3 ax, double TOL){
     dm[6]=-ax.y*S+ax.x*ax.z*_C;
     dm[7]= ax.x*S+ax.z*ax.y*_C;
     dm[8]=C+ax.z*ax.z*_C;
-    //QMessageBox::information(this,"TEST",QString(tr("TEST 2")),QMessageBox::Ok); 
     int same=0;
     double different=0.0;
     if (i>1){
     for (int j=0;j<cend;j++){      
       rot_(dm,asym.at(j).pos,sym[j].pos);
-      //sym[j].Label=QString::number(i)+"_"+QString::number(j);
-      //asym[j].Label="Org";
-      //chm->append(asym.at(j));
-      //chm->append(sym.at(j));
     }
-    //QMessageBox::information(this,"TEST333",QString(tr("TEST 3")),QMessageBox::Ok); 
     
     for (int j=0;j<cend;j++){
       for (int k=0;k<cend;k++){
@@ -475,7 +447,6 @@ QString  xdEditDlg::checkSymmOnAx(V3 ax, double TOL){
 	}//if
       }//k
     }//j
-    //    QMessageBox::information(this,"TEST333",QString(tr("SYM %3 %1 %2").arg(same).arg(different).arg(i)),QMessageBox::Ok);
     if (same==relatm) st+=QString("%1").arg(i); 
     }
     same=0;
@@ -627,7 +598,6 @@ void XDDlg::draw(){
     glEnable(GL_LIGHTING);
   glPushMatrix();
   glClear( GL_DEPTH_BUFFER_BIT);
-  //  glColor3f(0.0,0.0,0.0);
   myFont= QFont("Arial", 24, -1, false);  
 
   GLdouble model[16];
@@ -639,7 +609,6 @@ void XDDlg::draw(){
   for (int j=0;j<ce.size();j++){
     if (imFokus==j)  glColor3f(0.4,0.9,0.2); else glColor3f(0.0,0.0,0.0);
     renderText( ce.at(j).pos.x+mitsav.x,ce.at(j).pos.y+mitsav.y,ce.at(j).pos.z+mitsav.z, ce.at(j).Label,myFont);
-//    printf("render %d %d\n",j,ce.size());
     if (!posTo2D(ce.at(j).pos+mitsav,model,proj,viewport, &ce[j].screenX, &ce[j].screenY))
     {ce[j].screenX=-200; ce[j].screenY=-200;}
 
@@ -683,10 +652,6 @@ CEnvironment xdEditDlg::calcAxis(QString masstr,CEnvironment *all){
   if (zzs.length()) symmdiag+=zzs+zp.Label+" ";
   molman(symmdiag);
   symmetryReducer(symmdiag);
-  //  QMessageBox::information(this,"Symmetry along xyz",symmdiag,QMessageBox::Ok);
-//  QMessageBox::information(this,xp.Label,QString(tr("%1 ").arg(checkSymmOnAx(xp.pos))),QMessageBox::Ok); 
-//  QMessageBox::information(this,yp.Label,QString(tr("%1 ").arg(checkSymmOnAx(yp.pos))),QMessageBox::Ok); 
-//  QMessageBox::information(this,zp.Label,QString(tr("%1 ").arg(checkSymmOnAx(zp.pos))),QMessageBox::Ok); 
   xp.pos*=2.5;
   yp.pos*=2.5;
   zp.pos*=2.5;
@@ -707,7 +672,6 @@ void xdEditDlg::setKeyLine(const QString &s){
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 xdEditDlg::xdEditDlg(CEnvironment *ch,const Connection *cll,CEnvironment *all): QDialog(){
   keyLineEdit = new QLineEdit("",this);
-//  printf("dialog?\n");
   connect(keyLineEdit, SIGNAL(textChanged(const QString &)),
 	  this, SLOT(setKeyLine(const QString &)));
   setMinimumSize(1050,400);
@@ -722,45 +686,27 @@ xdEditDlg::xdEditDlg(CEnvironment *ch,const Connection *cll,CEnvironment *all): 
   font.setFamily("Courier");
   font.setFixedPitch(true);
   font.setPointSize(10);  
-  //statlab2.setFont(font);
-  //statlab2.setText("");
-  //  QStringList allLab;
-  //qDebug()<<"345 "<<all->size();
   for (int i=0; i<all->size();i++) allLab.append(all->at(i).Label);
-//  char line[200]="",nline[200]="";
-//  std::cout<<"TEST xdEditDlg\n";
-// /*
    QFile mas("xd.mas");
    mas.open(QIODevice::ReadOnly);
    QString allM = mas.readAll();
    mas.close();
-//  std::cout<<"TEST xdEditDlg\n";
    allM = allM.remove("\r");
-//   std::cout<<allM.toStdString()<<"=================6666\n";
    allM = allM.remove(QRegExp("![^\n]*"));
    allM = allM.replace("\r","[R]");
-//   std::cout<<allM.toStdString();
-   //allM.replace(QRegExp("CHEMCON[^\n]*\n"),"CHEMCON\n");
    allM = allM.remove(QRegExp("^.{1,}CHEMCON"));
 
-//  std::cout<<"TEST xdEditDlg\n";
    QStringList lines= allM.split("\n",QString::SkipEmptyParts);
    for (int i=0; i<lines.size();i++) lines[i]=lines.at(i).trimmed();
 
-//   for (int i=0; i<lines.size();i++) std::cout<<lines.at(i).toStdString()<<"~~~>"<<i<<std::endl;
    QStringList alteDummys= lines.filter(QRegExp("^DUM\\d{1,}"));
-  // qDebug()<<alteDummys;
   for (int i=0; i<alteDummys.size();i++) {
     alteDummys[i].remove(QRegExp("\\s+.{1,}$"));
-//    std::cout<<"<>"<<alteDummys.at(i).toStdString()<<"<>"<<std::endl;  
     lines.replaceInStrings(alteDummys.at(i),QString("DUM_%1").arg(i),Qt::CaseInsensitive );
   }
   lines.replaceInStrings("DUM_","DUM",Qt::CaseInsensitive);
-//  std::cout<<"---TEST xdEditDlg"<<lines.size()<<std::endl;
    int i0, i2;
    for (i0=0; ((!(lines.at(i0).startsWith("DUM",Qt::CaseInsensitive)))&&(!(lines.at(i0).startsWith("END",Qt::CaseInsensitive)))); i0++){
-//  std::cout<<i0<<"TEST xdEditDlg\n";
-//     std::cout<<lines.at(i0).toStdString()<<std::endl;
    QStringList words=lines.at(i0).split(" ",QString::SkipEmptyParts);
    if (words.size()){
    if (words.at(1).startsWith("DUM",Qt::CaseInsensitive)) duminuse.append(words.at(1));
@@ -768,16 +714,12 @@ xdEditDlg::xdEditDlg(CEnvironment *ch,const Connection *cll,CEnvironment *all): 
    }
    if (lines.at(i0).startsWith(ch->at(0).Label,Qt::CaseInsensitive)) sLabel.setText(lines.at(i0));
    }
-   //std::cout<<"TEST xdEditDlg"<<ch->at(0).Label.toStdString()<<" "<<i0<<" "<<all->size()<<std::endl; fflush(stdout);
 
    for (i2=i0; (!(lines.at(i2).startsWith("KEY",Qt::CaseInsensitive))) ;i2++){}
-//   std::cout<<"TEST xdEditDlg"<<ch->at(0).Label.toStdString()<<" "<<i0<<" "<<all->size()<<std::endl; fflush(stdout);
    do {
-    // std::cout<<lines.at(i2).toStdString()<<"!!"<<i2<<std::endl;
      i2++; 
      keyline=lines.at(i2);
    }while (!(lines.at(i2).startsWith(ch->at(0).Label,Qt::CaseInsensitive))); 
-//  std::cout<<"TEST"<<std::endl;fflush(stdout);
   QVBoxLayout *srl= new QVBoxLayout();
    srl->setAlignment(Qt::AlignTop);
    X_1 = new QCheckBox("-1 'along' X");srl->addWidget(X_1); X_1 ->setToolTip(X_1 ->text());
@@ -830,7 +772,6 @@ xdEditDlg::xdEditDlg(CEnvironment *ch,const Connection *cll,CEnvironment *all): 
 
   sRGroupBox = new QGroupBox("Symmetry elements"); 
   sRGroupBox->setLayout(srl);
-//  std::cout<<"EST"<<std::endl;fflush(stdout);
 
   locCo=calcAxis(sLabel.text(),all);
 
@@ -844,8 +785,6 @@ xdEditDlg::xdEditDlg(CEnvironment *ch,const Connection *cll,CEnvironment *all): 
   QHBoxLayout *dummyCreate=new QHBoxLayout();
   qhbl2->addWidget(&sLabel);
   qhbl2->addWidget(lhand);
-  //qhbl2->addWidget(firstAx);
-  //qhbl2->addWidget(secondAx);
   ax1lab=new QComboBox;
   ax2lab=new QComboBox;
   ax1lab->addItems(allLab);
@@ -890,19 +829,13 @@ xdEditDlg::xdEditDlg(CEnvironment *ch,const Connection *cll,CEnvironment *all): 
   grid->setColumnStretch(1,0);
   statbar= new  QStatusBar();
   statbar->setSizeGripEnabled(false);
-//  statbar->addPermanentWidget(&statlab2);
   statbar->addPermanentWidget(&statlab);
-  // statbar->showMessage("Status bar says hello to Christian!",2000); 
- // std::cout<< "OK til here"<<std::endl;
   tol.setMinimum(0.00001);
   tol.setMaximum(0.8);
   tol.setSingleStep(0.01);
   tol.setDecimals(6);
   tol.setValue(0.03);
-//  std::cout<< "OK til here"<<std::endl;
   QVBoxLayout *qhbl4=new QVBoxLayout();
-//  QLabel *tolLa=new QLabel("Symmetry tolerance:");
-//  qhbl4->addWidget(tolLa);	  
   qhbl4->addWidget(&tol);
   QGroupBox *symmTolBox = new QGroupBox("Symmetry tolerance:");
   symmTolBox->setLayout(qhbl4);
@@ -921,8 +854,6 @@ xdEditDlg::xdEditDlg(CEnvironment *ch,const Connection *cll,CEnvironment *all): 
   grid->addWidget(buttonBox             ,6,2);
 
   grid->addWidget(sRGroupBox            ,0,2,5,1) ;
-//  std::cout<< "OK til here"<<std::endl;
-//
   setLayout(grid);
   connect(id,SIGNAL(message(const QString&)),this,SLOT(updateStatusBar(const QString&)));
   connect(id,SIGNAL(addatom(const MyAtom &)),this,SLOT(updateAtoms(const MyAtom&)));
@@ -938,7 +869,6 @@ xdEditDlg::xdEditDlg(CEnvironment *ch,const Connection *cll,CEnvironment *all): 
   connect(ax2type,SIGNAL(currentIndexChanged(int)),this,SLOT(updatesLabel()));
   setWindowTitle("XD Setup Dialog");
   updatesLabel();
-//  std::cout << "XD Setup Dialog" <<std::endl;
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void xdEditDlg::updateStatusBar(const QString& s){
@@ -947,13 +877,11 @@ void xdEditDlg::updateStatusBar(const QString& s){
 void xdEditDlg::updateAtoms(const MyAtom& atm){
   ax1lab->addItem(atm.Label);
   ax2lab->addItem(atm.Label);
-  //  QMessageBox::information(this,"!!!!!!!!!!!",QString(tr("%1 ").arg(alle->at(alle->size()-1).Label)),QMessageBox::Ok); 
   
 }
 void xdEditDlg::updateAtoms2(const MyAtom& atm){
   ax1lab->removeItem(ax1lab->findText(atm.Label));
   ax2lab->removeItem(ax2lab->findText(atm.Label));
-  //  QMessageBox::information(this,"!!!!!!!!!!!",QString(tr("%1 ").arg(alle->at(alle->size()-1).Label)),QMessageBox::Ok); 
   
 }
 void xdEditDlg::updatesLabel(){
@@ -1014,7 +942,6 @@ void xdEditDlg::updatesLabel2(){
   if (Z_4->isChecked()) {symmdiag.append(Z_4->text());test++;}
   if (test) {symmdiag.append("Z ");test=0;}
   symmdiag.remove(QRegExp("( along [XYZ])|( 'along' [XYZ])|( over [XYZ])"));
-//  std::cout<<symmdiag.toStdString()<<std::endl;
   molman(symmdiag);
   update();
 }
@@ -1032,11 +959,9 @@ void xdEditDlg::accept () {
     masli.append(line);
   }    
   mas.close();
- // std::cout<<"___________________\n";
   QStringList alteDummys= masli.filter(QRegExp("^DUM\\d{1,}")); 
   for (int i=0; i<alteDummys.size();i++) {
     alteDummys[i].remove(QRegExp("\\s+.{1,}\n"));
-//    std::cout<<">"<<alteDummys.at(i).toStdString()<<"<"<<std::endl;  
     masli.replaceInStrings(alteDummys.at(i),QString("DUM_%1").arg(i),Qt::CaseInsensitive );
   }
   masli.replaceInStrings("DUM_","DUM",Qt::CaseInsensitive);
@@ -1050,12 +975,10 @@ void xdEditDlg::accept () {
     bef=QString("DUM%1").arg(num+1);
     for (int j=0;j<masli.size();j++) drin=(drin)?drin:masli.at(j).contains(bef,Qt::CaseInsensitive );
     
-    //    QMessageBox::information(this,"!!!!!!!!!!!",QString(tr("1.wanto replace %1 with %2 (drin%3)").arg(QString("DUM%1").arg(num+1)).arg(QString("DUM%1").arg(stn)).arg(drin)),QMessageBox::Ok); 
     while (drin) {
       drin=false;
       bef=QString("DUM%1").arg(++num);
       for (int j=0;j<masli.size();j++) drin=(drin)?drin:masli.at(j).contains(bef,Qt::CaseInsensitive );
-      //QMessageBox::information(this,"!!!!!!!!!!!",QString(tr("wanto replace %1 with %2").arg(bef).arg(QString("DUM%1").arg(stn))),QMessageBox::Ok); 
       masli.replaceInStrings(bef, QString("DUM%1").arg(stn++),Qt::CaseInsensitive );
     }         
   }
@@ -1081,7 +1004,6 @@ void xdEditDlg::accept () {
 	  kart.x+=xs;
 	  kart.y+=ys;
 	  kart.z+=zs;
-	  //	QMessageBox::information(this,"!!!!!!!!!!!",QString(tr("xs %1 ys %2 zs %3").arg(xs).arg(ys).arg(zs)),QMessageBox::Ok); 
 	  mol.kart2frac(kart,frac);
 	  masli.insert(i+dumcnt,QString("%1 %2 %3 %4 !%5 %6 %7 %8%9")
 			  .arg(QString("DUM%1").arg(dumcnt))
@@ -1115,7 +1037,6 @@ void xdEditDlg::accept () {
   res.close();
   dumcnt=0;
   symmignore=0;
-  //  std::cout<< "open"<<std::endl;
   int nad=resli.at(6).split(" ",QString::SkipEmptyParts).at(14).toInt();
   for (int i=0;i<nad;i++) resli.removeAt(9);
   while (symmignore+di+dumcnt<alle->size()){    
@@ -1134,7 +1055,6 @@ void xdEditDlg::accept () {
       dumcnt++;
     }else {symmignore++;}
   }
-  //std::cout<< "open"<<std::endl;
   if (id->dkilllist.size()){
     int w;
     for (int i=10; i<resli.size();i++){

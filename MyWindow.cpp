@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-QString rev="$Rev: 245 $";
+int rev=246;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -43,7 +43,6 @@ void MyWindow::setup_zelle(){
 }
 char *egals;
 double L=10;
-//int packart;
 QProgressBar *balken;
 #define iabs(a) (a>0)?(a):(-a) 
 
@@ -1120,8 +1119,6 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
 		       "<p> Moving the mouse over an atom will show its name in the status bar.");
   connect(cubeGL,SIGNAL(message(const QString&)),this,SLOT(updateStatusBar(const QString&)));
   connect(cubeGL,SIGNAL(bigmessage(const QString&)),this,SLOT(infoKanalNews(const QString&)));
-  rev.remove("$");
-  rev.remove("Rev: ");
   setWindowTitle(QString("MoleCoolQt-Revision %1 ").arg(rev));
   int argc=QCoreApplication::arguments().size();
   if (argc>1){
@@ -2130,7 +2127,6 @@ void MyWindow::load_MoPro(QString fileName) {
                         ato1.append(tok.at(1));
                         ato2.append(tok.at(2));
                         ato3.append(tok.at(3));//kommt nur bei 3ZX so vor
-                        //mullev.append(all.at(3));
                         tok.clear();
                         tok=all.at(++li).split(" ",QString::SkipEmptyParts);
                         if ((tok.size()>6)&&(tok.at(0)=="UANI")) {
@@ -2286,7 +2282,7 @@ dummax++;
 dummys.append(newAtom);
 
 }
-if (gendum==4){//3Zb  symmUnit[i].icor1=3; asymmUnit[i].icor2=1;gendum=4;
+if (gendum==4){
 V3 mitte, arm2, arm3;
 mol.frac2kart(asymmUnit.at(asymmUnit.at(i).nay2-1).frac,arm2);
 mol.frac2kart(asymmUnit.at(asymmUnit.at(i).nay1-1).frac,mitte);
@@ -2372,7 +2368,7 @@ void MyWindow::load_xdres(QString fileName) {
   {//RES  
   char line[85]="",dv[20],*dvv;
   int i=0;
-  mol.initDir();//dn);
+  mol.initDir();
   if ((adp=fopen(fileName.toLocal8Bit(),"r"))==NULL) {QMessageBox::critical(this,"Read Error!",QString("read error %1!").arg(fileName),QMessageBox::Ok);exit(2);}  
   i=0;
   cubeGL->drawAx=true;
@@ -2600,7 +2596,7 @@ void MyWindow::load_sheldrick(QString fileName){
   strncpy(dn,fn,dlen);
   dn[dlen]='\0';
   maxResi=0;
-  mol.initDir();//dn);
+  mol.initDir();
   FILE *adp; 
   part=0;
   char line[85],line2[85],llin[166],dv[50],dvv[50],command[8],ext[85],Ami3[5];
@@ -3020,7 +3016,7 @@ void MyWindow::load_pdb(QString fileName){
   int dlen=ddd-fn;
   strncpy(dn,fn,dlen);
   dn[dlen]='\0';
-  mol.initDir();//dn);
+  mol.initDir();
   atmax=0;
   smx=0;
   INP newAtom;
@@ -3137,7 +3133,7 @@ void MyWindow::load_gaus(QString fileName){
   dn[dlen]='\0';
   INP newAtom;
   newAtom.part=0;
-  mol.initDir();//dn);
+  mol.initDir();
   mol.adp=0;  
   FILE *adp;
   char line[182]="start",dvv[50],*dvvv;
@@ -3967,7 +3963,7 @@ void MyWindow::loadDipoleMoments(QString fileName){
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
   //                                                    DIPOLE                                                                      //
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//    
-  QFile DIPF(fileName);//("Dipoles.in");
+  QFile DIPF(fileName);
   if (DIPF.open(QIODevice::ReadOnly)){
     QStringList zeiger,zeilen=QString(DIPF.readAll()).split("\n",QString::SkipEmptyParts);
     for(int i=0; i<zeilen.size ();i++){
@@ -4488,7 +4484,7 @@ void MyWindow::SDM(QStringList &brauchSymm,int packart){
  if (packart!=1){ 
     int someleft=0,nextmol=0,maxmol=1;
     for (int i=0; i<asymmUnit.size();i++) asymmUnit[i].molindex=-1;
-    asymmUnit[0].molindex=1;//starter;
+    asymmUnit[0].molindex=1;
     do {
       nextmol=0;
       do { 
@@ -4531,7 +4527,7 @@ void MyWindow::SDM(QStringList &brauchSymm,int packart){
   }
 
   qSort(sdm.begin(),sdm.end());
-  ///Hier der geheime UNIQE algo von George zum testen; PK und HL von XD haben OrdZahl==-3
+
   QList<int> flags;
   for (int i=0; i<asymmUnit.size(); i++) flags.append((asymmUnit.at(i).OrdZahl==-3)?-1:1);
   for (int i=0; i<sdm.size(); i++)
@@ -4650,7 +4646,7 @@ void MyWindow::growSymm(int packart,int packatom){
 	    newAtom.frac=prime;
 	    newAtom.OrdZahl=asymmUnit[i].OrdZahl;
 	    newAtom.molindex=asymmUnit[i].molindex;
-	    sprintf(newAtom.atomname,"%s'",asymmUnit[i].atomname);//,strtok(namedum,"'"));//,n+1);_%d",namedum,lzz);
+	    sprintf(newAtom.atomname,"%s'",asymmUnit[i].atomname);
 	    newAtom.sg=1;
 	    if ((asymmUnit[i].u.m12==0.0)&&(asymmUnit[i].u.m23==0.0)&&(asymmUnit[i].u.m13==0.0)){
 	      newAtom.uf.m11=newAtom.u.m11=newAtom.u.m22=newAtom.u.m33=asymmUnit[i].uf.m11;
@@ -4829,7 +4825,7 @@ void MyWindow::growSymm(int packart,int packatom){
   mol.frac2kart(uz7f,mol.uz7k);mol.uz7k=mol.uz7k-Vs;//
 
   if ((Norm(atom1Pos)>0)&&(Norm(atom2Pos)>0)){
-    Matrix OM;//,OM1[9],OM2[9],OM3[9];
+    Matrix OM;
     V3 r1,r2,r3,t1,t2,t3;
     double l1,l2,kl1,kl2;
     r1=atom1Pos-atom2Pos;

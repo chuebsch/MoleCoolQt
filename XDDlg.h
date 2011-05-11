@@ -66,7 +66,6 @@ Q_OBJECT
   QLabel sLabel;
   QStringList duminuse;
   QLabel statlab;
-//  QLabel statlab2;
   QLineEdit *keyLineEdit;
   QString keyline;
   QLabel legend;
@@ -84,7 +83,6 @@ Q_OBJECT
   void molman(QString text);
   CEnvironment *chm;
   xdEditDlg(CEnvironment *ch,const Connection *cl,CEnvironment *all);
-    // void keyPressEvent(QKeyEvent *event);
   QDoubleSpinBox tol;
   QLabel messi;
   QString checkSymmOnAx(V3 ax,double TOL=0.03);

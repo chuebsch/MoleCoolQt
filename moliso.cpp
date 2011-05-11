@@ -115,7 +115,6 @@ void MolIso::loadMI(QString fname){
   extern QProgressBar *balken;
 
   extern double L;
-  //qDebug()<<x_dim<<L;
   QFile sf(fname);
   if (!sf.exists()) {qDebug()<<"The File "<<fname<<" does not exist!"; exit(0);}
   if (!sf.open(QIODevice::ReadOnly)) {qDebug()<<"Can not open "<<fname<<" for reading. Please check your rights."; exit(0);}
@@ -127,7 +126,6 @@ void MolIso::loadMI(QString fname){
   QStringList lines = all.split(QRegExp("[\n\r]{1,2}")); 
   min=1e99;
   max=-1e99;
-  //  qDebug()<<lines.at(0);
   if (lines.size()){
 
   balken->setMinimum(0);
@@ -142,9 +140,6 @@ void MolIso::loadMI(QString fname){
 	v.vertex.y = x_dim*(tok.at(2).toFloat()-0.5);
 	v.vertex.z = x_dim*(tok.at(3).toFloat()-0.5);
 //
-//	v.vertex.x = tok.at(1).toFloat();
-//	v.vertex.y = tok.at(2).toFloat();
-//	v.vertex.z = tok.at(3).toFloat();
 
 	v.normal.x = tok.at(4).toFloat();
 	v.normal.y = tok.at(5).toFloat();
@@ -153,15 +148,12 @@ void MolIso::loadMI(QString fname){
 	v.direct=0;
 	min=(min>v.color)?v.color:min;
 	max=(max<v.color)?v.color:max;
-//	printf("%d %f %f %f %f %f %f\n",orte.size(),v.vertex.x,v.vertex.y,v.vertex.z,min,max,fixmin);
 	orte.append(v);
       }
     }
     max+=0.00001;
     if (fixmin!=666.666) min=fixmin;
     if (fixmax!=666.666) max=fixmax;
-    //    printf("%f %f  %f %f \n",min,fixmin, max,fixmax);
-    //     printf("Vektoren sind wie Regen\n");
     for (int i=lines[0].toInt()+1;i<lines.size();i++){
       QStringList tok = lines[i].split(' ',QString::SkipEmptyParts);
       if (tok.size()){
@@ -177,88 +169,64 @@ void MolIso::loadMI(QString fname){
       }
     }
   }  
-//      printf("Regen ist nass %d %d \n",pgns.size(),orte.size());
-  //  printf("%f\n",L);
 
-  //  QFile f("molisobug");
-  //f.open(QIODevice::Append);
-  //f.write(QString("before %1 %2 %3 %4 %5 MIBAS%6\n").arg(min).arg(max).arg((char*)gluErrorString(glGetError())).arg(pgns.size()).arg(orte.size()).arg(mibas).toLatin1());
   balken->setValue(lines[0].toInt());
   glNewList(mibas, GL_COMPILE );{                       //Isooberfl"ache ::Perspektive 1     
     glPushMatrix();{
-      //      glTranslated(-L/2 , -L*y_dim/x_dim/2, -L*z_dim/x_dim/2 );
       glScaled( L, L*y_dim/x_dim, L*z_dim/x_dim );           
-      //      printf("Regen ist bloed\n");
       PXsort();
-      //    printf("Regen ist doof\n");
       DrawPlys();
-      //    printf("Regen ist nass\n");
     }glPopMatrix();
   }glEndList();
 
-  //f.write(QString("X%1 %2 %3 mibas%4\n").arg(min).arg(max).arg((char*)gluErrorString(glGetError())).arg(mibas).toLatin1());
 
   balken->setValue(2*lines[0].toInt());
-  //  printf("Regen ist nass\n");
   glNewList(mibas+1, GL_COMPILE  );{                       //Isooberfl"ache ::Perspektive 1     
     glPushMatrix();{
-      //      glTranslated(-L/2 , -L*y_dim/x_dim/2, -L*z_dim/x_dim/2 );
       glScaled( L, L*y_dim/x_dim, L*z_dim/x_dim );           
       Pxsort();
       DrawPlys();
     }glPopMatrix();
   }glEndList();
 
-  //f.write(QString("X%1 %2 %3 mibas%4\n").arg(min).arg(max).arg((char*)gluErrorString(glGetError())).arg(mibas+1).toLatin1());
   balken->setValue(3*lines[0].toInt());
   glNewList(mibas+2, GL_COMPILE  );{                       //Isooberfl"ache ::Perspektive 1     
     glPushMatrix();{
-      //      glTranslated(-L/2 , -L*y_dim/x_dim/2, -L*z_dim/x_dim/2 );
       glScaled( L, L*y_dim/x_dim, L*z_dim/x_dim );           
       PYsort();
       DrawPlys();
     }glPopMatrix();
   }glEndList();
 
-  //f.write(QString("Y%1 %2 %3\n").arg(min).arg(max).arg((char*)gluErrorString(glGetError())).toLatin1());
   balken->setValue(4*lines[0].toInt());
   glNewList(mibas+3, GL_COMPILE  );{                       //Isooberfl"ache ::Perspektive 1     
     glPushMatrix();{
-      //      glTranslated(-L/2 , -L*y_dim/x_dim/2, -L*z_dim/x_dim/2 );
       glScaled( L, L*y_dim/x_dim, L*z_dim/x_dim );           
       Pysort();
       DrawPlys();
     }glPopMatrix();
   }glEndList();
 
-  //f.write(QString("y%1 %2 %3\n").arg(min).arg(max).arg((char*)gluErrorString(glGetError())).toLatin1());
     balken->setValue(5*lines[0].toInt());
   glNewList(mibas+4, GL_COMPILE  );{                       //Isooberfl"ache ::Perspektive 1     
     glPushMatrix();{
-      //      glTranslated(-L/2 , -L*y_dim/x_dim/2, -L*z_dim/x_dim/2 );
       glScaled( L, L*y_dim/x_dim, L*z_dim/x_dim );           
       PZsort();
       DrawPlys();
     }glPopMatrix();
   }glEndList();
 
-  //f.write(QString("Z%1 %2 %3\n").arg(min).arg(max).arg((char*)gluErrorString(glGetError())).toLatin1());
   balken->setValue(6*lines[0].toInt());  
   glNewList(mibas+5, GL_COMPILE  );{                       //Isooberfl"ache ::Perspektive 1     
     glPushMatrix();{
-      //      glTranslated(-L/2 , -L*y_dim/x_dim/2, -L*z_dim/x_dim/2 );
       glScaled( L, L*y_dim/x_dim, L*z_dim/x_dim );           
       Pzsort();
       DrawPlys();
     }glPopMatrix();
   }glEndList();
 
-  //f.write(QString("z%1 %2 %3\n").arg(min).arg(max).arg((char*)gluErrorString(glGetError())).toLatin1());
 
-  //f.close();  
   balken->setValue(7*lines[0].toInt());  
-  //legende();
-  //  printf("Regen ist nass\n");
 
   balken->hide();
   faceFile=fname;
@@ -267,14 +235,11 @@ void MolIso::loadMI(QString fname){
 
 void MolIso::DrawPlys(){
   glLoadName((GLuint)-1);
-  //if (!lastcall) return;
   for (int i=0;i<pgns.size();i++){
     switch (pgns.at(i).n){
     case  3:glBegin(GL_TRIANGLES); 
       for (int k=0;k<3;k++) {
-	//	    printf("#####%d %d %f\n",k,ly[k],C[ly[k]]);fflush(stdout);
 	Farbverlauf(orte.at(pgns.at(i).ii[k]).color);
-		      //printf("#####\n");fflush(stdout);
 	glTexCoord1f((orte.at(pgns.at(i).ii[k]).color-min)/(max-min));
 	glNormal3fv( (GLfloat*)&orte.at(pgns.at(i).ii[k]).normal);
 	glVertex3fv( (GLfloat*)&orte.at(pgns.at(i).ii[k]).vertex);
@@ -285,10 +250,7 @@ void MolIso::DrawPlys(){
 	{
 	glBegin(GL_QUADS);
 	for (int k=0;k<4;k++) {
-	  //	  printf("[%f %f %f  %f]\n",orte.at(pgns.at(i).ii[k]).vertex.x,orte.at(pgns.at(i).ii[k]).vertex.y,orte.at(pgns.at(i).ii[k]).vertex.z,orte.at(pgns.at(i).ii[k]).color);
-	  //printf("i %d k %d pgnsat %d \n",i, k , pgns.at(i).ii[k]);
 	  Farbverlauf(orte.at(pgns.at(i).ii[k]).color);
-	  //printf("[%f %f %f  %f]\n",orte.at(pgns.at(i).ii[k]).vertex.x,orte.at(pgns.at(i).ii[k]).vertex.y,orte.at(pgns.at(i).ii[k]).vertex.z,orte.at(pgns.at(i).ii[k]).color);
 	  glTexCoord1f((orte.at(pgns.at(i).ii[k]).color-min)/(max-min));
 	  glNormal3fv( (GLfloat*)&orte.at(pgns.at(i).ii[k]).normal);
 	  glVertex3f(orte.at(pgns.at(i).ii[k]).vertex.x,orte.at(pgns.at(i).ii[k]).vertex.y,orte.at(pgns.at(i).ii[k]).vertex.z);
@@ -332,7 +294,6 @@ void MolIso::DrawPlys(){
 }	
 
 void MolIso::readXDGridHeader(QString fname){
-//  printf(" Ich lese nur Übeschriften, weißt Du?\n");
   QFile gh(fname);
   gh.open(QIODevice::ReadOnly);
   QString all =gh.readAll();
@@ -344,7 +305,6 @@ void MolIso::readXDGridHeader(QString fname){
     INP newAtom;
     newAtom.part=0;
     extern int smx;
-    //extern double L;
     int i=0;
     while (!lines.at(i).contains("Gridpoints")) i++;
     QStringList tok = lines[i+1].split(' ',QString::SkipEmptyParts);
@@ -354,10 +314,8 @@ void MolIso::readXDGridHeader(QString fname){
     bh = hoehe*breite;
     tok = lines[i+3].split(' ',QString::SkipEmptyParts);
     x_dim = tok.at(0).toDouble();
-    //    L=10.0*x_dim;
     y_dim = tok.at(1).toDouble();
     z_dim = tok.at(2).toDouble();
-//    printf("%d %d %d %f %f %f\n",breite,hoehe,tiefe,x_dim,y_dim,z_dim); 
     while (!lines.at(i).contains("Objects")) i++;
     {
       i++;
@@ -366,16 +324,9 @@ void MolIso::readXDGridHeader(QString fname){
       for (int j=0 ; j<atmax; j++){
 	tok = lines[i+j].split(' ',QString::SkipEmptyParts);
 	strncpy(newAtom.atomname,tok.at(0).toLatin1(),38);
-	//	newAtom.labPos.x=
 	newAtom.kart.x=tok.at(1).toDouble();
-//	std::cout<<tok.at(1).toStdString<<"  "<<newAtom.kart.x<<"   ";
-//	newAtom.labPos.y=
 	newAtom.kart.y=tok.at(2).toDouble();
-//	std::cout<<tok.at(2).toStdString<<"  "<<newAtom.kart.y<<"   ";
-	//	newAtom.labPos.z=
 	newAtom.kart.z=tok.at(3).toDouble();
-//	std::cout<<tok.at(3).toStdString<<"  "<<newAtom.kart.z<<"   ";
-	//       	printf("%f %f %f \n",newAtom.kart.x,newAtom.kart.y,newAtom.kart.z);
 	if (tok.contains("ATOM")){
 	  char *dv=NULL,dm[80];
 	dv=strcpy(dm,newAtom.atomname);
@@ -404,7 +355,7 @@ void MolIso::readXDGridHeader(QString fname){
   }else{//may be this is a cube file?
     printf("cubefile?\n");
     double a,b,c,xst,yst,zst;
-    double bohr=0.5291775108;// 0.5291772108;
+    double bohr=0.5291775108;
     if (lines.size()>6) {
       QStringList tok;
       tok=lines.at(2).split(QRegExp("\\s+"),QString::SkipEmptyParts);
@@ -496,7 +447,6 @@ void MolIso::makeFaces(int nn, Node poly[] ){
 //  */
 }
 void MolIso::simpelGrad(void){
-//  printf("sg %d %d %d %d %d\n",breite,hoehe,tiefe,breite,bh);
   GLfloat hier;
   for (int i=1; i<breite-1;i++){
     for (int j=1; j<hoehe-1;j++){
@@ -773,27 +723,21 @@ GLfloat MolIso::CalcNormalZ( int ix, int iy, int iz ) {
   return (((tang[0] - tang[1])%(tang[2] - tang[3]))*grad[ix+iy*breite+iz*bh]);
 }
 void MolIso::CalcNormals( void ) {
-  //FILE *test= fopen("Directions.txt","a");
-  //fprintf(test,"neu\n");
   for( int ix=0; ix<breite; ix++ ){
     for( int iy=0; iy<hoehe; iy++ ){
       for( int iz=0; iz<tiefe; iz++ ){
 	if( nodex[ix+iy*breite+iz*bh] ){
 	  orte[nodex[ix+iy*breite+iz*bh].index].direct = (CalcNormalX(ix,iy,iz)>0)?1:-1;
-	  //fprintf(test,"%9d [%4d,%4d,%4d] D:%2d X\n",nodex[ix+iy*breite+iz*bh].index,ix,iy,iz,orte[nodex[ix+iy*breite+iz*bh].index].direct);
 	}
 	if( nodey[ix+iy*breite+iz*bh] ){
 	  orte[nodey[ix+iy*breite+iz*bh].index].direct = (CalcNormalY(ix,iy,iz)>0)?1:-1;
-	  //fprintf(test,"%9d [%4d,%4d,%4d] D:%2d Y\n",nodey[ix+iy*breite+iz*bh].index,ix,iy,iz,orte[nodey[ix+iy*breite+iz*bh].index].direct);
 	}
 	if( nodez[ix+iy*breite+iz*bh] ){
 	  orte[nodez[ix+iy*breite+iz*bh].index].direct = (CalcNormalZ(ix,iy,iz)>0)?1:-1;
-	  //fprintf(test,"%9d [%4d,%4d,%4d] D:%2d Z\n",nodez[ix+iy*breite+iz*bh].index,ix,iy,iz,orte[nodez[ix+iy*breite+iz*bh].index].direct);
 	}
       }
     }
   }
-  //fclose(test);
 }
 void MolIso::MakeElement( int ix, int iy, int iz ,int s1, int s2) {//das ist der Teil des japanischen Programms den ich nicht verstehe.
   //Hauptsache fuktioniert.
@@ -844,7 +788,6 @@ void MolIso::MakeElement( int ix, int iy, int iz ,int s1, int s2) {//das ist der
       node[i].flag = 0;
     }while( (i!=is)&&(n<11) );
     {
-      //DrawPolygon( n, polygon );
       makeFaces( n, polygon );
     }
   }
@@ -852,8 +795,6 @@ void MolIso::MakeElement( int ix, int iy, int iz ,int s1, int s2) {//das ist der
 }
 
 void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &storeFaceName){
-//  QTime uhr;
-//  uhr.start();
   if (storeFaceName.isEmpty()){
   QTemporaryFile *tf = new  QTemporaryFile();
   tf->open();
@@ -886,7 +827,6 @@ void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &st
       altb=b;
     }
   }
-  //qDebug()<<data.size()<<data.last();
   }else {// ein cube file hoffentlich
     for (int i=0; i<(atomanzahl+6);i++) isoF.readLine();
     int pmax=breite*hoehe*tiefe,altb=0,b=0;
@@ -952,7 +892,6 @@ void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &st
     qDebug()<<"Map-Grid and Iso-Grid must have the same size!";
     qApp->quit();
   }
-  //  printf("%d %d breite %d hoehe %d tiefe %d bh %d \n",data.size(),mdata.size(),breite,hoehe,tiefe,bh);
   if (( grad =(Vector3*)malloc(sizeof(Vector3)*bh*tiefe))==NULL) {
     fprintf(stderr ,"Less Memory(grad)%d !!\n",bh*tiefe);
     exit(1);
@@ -974,8 +913,6 @@ void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &st
   balken->setValue(89);
   for (int k=0; k<isoValues.size(); k++){
     iso_level=isoValues.at(k);
-//    std::cout<<iso_level<<std::endl;
-//    std::cout<<cubemap<<cubeiso<<std::endl;
     CalcVertexes();
     CalcNormals();
 //    std::cout<<
@@ -1000,7 +937,6 @@ void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &st
     PXsort();
     balken->setValue(90+(10/isoValues.size())*(k+1));
     QString Line="";
-    //  printf("PCN %d \n",pgns.size());
     for (int i=0; i<pgns.size();i++) {
       for (int j=0; j<pgns.at(i).n;j++){
 	Line.append(QString("%1 ").arg(pgns.at(i).ii[j],6));
@@ -1014,8 +950,6 @@ void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &st
     tf->close();
   }
   balken->setValue(100);
-  //  std::cout<<uhr.restart()<<std::endl;
-  //qDebug()<<"Ich brauch Speicher!\n";
   free(grad);
   free(nodex);
   free(nodey);
@@ -1024,8 +958,6 @@ void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &st
   data.clear();
   pgns.clear();
   orte.clear();
-  //qDebug()<<"Ich brauch weniger Speicher!\n";
-  //  qApp->quit();
 }
 
 void MolIso::Farbverlauf (GLfloat wrt){

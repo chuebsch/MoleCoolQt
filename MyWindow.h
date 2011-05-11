@@ -140,9 +140,7 @@ public slots:
 protected:
      void paintEvent(QPaintEvent *event);
      void moveEvent(QMoveEvent *event);
-     //     void contextMenuEvent(QContextMenuEvent *event);
  private:
-//     MolIso *mi;
     QSlider *legendSize,*strikesSldr,*swidthSldr;
     QCheckBox *zebraBox,*mt;
     QRadioButton *cullNone,*cullBack,*cullFront;

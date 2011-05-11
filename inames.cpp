@@ -47,7 +47,7 @@ bool icmp (const QString &i,const QString &j) {
   else if (i[0]=='@') {
     str1>>hash1>>ring1>>a1;
     ring1=quersumme(ring1);
-    d1=1.0;//+ring1/100000.0;
+    d1=1.0;
   }
   else	str1>>d1>>a1;
   str2<<j.toStdString();
@@ -59,7 +59,7 @@ bool icmp (const QString &i,const QString &j) {
   else if (j[0]=='@') {
     str2>>hash2>>ring2>>a2;
     ring2=quersumme(ring2);
-    d2=1.0;//+ring2/100000.0;
+    d2=1.0;
   }
   else	str2>>d2>>a2;
   if (d1!=d2) return (d1>d2);//wenn bindungsgrade verschieden dann ist hier schon entschieden
@@ -216,7 +216,7 @@ void inames::ringlord(Connection cl){//
 	tripel.taken=false;
 	tripels.append(tripel);
       }
-    }//else A=B=C;
+    }
 
   }
   
@@ -250,7 +250,7 @@ void inames::ringlord(Connection cl){//
       for (int k=0; k<dabei.size();k++){
 	ringCode[secondCast.at(dabei.at(k)).t[0]]=(ringCode[secondCast.at(dabei.at(k)).t[0]]*10)+ dabei.size();
 	ringID[secondCast.at(dabei.at(k)).t[0]]|=ID;
-	//cout<<secondCast.at(dabei.at(k)).t[0].Label.toStdString(); 
+
 	secondCast[dabei.at(k)].taken=true;
       }
       ID<<=1; 
@@ -259,7 +259,7 @@ void inames::ringlord(Connection cl){//
   }
  CEnvironment alleInRingen=ringCode.keys();
   for (int i=0; i<alleInRingen.size();i++){
-    //cout<<i<<""<<alleInRingen.at(i).Label.toStdString()<<"  "<<ringCode[alleInRingen.at(i)]<<endl;
+
     ringCode[alleInRingen.at(i)]=ringCodeSort(ringCode[alleInRingen.at(i)]);
   }
   alleInRingen.clear();
@@ -305,7 +305,7 @@ QString inames::invName(MyAtom core,Connection &cl, CEnvironment &sel ,int rung)
   for (int i=0; i<cl.size();i++){//1.for
     if (core.pos==cl.at(i).ato2->pos){
       if (ringCode.contains(*cl.at(i).ato1)){
-//        printf("%s %ld %ld %ld\n",core.Label.toStdString().c_str(),ringID[*cl.at(i).ato1],ringID[core],(ringID[*cl.at(i).ato1]&ringID[core]));
+
 	hand=QString("%1%2%3").arg((ringID[*cl.at(i).ato1]&ringID[core])?"#":"@").arg(ringCode[*cl.at(i).ato1]).arg(cl.at(i).ato1->Symbol);
       }else{
 	hand=botostr(cl.at(i).order);
@@ -315,7 +315,7 @@ QString inames::invName(MyAtom core,Connection &cl, CEnvironment &sel ,int rung)
 	sel.append(*cl.at(i).ato1);
 	erstesphaere.append(*cl.at(i).ato1);
       }
-      //cout<<cl.at(i).ato1->Label.toStdString()<<cl.at(i).ato2->Label.toStdString();
+
       tmp1=1;
 
     }
@@ -351,7 +351,7 @@ QString inames::invName(MyAtom core,Connection &cl, CEnvironment &sel ,int rung)
 		  ? QString("%1%2").arg((ringID[*cl.at(j).ato1]&ringID[*cl.at(i).ato1])?"#":"@").arg(ringCode[*cl.at(j).ato1])
 		  : botostr(cl.at(j).order);
 	  digit+=cl.at(j).ato1->Symbol;
-	  //  cout<<cl.at(j).ato1->Label.toStdString();
+
 	}
 	else if ((tmp1==1)&&(cl.at(i).ato1->pos==cl.at(j).ato1->pos)&&(!(cl.at(j).ato2->pos==core.pos))){	  
 	  if (!sel.contains((*cl.at(j).ato2))) sel.append(*cl.at(j).ato2);
@@ -359,7 +359,7 @@ QString inames::invName(MyAtom core,Connection &cl, CEnvironment &sel ,int rung)
 		  ? QString("%1%2").arg((ringID[*cl.at(j).ato2]&ringID[*cl.at(i).ato1])?"#":"@").arg(ringCode[*cl.at(j).ato2])
 		  : botostr(cl.at(j).order);
 	  digit+=cl.at(j).ato2->Symbol;
-	  //cout<<cl.at(j).ato2->Label.toStdString();
+
 	}
 	else if ((tmp1==2)&&(cl.at(i).ato2->pos==cl.at(j).ato2->pos)&&(!(cl.at(j).ato1->pos==core.pos))){	  
 	  if (!sel.contains((*cl.at(j).ato1))) sel.append(*cl.at(j).ato1);
@@ -367,7 +367,7 @@ QString inames::invName(MyAtom core,Connection &cl, CEnvironment &sel ,int rung)
 		  ? QString("%1%2").arg((ringID[*cl.at(j).ato1]&ringID[*cl.at(i).ato2])?"#":"@").arg(ringCode[*cl.at(j).ato1])
 		  : botostr(cl.at(j).order);
 	  digit+=cl.at(j).ato1->Symbol;
-	  //cout<<cl.at(j).ato1->Label.toStdString();
+
 	}
 	else if ((tmp1==2)&&(cl.at(i).ato2->pos==cl.at(j).ato1->pos)&&(!(cl.at(j).ato2->pos==core.pos))){	  
 	  if (!sel.contains((*cl.at(j).ato2))) sel.append(*cl.at(j).ato2);
@@ -375,15 +375,15 @@ QString inames::invName(MyAtom core,Connection &cl, CEnvironment &sel ,int rung)
 		  ? QString("%1%2").arg((ringID[*cl.at(j).ato2]&ringID[*cl.at(i).ato2])?"#":"@").arg(ringCode[*cl.at(j).ato2])
 		  : botostr(cl.at(j).order);
 	  digit+=cl.at(j).ato2->Symbol;
-	  //cout<<cl.at(j).ato2->Label.toStdString();
+
 	} 
 	else continue;
-	//cout<<"( finger "<<digit.toStdString()<<"   )";
+
 	fingers.push_back(digit);
       }
-      //cout<<"before sort"<<endl;
+
       qSort(fingers.begin(), fingers.end(), icmp);
-      //cout<<"after sort"<<endl;
+
       for (int j=0; j<fingers.size();j++){
 	hand+=fingers.at(j);
       }

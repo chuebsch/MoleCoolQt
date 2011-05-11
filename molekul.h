@@ -85,7 +85,6 @@ inline double Distance( const V3& v1, const V3& v2 ) {
   return Norm(v1 - v2);
 }
 inline bool operator == (const V3& v1, const V3& v2 ) {
-  //  return ((v1.x==v2.x)&&(v1.y==v2.y)&&(v1.z==v2.z));
   return (Distance(v1,v2)<0.001);
 }
 inline V3& Normalize( V3 v ) {
@@ -548,10 +547,9 @@ class molekul {
     }
   }
     //ein Konstruktor
-  void initDir();//const char * dir);
+  void initDir();
   int fvl;
   MAS scat[20];
- // QList<INP> xdinp;
   V3 uz0k,uz1k,uz2k,uz3k,uz4k,uz5k,uz6k,uz7k;  
   unsigned short Kovalenz_Radien[109];  
   unsigned short ElNeg[83];  

@@ -30,20 +30,14 @@ public:
   double milsize;
   bool back_grad;
   bool drawAt,elli,drawBo,drawLa,drawHb,Luftschlange,invEditAble,moveLab,moveLeg,xdSetupMode,reSe,depthCueing,moai,horizont,monochrom;
- // GLuint tex[2];
- // int texti;
   QStringList invariomsComplete, invariomsUnique;
   QFont myFont;
   QFont MLegendFont;
- // QString Tex1FileName;
- // QString Tex2FileName;
   GLdouble MM[16];
-//  int mibas;
   GLclampf bgCR, bgCG, bgCB, bgCA;
   GLclampf tCR, tCG, tCB, tCA;
   int _win_width,_win_height;
   bool drawAx,drawUz;
-  // void setMole(molekul m);
   void zoom(double speed);
   void rotY(double speed);
   void rotX(double speed);
@@ -58,12 +52,9 @@ public:
   QString afilename,CID;
   void checkTC();
   bool MIS,MILe;
-  //  INP *xdinpC;
-  // molekul mokl;
   QList<INP> selectedAtoms;
   QList<V3> pole;
   QList<QColor> farben;
-//  double MIMIN,MIMAX,MIFIXMAX,MIFIXMIN;
   int faceCull;
 public slots:
   void rotCenter();
@@ -89,9 +80,6 @@ public slots:
   void loadTexture(); 
   // */
   void setupTexture();
-//  void togglAt();
-//  void togglBo();
-//  void togglLa();
   void setAtom(bool on);
   void setNoAtom(bool on);
   void setBond(bool on);
@@ -129,7 +117,6 @@ public slots:
   void fontSizeDown() ;
   void invariomExport();
   QString translateSymm2MP(QString idbs);
-//  void unsetXDSetup();
   void editInv(const QUrl & link );
   void loadDataBase();
   void exportMoProFiles();
@@ -155,7 +142,6 @@ protected:
   void wheelEvent(QWheelEvent *event);
   void contextMenuEvent(QContextMenuEvent *event);
 
-  //  void keyPressEvent(QKeyEvent *event);
 private:  
   int imFokus;
   double mlsc;
@@ -167,7 +153,6 @@ private:
   GLuint selectBuf[MAXSELECT];
   GLfloat feedBuf[3000];
   GLint vp[4];
- // GLuint texture[1];
   QPoint lastPos;
   CEnvironment ce;
   CEnvironment exportDummys;
