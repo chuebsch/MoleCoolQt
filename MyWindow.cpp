@@ -10,6 +10,7 @@
 #include "eacDlg.h"
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
+#include "fourmcq.h"
 #include <locale.h>
 int rev=248;
 int atmax,smx,dummax,egal;
