@@ -2328,6 +2328,13 @@ void MyWindow::load_xdres(QString fileName) {
   masName=fileName;
   masName.chop(3);
   masName.append("mas");
+
+  QString fouName;
+  fouName=fileName;
+  fouName.chop(3);
+  fouName.append("fou");
+  FourMCQ *fmcq = new FourMCQ(fouName.toStdString().c_str());
+
   mol.zelle.symmops.clear();
   mol.zelle.trans.clear();
   V3 nl(0,0,0);
