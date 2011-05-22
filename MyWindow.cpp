@@ -2334,8 +2334,8 @@ void MyWindow::load_xdres(QString fileName) {
   fouName=fileName;
   fouName.chop(3);
   fouName.append("fou");
-  FourMCQ *fmcq = new FourMCQ(fouName.toStdString().c_str());
-
+  FourMCQ *fmcq = new FourMCQ();
+  if (!fmcq->loadFouAndPerform(fouName.toStdString().c_str())) qDebug()<<"Could not load "<<fouName;
   mol.zelle.symmops.clear();
   mol.zelle.trans.clear();
   V3 nl(0,0,0);

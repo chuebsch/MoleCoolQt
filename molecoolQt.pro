@@ -5,14 +5,14 @@
 TEMPLATE = app
 TARGET = molecoolQt
 DEPENDPATH += .
-INCLUDEPATH += .
+INCLUDEPATH += . 
 QT += opengl
 win32: RC_FILE =molecoolQt.rc
 mac {
 ICON = molecoolQt.icns
 }
 
-QMAKE_CXXFLAGS += -lfftw3f -fopenmp
+QMAKE_CXXFLAGS += -fopenmp
 LIBS += -lfftw3f -fopenmp
 
 # Input

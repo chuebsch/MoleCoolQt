@@ -1,215 +1,240 @@
 #include "fourmcq.h"
+#include <QtCore>
 
-FourMCQ::FourMCQ(const char filename[], int kind, double resol, double wght){
-  const int it[480]= {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 20, 21, 22, 24, 25, 26, 27,
-    28, 30, 32, 33, 35, 36, 39, 40, 42, 44, 45, 48, 49, 50, 52, 54, 55, 56, 60, 63, 64, 65, 66, 70, 72, 75, 77,
-    78, 80, 81, 84, 88, 90, 91, 96, 98, 99, 100, 104, 105, 108, 110, 112, 117, 120, 125, 126, 128, 130, 132, 135,
-    140, 143, 144, 147, 150, 154, 156, 160, 162, 165, 168, 175, 176, 180, 182, 189, 192, 195, 196, 198, 200, 208,
-    210, 216, 220, 224, 225, 231, 234, 240, 243, 245, 250, 252, 256, 260, 264, 270, 273, 275, 280, 286, 288, 294,
-    297, 300, 308, 312, 315, 320, 324, 325, 330, 336, 343, 350, 351, 352, 360, 364, 375, 378, 384, 385, 390, 392,
-    396, 400, 405, 416, 420, 429, 432, 440, 441, 448, 450, 455, 462, 468, 480, 486, 490, 495, 500, 504, 512, 520,
-    525, 528, 539, 540, 546, 550, 560, 567, 572, 576, 585, 588, 594, 600, 616, 624, 625, 630, 637, 640, 648, 650,
-    660, 672, 675, 686, 693, 700, 702, 704, 715, 720, 728, 729, 735, 750, 756, 768, 770, 780, 784, 792, 800, 810,
-    819, 825, 832, 840, 858, 864, 875, 880, 882, 891, 896, 900, 910, 924, 936, 945, 960, 972, 975, 980, 990, 1000,
-    1001, 1008, 1024, 1029, 1040, 1050, 1053, 1056, 1078, 1080, 1092, 1100, 1120, 1125, 1134, 1144, 1152, 1155,
-    1170, 1176, 1188, 1200, 1215, 1225, 1232, 1248, 1250, 1260, 1274, 1280, 1287, 1296, 1300, 1320, 1323, 1344,
-    1350, 1365, 1372, 1375, 1386, 1400, 1404, 1408, 1430, 1440, 1456, 1458, 1470, 1485, 1500, 1512, 1536, 1540,
-    1560, 1568, 1575, 1584, 1600, 1617, 1620, 1625, 1638, 1650, 1664, 1680, 1701, 1715, 1716, 1728, 1750, 1755,
-    1760, 1764, 1782, 1792, 1800, 1820, 1848, 1872, 1875, 1890, 1911, 1920, 1925, 1944, 1950, 1960, 1980, 2000,
-    2002, 2016, 2025, 2048, 2058, 2079, 2080, 2100, 2106, 2112, 2145, 2156, 2160, 2184, 2187, 2200, 2205, 2240,
-    2250, 2268, 2275, 2288, 2304, 2310, 2340, 2352, 2376, 2400, 2401, 2430, 2450, 2457, 2464, 2475, 2496, 2500,
-    2520, 2548, 2560, 2574, 2592, 2600, 2625, 2640, 2646, 2673, 2688, 2695, 2700, 2730, 2744, 2750, 2772, 2800,
-    2808, 2816, 2835, 2860, 2880, 2912, 2916, 2925, 2940, 2970, 3000, 3003, 3024, 3072, 3080, 3087, 3120, 3125,
-    3136, 3150, 3159, 3168, 3185, 3200, 3234, 3240, 3250, 3276, 3300, 3328, 3360, 3375, 3402, 3430, 3432, 3456,
-    3465, 3500, 3510, 3520, 3528, 3564, 3575, 3584, 3600, 3640, 3645, 3675, 3696, 3744, 3750, 3773, 3780, 3822,
-    3840, 3850, 3861, 3888, 3900, 3920, 3960, 3969, 4000, 4004, 4032, 4050, 4095, 4096, 4116, 4125, 4158, 4160,
-    4200, 4212, 4224, 4290, 4312, 4320, 4368, 4374, 4375, 4400, 4410, 4455, 4459, 4480, 4500, 4536, 4550, 4576,
-    4608, 4620, 4680, 4704, 4725, 4752, 4800, 4802, 4851, 4860, 4875, 4900, 4914, 4928, 4950, 4992, 5000};
+FourMCQ::FourMCQ(int kind, double resol, double wght){
   nr=0;
   nc=0;
   jm= kind;
   rr=resol;
-  rw=wght;
-  int winformat=0,ok;
-  FILE *f;
-  f=fopen(filename,"rb");
-  fseek (f , 0 , SEEK_END);
-  size_t lSize = ftell (f);
-  rewind (f);
-  if (!(lSize%sizeof(reco))&&(lSize%sizeof(rec64)))winformat=1;
-  ok= readMas(filename);
-  if (!ok) {
-    char masname[4096];
-    int len=strlen(filename);
-    strncpy(masname,filename,len-3);
-    strcat(masname,"mas");
-    fprintf(stderr,"Problems while reading XD master file! [%s]\n",masname);
-    exit(1);
-  }
-  while (!feof(f)){
-    if (winformat) {
-      fread(&wr[nr],sizeof(reco),1,f);
-      lr[nr].ih=wr[nr].ih;
-      lr[nr].ik=wr[nr].ik;
-      lr[nr].il=wr[nr].il;
-      lr[nr].d1=wr[nr].d1;
-      lr[nr].d2=wr[nr].d2;
-      lr[nr].d3=wr[nr].d3;
-      lr[nr].d4=wr[nr].d4;
-      lr[nr].d5=wr[nr].d5;
-      lr[nr].d6=wr[nr].d6;
-      lr[nr].d7=wr[nr].d7;
-    }
-    else fread(&lr[nr],sizeof(rec64),1,f);
-    if ((lr[nr].ih|lr[nr].ik|lr[nr].il)!=0) nr++;
-    if (nr>=LM) {fprintf(stderr,"to many reflections in xd.fou file\n");exit(0); }
-  }
-  fclose(f);
-  for (int i=0;i<nr;i++){
-    double u=lr[i].ih,v=lr[i].ik,w=lr[i].il;
-    int mh=lr[i].ih,mk=lr[i].ik,ml=lr[i].il;
-    double p,q=lr[i].d3;
-    lr[i].d3=fmod(4*M_PI+q,2*M_PI);
-    for (int k=0; k<ns; k++){
-      int nh,nk,nl;
-      double t=1.0;
-      nh=(int) (u*sy[0][k]+ v*sy[3][k] + w*sy[6][k]);
-      nk=(int) (u*sy[1][k]+ v*sy[4][k] + w*sy[7][k]);
-      nl=(int) (u*sy[2][k]+ v*sy[5][k] + w*sy[8][k]);
-      if((nl<0)||((nl==0)&&(nk<0))||((nl==0)&&(nk==0)&&(nh<0))) 
-      {nh*=-1;nk*=-1;nl*=-1;t=-1.0;}
-      if ((nl<ml)||((nl==ml)&&(nk<mk))||((nl==ml)&&(nk==mk)&&(nh<=mh))) continue;
-      mh=nh;mk=nk;ml=nl;
-      p=u*sy[9][k]+v*sy[10][k]+w*sy[11][k];
-      lr[i].d3=fmod(4*M_PI+t*fmod(q-2*M_PI*p,2*M_PI)-0.01,2*M_PI)+0.01;
-
-    }
-    lr[i].ih=mh;
-    lr[i].ik=mk;
-    lr[i].il=ml;
-  }
-  sorthkl(nr,lr);
-  int n=-1;
-  {int i=0;
-    while(i<nr){
-      double t=0.;
-      double u=0.;
-      double v=0.;
-      double z=0.;
-      double y=0.;
-      double p=0.;
-      int m;
-      int k=i;
-      while ((i<nr)&&(lr[i].ih==lr[k].ih)&&(lr[i].ik==lr[k].ik)&&(lr[i].il==lr[k].il)) {
-	t=t+1.;
-	u+=lr[i].d1;
-	v+=1./(lr[i].d2*lr[i].d2);
-	y=lr[i].d5;
-	z+=lr[i].d4;
-	p=lr[i].d3;
-	i++;
-      }
-      m=n+1;
-      lr[m].d1=fmax(0.,u/t);
-      lr[m].d2=sqrt(1./v);
-      lr[m].d5=y;
-      lr[m].d4=z/t;
-      lr[m].d3=p;
-      n=m;
-      lr[n].ih=lr[k].ih;
-      lr[n].ik=lr[k].ik;
-      lr[n].il=lr[k].il;
-    } 
-  }
-  n++;
-  nr=n;
-  {
-    int mh=0, mk=0, ml=0,j;
-    for (int n=0; n<nr; n++){
-      double u=lr[n].ih,v=lr[n].ik,w=lr[n].il;
-      double a,b,c;
-      for (int k=0; k<ns;k++){
-	a=abs((int)(u*sy[0][k]+v*sy[3][k]+w*sy[6][k]));
-	b=abs((int)(u*sy[1][k]+v*sy[4][k]+w*sy[7][k]));
-	c=abs((int)(u*sy[2][k]+v*sy[5][k]+w*sy[8][k]));
-	mh=(mh<a)?a:mh;
-	mk=(mk<b)?b:mk;
-	ml=(ml<c)?c:ml;
-      }
-    }
-    j=(int)(rr*mh+.5);
-    for (int i=0; it[i]< j; i++)n1=it[i+1];
-    j=(int)(rr*mk+.5);
-    for (int i=0; it[i]< j; i++)n2=it[i+1];
-    j=(int)(rr*ml+.5);
-    for (int i=0; (it[i]< j)||((nc)&&(it[i]%2)); i++) n3=it[i+1];
-    n4=n2*n1;
-    n5=n3*n4;
-    B=(fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*n5);
-    dx=1.0/n1;
-    dy=1.0/n2;
-    dz=1.0/n3;
-  }
-  for (int i=0; i<nr;i++){
-    float fmod1 = sqrt(lr[i].d4*lr[i].d4+lr[i].d5*lr[i].d5);
-    float  u=lr[i].ih,v=lr[i].ik,w=lr[i].il;
-    float  s=0,t=0,q,p;
-    for (int n=0; n<ns;n++){
-      int j,k,l;
-      j=(int) (u*sy[0][n]+ v*sy[3][n] + w*sy[6][n]);
-      k=(int) (u*sy[1][n]+ v*sy[4][n] + w*sy[7][n]);
-      l=(int) (u*sy[2][n]+ v*sy[5][n] + w*sy[8][n]);
-      if((abs(j-lr[i].ih)+abs(k-lr[i].ik)+abs(l-lr[i].il))==0)s+=1.0;
-      if(abs(j+lr[i].ih)+abs(k+lr[i].ik)+abs(l+lr[i].il)==0)t+=1.0;
-    }
-    if(jm==0) s=(lr[i].d1-fmod1)/(C[14]*(s+t));
-    else s=(lr[i].d1*jm-fmod1*(jm-1))/(C[14]*(s+t));
-
-    if(fmod1>1.E-6) s=s/(1.+rw*pow(lr[i].d2/fmod1,4));
-    for (int n=0; n<ns;n++){ 
-      int j,k,l,m;
-      j=(int) (u*sy[0][n]+ v*sy[3][n] + w*sy[6][n]);
-      k=(int) (u*sy[1][n]+ v*sy[4][n] + w*sy[7][n]);
-      l=(int) (u*sy[2][n]+ v*sy[5][n] + w*sy[8][n]);
-      q=(lr[i].d3-2*M_PI*(u*sy[9][n]+v*sy[10][n]+w*sy[11][n]))-M_PI*(j*dx+k*dy+l*dz);
-      j=(999*n1+j)%n1;
-      k=(999*n2+k)%n2;
-      l=(999*n3+l)%n3;
-      m=j+n1*(k+n2*l);
-      p=s*cosf(q);
-      B[m][0]=p;
-      q=s*sinf(q);
-      B[m][1]=q;
-      j*=-1;
-      if(j<0)j=n1+j;
-      k*=-1;
-      if(k<0)k=n2+k;
-      l*=-1;
-      if(l<0)l=n3+l;
-      m=j+n1*(k+n2*l);
-      B[m][0]=p;
-      B[m][1]=-q;
-    }
-  }
-  fprintf(stderr,"Starting Fourier!\n");
-  fwd_plan = fftwf_plan_dft_3d(n3,n2,n1,B,B,FFTW_FORWARD,FFTW_ESTIMATE);
-  fftwf_execute(fwd_plan);
-  fftwf_destroy_plan(fwd_plan);
-  float t=0; 
-  double DM=0.,  DS=0., DD  ; 
-  for (int i=0; i<n5;i++){
-    DD=B[i][0];
-    DM+=DD;
-    DS+=DD*DD;
-  }
-  t=sqrt((DS/n5)-((DM/n5)*(DM/n5)));
-  fprintf(stderr,"Finished!\n");  
-
+  rw=wght; 
 }
 
 FourMCQ::~FourMCQ(){
   fftwf_free(B);
 }
+
+bool FourMCQ::loadFouAndPerform(const char filename[]){
+    const int it[480]= {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 20, 21, 22, 24, 25, 26, 27,
+      28, 30, 32, 33, 35, 36, 39, 40, 42, 44, 45, 48, 49, 50, 52, 54, 55, 56, 60, 63, 64, 65, 66, 70, 72, 75, 77,
+      78, 80, 81, 84, 88, 90, 91, 96, 98, 99, 100, 104, 105, 108, 110, 112, 117, 120, 125, 126, 128, 130, 132, 135,
+      140, 143, 144, 147, 150, 154, 156, 160, 162, 165, 168, 175, 176, 180, 182, 189, 192, 195, 196, 198, 200, 208,
+      210, 216, 220, 224, 225, 231, 234, 240, 243, 245, 250, 252, 256, 260, 264, 270, 273, 275, 280, 286, 288, 294,
+      297, 300, 308, 312, 315, 320, 324, 325, 330, 336, 343, 350, 351, 352, 360, 364, 375, 378, 384, 385, 390, 392,
+      396, 400, 405, 416, 420, 429, 432, 440, 441, 448, 450, 455, 462, 468, 480, 486, 490, 495, 500, 504, 512, 520,
+      525, 528, 539, 540, 546, 550, 560, 567, 572, 576, 585, 588, 594, 600, 616, 624, 625, 630, 637, 640, 648, 650,
+      660, 672, 675, 686, 693, 700, 702, 704, 715, 720, 728, 729, 735, 750, 756, 768, 770, 780, 784, 792, 800, 810,
+      819, 825, 832, 840, 858, 864, 875, 880, 882, 891, 896, 900, 910, 924, 936, 945, 960, 972, 975, 980, 990, 1000,
+      1001, 1008, 1024, 1029, 1040, 1050, 1053, 1056, 1078, 1080, 1092, 1100, 1120, 1125, 1134, 1144, 1152, 1155,
+      1170, 1176, 1188, 1200, 1215, 1225, 1232, 1248, 1250, 1260, 1274, 1280, 1287, 1296, 1300, 1320, 1323, 1344,
+      1350, 1365, 1372, 1375, 1386, 1400, 1404, 1408, 1430, 1440, 1456, 1458, 1470, 1485, 1500, 1512, 1536, 1540,
+      1560, 1568, 1575, 1584, 1600, 1617, 1620, 1625, 1638, 1650, 1664, 1680, 1701, 1715, 1716, 1728, 1750, 1755,
+      1760, 1764, 1782, 1792, 1800, 1820, 1848, 1872, 1875, 1890, 1911, 1920, 1925, 1944, 1950, 1960, 1980, 2000,
+      2002, 2016, 2025, 2048, 2058, 2079, 2080, 2100, 2106, 2112, 2145, 2156, 2160, 2184, 2187, 2200, 2205, 2240,
+      2250, 2268, 2275, 2288, 2304, 2310, 2340, 2352, 2376, 2400, 2401, 2430, 2450, 2457, 2464, 2475, 2496, 2500,
+      2520, 2548, 2560, 2574, 2592, 2600, 2625, 2640, 2646, 2673, 2688, 2695, 2700, 2730, 2744, 2750, 2772, 2800,
+      2808, 2816, 2835, 2860, 2880, 2912, 2916, 2925, 2940, 2970, 3000, 3003, 3024, 3072, 3080, 3087, 3120, 3125,
+      3136, 3150, 3159, 3168, 3185, 3200, 3234, 3240, 3250, 3276, 3300, 3328, 3360, 3375, 3402, 3430, 3432, 3456,
+      3465, 3500, 3510, 3520, 3528, 3564, 3575, 3584, 3600, 3640, 3645, 3675, 3696, 3744, 3750, 3773, 3780, 3822,
+      3840, 3850, 3861, 3888, 3900, 3920, 3960, 3969, 4000, 4004, 4032, 4050, 4095, 4096, 4116, 4125, 4158, 4160,
+      4200, 4212, 4224, 4290, 4312, 4320, 4368, 4374, 4375, 4400, 4410, 4455, 4459, 4480, 4500, 4536, 4550, 4576,
+      4608, 4620, 4680, 4704, 4725, 4752, 4800, 4802, 4851, 4860, 4875, 4900, 4914, 4928, 4950, 4992, 5000};
+
+    int winformat=0,ok;
+    FILE *f;
+    f=fopen(filename,"rb");
+    if (f==NULL) return false;
+    fseek (f , 0 , SEEK_END);
+    size_t lSize = ftell (f);
+    rewind (f);
+    if (!(lSize%sizeof(reco))&&(lSize%sizeof(rec64)))winformat=1;
+    printf("%lu %lu\n",lSize%sizeof(reco),lSize%sizeof(rec64));
+    ok= readMas(filename);
+    if (!ok) {
+      char masname[4096];
+      int len=strlen(filename);
+      strncpy(masname,filename,len-3);
+      strcat(masname,"mas");
+      qDebug()<<"test";
+      fprintf(stderr,"Problems while reading XD master file! [%s]\n",masname);
+      return false;
+    }
+    while (!feof(f)){
+      if (winformat) {
+        fread(&wr[nr],sizeof(reco),1,f);
+        lr[nr].ih=wr[nr].ih;
+        lr[nr].ik=wr[nr].ik;
+        lr[nr].il=wr[nr].il;
+        lr[nr].d1=wr[nr].d1;
+        lr[nr].d2=wr[nr].d2;
+        lr[nr].d3=wr[nr].d3;
+        lr[nr].d4=wr[nr].d4;
+        lr[nr].d5=wr[nr].d5;
+        lr[nr].d6=wr[nr].d6;
+        lr[nr].d7=wr[nr].d7;
+      }
+      else fread(&lr[nr],sizeof(rec64),1,f);
+      if ((lr[nr].ih|lr[nr].ik|lr[nr].il)!=0) nr++;
+      if (nr>=LM) {
+          fprintf(stderr,"to many reflections in xd.fou file\n");
+          return false;
+      }
+    }
+    fclose(f);
+    for (int i=0;i<nr;i++){
+      double u=lr[i].ih,v=lr[i].ik,w=lr[i].il;
+      int mh=lr[i].ih,mk=lr[i].ik,ml=lr[i].il;
+      double p,q=lr[i].d3;
+      lr[i].d3=fmod(4*M_PI+q,2*M_PI);
+      for (int k=0; k<ns; k++){
+        int nh,nk,nl;
+        double t=1.0;
+        nh=(int) (u*sy[0][k]+ v*sy[3][k] + w*sy[6][k]);
+        nk=(int) (u*sy[1][k]+ v*sy[4][k] + w*sy[7][k]);
+        nl=(int) (u*sy[2][k]+ v*sy[5][k] + w*sy[8][k]);
+        if((nl<0)||((nl==0)&&(nk<0))||((nl==0)&&(nk==0)&&(nh<0)))
+        {nh*=-1;nk*=-1;nl*=-1;t=-1.0;}
+        if ((nl<ml)||((nl==ml)&&(nk<mk))||((nl==ml)&&(nk==mk)&&(nh<=mh))) continue;
+        mh=nh;mk=nk;ml=nl;
+        p=u*sy[9][k]+v*sy[10][k]+w*sy[11][k];
+        lr[i].d3=fmod(4*M_PI+t*fmod(q-2*M_PI*p,2*M_PI)-0.01,2*M_PI)+0.01;
+
+      }
+      lr[i].ih=mh;
+      lr[i].ik=mk;
+      lr[i].il=ml;
+    }
+    sorthkl(nr,lr);
+    int n=-1;
+    {int i=0;
+      while(i<nr){
+        double t=0.;
+        double u=0.;
+        double v=0.;
+        double z=0.;
+        double y=0.;
+        double p=0.;
+        int m;
+        int k=i;
+        while ((i<nr)&&(lr[i].ih==lr[k].ih)&&(lr[i].ik==lr[k].ik)&&(lr[i].il==lr[k].il)) {
+          t=t+1.;
+          u+=lr[i].d1;
+          v+=1./(lr[i].d2*lr[i].d2);
+          y=lr[i].d5;
+          z+=lr[i].d4;
+          p=lr[i].d3;
+          i++;
+        }
+        m=n+1;
+        lr[m].d1=fmax(0.,u/t);
+        lr[m].d2=sqrt(1./v);
+        lr[m].d5=y;
+        lr[m].d4=z/t;
+        lr[m].d3=p;
+        n=m;
+        lr[n].ih=lr[k].ih;
+        lr[n].ik=lr[k].ik;
+        lr[n].il=lr[k].il;
+      }
+    }
+    n++;
+    nr=n;
+    {
+      int mh=0, mk=0, ml=0,j;
+      for (int n=0; n<nr; n++){
+        double u=lr[n].ih,v=lr[n].ik,w=lr[n].il;
+        double a,b,c;
+        for (int k=0; k<ns;k++){
+          a=abs((int)(u*sy[0][k]+v*sy[3][k]+w*sy[6][k]));
+          b=abs((int)(u*sy[1][k]+v*sy[4][k]+w*sy[7][k]));
+          c=abs((int)(u*sy[2][k]+v*sy[5][k]+w*sy[8][k]));
+          mh=(mh<a)?a:mh;
+          mk=(mk<b)?b:mk;
+          ml=(ml<c)?c:ml;
+        }
+      }
+      j=(int)(rr*mh+.5);
+      for (int i=0; it[i]< j; i++)n1=it[i+1];
+      j=(int)(rr*mk+.5);
+      for (int i=0; it[i]< j; i++)n2=it[i+1];
+      j=(int)(rr*ml+.5);
+      for (int i=0; (it[i]< j)||((nc)&&(it[i]%2)); i++) n3=it[i+1];
+      n4=n2*n1;
+      n5=n3*n4;
+      B=(fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*n5);
+      datfo=(float*) malloc(sizeof(float)*n5);
+      datfo_fc=(float*) malloc(sizeof(float)*n5);
+      datf1_f2=(float*) malloc(sizeof(float)*n5);
+      DX=1.0/n1;
+      DY=1.0/n2;
+      DZ=1.0/n3;
+    }
+    for (int typ=0; typ<3;typ++){
+    for (int i=0; i<nr;i++){
+      float fmod1 = sqrt(lr[i].d4*lr[i].d4+lr[i].d5*lr[i].d5);
+      float a12=lr[i].d4-lr[i].d6;
+      float b12=lr[i].d5-lr[i].d7;
+      float f12=sqrt(a12*a12+b12*b12);
+      b12=(b12<0)?-1:1;
+      float phi12=(f12!=0)?b12*acosf(a12/f12):0;
+      float  u=lr[i].ih,v=lr[i].ik,w=lr[i].il;
+      float  s=0,t=0,q,p;
+      for (int n=0; n<ns;n++){
+        int j,k,l;
+        j=(int) (u*sy[0][n]+ v*sy[3][n] + w*sy[6][n]);
+        k=(int) (u*sy[1][n]+ v*sy[4][n] + w*sy[7][n]);
+        l=(int) (u*sy[2][n]+ v*sy[5][n] + w*sy[8][n]);
+        if((abs(j-lr[i].ih)+abs(k-lr[i].ik)+abs(l-lr[i].il))==0)s+=1.0;
+        if(abs(j+lr[i].ih)+abs(k+lr[i].ik)+abs(l+lr[i].il)==0)t+=1.0;
+      }
+      if(typ==0) s=(lr[i].d1-fmod1)/(C[14]*(s+t));
+      else if (typ==1) s=(lr[i].d1)/(C[14]*(s+t));
+      else s=f12;
+      if(fmod1>1.E-6) s=s/(1.+rw*pow(lr[i].d2/fmod1,4));
+      for (int n=0; n<ns;n++){
+        int j,k,l,m;
+        j=(int) (u*sy[0][n]+ v*sy[3][n] + w*sy[6][n]);
+        k=(int) (u*sy[1][n]+ v*sy[4][n] + w*sy[7][n]);
+        l=(int) (u*sy[2][n]+ v*sy[5][n] + w*sy[8][n]);
+        if (typ==2) q=(phi12-2*M_PI*(u*sy[9][n]+v*sy[10][n]+w*sy[11][n]))-M_PI*(j*DX+k*DY+l*DZ);
+        else q=(lr[i].d3-2*M_PI*(u*sy[9][n]+v*sy[10][n]+w*sy[11][n]))-M_PI*(j*DX+k*DY+l*DZ);
+        j=(999*n1+j)%n1;
+        k=(999*n2+k)%n2;
+        l=(999*n3+l)%n3;
+        m=j+n1*(k+n2*l);
+        p=s*cosf(q);
+        B[m][0]=p;
+        q=s*sinf(q);
+        B[m][1]=q;
+        j*=-1;
+        if(j<0)j=n1+j;
+        k*=-1;
+        if(k<0)k=n2+k;
+        l*=-1;
+        if(l<0)l=n3+l;
+        m=j+n1*(k+n2*l);
+        B[m][0]=p;
+        B[m][1]=-q;
+      }
+    }
+    fprintf(stderr,"Starting Fourier %d %d %d!\n",n1,n2,n3);
+    fwd_plan = fftwf_plan_dft_3d(n3,n2,n1,B,B,FFTW_FORWARD,FFTW_ESTIMATE);
+    fftwf_execute(fwd_plan);
+    fftwf_destroy_plan(fwd_plan);
+    float t=0;
+    double DM=0.,  DS=0., DD  ;
+    for (int i=0; i<n5;i++){
+      DD=B[i][0];
+      DM+=DD;
+      DS+=DD*DD;
+      if (typ==0) datfo[i]=B[i][0];
+      else if (typ==1) datfo_fc[i]=B[i][0];
+      else datf1_f2[i]=B[i][0];
+    }
+    t=sqrt((DS/n5)-((DM/n5)*(DM/n5)));
+    fprintf(stderr,"Finished! sigma %g %g %g\n",t,DS,DM);
+    }
+    return true;
+  }
 
 void FourMCQ::trimm(char s[]){
   char sc[409];
@@ -231,11 +256,12 @@ int FourMCQ::readMas(const char *filename){
   char masname[4096];
   int len=strlen(filename);
   char line[122];
-  size_t zlen=120;
+  //size_t zlen=120;
   int ok=0;
   int i;double T,V;
-  strncpy(masname,filename,len-3);
-  strcat(masname,"mas");
+  strncpy(masname,filename,len-4);
+  masname[len-4]='\0';
+  strcat(masname,".mas");
   f=fopen(masname,"r");
   if (f==NULL) return 0;
   ns=0;
@@ -262,7 +288,8 @@ int FourMCQ::readMas(const char *filename){
       trimm(titl);
     }
     if (!strncmp(line,"CELL ",5)) {
-      sscanf(line,"CELL %lf %lf %lf %lf %lf %lf",&C[0],&C[1],&C[2],&C[3],&C[4],&C[5]); 
+      sscanf(line,"CELL %lf %lf %lf %lf %lf %lf",&C[0],&C[1],&C[2],&C[3],&C[4],&C[5]);
+
       for (i=0;i<3;i++){
 	if (C[i]<0.1) return 0;
 	T=.0174533*C[i+3];
@@ -358,8 +385,7 @@ int FourMCQ::readMas(const char *filename){
     }
     if (!strncmp(line,"BANK",4)) ok=1;
   }while(!ok);
-  return 1;
-  return 0;
+  return 1;  
 }
 
 void FourMCQ::sorthkl(int nr, rec64 r[]){
@@ -420,5 +446,404 @@ void FourMCQ::sorthkl(int nr, rec64 r[]){
      r[j].d7=hilf[i].d7;
    }/*/6*/
   }/*/spalten*/
+
+}
+
+void FourMCQ::bewegt(V3 nm){
+  V3 v , alturs=urs;
+  mole->kart2frac(nm,v);
+  urs=V3(1,1,1)-1.0*v;
+  mole->frac2kart(urs,urs);
+  printf("moved? =>%s\n",(urs==alturs)?"no":"yes");
+  if (urs==alturs) return;
+
+  //balken->setMinimum(0);
+  //balken->setMaximum(Nz*6);
+  //balken->show();
+  //balkenstep=0;
+  //chgl->pause=true;
+  //scroller=true;
+  //mode=0;
+  //iso=difsig;
+  gen_surface();
+  //mode=1;
+  //iso=fosig;
+  //gen_surface();
+  //balken->hide();
+  //chgl->pause=false;
+  //chgl->updateGL();
+
+}
+
+void FourMCQ::inimap(){//for screenies
+  //int lsts=glIsList(chgl->mibas)+glIsList(chgl->mibas+1);
+  //glDeleteLists(chgl->mibas,lsts);
+  //balken->setMinimum(0);
+  //balken->setMaximum(Nz*6);
+  //balken->show();
+  //balkenstep=0;
+  //chgl->pause=true;
+  //scroller=false;
+  //mode=0;
+  //iso=difsig;
+  gen_surface();
+  //mode=1;
+  //iso=fosig;
+  //gen_surface();
+  //balken->hide();
+  //chgl->pause=false;
+}
+#include <omp.h>
+
+void FourMCQ::gen_surface(){
+  if (!((chgl->isFO())||(chgl->isDF()))) {
+    chgl->warFaul();
+    return ;
+  }
+  disconnect(chgl,SIGNAL(diffscroll(int ,int )),0,0);
+  disconnect(chgl,SIGNAL(neuemitte(V3)),0,0);
+  disconnect(chgl,SIGNAL(inimibas()),0,0);
+  if ((mode==0)&&(!scroller)) chgl->mibas=glGenLists(2);
+  scroller=false;
+  glNewList(chgl->mibas+mode, GL_COMPILE );
+  int fertig=0;
+  glColor4d(0.0,0,0.8,0.2);
+  delDA[ 0]=  -Nx*dx -Ny*dy -Nz*dz;
+  delDA[ 1]=         -Ny*dy -Nz*dz;
+  delDA[ 2]=   Nx*dx -Ny*dy -Nz*dz;
+  delDA[ 3]=  -Nx*dx        -Nz*dz;
+  delDA[ 4]=                -Nz*dz;
+  delDA[ 5]=   Nx*dx        -Nz*dz;
+  delDA[ 6]=  -Nx*dx +Ny*dy -Nz*dz;
+  delDA[ 7]=          Ny*dy -Nz*dz;
+  delDA[ 8]=   Nx*dx +Ny*dy -Nz*dz;
+  delDA[ 9]=  -Nx*dx -Ny*dy       ;
+  delDA[10]=         -Ny*dy       ;
+  delDA[11]=   Nx*dx -Ny*dy       ;
+  delDA[12]=  -Nx*dx              ;
+  delDA[13]=  V3(0,0,0)           ;
+  delDA[14]=   Nx*dx              ;
+  delDA[15]=  -Nx*dx +Ny*dy       ;
+  delDA[16]=          Ny*dy       ;
+  delDA[17]=   Nx*dx +Ny*dy       ;
+  delDA[18]=  -Nx*dx -Ny*dy +Nz*dz;
+  delDA[19]=         -Ny*dy +Nz*dz;
+  delDA[20]=   Nx*dx -Ny*dy +Nz*dz;
+  delDA[21]=  -Nx*dx        +Nz*dz;
+  delDA[22]=                +Nz*dz;
+  delDA[23]=   Nx*dx        +Nz*dz;
+  delDA[24]=  -Nx*dx +Ny*dy +Nz*dz;
+  delDA[25]=          Ny*dy +Nz*dz;
+  delDA[26]=   Nx*dx +Ny*dy +Nz*dz;
+
+  if (mode==0) {
+    fertig=-1;
+    glColor4d(0.0,0.6,0,0.7);
+  }
+  do{
+int chunk=3;
+QTime t;
+t.start();
+      balken->setValue(balkenstep++);
+    printf("iso=%g e/A^3 %s %10.5f %10.5f %10.5f\n",iso,(!mode)?"difference map":"Fo-map",urs.x,urs.y,urs.z);
+#pragma omp parallel shared(chunk)
+    {
+    int ix,iy,iz;
+#pragma omp for schedule(dynamic,chunk) private(ix,iy) nowait
+    for (iz=0; iz<Nz;iz++){
+      for (iy=0; iy<Ny;iy++){
+        for (ix=0; ix<Nx;ix++){
+          CalcVertex(ix,iy,iz);
+        }
+      }
+    }
+  }//omp
+      balken->setValue(balkenstep+=Nz);
+    printf("...%d ms later. drawing to memory\n",t.elapsed());
+t.start();
+    int bh=Nx*Ny;
+//#pragma omp parallel
+    {
+    glPushMatrix();
+    glScaled(chgl->L,chgl->L,chgl->L);
+    int h,k,l;
+//#pragma omp for private(h,k,l)
+    for ( l=0; l<Nz;l++){
+      for ( k=0; k<Ny;k++){
+        for ( h=0; h<Nx;h++){
+          MakeElement(h,k,l,Nx,bh);
+        }
+      }
+      balken->setValue(balkenstep++);
+    }
+    glPopMatrix();
+    printf("...%d ms later. \n",t.elapsed());
+    }//O M P
+    fertig++;
+    if (!fertig){
+      if (iso >0) iso=-iso;
+      glColor4d(1.0,0,0,0.7);
+    }
+  }while (!fertig);
+  glEndList();
+//  orte.clear();
+  if (!mode) {
+    QString info=QString("<b>Difference Map:</b><font color=green>%1 e&Aring;<sup>-3</sup></font>"
+                    "<font color=red> %2 e&Aring;<sup>-3</sup> </font><font color=grey> Hint:  [%3 Scroll (up or down)] to change. </font>")
+            .arg(difsig,6,'g',2)
+            .arg(-difsig,6,'g',2)
+            .arg(QKeySequence(Qt::ControlModifier).toString(QKeySequence::NativeText));
+    infoKanalNews(info);
+  }
+  else {
+    QString info=QString("<b>Fo-Map:</b><font color=blue>%1  e&Aring;<sup>-3</sup></font><font color=grey> Hint:  [%2 Scroll (up or down)] to change. </font>")
+            .arg(fosig,6,'g',2)
+            .arg(QKeySequence(Qt::ShiftModifier).toString(QKeySequence::NativeText));
+    infoKanalNews(info);
+  }
+  connect(chgl,SIGNAL(inimibas()),this,SLOT(inimap()));
+  connect(chgl,SIGNAL(neuemitte(V3)),this, SLOT(bewegt(V3)));
+  connect(chgl,SIGNAL(diffscroll(int ,int )),this,SLOT(change_iso(int ,int )));
+}
+
+void FourMCQ::CalcVertex( int ix, int iy, int iz) {
+  V3 mdz=(0.5*dx)+(0.5*dy)+(0.5*dz);
+  V3 o,fl;
+  double vo, vx=0,vy=0,vz=0;
+
+  //nodex[(ix+Nx*(iy+Ny*iz))%ntot].index=0;
+  //nodey[(ix+Nx*(iy+Ny*iz))%ntot].index=0;
+  //nodez[(ix+Nx*(iy+Ny*iz))%ntot].index=0;
+  nodex[(ix+Nx*(iy+Ny*iz))%ntot].flag=0;
+  nodey[(ix+Nx*(iy+Ny*iz))%ntot].flag=0;
+  nodez[(ix+Nx*(iy+Ny*iz))%ntot].flag=0;
+  if (mode){
+    vo = dato[ (ix+Nx*iy+Ny*Nx*iz                  )%ntot]   -iso;
+    vx = dato[ (((ix+1)%Nx) + Nx* iy    + Ny*Nx *  iz   )%ntot]   -iso;
+    vy = dato[ ( ix +    Nx*((iy+1)%Ny)+ Ny*Nx *  iz   )%ntot]   -iso;
+    vz = dato[ ( ix +    Nx* iy    + Ny*Nx * ((iz+1)%Nz))%ntot]   -iso;
+  }else{
+    vo = datd[(ix+Nx*iy+Ny*Nx*iz                  )%ntot]   -iso;
+    vx = datd[(((ix+1)%Nx) + Nx* iy    + Ny*Nx *  iz   )%ntot]   -iso;
+    vy = datd[( ix +    Nx*((iy+1)%Ny) + Ny*Nx *  iz   )%ntot]   -iso;
+    vz = datd[( ix +    Nx* iy    + Ny*Nx * ((iz+1)%Nz))%ntot]   -iso;
+  }
+  if (Intersect(vo,vx)) {
+    o=dx*((vo/(vo-vx))+ix) + dy*iy + dz*iz+urs;
+    mole->kart2frac(o,o);
+    o+=V3(-0.5,-0.5,-0.5);
+    fl=V3(floor(o.x),floor(o.y),floor(o.z));
+    o+=-1.0*fl;
+    o+=V3(0.5,0.5,0.5);
+    mole->frac2kart(o,o);
+    o+=-1.0*urs;
+    o+=mdz;
+//    orte.append(o);
+    nodex[ix+Nx*iy+Ny*Nx*iz].vertex=o;
+    nodex[ix+Nx*iy+Ny*Nx*iz].flag=1;
+  }
+  if (Intersect(vo,vy)) {
+    o=dx*ix + dy*((vo/(vo-vy))+iy) + dz*iz+urs;
+    mole->kart2frac(o,o);
+    o+=V3(-0.5,-0.5,-0.5);
+    fl=V3(floor(o.x),floor(o.y),floor(o.z));
+    o+=-1.0*fl;
+    o+=V3(0.5,0.5,0.5);
+    mole->frac2kart(o,o);
+    o+=-1.0*urs;
+    o+=mdz;
+//    orte.append(o);
+    nodey[ix+Nx*iy+Ny*Nx*iz].vertex=o;
+    nodey[ix+Nx*iy+Ny*Nx*iz].flag=1;
+  }
+  if (Intersect(vo,vz)) {
+    o=dx*ix + dy*iy + dz*((vo/(vo-vz))+iz)+urs;
+    mole->kart2frac(o,o);
+    o+=V3(-0.5,-0.5,-0.5);
+    fl=V3(floor(o.x),floor(o.y),floor(o.z));
+    o+=-1.0*fl;
+    o+=V3(0.5,0.5,0.5);
+    mole->frac2kart(o,o);
+    o+=-1.0*urs;
+    o+=mdz;
+//    orte.append(o);
+    nodez[ix+Nx*iy+Ny*Nx*iz].vertex=o;
+    nodez[ix+Nx*iy+Ny*Nx*iz].flag=1;
+  }
+}
+
+V3& FourMCQ::VectorSelected( Node& node0, Node& node1, Node& node2, Node& node3 ) {
+  if( node1 && node2 && node3 ){
+    GLfloat d1 = Distance( node0.vertex, node1.vertex ) +
+            Distance( node3.vertex, node2.vertex );
+    GLfloat d2 = Distance( node0.vertex, node2.vertex ) +
+            Distance( node3.vertex, node1.vertex );
+    if( d1 > d2 ) return node2.vertex; else return node1.vertex;
+  }else{
+    if(      node1 )   return node1.vertex;
+    else if( node2 )   return node2.vertex;
+    else if( node3 )   return node3.vertex;
+  }
+  return node0.vertex;
+}
+
+void FourMCQ::makeFaces(int n, Node poly[] ){
+
+  if (n<3) return;  //weniger als 3 verts -> nichts zu tun
+  V3 mid_ver = V3(0,0,0);
+  for(int i=0; i<n; i++ ){
+    mid_ver += poly[i].vertex;
+  }
+  mid_ver *= (1.0/n);
+
+  V3 mit=V3(1,1,1);
+  mole->frac2kart(mit,mit);
+  for (int w=0; w<27; w++){
+    if (maptrunc==0){w=13;}
+    else if ((maptrunc==1)&&(Distance(mit-urs,mid_ver+delDA[w])>(map_radius*map_radius))) continue;
+    else if (maptrunc==2) {
+      double maexle=2;
+      for (int g=0; g<mole->showatoms.size();g++){
+        if (!mole->showatoms.at(g).hidden) maexle=qMin(maexle,Distance(mid_ver+delDA[w],mole->showatoms.at(g).pos));
+      }
+      if (maexle==2) continue;
+    }
+    if (n==3){
+      glBegin(GL_TRIANGLES);
+      for (int k=0; k<n;k++){
+        glVertex3f( poly[k].vertex.x+delDA[w].x,
+                        poly[k].vertex.y+delDA[w].y,
+                        poly[k].vertex.z+delDA[w].z);
+      }
+      glEnd();
+    }else{
+      glBegin(GL_TRIANGLE_FAN);
+      glVertex3f( mid_ver.x+delDA[w].x,mid_ver.y+delDA[w].y,mid_ver.z+delDA[w].z);
+      for (int k=0; k<n;k++){
+        glVertex3f(     poly[k%n].vertex.x+delDA[w].x,
+                        poly[k%n].vertex.y+delDA[w].y,
+                        poly[k%n].vertex.z+delDA[w].z);
+      }
+      glVertex3f(     poly[0].vertex.x+delDA[w].x,
+                      poly[0].vertex.y+delDA[w].y,
+                      poly[0].vertex.z+delDA[w].z);
+      glEnd();
+    }
+    if (maptrunc==0) w=27;
+  }
+}//omp
+
+int FourMCQ::IndexSelected( Node& node0, Node& node1, Node& node2, Node& node3 ) {
+  if( node1 && node2 && node3 ){
+    GLfloat d1 = Distance( node0.vertex, node1.vertex) +
+            Distance( node3.vertex, node2.vertex) ;
+    GLfloat d2 = Distance( node0.vertex, node2.vertex ) +
+            Distance( node3.vertex, node1.vertex );
+    if( d1 > d2 ) return 2; else return 1;
+  }else{
+    if(      node1 )   return 1;
+    else if( node2 )   return 2;
+    else if( node3 )   return 3;
+  }
+  return 0;
+
+}
+
+void FourMCQ::MakeElement( int ix, int iy, int iz ,int s1, int s2) {//das ist der Teil des japanischen Programms den ich nicht verstehe.
+  //Hauptsache fuktioniert.
+ // printf("ich bin fred #%d\n",omp_get_thread_num());
+  int conn[12][2][4] = {           //char->int wegen warning g++ >3.0
+    {{ 0, 1, 7, 6}, { 0, 2, 8, 3}},  //  0
+    {{ 1, 2, 5, 4}, { 1, 0, 6, 7}},  //  1
+    {{ 2, 0, 3, 8}, { 2, 1, 4, 5}},  //  2
+    {{ 3, 8, 2, 0}, { 3, 4,10, 9}},  //  3
+    {{ 4, 3, 9,10}, { 4, 5, 2, 1}},  //  4
+    {{ 5, 4, 1, 2}, { 5, 6, 9,11}},  //  5
+    {{ 6, 5,11, 9}, { 6, 7, 1, 0}},  //  6
+    {{ 7, 6, 0, 1}, { 7, 8,11,10}},  //  7
+    {{ 8, 7,10,11}, { 8, 3, 0, 2}},  //  8
+    {{ 9,10, 4, 3}, { 9,11, 5, 6}},  //  9
+    {{10,11, 8, 7}, {10, 9, 3, 4}},  // 10
+    {{11, 9, 6, 5}, {11,10, 7, 8}}   // 11
+  };
+  Node node[12];
+  Node polygon[12];
+  node[ 0] = nodex[(ix+iy*s1+iz*s2)        %ntot];        // 000x
+  node[ 1] = nodey[(ix+iy*s1+iz*s2)        %ntot];        // 000y
+  node[ 2] = nodez[(ix+iy*s1+iz*s2)        %ntot];        // 000z
+  node[ 3] = nodex[(ix+iy*s1+((iz+1)%Nz)*s2)    %ntot];    // 001y
+  node[ 4] = nodey[(ix+iy*s1+((iz+1)%Nz)*s2)    %ntot];    // 001z
+  node[ 5] = nodez[(ix+((iy+1)%Ny)*s1+iz*s2)    %ntot];    // 010x
+  node[ 6] = nodex[(ix+((iy+1)%Ny)*s1+iz*s2)    %ntot];    // 010y
+  node[ 7] = nodey[(((1+ix)%Nx)+iy*s1+iz*s2)      %ntot];      // 100y
+  node[ 8] = nodez[(((1+ix)%Nx)+iy*s1+iz*s2)      %ntot];      // 100z
+  node[ 9] = nodex[(ix+((iy+1)%Ny)*s1+((iz+1)%Nz)*s2)%ntot];// 011x
+  node[10] = nodey[(((ix+1)%Nx)+iy*s1+((iz+1)%Nz)*s2)%ntot];// 101y
+  node[11] = nodez[(((ix+1)%Nx)+((iy+1)%Ny)*s1+iz*s2)%ntot];// 110z
+  if (((char)node[0]+node[1]+node[2]+node[3]+node[4]+node[5]
+                          +node[6]+node[7]+node[8]+node[9]+node[10]+node[11])==0) return;
+  for( int is=0; is<12; is++ ) {
+    if( !node[is] ) continue;
+
+    int n=0, i=is, m=0,ai=i;
+    GLfloat dis;
+    dis=0;
+    do {
+      polygon[n++]= node[i];
+      int sol = IndexSelected(
+                      node[conn[i][m][0]],
+                      node[conn[i][m][1]],
+                      node[conn[i][m][2]],
+                      node[conn[i][m][3]]);
+      ai=i;
+      i = conn[i][m][sol];
+      if( sol == 2 ) m ^= 1;
+      dis+=Distance(polygon[0].vertex,node[i].vertex);
+        node[i].flag= 0;
+    }while( (i!=is)&&(n<11) );
+    if (n>=3) {
+      if (dis<5)
+      makeFaces( n, polygon );
+      else {
+        int axe=0;
+        double delx=0,dely=0,delz=0;
+        double mind=100000000;
+        V3 minp=V3(10000,10000,10000),lihiun=V3(-10000,-10000,-10000);
+        int minii=0;
+        for (int polni=1; polni<=n; polni++){
+            delx+=fabs(polygon[polni-1].vertex.x - polygon[polni%n].vertex.x);
+            dely+=fabs(polygon[polni-1].vertex.y - polygon[polni%n].vertex.y);
+            delz+=fabs(polygon[polni-1].vertex.z - polygon[polni%n].vertex.z);
+            if (Distance(polygon[polni%n].vertex,lihiun)<mind) {
+              mind=Distance(polygon[polni%n].vertex,minp);
+              minii=polni%n;
+            }
+        }
+        minp=polygon[minii].vertex;
+        axe|=(delx>1)?1:0;
+        axe|=(dely>1)?2:0;
+        axe|=(delz>1)?4:0;
+        for (int polni=0; polni<n; polni++){
+          V3 neo=polygon[polni].vertex;
+          double lang =Distance(minp,neo);
+          if ((lang>Distance(minp,neo+V3(mole->cell.a,0,0)))&&(axe&1)) neo.x+=mole->cell.a;
+          else if ((lang>Distance(minp,neo-V3(mole->cell.a,0,0)))&&(axe&1)) neo.x-=mole->cell.a;
+          lang =Distance(minp,neo);
+          if ((lang>Distance(minp,neo+V3(0,mole->cell.b,0)))&&(axe&2)) neo.y+=mole->cell.b;
+          else if ((lang>Distance(minp,neo-V3(0,mole->cell.b,0)))&&(axe&2)) neo.y-=mole->cell.b;
+          lang =Distance(minp,neo);
+          if ((lang>Distance(minp,neo+V3(0,0,mole->cell.c)))&&(axe&4)) neo.z+=mole->cell.c;
+          else if ((lang>Distance(minp,neo-V3(0,0,mole->cell.c)))&&(axe&4)) neo.z-=mole->cell.c;
+          polygon[polni].vertex=neo;
+        }
+        dis=0;
+        for (int polni=1; polni<=n; polni++){
+            dis+=Distance(polygon[polni-1].vertex , polygon[polni%n].vertex);
+        }
+      if (dis<5)
+        makeFaces( n, polygon );
+      }
+    }
+  }
 
 }
