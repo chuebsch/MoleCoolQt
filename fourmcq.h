@@ -51,7 +51,7 @@ class FourMCQ:public QObject{
 Q_OBJECT
   public:
           float *datfo,*datfo_fc,*datf1_f2;
-          FourMCQ(molekul *mole_, CubeGL *chgl_, int kind=1, double resol=5.0, double wght=1.0);
+          FourMCQ(molekul *mole_, CubeGL *chgl_, double resol=5.0, double wght=1.0);
 	  ~FourMCQ();
           bool loadFouAndPerform(const char filename[]);
           float sigma[3];
@@ -65,6 +65,7 @@ Q_OBJECT
   public slots:
           void bewegt(V3 v);
           void inimap();
+          void change_iso(int numsteps,int diff);
 
   private:
 	  double C[15],D[9],sy[12][192],wave;
@@ -77,11 +78,11 @@ Q_OBJECT
 	  rec64 lr[LM];
 	  reco wr[LM];
 	  char cen,git;
-	  int nr,nc,ns,jm;
+          int nr,nc,ns;
 	  int mtyp;
           double rr,rw;
 	  V3 dx,dy,dz;
-          void gen_surface();
+          void gen_surface(bool neu);
           void CalcVertex( int ix, int iy, int iz);
           int IndexSelected( FNode& node0, FNode& node1, FNode& node2, FNode& node3 );
           V3& VectorSelected( FNode& node0, FNode& node1, FNode& node2, FNode& node3 );

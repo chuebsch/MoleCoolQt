@@ -4,6 +4,7 @@
 #include <QtGui>
 #include "cubeGL.h"
 #include "moliso.h"
+#include "fourmcq.h"
  class MySortFilterProxyModel : public QSortFilterProxyModel {
      Q_OBJECT
 
@@ -149,6 +150,7 @@ protected:
 //
      QSignalMapper *signalMapper;
      QMenu *xdMenu;
+     FourMCQ *fmcq;
      void makeXDPartAux();
      void readXDPartAux();
      bool george,fck;

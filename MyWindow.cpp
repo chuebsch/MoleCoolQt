@@ -10,9 +10,8 @@
 #include "eacDlg.h"
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
-#include "fourmcq.h"
 #include <locale.h>
-int rev=248;
+int rev=254;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -48,7 +47,8 @@ QProgressBar *balken;
 
 MyWindow::MyWindow( QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(parent, flags)  {
   QMainWindow::setDockOptions(QMainWindow::AnimatedDocks|QMainWindow::AllowTabbedDocks|QMainWindow::ForceTabbedDocks|QMainWindow::VerticalTabs);
-  //  DOCK  
+  //  DOCK
+
   printf("{%s}\n", setlocale(LC_ALL,"en_US"));//suse11.3 braucht das
   filtered=0;
   speedSldr = new QSlider (Qt::Horizontal);
@@ -545,6 +545,8 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
 			"<b><font color=blue>c</font></b>-direction is <b><font color=blue>blue</font></b>,  "
 			);
 
+
+
   togLuft->setShortcut(tr("#"));
   togLuft->setCheckable ( true );
   togLuft->setChecked ( true );
@@ -956,6 +958,17 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
   toolView->addAction(togHBond);
   toolView->addAction(showface);
   toolView->addAction(showLeg);
+
+  fmcq = new FourMCQ(&mol,cubeGL);
+  cubeGL->foact=toolView->addAction(QIcon(":/images/fomap.png"),"toggle Fo map",cubeGL,SLOT(updateGL()));
+  cubeGL->foact->setCheckable(true);
+  cubeGL->foact->setChecked(false);
+  cubeGL->fofcact=toolView->addAction(QIcon(":/images/diffmap.png"),"toggle Fo-Fc map",cubeGL,SLOT(updateGL()));
+  cubeGL->fofcact->setCheckable(true);
+  cubeGL->fofcact->setChecked(true);
+  cubeGL->f1f2act=toolView->addAction(QIcon(":/images/f12map.png"),"toggle F1-F2 map",cubeGL,SLOT(updateGL()));
+  cubeGL->f1f2act->setCheckable(true);
+  cubeGL->f1f2act->setChecked(false);
   toolView->setWhatsThis("This is the view tool bar. You can move it to any window border if you want."
                          " By clicking right on the menu or tool bar region, you can toggel the toolbars.");
   settings = new QSettings( QSettings::IniFormat, QSettings::UserScope ,"Christian_B._Huebschle","MoleCoolQt" );
@@ -2551,7 +2564,6 @@ dummax=smx-atmax;
       asymmUnit[i].u.m12=asymmUnit[i].u.m13=asymmUnit[i].u.m23=asymmUnit[i].u.m21=asymmUnit[i].u.m31=asymmUnit[i].u.m32=0.0;}
     else Uf2Uo(asymmUnit[i].uf,asymmUnit[i].u);}
   growSymm(6);
-  FourMCQ *fmcq = new FourMCQ(&mol,cubeGL);
   if (!fmcq->loadFouAndPerform(fouName.toStdString().c_str())) qDebug()<<"Could not load "<<fouName;
 }
 
@@ -4783,13 +4795,14 @@ void MyWindow::growSymm(int packart,int packatom){
       xdinp[i].u.m11=xdinp[i].u.m22=xdinp[i].u.m33=xdinp[i].u.m12=xdinp[i].u.m13=xdinp[i].u.m23=xdinp[i].u.m21=xdinp[i].u.m31=xdinp[i].u.m32=0.0;
     }
   }
-  xs/=(atoms);ys/=(atoms);zs/=(atoms);
 
+  xs/=(atoms);ys/=(atoms);zs/=(atoms);
+/*
   for (int i=0; i<smx; i++){
     xdinp[i].kart.x-=xs;
     xdinp[i].kart.y-=ys;
     xdinp[i].kart.z-=zs;
-  }
+  }*/
   if (!george){
     for (int i=0; i<asymmUnit.size() ;i++)
       if (xdinp[i].OrdZahl>-1){
@@ -4819,10 +4832,10 @@ void MyWindow::growSymm(int packart,int packatom){
   uz5f.x=1.0;  uz5f.y=0.0;  uz5f.z=1.0;
   uz6f.x=0.0;  uz6f.y=1.0;  uz6f.z=1.0;
   uz7f.x=1.0;  uz7f.y=1.0;  uz7f.z=1.0;
-  V3 Vs;
-  Vs.x=xs;
-  Vs.y=ys;
-  Vs.z=zs;
+  V3 Vs=V3(0,0,0);
+  //Vs.x=xs;
+  //Vs.y=ys;
+  //Vs.z=zs;
   mol.frac2kart(uz0f,mol.uz0k);mol.uz0k=mol.uz0k-Vs;//
   mol.frac2kart(uz1f,mol.uz1k);mol.uz1k=mol.uz1k-Vs;//
   mol.frac2kart(uz2f,mol.uz2k);mol.uz2k=mol.uz2k-Vs;//

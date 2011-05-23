@@ -1,4 +1,4 @@
-#!/usr/bin/sh
+#!/bin/sh
 FILE=MyWindow.cpp
 Version=`/usr/bin/svn info|grep Revision:|sed -e "s/Revision: //" ` 
 let Version=$Version+1

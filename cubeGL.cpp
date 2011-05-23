@@ -684,6 +684,10 @@ bool before=  mol.singleColorBonds;
     }
       mol.adp=adpstate;      ;
   }
+
+  if (foubas){
+      emit inimibas();
+  }
 }
 
 void CubeGL::resizeGL(int width, int height) {
@@ -2847,7 +2851,8 @@ void CubeGL::exportXDFiles(){
 
 void CubeGL::wheelEvent(QWheelEvent *event){   
   int numDegrees = event->delta() / 8;
-  int numSteps = numDegrees / 15;     
+  int numSteps = numDegrees / 15;
+if (event->modifiers()==Qt::NoModifier){
   if (iSel){
     if (ibas) glDeleteLists(ibas,1);
     ibas=glGenLists(1);    
@@ -2864,6 +2869,14 @@ void CubeGL::wheelEvent(QWheelEvent *event){
     myFont.setPointSize(d);
     updateGL();
   }
+}else if (event->modifiers()==Qt::ControlModifier){
+    emit diffscroll(numSteps,1);
+
+}else if (event->modifiers()==Qt::ShiftModifier){
+    emit diffscroll(numSteps,0);
+}if (event->modifiers()==Qt::AltModifier){
+    emit diffscroll(numSteps,2);
+}
   event->accept();
 }
 
@@ -3247,8 +3260,14 @@ void CubeGL::draw() {
   if (centerSelection->isChecked()){
     if (selectedAtoms.isEmpty()) centerSelection->setChecked(false);
     else {
-      for (int i=0;i<selectedAtoms.size();i++)
-	sumse+=selectedAtoms[i].kart;
+        sumse=V3(0,0,0);
+        for (int i=0;i<selectedAtoms.size();i++){
+            sumse+=selectedAtoms[i].kart;
+            printf("%s %d %g %g %g\n",selectedAtoms.at(i).atomname,i,
+                   selectedAtoms.at(i).kart.x,
+                   selectedAtoms.at(i).kart.y,
+                   selectedAtoms.at(i).kart.z);
+        }
       sumse*=1.0/selectedAtoms.size();
 
       glGetDoublev( GL_MODELVIEW_MATRIX, (double*)gmat );
@@ -3262,6 +3281,10 @@ void CubeGL::draw() {
 
   if (rotze>-1) {
     sumse=xdinp.at(rotze).kart;
+    printf("%s %g %g %g\n",xdinp.at(rotze).atomname,
+           xdinp.at(rotze).kart.x,
+           xdinp.at(rotze).kart.y,
+           xdinp.at(rotze).kart.z);
     double gmat[16];
     glGetDoublev( GL_MODELVIEW_MATRIX, (double*)gmat );
     ori.x=gmat[0] * xdinp.at(rotze).kart.x + gmat[4] * xdinp.at(rotze).kart.y + gmat[8] *  xdinp.at(rotze).kart.z;
@@ -3370,14 +3393,18 @@ if (!selectedAtoms.isEmpty()){
 	glDisable(GL_CULL_FACE);
 	glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
 	glDisable(GL_LIGHTING);
-	glLineWidth(1);
-	//glEnable(GL_BLEND);
-	glCallList(foubas);
-	glCallList(foubas+1);
-	glCallList(foubas+2);
-	//glCallList(foubas+3);
-	//glCallList(foubas+4);
-	glEnable(GL_LIGHTING);
+        glLineWidth(0.5);
+        glEnable(GL_BLEND);
+        if (fofcact->isChecked()) {
+            glCallList(foubas);
+            glCallList(foubas+1);
+        }
+        if (foact->isChecked()) glCallList(foubas+2);
+        if (f1f2act->isChecked()){
+            glCallList(foubas+3);
+            glCallList(foubas+4);
+        }
+        glEnable(GL_LIGHTING);
 	glDisable(GL_BLEND);
 	glEnable(GL_CULL_FACE); 
 	glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);

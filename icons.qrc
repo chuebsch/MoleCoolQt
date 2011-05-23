@@ -49,7 +49,10 @@
         <file>images/move-legend.png</file>
         <file>images/legende.png</file>
         <file>images/moliso_molecool_32x32.png</file>
-        <file>images/nomoliso.png</file> 
+        <file>images/nomoliso.png</file>
         <file>images/createmoliso.png</file>
+        <file>images/f12map.png</file>
+        <file>images/fomap.png</file>
+        <file>images/diffmap.png</file>
     </qresource>
 </RCC>

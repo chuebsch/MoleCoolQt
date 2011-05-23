@@ -1,16 +1,15 @@
 #include "fourmcq.h"
 #include <QtCore>
 #include <QtGui>
-FourMCQ::FourMCQ(molekul *mole_, CubeGL *chgl_,int kind, double resol, double wght){
+FourMCQ::FourMCQ(molekul *mole_, CubeGL *chgl_, double resol, double wght){
   mole =mole_;
   chgl=chgl_;
   map_radius=5.0;
-  maptrunc = 1;
+  maptrunc = 0;
   chgl->foubas=0;
   urs=V3(0,0,0);
   nr=0;
   nc=0;
-  jm= kind;
   rr=resol;
   rw=wght; 
 }
@@ -274,8 +273,35 @@ bool FourMCQ::loadFouAndPerform(const char filename[]){
     dz=V3(0,0,1.0/(n3));
     mole->frac2kart(dx,dx); 
     mole->frac2kart(dy,dy); 
-    mole->frac2kart(dz,dz); 
-    gen_surface();
+    mole->frac2kart(dz,dz);     
+    delDA[ 0]=  -n1*dx -n2*dy -n3*dz;//nx ny,nz??
+    delDA[ 1]=         -n2*dy -n3*dz;
+    delDA[ 2]=   n1*dx -n2*dy -n3*dz;
+    delDA[ 3]=  -n1*dx        -n3*dz;
+    delDA[ 4]=                -n3*dz;
+    delDA[ 5]=   n1*dx        -n3*dz;
+    delDA[ 6]=  -n1*dx +n2*dy -n3*dz;
+    delDA[ 7]=          n2*dy -n3*dz;
+    delDA[ 8]=   n1*dx +n2*dy -n3*dz;
+    delDA[ 9]=  -n1*dx -n2*dy       ;
+    delDA[10]=         -n2*dy       ;
+    delDA[11]=   n1*dx -n2*dy       ;
+    delDA[12]=  -n1*dx              ;
+    delDA[13]=  V3(0,0,0)           ;
+    delDA[14]=   n1*dx              ;
+    delDA[15]=  -n1*dx +n2*dy       ;
+    delDA[16]=          n2*dy       ;
+    delDA[17]=   n1*dx +n2*dy       ;
+    delDA[18]=  -n1*dx -n2*dy +n3*dz;
+    delDA[19]=         -n2*dy +n3*dz;
+    delDA[20]=   n1*dx -n2*dy +n3*dz;
+    delDA[21]=  -n1*dx        +n3*dz;
+    delDA[22]=                +n3*dz;
+    delDA[23]=   n1*dx        +n3*dz;
+    delDA[24]=  -n1*dx +n2*dy +n3*dz;
+    delDA[25]=          n2*dy +n3*dz;
+    delDA[26]=   n1*dx +n2*dy +n3*dz;
+    gen_surface(true);
     return true;
   }
 
@@ -498,6 +524,8 @@ void FourMCQ::bewegt(V3 nm){
   urs=V3(1,1,1)-1.0*v;
   mole->frac2kart(urs,urs);
   printf("moved? =>%s\n",(urs==alturs)?"no":"yes");
+
+  printf("ursprung %g %g %g \n",urs.x,urs.y,urs.z);
   if (urs==alturs) return;
 
   //balken->setMinimum(0);
@@ -508,7 +536,7 @@ void FourMCQ::bewegt(V3 nm){
   //scroller=true;
   //mode=0;
   //iso=difsig;
-  gen_surface();
+  gen_surface(false);
   //mode=1;
   //iso=fosig;
   //gen_surface();
@@ -529,7 +557,7 @@ void FourMCQ::inimap(){//for screenies
   //scroller=false;
   //mode=0;
   //iso=difsig;
-  gen_surface();
+  gen_surface(false);
   //mode=1;
   //iso=fosig;
   //gen_surface();
@@ -538,76 +566,55 @@ void FourMCQ::inimap(){//for screenies
 }
 #include <omp.h>
 
-void FourMCQ::gen_surface(){
+void FourMCQ::gen_surface(bool neu){
   /*if (!((chgl->isFO())||(chgl->isDF()))) {
     chgl->warFaul();
     return ;
   }
-  disconnect(chgl,SIGNAL(diffscroll(int ,int )),0,0);*/
+  */
+  disconnect(chgl,SIGNAL(diffscroll(int ,int )),0,0);
   disconnect(chgl,SIGNAL(neuemitte(V3)),0,0);/*
   disconnect(chgl,SIGNAL(inimibas()),0,0);
   if ((mode==0)&&(!scroller)) chgl->mibas=glGenLists(2);
   scroller=false;*/
+  if ((chgl->foubas)&&(glIsList(chgl->foubas))) glDeleteLists(chgl->foubas,5);
   chgl->foubas=glGenLists(5);
   for (int fac=0; fac<5; fac++){
     glNewList(chgl->foubas+fac, GL_COMPILE );
-    delDA[ 0]=  -n1*dx -n2*dy -n3*dz;//nx ny,nz??
-    delDA[ 1]=         -n2*dy -n3*dz;
-    delDA[ 2]=   n1*dx -n2*dy -n3*dz;
-    delDA[ 3]=  -n1*dx        -n3*dz;
-    delDA[ 4]=                -n3*dz;
-    delDA[ 5]=   n1*dx        -n3*dz;
-    delDA[ 6]=  -n1*dx +n2*dy -n3*dz;
-    delDA[ 7]=          n2*dy -n3*dz;
-    delDA[ 8]=   n1*dx +n2*dy -n3*dz;
-    delDA[ 9]=  -n1*dx -n2*dy       ;
-    delDA[10]=         -n2*dy       ;
-    delDA[11]=   n1*dx -n2*dy       ;
-    delDA[12]=  -n1*dx              ;
-    delDA[13]=  V3(0,0,0)           ;
-    delDA[14]=   n1*dx              ;
-    delDA[15]=  -n1*dx +n2*dy       ;
-    delDA[16]=          n2*dy       ;
-    delDA[17]=   n1*dx +n2*dy       ;
-    delDA[18]=  -n1*dx -n2*dy +n3*dz;
-    delDA[19]=         -n2*dy +n3*dz;
-    delDA[20]=   n1*dx -n2*dy +n3*dz;
-    delDA[21]=  -n1*dx        +n3*dz;
-    delDA[22]=                +n3*dz;
-    delDA[23]=   n1*dx        +n3*dz;
-    delDA[24]=  -n1*dx +n2*dy +n3*dz;
-    delDA[25]=          n2*dy +n3*dz;
-    delDA[26]=   n1*dx +n2*dy +n3*dz;
     switch (fac){
 	    case 0:
-		    glColor4d(0.0, 0.7, 0.0, 0.3);
-		    iso[1]=sigma[0]*2.7;
+                    glColor4d(0.0, 0.7, 0.0, 0.4);
+                    if (neu) iso[1]=sigma[0]*2.7;
+                    else iso[1]=-iso[1];
 		    mtyp=1;
 		    printf("fac %d case %d %g %g\n",fac,mtyp,iso[1],sigma[0]);
 		    break;
 	    case 1:
-		    glColor4d(0.8, 0.0, 0.0, 0.3);
-                    iso[1]=-sigma[0]*2.7;
-		    mtyp=1;
+                    glColor4d(0.8, 0.0, 0.0, 0.4);
+                    if (neu) iso[1]=-sigma[0]*2.7;
+                    else iso[1]=-iso[1];
+                    mtyp=1;
 		    printf("fac %d case %d %g %g\n",fac,mtyp,iso[1],sigma[0]);
 		    break;
 	    case 2:
-		    glColor4d(0.0, 0.0, 1.0, 0.3);
-                    iso[0]=sigma[1]*1.2;
+                    glColor4d(0.0, 0.0, 1.0, 0.24);
+                   if (neu) iso[0]=sigma[1]*1.2;
 		    mtyp=0;
 		    printf("fac %d case %d %g %g\n",fac,mtyp,iso[0],sigma[1]);
 
 		    break;
 	    case 3:
-		    glColor4d(0.8, 0.5, 0.0, 0.3); 
-                    iso[2]=sigma[2]*2.7;
-		    mtyp=2;
+                    glColor4d(0.9, 0.6, 0.0, 0.6);
+                    if (neu) iso[2]=sigma[2]*1.7;
+                    else iso[2]=-iso[2];
+                    mtyp=2;
 		    printf("fac %d case %d %g %g\n",fac,mtyp,iso[2],sigma[2]);
 		    break;
 	    case 4:
-		    glColor4d(0.0, 0.7, 0.5, 0.3);
-                    iso[2]=-sigma[2]*2.7;
-		    mtyp=2;
+                    glColor4d(0.0, 0.7, 0.9, 0.6);
+                    if (neu) iso[2]=-sigma[2]*1.7;
+                    else iso[2]=-iso[2];
+                    mtyp=2;
 		    printf("fac %d case %d %g %g\n",fac,mtyp,iso[2],sigma[2]);
 		    break;
     }
@@ -666,9 +673,15 @@ void FourMCQ::gen_surface(){
     infoKanalNews(info);
   }
   connect(chgl,SIGNAL(inimibas()),this,SLOT(inimap()));*/
-  connect(chgl,SIGNAL(neuemitte(V3)),this, SLOT(bewegt(V3)));/*
+  connect(chgl,SIGNAL(neuemitte(V3)),this, SLOT(bewegt(V3)));
   connect(chgl,SIGNAL(diffscroll(int ,int )),this,SLOT(change_iso(int ,int )));
-  */
+}
+
+void FourMCQ::change_iso(int numsteps,int diff){
+  disconnect(chgl,SIGNAL(diffscroll(int ,int )),0,0);
+  iso[diff]+=iso[diff]*numsteps/10.0;
+  gen_surface(false);
+  chgl->updateGL();
 }
 
 void FourMCQ::CalcVertex( int ix, int iy, int iz) {

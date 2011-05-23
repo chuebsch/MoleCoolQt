@@ -20,6 +20,7 @@ public:
   QAction *changeGDAct;
   QCheckBox *invertMouseZoom,*minus;
   QAction *rCenter;
+  QAction *foact,*fofcact,*f1f2act;
   int cdens, cwid,awidth;
   QAction *addBond,*killBond,*clearSelection,*centerSelection,*addCoordi,*delCoordi; 
   bool molisoTransparence;
@@ -135,6 +136,8 @@ signals:
   void reloadFile();
   void mconf();
   void neuemitte(V3 mitte);
+  void diffscroll(int numsteps,int diff);
+  void inimibas();
 protected:
   void initializeGL();
   void resizeGL(int width, int height);
