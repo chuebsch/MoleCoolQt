@@ -114,7 +114,6 @@ void MolIso::legende(){
 void MolIso::loadMI(QString fname){
   extern QProgressBar *balken;
 
-  extern double L;
   QFile sf(fname);
   if (!sf.exists()) {qDebug()<<"The File "<<fname<<" does not exist!"; exit(0);}
   if (!sf.open(QIODevice::ReadOnly)) {qDebug()<<"Can not open "<<fname<<" for reading. Please check your rights."; exit(0);}

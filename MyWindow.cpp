@@ -43,7 +43,6 @@ void MyWindow::setup_zelle(){
   mol.zelle.cs=mol.zelle.a*mol.zelle.b*sin(mol.zelle.ga/g2r)/mol.zelle.V;
 }
 char *egals;
-double L=10;
 QProgressBar *balken;
 #define iabs(a) (a>0)?(a):(-a) 
 
@@ -1179,6 +1178,7 @@ void MyWindow::genMoliso() {
     cubeGL->moliso=NULL;
   }
   cubeGL->moliso = new MolIso();
+  cubeGL->moliso->L=cubeGL->L;
   QString isof,mapf,lfaceFile,sfaceFile,adpName;
   MolisoStartDlg *msgdlg = new MolisoStartDlg();
   if (msgdlg->exec()==QDialog::Accepted) {
@@ -1296,7 +1296,7 @@ void MyWindow::genMoliso() {
   addDockWidget(Qt::LeftDockWidgetArea, dock3);
   cubeGL->moliso->readXDGridHeader(isof);
   mol.adp=0;
-  L = 100.0/dimension(asymmUnit);
+  cubeGL->L = 100.0/dimension(asymmUnit);
   if (smx>7){
   atom1Pos=asymmUnit[0].kart;
   atom2Pos=asymmUnit[1].kart;
@@ -1752,7 +1752,7 @@ void MyWindow::changeADP(){
     glDeleteLists(cubeGL->bas,1);
     glNewList(cubeGL->bas, GL_COMPILE );{                          //ATOME
       glPushMatrix();{
-	glScaled( L, L, L );
+	glScaled(cubeGL-> L,cubeGL-> L,cubeGL-> L );
 	mol.adp=1;
 	mol.intern=1;
 	mol.atoms(xdinp,mol.proba);
@@ -1762,7 +1762,7 @@ void MyWindow::changeADP(){
     glDeleteLists(cubeGL->bas+7,1);
     glNewList(cubeGL->bas+7, GL_COMPILE );{                          //ATOME
       glPushMatrix();{
-	glScaled( L, L, L );
+	glScaled( cubeGL->L, cubeGL->L, cubeGL->L );
 	mol.adp=1;
 	mol.intern=0;
 	mol.atoms(xdinp,mol.proba);
@@ -2020,7 +2020,7 @@ void MyWindow::load_fchk(QString fileName){
   mol.adp=0;
   xdinp=asymmUnit;
   double dim=dimension(xdinp);
-  if (Norm(atom1Pos)==0) L=100.0/dim;
+  if (Norm(atom1Pos)==0) cubeGL->L=100.0/dim;
   if (mol.nListe>2) {
     free(mol.vL);
     mol.vL=NULL;
@@ -2334,8 +2334,6 @@ void MyWindow::load_xdres(QString fileName) {
   fouName=fileName;
   fouName.chop(3);
   fouName.append("fou");
-  FourMCQ *fmcq = new FourMCQ();
-  if (!fmcq->loadFouAndPerform(fouName.toStdString().c_str())) qDebug()<<"Could not load "<<fouName;
   mol.zelle.symmops.clear();
   mol.zelle.trans.clear();
   V3 nl(0,0,0);
@@ -2553,6 +2551,8 @@ dummax=smx-atmax;
       asymmUnit[i].u.m12=asymmUnit[i].u.m13=asymmUnit[i].u.m23=asymmUnit[i].u.m21=asymmUnit[i].u.m31=asymmUnit[i].u.m32=0.0;}
     else Uf2Uo(asymmUnit[i].uf,asymmUnit[i].u);}
   growSymm(6);
+  FourMCQ *fmcq = new FourMCQ(&mol,cubeGL);
+  if (!fmcq->loadFouAndPerform(fouName.toStdString().c_str())) qDebug()<<"Could not load "<<fouName;
 }
 
 //----------------------------------S H E L D R I C K -----------------------------------------
@@ -3329,7 +3329,7 @@ void MyWindow::load_gaus(QString fileName){
 
   xdinp=asymmUnit;
   double dim=dimension(xdinp);
-  if (Norm(atom1Pos)==0) L=100.0/dim;
+  if (Norm(atom1Pos)==0) cubeGL->L=100.0/dim;
   if (mol.nListe>2) {
     free(mol.vL);
     mol.vL=NULL;
@@ -4036,7 +4036,7 @@ void MyWindow::initLists(QList<INP> xd){
 
   glNewList(cubeGL->bas, GL_COMPILE );{                          //ATOME
     glPushMatrix();{
-      glScaled( L, L, L );
+      glScaled( cubeGL->L, cubeGL->L, cubeGL->L );
       mol.intern=1;
       mol.atoms(xd,mol.proba);
     }glPopMatrix();    
@@ -4046,7 +4046,7 @@ void MyWindow::initLists(QList<INP> xd){
 
   glNewList(cubeGL->bas+8, GL_COMPILE );{       //bonds in single color
     glPushMatrix();{
-      glScaled( L, L, L );
+      glScaled( cubeGL->L, cubeGL->L, cubeGL->L );
       mol.intern=1;
       mol.singleColorBonds=true;
       mol.bonds(xd);
@@ -4056,7 +4056,7 @@ void MyWindow::initLists(QList<INP> xd){
 
   glNewList(cubeGL->bas+7, GL_COMPILE );{                          //ATOME
     glPushMatrix();{
-      glScaled( L, L, L );
+      glScaled( cubeGL->L, cubeGL->L, cubeGL->L );
       mol.intern=0;
       mol.atoms(xd,mol.proba);
     }glPopMatrix();    
@@ -4065,7 +4065,7 @@ void MyWindow::initLists(QList<INP> xd){
 
   glNewList(cubeGL->bas+4, GL_COMPILE );{                          //ATOME
     glPushMatrix();{
-      glScaled( L, L, L );
+      glScaled( cubeGL->L, cubeGL->L, cubeGL->L );
       mol.adp=0;
       mol.atoms(xd,50);
     }glPopMatrix();    
@@ -4073,7 +4073,7 @@ void MyWindow::initLists(QList<INP> xd){
 
   glNewList(cubeGL->bas+9, GL_COMPILE );{       //Atome fuer tube syle
     glPushMatrix();{
-      glScaled( L, L, L );
+      glScaled( cubeGL->L, cubeGL->L, cubeGL->L );
       mol.intern=1;
       mol.tubifiedAtoms=true;
       mol.atoms(xd,mol.proba);
@@ -4084,7 +4084,7 @@ void MyWindow::initLists(QList<INP> xd){
 
   glNewList(cubeGL->bas+1, GL_COMPILE );{                          //BONDS
     glPushMatrix();{
-      glScaled( L, L, L );
+      glScaled( cubeGL->L, cubeGL->L, cubeGL->L );
       mol.adp=0;      
       mol.singleColorBonds=false;
       mol.bonds(xd);
@@ -4101,7 +4101,7 @@ void MyWindow::initLists(QList<INP> xd){
     glNewList(cubeGL->bas+2, GL_COMPILE );{                          //Axen
       glDisable( GL_DEPTH_TEST ); 
       glPushMatrix();{
-	glScaled( L, L, L );
+	glScaled( cubeGL->L, cubeGL->L, cubeGL->L );
 	mol.axes(xd); 
       }glPopMatrix();    
       glEnable( GL_DEPTH_TEST );
@@ -4114,7 +4114,7 @@ void MyWindow::initLists(QList<INP> xd){
     statusBar()->showMessage(tr("Draw unit cell.") );
     glNewList(cubeGL->bas+3, GL_COMPILE );{                          //Unit Zell
       glPushMatrix();{
-	glScaled( L, L, L );           
+	glScaled( cubeGL->L, cubeGL->L, cubeGL->L );           
 	mol.UnitZell(); 
       }glPopMatrix();    
     }glEndList();
@@ -4124,7 +4124,7 @@ void MyWindow::initLists(QList<INP> xd){
     statusBar()->showMessage(tr("Draw H-bonds.") );	
     glNewList(cubeGL->bas+5, GL_COMPILE );{                          //H...X-Bindungen
       glPushMatrix();{
-	glScaled( L, L, L );
+	glScaled( cubeGL->L, cubeGL->L, cubeGL->L );
 	hbKanal->setHtml(mol.h_bonds(xd));
       }glPopMatrix();    
     }glEndList();
@@ -4138,7 +4138,7 @@ void MyWindow::initLists(QList<INP> xd){
     statusBar()->showMessage(tr("Draw helices.") );	
     glNewList(cubeGL->bas+6, GL_COMPILE );{        
       glPushMatrix();
-      glScaled( L, L, L );
+      glScaled( cubeGL->L, cubeGL->L, cubeGL->L );
       mol.drawSline(mol.vL,mol.nListe);
       glPopMatrix();
     }glEndList();
@@ -4945,7 +4945,7 @@ void MyWindow::growSymm(int packart,int packatom){
   }
 
   double dim=dimension(xdinp);
-  if (Norm(atom1Pos)==0) L=100.0/dim;
+  if (Norm(atom1Pos)==0) cubeGL->L=100.0/dim;
   if (mol.nListe>2) {
     free(mol.vL);
     mol.vL=NULL;

@@ -8,6 +8,7 @@
 #include <fftw3.h>
 #include "molekul.h"
 #include "cubeGL.h"
+#include <QObject>
 #pragma pack(push)  /* push current alignment to stack */
 #pragma pack(1)     /* set alignment to 1 byte boundary */
 typedef struct  {
@@ -29,35 +30,63 @@ int size_tail;
 #pragma pack(pop)   /* restore original alignment from stack */
 #define LM 2000000
 
-class FourMCQ{
+struct FNode
+{
+  V3 vertex;
+  char flag;
+
+  inline operator char (){
+    return flag;
+  }
+  inline operator V3(){
+    return vertex;
+  }
+  friend inline double Distance( const FNode& n1, const FNode& n2 ){
+    return Norm(n1.vertex-n2.vertex);
+  }
+};
+//
+
+class FourMCQ:public QObject{ 
+Q_OBJECT
   public:
           float *datfo,*datfo_fc,*datf1_f2;
-          FourMCQ(int kind=1, double resol=5.0, double wght=1.0);
+          FourMCQ(molekul *mole_, CubeGL *chgl_, int kind=1, double resol=5.0, double wght=1.0);
 	  ~FourMCQ();
           bool loadFouAndPerform(const char filename[]);
-          void bewegt(V3 v);
-          void inimap();
           float sigma[3];
           float iso[3];
           GLint basemap;
           V3 urs;
+	  int maptrunc;
           molekul *mole;
+	  double map_radius;
+	  CubeGL *chgl;
+  public slots:
+          void bewegt(V3 v);
+          void inimap();
+
   private:
 	  double C[15],D[9],sy[12][192],wave;
 	  int n1,n2,n3,n4,n5;
+	  inline int Intersect( double& vm, double& vp ){ return vm*vp <= 0.0 && (vm<0.0 || vp<0.0); }
+	  V3  delDA[27];
 	  fftwf_plan  fwd_plan;
           fftwf_complex *B;
+	  FNode *nodex,*nodey,*nodez;
 	  rec64 lr[LM];
 	  reco wr[LM];
 	  char cen,git;
 	  int nr,nc,ns,jm;
-          double rr,rw,DX,DY,DZ;
+	  int mtyp;
+          double rr,rw;
+	  V3 dx,dy,dz;
           void gen_surface();
           void CalcVertex( int ix, int iy, int iz);
-          int IndexSelected( Node& node0, Node& node1, Node& node2, Node& node3 );
-          V3& VectorSelected( Node& node0, Node& node1, Node& node2, Node& node3 );
+          int IndexSelected( FNode& node0, FNode& node1, FNode& node2, FNode& node3 );
+          V3& VectorSelected( FNode& node0, FNode& node1, FNode& node2, FNode& node3 );
           void MakeElement( int ix, int iy, int iz ,int s1, int s2);
-          void makeFaces(int n, Node poly[] );
+          void makeFaces(int n, FNode poly[] );
 
 char titl[80];/*fcmax=0,f000=0,resmax=99999.0,*/
 void trimm(char s[]);

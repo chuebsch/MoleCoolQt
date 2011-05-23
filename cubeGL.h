@@ -15,6 +15,7 @@ Q_OBJECT
 public:
   CubeGL(QWidget *parent = 0);
   MolIso *moliso;
+  double L;
   int stereo_mode;
   QAction *changeGDAct;
   QCheckBox *invertMouseZoom,*minus;
@@ -24,7 +25,7 @@ public:
   bool molisoTransparence;
   bool zebra;
   double mixdim,miydim,mizdim;
-  int cbas, bas, ibas, iSel;
+  int cbas, bas, ibas, iSel, foubas;
   int rotze;
   int expandatom;
   double milsize;
@@ -133,6 +134,7 @@ signals:
   void reloadXD();
   void reloadFile();
   void mconf();
+  void neuemitte(V3 mitte);
 protected:
   void initializeGL();
   void resizeGL(int width, int height);
@@ -153,6 +155,7 @@ private:
   GLuint selectBuf[MAXSELECT];
   GLfloat feedBuf[3000];
   GLint vp[4];
+  V3 altemitte;
   QPoint lastPos;
   CEnvironment ce;
   CEnvironment exportDummys;

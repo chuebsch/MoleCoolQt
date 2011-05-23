@@ -136,6 +136,7 @@ class MolIso{
   Node *nodey;
   Node *nodez;
  public:
+  double L;
   QColor qtFarbe(int index);
   QList<double> isoValues;
   QString GHName;

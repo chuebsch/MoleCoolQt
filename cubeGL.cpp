@@ -13,6 +13,7 @@ CubeGL::CubeGL(QWidget *parent) : QGLWidget(parent) {
    atomsClickable=true;
    faceCull=0;
    monochrom=false;
+   altemitte=V3(0,0,0);
    reSe=false;
    rotze=-1;
    imFokus=-1;
@@ -550,7 +551,6 @@ void CubeGL::initializeGL() {
    setMouseTracking(true); 
 
   extern QList<INP> xdinp;
-  extern double L;
   extern molekul mol;
   setupTexture();
   //888
@@ -668,7 +668,6 @@ bool before=  mol.singleColorBonds;
       ibas=glGenLists(1);    
       glNewList(ibas, GL_COMPILE );
       extern QList<INP> xdinp;
-      extern double L;
       extern molekul mol;
       mol.intern=1;
        mol.highlightResi(xdinp,mol.firstHL,L,elli);
@@ -994,7 +993,6 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 
     if (nahdai<xdinp.size()) {
       extern QList<INP> xdinp;
-      extern double L;
       extern molekul mol;
 	GLuint index=nahdai;
 	if (index==((GLuint)-1))return;
@@ -2855,7 +2853,6 @@ void CubeGL::wheelEvent(QWheelEvent *event){
     ibas=glGenLists(1);    
     glNewList(ibas, GL_COMPILE );
     extern QList<INP> xdinp;
-    extern double L;
     extern molekul mol;
     if (numSteps>0)mol.highlightResi(xdinp,mol.firstHL-1,L,elli);
     else mol.highlightResi(xdinp,mol.lastHL+1,L,elli);
@@ -3210,7 +3207,6 @@ void CubeGL::draw() {
 
   static int Pers;
   extern QList<INP> xdinp;
-  extern double L;
   extern molekul mol;
   double gmat[16];
   static double max=0;
@@ -3225,9 +3221,9 @@ void CubeGL::draw() {
 	    if ((max==gmat[10])&&(max>0.0)) Pers=5; else 
 	      if ((max==gmat[10])&&(max<0.0)) Pers=6;
   }
+  V3 sumse=V3(0,0,0);
   V3 ori=V3(0,0,0);///rotation origin
   if ((iSel)&&(ibas)){    
-    V3 sumse=V3(0,0,0);
     if ((mol.firstHL!=0)||(0!=mol.lastHL)){
       for (int i=mol.firstHL;i<=mol.lastHL;i++)
 	sumse+=xdinp[i].kart;
@@ -3239,7 +3235,6 @@ void CubeGL::draw() {
     }
     else iSel=0;
   }else {
-    V3 sumse=V3(0,0,0);
     for (int i=0;i<xdinp.size();i++)
       sumse+=xdinp[i].kart;
     sumse*=1.0/xdinp.size();
@@ -3252,7 +3247,6 @@ void CubeGL::draw() {
   if (centerSelection->isChecked()){
     if (selectedAtoms.isEmpty()) centerSelection->setChecked(false);
     else {
-      V3 sumse=V3(0,0,0);
       for (int i=0;i<selectedAtoms.size();i++)
 	sumse+=selectedAtoms[i].kart;
       sumse*=1.0/selectedAtoms.size();
@@ -3267,12 +3261,14 @@ void CubeGL::draw() {
   glGetIntegerv(GL_RENDER_MODE,&rmode);
 
   if (rotze>-1) {
+    sumse=xdinp.at(rotze).kart;
     double gmat[16];
     glGetDoublev( GL_MODELVIEW_MATRIX, (double*)gmat );
     ori.x=gmat[0] * xdinp.at(rotze).kart.x + gmat[4] * xdinp.at(rotze).kart.y + gmat[8] *  xdinp.at(rotze).kart.z;
     ori.y=gmat[1] * xdinp.at(rotze).kart.x + gmat[5] * xdinp.at(rotze).kart.y + gmat[9] *  xdinp.at(rotze).kart.z;
     ori.z=gmat[2] * xdinp.at(rotze).kart.x + gmat[6] * xdinp.at(rotze).kart.y + gmat[10] * xdinp.at(rotze).kart.z;    
   }
+
   QFont nonAtomFont=QFont(myFont);
   nonAtomFont.setPointSize(myFont.pointSize()/2);
   glPushMatrix();
@@ -3305,6 +3301,12 @@ void CubeGL::draw() {
   glDisable(GL_TEXTURE_2D);
   glPopMatrix();
   glPushMatrix();
+  if (!(altemitte==sumse)){
+    printf("neuemitte %f %f %f\n",sumse.x,sumse.y,sumse.z);
+    altemitte=sumse;
+    emit neuemitte(altemitte);
+  }
+
   glTranslateL(-L*ori.x,-L*ori.y,-L*ori.z);
   if ((ibas)&&(iSel)&&(rmode==GL_RENDER)){
     glDisable(GL_BLEND);
@@ -3363,7 +3365,23 @@ if (!selectedAtoms.isEmpty()){
     glEnable(GL_BLEND);
     if (rmode==GL_RENDER){
       if (drawAx) glCallList(bas+2);
-      if (drawUz) glCallList(bas+3);    
+      if (drawUz) glCallList(bas+3);   
+      if (foubas) {
+	glDisable(GL_CULL_FACE);
+	glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
+	glDisable(GL_LIGHTING);
+	glLineWidth(1);
+	//glEnable(GL_BLEND);
+	glCallList(foubas);
+	glCallList(foubas+1);
+	glCallList(foubas+2);
+	//glCallList(foubas+3);
+	//glCallList(foubas+4);
+	glEnable(GL_LIGHTING);
+	glDisable(GL_BLEND);
+	glEnable(GL_CULL_FACE); 
+	glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+      } 
       if ((MIS)&&(moliso->mibas)) { 
 	glDisable(GL_CULL_FACE);
 	if (molisoTransparence) glEnable(GL_BLEND);
@@ -3591,7 +3609,6 @@ void CubeGL::connectSelection(){
   if (selectedAtoms.size()!=2) return;
   extern molekul mol;
   extern QList<INP> xdinp;
-  extern double L;
   int idx= mol.bcnt;
   mol.bcnt+=2;
   mol.bd=(bindi*)realloc(mol.bd,sizeof(bindi)*mol.bcnt);
@@ -3628,7 +3645,6 @@ void CubeGL::disConnectSelection(){
   if (selectedAtoms.size()!=2) return;
   extern molekul mol;
   extern QList<INP> xdinp;
-  extern double L;
   static bindi *nbd,*abd;
   abd=mol.bd;
   if (NULL==(nbd=(bindi*)malloc(sizeof(bindi)*mol.bcnt-2))) return;
@@ -3676,7 +3692,6 @@ void CubeGL::coordinativeBonds(){
   bindi bond;
   extern molekul mol;
   extern QList<INP> xdinp;
-  extern double L;
   bond.a=selectedAtoms.at(0).GLname;
   bond.e=selectedAtoms.at(1).GLname;
   mol.cBonds.append(bond);
