@@ -86,6 +86,9 @@ Section "MoleCoolQt" SecMoleCoolQt
   File ..\release\QtGui4.dll
   File ..\release\mingwm10.dll 
   File ..\release\libstdc++-6.dll
+  File ..\release\libfftw3f-3.dll
+  File ..\release\libgomp-1.dll
+  File ..\release\libpthread-2.dll
   File ..\release\libgcc_s_dw2-1.dll
   File ..\release\QtOpenGL4.dll
   CreateDirectory "$INSTDIR\imageformats"
@@ -138,7 +141,10 @@ Section "Uninstall"
   Delete "$INSTDIR\QtGui4.dll"
   Delete "$INSTDIR\mingwm10.dll"	  
   Delete "$INSTDIR\libgcc_s_dw2-1.dll"
-  Delete "$INSTDIR\libstdc++-6.dll"	
+  Delete "$INSTDIR\libstdc++-6.dll"
+  Delete "$INSTDIR\libgomp-1.dll"
+  Delete "$INSTDIR\libpthread-2.dll"
+  Delete "$INSTDIR\libfftw3f-3.dll"	
   Delete "$INSTDIR\QtOpenGL4.dll"
   Delete "$INSTDIR\imageformats\qgif4.dll"
   Delete "$INSTDIR\imageformats\qico4.dll"

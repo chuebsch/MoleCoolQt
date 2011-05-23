@@ -51,7 +51,7 @@ bool FourMCQ::loadFouAndPerform(const char filename[]){
     size_t lSize = ftell (f), readsize;
     rewind (f);
     if (!(lSize%sizeof(reco))&&(lSize%sizeof(rec64)))winformat=1;
-    printf("%lu %lu\n",lSize%sizeof(reco),lSize%sizeof(rec64));
+    //printf("%lu %lu\n",lSize%sizeof(reco),lSize%sizeof(rec64));
     ok= readMas(filename);
     if (!ok) {
       char masname[4096];
@@ -573,8 +573,8 @@ void FourMCQ::gen_surface(bool neu){
   }
   */
   disconnect(chgl,SIGNAL(diffscroll(int ,int )),0,0);
-  disconnect(chgl,SIGNAL(neuemitte(V3)),0,0);/*
-  disconnect(chgl,SIGNAL(inimibas()),0,0);
+  disconnect(chgl,SIGNAL(neuemitte(V3)),0,0);
+  disconnect(chgl,SIGNAL(inimibas()),0,0);/*
   if ((mode==0)&&(!scroller)) chgl->mibas=glGenLists(2);
   scroller=false;*/
   if ((chgl->foubas)&&(glIsList(chgl->foubas))) glDeleteLists(chgl->foubas,5);
@@ -671,8 +671,8 @@ void FourMCQ::gen_surface(bool neu){
             .arg(fosig,6,'g',2)
             .arg(QKeySequence(Qt::ShiftModifier).toString(QKeySequence::NativeText));
     infoKanalNews(info);
-  }
-  connect(chgl,SIGNAL(inimibas()),this,SLOT(inimap()));*/
+  }*/
+  connect(chgl,SIGNAL(inimibas()),this,SLOT(inimap()));
   connect(chgl,SIGNAL(neuemitte(V3)),this, SLOT(bewegt(V3)));
   connect(chgl,SIGNAL(diffscroll(int ,int )),this,SLOT(change_iso(int ,int )));
 }
