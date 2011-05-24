@@ -606,14 +606,14 @@ void FourMCQ::gen_surface(bool neu,int imin,int imax){
 	    case 0:
                     glColor4d(0.0, 0.7, 0.0, 0.4);
                     if (neu) iso[1]=sigma[0]*2.7;
-                    else iso[1]=-iso[1];
+                    else iso[1]=fabs(iso[1]);
 		    mtyp=1;
 //		    printf("fac %d case %d %g %g\n",fac,mtyp,iso[1],sigma[0]);
 		    break;
 	    case 1:
                     glColor4d(0.8, 0.0, 0.0, 0.4);
                     if (neu) iso[1]=-sigma[0]*2.7;
-                    else iso[1]=-iso[1];
+                    else iso[1]=-fabs(iso[1]);
                     mtyp=1;
 //		    printf("fac %d case %d %g %g\n",fac,mtyp,iso[1],sigma[0]);
 		    break;
@@ -627,14 +627,14 @@ void FourMCQ::gen_surface(bool neu,int imin,int imax){
 	    case 3:
                     glColor4d(0.0, 0.7, 0.9, 0.6);
                     if (neu) iso[2]=sigma[2]*1.7;
-                    else iso[2]=-iso[2];
+                    else iso[2]=fabs(iso[2]);
                     mtyp=2;
 //		    printf("fac %d case %d %g %g\n",fac,mtyp,iso[2],sigma[2]);
 		    break;
 	    case 4:
                     glColor4d(0.9, 0.6, 0.0, 0.6);
                     if (neu) iso[2]=-sigma[2]*1.7;
-                    else iso[2]=-iso[2];
+                    else iso[2]=-fabs(iso[2]);
                     mtyp=2;
 //		    printf("fac %d case %d %g %g\n",fac,mtyp,iso[2],sigma[2]);
 		    break;
