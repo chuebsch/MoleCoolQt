@@ -109,6 +109,8 @@ public slots:
      void moveD();
      void rotUp();
      void rotDown();
+     void openMapControl();
+     void controlMap();
      void wasistdas();
      void togglSt();
      void toggleElli(bool b);
@@ -144,6 +146,9 @@ protected:
  private:
     QSlider *legendSize,*strikesSldr,*swidthSldr;
     QCheckBox *zebraBox,*mt;
+    QComboBox *mapSchnitt;
+    QDoubleSpinBox *maprad,*fomaps,*difmaps,*f12maps,*weak,*mapprec;
+    QDialog *md;
     QRadioButton *cullNone,*cullBack,*cullFront;
     QSpinBox *fos;
     QFontComboBox *mlf;

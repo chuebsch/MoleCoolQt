@@ -51,21 +51,24 @@ class FourMCQ:public QObject{
 Q_OBJECT
   public:
           float *datfo,*datfo_fc,*datf1_f2;
-          FourMCQ(molekul *mole_, CubeGL *chgl_, double resol=5.0, double wght=1.0);
+          FourMCQ(molekul *mole_, CubeGL *chgl_, double resol=2.0, double wght=1.0);
 	  ~FourMCQ();
-          bool loadFouAndPerform(const char filename[]);
+          bool loadFouAndPerform(const char filename[],bool neu=true);
           float sigma[3];
           float iso[3];
-          GLint basemap;
           V3 urs;
+          double rr,rw;
 	  int maptrunc;
           molekul *mole;
 	  double map_radius;
 	  CubeGL *chgl;
+	  void deleteLists();
   public slots:
           void bewegt(V3 v);
           void inimap();
           void change_iso(int numsteps,int diff);
+  signals:
+  void bigmessage(const QString &);
 
   private:
 	  double C[15],D[9],sy[12][192],wave;
@@ -80,9 +83,8 @@ Q_OBJECT
 	  char cen,git;
           int nr,nc,ns;
 	  int mtyp;
-          double rr,rw;
 	  V3 dx,dy,dz;
-          void gen_surface(bool neu);
+          void gen_surface(bool neu,int imin=0, int imax=5);
           void CalcVertex( int ix, int iy, int iz);
           int IndexSelected( FNode& node0, FNode& node1, FNode& node2, FNode& node3 );
           V3& VectorSelected( FNode& node0, FNode& node1, FNode& node2, FNode& node3 );

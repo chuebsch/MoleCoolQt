@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=255;
+int rev=256;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -802,6 +802,7 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
   dialogMenu->addAction(editAtomAct);
   dialogMenu->addAction(filterAct);
   dialogMenu->addAction(unfilterAct);
+  dialogMenu->addAction(tr("Open map control"),this,SLOT(openMapControl()));
   dialogMenu->addSeparator();
   dialogMenu->addAction("Save current toggel states",cubeGL,SLOT(saveMISettings()));
   dialogMenu->addAction("Load toggle states",cubeGL,SLOT(loadMISettings()));
@@ -960,6 +961,88 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
   toolView->addAction(showLeg);
 
   fmcq = new FourMCQ(&mol,cubeGL);
+  /////////////
+  {
+  QDialogButtonBox *buttonBoxMC = new QDialogButtonBox( QDialogButtonBox::Apply | QDialogButtonBox::Cancel);
+  QPushButton *applyMC = buttonBoxMC->button(QDialogButtonBox::Apply);
+  QLabel *wl= new QLabel("Factor to downweight weak data");
+  QLabel *pl= new QLabel("Map precision: ");
+  QLabel *dl= new QLabel("Fo-Fc map: ");
+  QLabel *d12= new QLabel("F1-F2 map: ");
+  QLabel *ol= new QLabel("F-observed map: ");
+  QLabel *rl= new QLabel("Map radius: ");
+  QLabel *sl= new QLabel("Map truncation type: ");
+  md = new QDialog(this);
+  md->setWindowTitle("Map Control");
+  connect(applyMC , SIGNAL(clicked()), this , SLOT(controlMap()));
+  connect(applyMC , SIGNAL(clicked()), this , SLOT(openMapControl()));
+  connect(buttonBoxMC, SIGNAL(rejected()), md, SLOT(hide()));
+
+  mapprec = new QDoubleSpinBox();
+  mapprec->setMinimum(1.1);
+  mapprec->setMaximum(8.0);
+  mapprec->setValue(fmcq->rr);
+  mapprec->setSingleStep(0.1);
+
+  weak = new QDoubleSpinBox();
+  weak->setMinimum(0.1);
+  weak->setMaximum(8.0);
+  weak->setValue(fmcq->rw);
+  weak->setSingleStep(0.1);
+
+  difmaps = new QDoubleSpinBox();
+  difmaps->setMinimum(0);
+  difmaps->setMaximum(94);
+  difmaps->setValue(fabs(fmcq->iso[1]));
+  difmaps->setSingleStep(fabs(fmcq->iso[1])/10.0); 
+  difmaps->setSuffix("e/A^3");
+
+  fomaps = new QDoubleSpinBox();
+  fomaps->setMinimum(0);
+  fomaps->setMaximum(94);
+  fomaps->setValue(fmcq->iso[0]);
+  fomaps->setSingleStep(fmcq->iso[0]/10.0);
+  fomaps->setSuffix("e/A^3");
+  
+  f12maps = new QDoubleSpinBox();
+  f12maps->setMinimum(0);
+  f12maps->setMaximum(94);
+  f12maps->setValue(fabs(fmcq->iso[2]));
+  f12maps->setSingleStep(fabs(fmcq->iso[2])/10.0);
+  f12maps->setSuffix("e/A^3");
+
+  maprad = new QDoubleSpinBox();
+  maprad->setValue(fmcq->map_radius);
+  maprad->setMinimum(0);
+  maprad->setMaximum(25.0);
+  maprad->setSuffix("A");
+  maprad->setSingleStep(0.3);
+  mapSchnitt=  new QComboBox();
+  mapSchnitt->addItem("one complete unit cell",0);
+  mapSchnitt->addItem("sphere around rotation center",1);
+  mapSchnitt->addItem("1.41A around visible atoms or peaks",2);
+  mapSchnitt->setCurrentIndex(fmcq->maptrunc);
+  QGridLayout *mdl = new QGridLayout();
+  mdl->addWidget(mapprec,0,1);
+  mdl->addWidget(weak,1,1);
+  mdl->addWidget(difmaps,2,1);
+  mdl->addWidget(fomaps,3,1);
+  mdl->addWidget(f12maps,4,1);
+  mdl->addWidget(maprad,5,1);
+  mdl->addWidget(mapSchnitt,6,1);
+  mdl->addWidget(pl,0,0);
+  mdl->addWidget(wl,1,0);
+  mdl->addWidget(dl,2,0);
+  mdl->addWidget(ol,3,0);
+  mdl->addWidget(d12,4,0);
+  mdl->addWidget(rl,5,0);
+  mdl->addWidget(sl,6,0);
+  mdl->addWidget(buttonBoxMC,10,0,3,3);
+  md->setLayout(mdl);
+  md->setModal (false);
+  md->hide();
+  }
+  /////////////
   cubeGL->foact=toolView->addAction(QIcon(":/images/fomap.png"),"toggle Fo map",cubeGL,SLOT(updateGL()));
   cubeGL->foact->setCheckable(true);
   cubeGL->foact->setChecked(false);
@@ -1132,6 +1215,7 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
 		       "<p> Moving the mouse over an atom will show its name in the status bar.");
   connect(cubeGL,SIGNAL(message(const QString&)),this,SLOT(updateStatusBar(const QString&)));
   connect(cubeGL,SIGNAL(bigmessage(const QString&)),this,SLOT(infoKanalNews(const QString&)));
+  connect(fmcq,SIGNAL(bigmessage(const QString&)),this,SLOT(infoKanalNews(const QString&)));
   setWindowTitle(QString("MoleCoolQt-Revision %1 ").arg(rev));
   int argc=QCoreApplication::arguments().size();
   if (argc>1){
@@ -1180,6 +1264,46 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void MyWindow::openMapControl(){
+  weak->setValue(fmcq->rw);
+  mapprec->setValue(fmcq->rr);
+  difmaps->setValue(fabs(fmcq->iso[1]));
+  difmaps->setSingleStep(fabs(fmcq->iso[1])/10.0);
+  f12maps->setValue(fabs(fmcq->iso[2]));
+  f12maps->setSingleStep(fabs(fmcq->iso[2])/10.0);
+
+  fomaps->setValue(fmcq->iso[0]);
+  fomaps->setSingleStep(fmcq->iso[0]/10.0);
+  maprad->setValue(fmcq->map_radius);
+  mapSchnitt->setCurrentIndex(fmcq->maptrunc);
+  md->show();
+}
+
+void MyWindow::controlMap(){
+  fmcq->maptrunc=mapSchnitt->currentIndex (); 
+  if ((fmcq->rw!=weak->value())||(fmcq->rr!=mapprec->value())){
+    fmcq->rr =  mapprec->value();  
+    fmcq->rw = weak->value();
+
+    QString fouName;
+    fouName=dirName;
+    fouName.chop(3);
+    fouName.append("fou");
+    if (fmcq->loadFouAndPerform(fouName.toStdString().c_str()),false){
+      infoKanalNews(QString("<font color=red>Could not load %1!</font><br>").arg(fouName));
+      fmcq->deleteLists();
+
+    }
+  }    
+  fmcq->map_radius = maprad->value();
+  fmcq->iso[0] = fomaps->value();
+  fmcq->iso[1] = -difmaps->value();
+  fmcq->iso[2] = -f12maps->value();
+  fmcq->inimap();
+  cubeGL->updateGL();
+}
+
 
 void MyWindow::genMoliso() {
   atmax=0;
@@ -1455,20 +1579,12 @@ unfilterAct->setVisible(false);
 
 void MyWindow::infoKanalNews(const QString& s){
   QString alt = infoKanal->toHtml();
-  QString news = QString("%1</body></html").arg(s);
-  if (alt.contains("Geometry:")) {
-    alt.replace(QRegExp("Geometry:.{1,}"),news); 
-  }
-  else if ((s.contains("Dipole Moments:"))&&(alt.contains("Dipole Moments:"))) {
-    alt.replace(QRegExp("Dipole Moments:.{1,}"),news); 
-  }
-  else if ((s.contains("Used Symmetry:"))&&(alt.contains("Used Symmetry:"))) {
-    alt.replace(QRegExp("Used Symmetry:.{1,}"),news);
-  }
-  else {
-    alt.replace("</body></html>",news);
-  }
+  alt.append(s);
   infoKanal->setHtml(alt);
+  QTextCursor c = infoKanal->textCursor();
+  c.movePosition(QTextCursor::End);
+  infoKanal->setTextCursor(c);
+  infoKanal->ensureCursorVisible();
   dock->show();
   dock->raise();
 }
@@ -2564,7 +2680,10 @@ dummax=smx-atmax;
       asymmUnit[i].u.m12=asymmUnit[i].u.m13=asymmUnit[i].u.m23=asymmUnit[i].u.m21=asymmUnit[i].u.m31=asymmUnit[i].u.m32=0.0;}
     else Uf2Uo(asymmUnit[i].uf,asymmUnit[i].u);}
   growSymm(6);
-  if (!fmcq->loadFouAndPerform(fouName.toStdString().c_str())) qDebug()<<"Could not load "<<fouName;
+  if (!fmcq->loadFouAndPerform(fouName.toStdString().c_str())) {
+    infoKanalNews(QString("<font color=red>Could not load %1!</font><br>").arg(fouName));
+    fmcq->deleteLists();
+  }
 }
 
 //----------------------------------S H E L D R I C K -----------------------------------------
@@ -4040,7 +4159,6 @@ void MyWindow::initLists(QList<INP> xd){
 
   for (int j=0;j<mx;j++)               
     xd[j].labPos=xd[j].kart;
-
 
   if (cubeGL->bas) glDeleteLists(cubeGL->bas,10);
   cubeGL->bas=glGenLists(10);

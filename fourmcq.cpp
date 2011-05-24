@@ -5,8 +5,13 @@ FourMCQ::FourMCQ(molekul *mole_, CubeGL *chgl_, double resol, double wght){
   mole =mole_;
   chgl=chgl_;
   map_radius=5.0;
-  maptrunc = 0;
-  chgl->foubas=0;
+  maptrunc = 1;
+  chgl->foubas[0]=0;
+  chgl->foubas[1]=0;
+  chgl->foubas[2]=0;
+  chgl->foubas[3]=0;
+  chgl->foubas[4]=0;
+  datfo_fc=datf1_f2=datfo=NULL;
   urs=V3(0,0,0);
   nr=0;
   nc=0;
@@ -17,7 +22,7 @@ FourMCQ::FourMCQ(molekul *mole_, CubeGL *chgl_, double resol, double wght){
 FourMCQ::~FourMCQ(){
 }
 
-bool FourMCQ::loadFouAndPerform(const char filename[]){
+bool FourMCQ::loadFouAndPerform(const char filename[],bool neu){
     const int it[480]= {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 20, 21, 22, 24, 25, 26, 27,
       28, 30, 32, 33, 35, 36, 39, 40, 42, 44, 45, 48, 49, 50, 52, 54, 55, 56, 60, 63, 64, 65, 66, 70, 72, 75, 77,
       78, 80, 81, 84, 88, 90, 91, 96, 98, 99, 100, 104, 105, 108, 110, 112, 117, 120, 125, 126, 128, 130, 132, 135,
@@ -53,15 +58,16 @@ bool FourMCQ::loadFouAndPerform(const char filename[]){
     if (!(lSize%sizeof(reco))&&(lSize%sizeof(rec64)))winformat=1;
     //printf("%lu %lu\n",lSize%sizeof(reco),lSize%sizeof(rec64));
     ok= readMas(filename);
+    nr=0;
     if (!ok) {
       char masname[4096];
       int len=strlen(filename);
       strncpy(masname,filename,len-3);
       strcat(masname,"mas");
-      qDebug()<<"test";
       fprintf(stderr,"Problems while reading XD master file! [%s]\n",masname);
       return false;
     }
+    emit bigmessage(filename);
     while (!feof(f)){
       if (winformat) {
         readsize = fread(&wr[nr],sizeof(reco),1,f);
@@ -170,6 +176,9 @@ bool FourMCQ::loadFouAndPerform(const char filename[]){
       for (int i=0; (it[i]< j)||((nc)&&(it[i]%2)); i++) n3=it[i+1];
       n4=n2*n1;
       n5=n3*n4;
+      if (datfo!=NULL) free(datfo);
+      if (datfo_fc!=NULL) free(datfo_fc);
+      if (datf1_f2!=NULL) free(datf1_f2);
       datfo=(float*) malloc(sizeof(float)*n5);
       datfo_fc=(float*) malloc(sizeof(float)*n5);
       datf1_f2=(float*) malloc(sizeof(float)*n5);
@@ -202,7 +211,7 @@ bool FourMCQ::loadFouAndPerform(const char filename[]){
 	}
 	if(typ==0) ss=(lr[i].d1-fmod1)/(C[14]*(s+t));
 	else if (typ==1) ss=(lr[i].d1)/(C[14]*(s+t));
-	else ss=f12;
+	else ss=f12/(C[14]*(s+t));
 	if(fmod1>1.E-6) ss=ss/(1.+rw*pow(lr[i].d2/fmod1,4));
 	for (int n=0; n<ns;n++){
 	  int j,k,l,m;
@@ -258,7 +267,7 @@ bool FourMCQ::loadFouAndPerform(const char filename[]){
     urs*=1.0/gt;
     urs=V3(1,1,1)-1.0*urs;
     mole->frac2kart(urs,urs);
-    printf("ursprung %g %g %g \n",urs.x,urs.y,urs.z);
+//    printf("ursprung %g %g %g \n",urs.x,urs.y,urs.z);
 
     nodex= (FNode*)malloc(sizeof(FNode)*n5);
     nodey= (FNode*)malloc(sizeof(FNode)*n5);
@@ -301,9 +310,19 @@ bool FourMCQ::loadFouAndPerform(const char filename[]){
     delDA[24]=  -n1*dx +n2*dy +n3*dz;
     delDA[25]=          n2*dy +n3*dz;
     delDA[26]=   n1*dx +n2*dy +n3*dz;
-    gen_surface(true);
+    gen_surface(neu);
     return true;
   }
+
+void FourMCQ::deleteLists(){
+ for (int fac=0; fac<5; fac++){
+    if ((chgl->foubas[fac])&&(glIsList(chgl->foubas[fac]))) {
+      //printf("deleting list #%d\n",chgl->foubas[fac]);
+      glDeleteLists(chgl->foubas[fac],1);
+      chgl->foubas[fac]=0;
+    }//else printf("NOT deleting list #%d %d\n",chgl->foubas[fac],glIsList(chgl->foubas[fac]));
+ }
+}
 
 void FourMCQ::trimm(char s[]){
   char sc[409];
@@ -525,7 +544,7 @@ void FourMCQ::bewegt(V3 nm){
   mole->frac2kart(urs,urs);
   printf("moved? =>%s\n",(urs==alturs)?"no":"yes");
 
-  printf("ursprung %g %g %g \n",urs.x,urs.y,urs.z);
+//  printf("ursprung %g %g %g \n",urs.x,urs.y,urs.z);
   if (urs==alturs) return;
 
   //balken->setMinimum(0);
@@ -557,6 +576,8 @@ void FourMCQ::inimap(){//for screenies
   //scroller=false;
   //mode=0;
   //iso=difsig;
+ // printf("inimap\n");
+  deleteLists();
   gen_surface(false);
   //mode=1;
   //iso=fosig;
@@ -566,7 +587,7 @@ void FourMCQ::inimap(){//for screenies
 }
 #include <omp.h>
 
-void FourMCQ::gen_surface(bool neu){
+void FourMCQ::gen_surface(bool neu,int imin,int imax){
   /*if (!((chgl->isFO())||(chgl->isDF()))) {
     chgl->warFaul();
     return ;
@@ -577,50 +598,50 @@ void FourMCQ::gen_surface(bool neu){
   disconnect(chgl,SIGNAL(inimibas()),0,0);/*
   if ((mode==0)&&(!scroller)) chgl->mibas=glGenLists(2);
   scroller=false;*/
-  if ((chgl->foubas)&&(glIsList(chgl->foubas))) glDeleteLists(chgl->foubas,5);
-  chgl->foubas=glGenLists(5);
-  for (int fac=0; fac<5; fac++){
-    glNewList(chgl->foubas+fac, GL_COMPILE );
+ for (int fac=imin; fac<imax; fac++){
+    if ((chgl->foubas[fac])&&(glIsList(chgl->foubas[fac]))) glDeleteLists(chgl->foubas[fac],1);
+    if (!chgl->foubas[fac]) chgl->foubas[fac]=glGenLists(1);
+    glNewList(chgl->foubas[fac], GL_COMPILE );
     switch (fac){
 	    case 0:
                     glColor4d(0.0, 0.7, 0.0, 0.4);
                     if (neu) iso[1]=sigma[0]*2.7;
                     else iso[1]=-iso[1];
 		    mtyp=1;
-		    printf("fac %d case %d %g %g\n",fac,mtyp,iso[1],sigma[0]);
+//		    printf("fac %d case %d %g %g\n",fac,mtyp,iso[1],sigma[0]);
 		    break;
 	    case 1:
                     glColor4d(0.8, 0.0, 0.0, 0.4);
                     if (neu) iso[1]=-sigma[0]*2.7;
                     else iso[1]=-iso[1];
                     mtyp=1;
-		    printf("fac %d case %d %g %g\n",fac,mtyp,iso[1],sigma[0]);
+//		    printf("fac %d case %d %g %g\n",fac,mtyp,iso[1],sigma[0]);
 		    break;
 	    case 2:
                     glColor4d(0.0, 0.0, 1.0, 0.24);
                    if (neu) iso[0]=sigma[1]*1.2;
 		    mtyp=0;
-		    printf("fac %d case %d %g %g\n",fac,mtyp,iso[0],sigma[1]);
+//		    printf("fac %d case %d %g %g\n",fac,mtyp,iso[0],sigma[1]);
 
 		    break;
 	    case 3:
-                    glColor4d(0.9, 0.6, 0.0, 0.6);
+                    glColor4d(0.0, 0.7, 0.9, 0.6);
                     if (neu) iso[2]=sigma[2]*1.7;
                     else iso[2]=-iso[2];
                     mtyp=2;
-		    printf("fac %d case %d %g %g\n",fac,mtyp,iso[2],sigma[2]);
+//		    printf("fac %d case %d %g %g\n",fac,mtyp,iso[2],sigma[2]);
 		    break;
 	    case 4:
-                    glColor4d(0.0, 0.7, 0.9, 0.6);
+                    glColor4d(0.9, 0.6, 0.0, 0.6);
                     if (neu) iso[2]=-sigma[2]*1.7;
                     else iso[2]=-iso[2];
                     mtyp=2;
-		    printf("fac %d case %d %g %g\n",fac,mtyp,iso[2],sigma[2]);
+//		    printf("fac %d case %d %g %g\n",fac,mtyp,iso[2],sigma[2]);
 		    break;
     }
     int chunk=3;
-    QTime t;
-    t.start();
+//    QTime t;
+ //   t.start();
     //balken->setValue(balkenstep++);
     //printf("iso=%g e/A^3 %s %10.5f %10.5f %10.5f\n",iso,(!mode)?"difference map":"Fo-map",urs.x,urs.y,urs.z);
 #pragma omp parallel shared(chunk)
@@ -636,8 +657,8 @@ void FourMCQ::gen_surface(bool neu){
       }
     }//omp
    // balken->setValue(balkenstep+=n3);
-    printf("...%d ms later. drawing to memory\n",t.elapsed());
-    t.start();
+ //   printf("...%d ms later. drawing to memory\n",t.elapsed());
+    //t.start();
     //#pragma omp parallel
     {
       glPushMatrix();
@@ -653,25 +674,25 @@ void FourMCQ::gen_surface(bool neu){
 //	balken->setValue(balkenstep++);
       }
       glPopMatrix();
-      printf("...%d ms later. \n",t.elapsed());
+   //   printf("...%d ms later. \n",t.elapsed());
     }//O M P
   glEndList();
   }
-//  orte.clear();
-/*  if (!mode) {
-    QString info=QString("<b>Difference Map:</b><font color=green>%1 e&Aring;<sup>-3</sup></font>"
-                    "<font color=red> %2 e&Aring;<sup>-3</sup> </font><font color=grey> Hint:  [%3 Scroll (up or down)] to change. </font>")
-            .arg(difsig,6,'g',2)
-            .arg(-difsig,6,'g',2)
-            .arg(QKeySequence(Qt::ControlModifier).toString(QKeySequence::NativeText));
-    infoKanalNews(info);
-  }
-  else {
-    QString info=QString("<b>Fo-Map:</b><font color=blue>%1  e&Aring;<sup>-3</sup></font><font color=grey> Hint:  [%2 Scroll (up or down)] to change. </font>")
-            .arg(fosig,6,'g',2)
-            .arg(QKeySequence(Qt::ShiftModifier).toString(QKeySequence::NativeText));
-    infoKanalNews(info);
-  }*/
+  QString info=QString("<b>Fo-Fc1 Map:</b><font color=green>%1 e&Aring;<sup>-3</sup></font>"
+		  "<font color=red> %2 e&Aring;<sup>-3</sup> </font><br><font color=grey> Hint:  [%3 Scroll (up or down)] to change. </font><br>"
+		  "<b>Fo-Map:</b><font color=blue>%4  e&Aring;<sup>-3</sup></font><br><font color=grey> Hint:  [%5 Scroll (up or down)] to change. </font><br>"
+		  "<b>F1-Fc2 Map:</b><font color=orange>%6 e&Aring;<sup>-3</sup></font>"
+		  "<font color=cyan> %7 e&Aring;<sup>-3</sup> </font><br><font color=grey> Hint:  [%8 Scroll (up or down)] to change. </font><br>")
+	  .arg(-iso[1],6,'g',2)
+	  .arg(iso[1],6,'g',2)
+	  .arg(QKeySequence(Qt::ControlModifier).toString(QKeySequence::NativeText))
+	  .arg(iso[0],6,'g',2)
+	  .arg(QKeySequence(Qt::ShiftModifier).toString(QKeySequence::NativeText))
+	  .arg(-iso[2],6,'g',2)
+	  .arg(iso[2],6,'g',2)
+	  .arg(QKeySequence(Qt::AltModifier).toString(QKeySequence::NativeText))
+	  ;
+  emit bigmessage(info);
   connect(chgl,SIGNAL(inimibas()),this,SLOT(inimap()));
   connect(chgl,SIGNAL(neuemitte(V3)),this, SLOT(bewegt(V3)));
   connect(chgl,SIGNAL(diffscroll(int ,int )),this,SLOT(change_iso(int ,int )));
@@ -680,7 +701,20 @@ void FourMCQ::gen_surface(bool neu){
 void FourMCQ::change_iso(int numsteps,int diff){
   disconnect(chgl,SIGNAL(diffscroll(int ,int )),0,0);
   iso[diff]+=iso[diff]*numsteps/10.0;
-  gen_surface(false);
+  int mi=0,ma=5;
+  switch (diff) {
+	  case 0: 
+		  mi=2;ma=3;
+		  break;
+	  case 1:
+		  mi=0; ma=2;
+		  break;
+	  case 2:
+		  mi=3;ma=5;
+		  break;
+  
+  }
+  gen_surface(false,mi,ma);
   chgl->updateGL();
 }
 
@@ -911,14 +945,14 @@ void FourMCQ::MakeElement( int ix, int iy, int iz ,int s1, int s2) {//das ist de
         for (int polni=0; polni<n; polni++){
           V3 neo=polygon[polni].vertex;
           double lang =Distance(minp,neo);
-          if ((lang>Distance(minp,neo+V3(C[0],0,0)))&&(axe&1)) neo.x+=C[0];
-          else if ((lang>Distance(minp,neo-V3(C[0],0,0)))&&(axe&1)) neo.x-=C[0];
+          if ((lang>Distance(minp,neo+dx*n1))&&(axe&1)) neo+=dx*n1;
+          else if ((lang>Distance(minp,neo-dx*n1))&&(axe&1)) neo+=-n1*dx;
           lang =Distance(minp,neo);
-          if ((lang>Distance(minp,neo+V3(0,C[1],0)))&&(axe&2)) neo.y+=C[1];
-          else if ((lang>Distance(minp,neo-V3(0,C[1],0)))&&(axe&2)) neo.y-=C[1];
+          if ((lang>Distance(minp,neo+dy*n2))&&(axe&2)) neo+=n2*dy;
+          else if ((lang>Distance(minp,neo-dy*n2))&&(axe&2)) neo+=-n2*dy;
           lang =Distance(minp,neo);
-          if ((lang>Distance(minp,neo+V3(0,0,C[2])))&&(axe&4)) neo.z+=C[2];
-          else if ((lang>Distance(minp,neo-V3(0,0,C[2])))&&(axe&4)) neo.z-=C[2];
+          if ((lang>Distance(minp,neo+n3*dz))&&(axe&4)) neo+=n3*dz;
+          else if ((lang>Distance(minp,neo-n3*dz))&&(axe&4)) neo+=-n3*dz;
           polygon[polni].vertex=neo;
         }
         dis=0;

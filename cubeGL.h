@@ -26,7 +26,7 @@ public:
   bool molisoTransparence;
   bool zebra;
   double mixdim,miydim,mizdim;
-  int cbas, bas, ibas, iSel, foubas;
+  int cbas, bas, ibas, iSel, foubas[5];
   int rotze;
   int expandatom;
   double milsize;

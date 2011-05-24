@@ -372,7 +372,7 @@ void  CubeGL::toggInvEdit(bool on){
 	  if ((ce.at(i).an<0)||(ce.at(j).an<0)) continue;
 	  if (ce.at(i).pos==ce.at(j).pos) continue;
 	  if ((ce.at(i).part>0)&&(ce.at(j).part>0)&&(ce.at(j).part!=ce.at(i).part)) continue;
-	  if ((ce.at(i).part<0)&&(ce.at(j).part<0)&&(ce.at(j).part!=ce.at(i).part)) continue;
+	  if (((ce.at(i).part<0)||(ce.at(j).part<0))&&(ce.at(j).part!=ce.at(i).part)) continue;
 	  if (((ce.at(i).part<0)||(ce.at(j).part<0))&&(ce.at(j).sg!=ce.at(i).sg)) continue;
 	  if ((ce.at(i).an<83)&&(ce.at(j).an<83)&&(ce.at(i).an>=0)&&(ce.at(j).an>=0)){
 	    soll_abst=((mol.Kovalenz_Radien[ce.at(i).an]+
@@ -685,9 +685,10 @@ bool before=  mol.singleColorBonds;
       mol.adp=adpstate;      ;
   }
 
-  if (foubas){
+  if (foubas[0]|foubas[1]|foubas[2]|foubas[3]|foubas[4]){
       emit inimibas();
-  }
+  }//else printf("dountinit\n");
+//  printf("init\n");
 }
 
 void CubeGL::resizeGL(int width, int height) {
@@ -3263,10 +3264,7 @@ void CubeGL::draw() {
         sumse=V3(0,0,0);
         for (int i=0;i<selectedAtoms.size();i++){
             sumse+=selectedAtoms[i].kart;
-            printf("%s %d %g %g %g\n",selectedAtoms.at(i).atomname,i,
-                   selectedAtoms.at(i).kart.x,
-                   selectedAtoms.at(i).kart.y,
-                   selectedAtoms.at(i).kart.z);
+        //    printf("%s %d %g %g %g\n",selectedAtoms.at(i).atomname,i, selectedAtoms.at(i).kart.x, selectedAtoms.at(i).kart.y, selectedAtoms.at(i).kart.z);
         }
       sumse*=1.0/selectedAtoms.size();
 
@@ -3281,10 +3279,7 @@ void CubeGL::draw() {
 
   if (rotze>-1) {
     sumse=xdinp.at(rotze).kart;
-    printf("%s %g %g %g\n",xdinp.at(rotze).atomname,
-           xdinp.at(rotze).kart.x,
-           xdinp.at(rotze).kart.y,
-           xdinp.at(rotze).kart.z);
+//    printf("%s %g %g %g\n",xdinp.at(rotze).atomname, xdinp.at(rotze).kart.x, xdinp.at(rotze).kart.y, xdinp.at(rotze).kart.z);
     double gmat[16];
     glGetDoublev( GL_MODELVIEW_MATRIX, (double*)gmat );
     ori.x=gmat[0] * xdinp.at(rotze).kart.x + gmat[4] * xdinp.at(rotze).kart.y + gmat[8] *  xdinp.at(rotze).kart.z;
@@ -3325,8 +3320,8 @@ void CubeGL::draw() {
   glPopMatrix();
   glPushMatrix();
   if (!(altemitte==sumse)){
-    printf("neuemitte %f %f %f\n",sumse.x,sumse.y,sumse.z);
-    altemitte=sumse;
+//    printf("neuemitte %f %f %f\n",sumse.x,sumse.y,sumse.z);
+    if (finite(Norm(sumse))) altemitte=sumse;
     emit neuemitte(altemitte);
   }
 
@@ -3389,20 +3384,20 @@ if (!selectedAtoms.isEmpty()){
     if (rmode==GL_RENDER){
       if (drawAx) glCallList(bas+2);
       if (drawUz) glCallList(bas+3);   
-      if (foubas) {
+      if (foubas[0]|foubas[1]|foubas[2]|foubas[3]|foubas[4]) {
 	glDisable(GL_CULL_FACE);
 	glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
 	glDisable(GL_LIGHTING);
         glLineWidth(0.5);
         glEnable(GL_BLEND);
         if (fofcact->isChecked()) {
-            glCallList(foubas);
-            glCallList(foubas+1);
+            glCallList(foubas[0]);
+            glCallList(foubas[1]);
         }
-        if (foact->isChecked()) glCallList(foubas+2);
+        if (foact->isChecked()) glCallList(foubas[2]);
         if (f1f2act->isChecked()){
-            glCallList(foubas+3);
-            glCallList(foubas+4);
+            glCallList(foubas[3]);
+            glCallList(foubas[4]);
         }
         glEnable(GL_LIGHTING);
 	glDisable(GL_BLEND);
