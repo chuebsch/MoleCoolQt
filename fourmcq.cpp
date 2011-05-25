@@ -1,7 +1,7 @@
 #include "fourmcq.h"
 #include <QtCore>
 #include <QtGui>
-FourMCQ::FourMCQ(molekul *mole_, CubeGL *chgl_, double resol, double wght){
+FourMCQ::FourMCQ(molekul *mole_, CubeGL *chgl_,QToolBar *toolView, double resol, double wght){
   mole =mole_;
   chgl=chgl_;
   map_radius=5.0;
@@ -12,143 +12,167 @@ FourMCQ::FourMCQ(molekul *mole_, CubeGL *chgl_, double resol, double wght){
   chgl->foubas[3]=0;
   chgl->foubas[4]=0;
   datfo_fc=datf1_f2=datfo=NULL;
+  nodex=nodey=nodez=NULL;
   urs=V3(0,0,0);
   nr=0;
   nc=0;
   rr=resol;
   rw=wght; 
+  chgl->foact=toolView->addAction(QIcon(":/images/fomap.png"),"toggle Fo map",chgl,SLOT(updateGL()));
+  chgl->foact->setCheckable(true);
+  chgl->foact->setChecked(false);
+  chgl->fofcact=toolView->addAction(QIcon(":/images/diffmap.png"),"toggle Fo-Fc map",chgl,SLOT(updateGL()));
+  chgl->fofcact->setCheckable(true);
+  chgl->fofcact->setChecked(true);
+  chgl->f1f2act=toolView->addAction(QIcon(":/images/f12map.png"),"toggle F1-F2 map",chgl,SLOT(updateGL()));
+  chgl->f1f2act->setCheckable(true);
+  chgl->f1f2act->setChecked(false);
+  chgl->fofcact->setVisible(false);
+  chgl->foact->setVisible(false);
+  chgl->f1f2act->setVisible(false);
 }
 
 FourMCQ::~FourMCQ(){
 }
 
 bool FourMCQ::loadFouAndPerform(const char filename[],bool neu){
-    const int it[480]= {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 20, 21, 22, 24, 25, 26, 27,
-      28, 30, 32, 33, 35, 36, 39, 40, 42, 44, 45, 48, 49, 50, 52, 54, 55, 56, 60, 63, 64, 65, 66, 70, 72, 75, 77,
-      78, 80, 81, 84, 88, 90, 91, 96, 98, 99, 100, 104, 105, 108, 110, 112, 117, 120, 125, 126, 128, 130, 132, 135,
-      140, 143, 144, 147, 150, 154, 156, 160, 162, 165, 168, 175, 176, 180, 182, 189, 192, 195, 196, 198, 200, 208,
-      210, 216, 220, 224, 225, 231, 234, 240, 243, 245, 250, 252, 256, 260, 264, 270, 273, 275, 280, 286, 288, 294,
-      297, 300, 308, 312, 315, 320, 324, 325, 330, 336, 343, 350, 351, 352, 360, 364, 375, 378, 384, 385, 390, 392,
-      396, 400, 405, 416, 420, 429, 432, 440, 441, 448, 450, 455, 462, 468, 480, 486, 490, 495, 500, 504, 512, 520,
-      525, 528, 539, 540, 546, 550, 560, 567, 572, 576, 585, 588, 594, 600, 616, 624, 625, 630, 637, 640, 648, 650,
-      660, 672, 675, 686, 693, 700, 702, 704, 715, 720, 728, 729, 735, 750, 756, 768, 770, 780, 784, 792, 800, 810,
-      819, 825, 832, 840, 858, 864, 875, 880, 882, 891, 896, 900, 910, 924, 936, 945, 960, 972, 975, 980, 990, 1000,
-      1001, 1008, 1024, 1029, 1040, 1050, 1053, 1056, 1078, 1080, 1092, 1100, 1120, 1125, 1134, 1144, 1152, 1155,
-      1170, 1176, 1188, 1200, 1215, 1225, 1232, 1248, 1250, 1260, 1274, 1280, 1287, 1296, 1300, 1320, 1323, 1344,
-      1350, 1365, 1372, 1375, 1386, 1400, 1404, 1408, 1430, 1440, 1456, 1458, 1470, 1485, 1500, 1512, 1536, 1540,
-      1560, 1568, 1575, 1584, 1600, 1617, 1620, 1625, 1638, 1650, 1664, 1680, 1701, 1715, 1716, 1728, 1750, 1755,
-      1760, 1764, 1782, 1792, 1800, 1820, 1848, 1872, 1875, 1890, 1911, 1920, 1925, 1944, 1950, 1960, 1980, 2000,
-      2002, 2016, 2025, 2048, 2058, 2079, 2080, 2100, 2106, 2112, 2145, 2156, 2160, 2184, 2187, 2200, 2205, 2240,
-      2250, 2268, 2275, 2288, 2304, 2310, 2340, 2352, 2376, 2400, 2401, 2430, 2450, 2457, 2464, 2475, 2496, 2500,
-      2520, 2548, 2560, 2574, 2592, 2600, 2625, 2640, 2646, 2673, 2688, 2695, 2700, 2730, 2744, 2750, 2772, 2800,
-      2808, 2816, 2835, 2860, 2880, 2912, 2916, 2925, 2940, 2970, 3000, 3003, 3024, 3072, 3080, 3087, 3120, 3125,
-      3136, 3150, 3159, 3168, 3185, 3200, 3234, 3240, 3250, 3276, 3300, 3328, 3360, 3375, 3402, 3430, 3432, 3456,
-      3465, 3500, 3510, 3520, 3528, 3564, 3575, 3584, 3600, 3640, 3645, 3675, 3696, 3744, 3750, 3773, 3780, 3822,
-      3840, 3850, 3861, 3888, 3900, 3920, 3960, 3969, 4000, 4004, 4032, 4050, 4095, 4096, 4116, 4125, 4158, 4160,
-      4200, 4212, 4224, 4290, 4312, 4320, 4368, 4374, 4375, 4400, 4410, 4455, 4459, 4480, 4500, 4536, 4550, 4576,
-      4608, 4620, 4680, 4704, 4725, 4752, 4800, 4802, 4851, 4860, 4875, 4900, 4914, 4928, 4950, 4992, 5000};
-
-    int winformat=0,ok;
-    FILE *f;
-    f=fopen(filename,"rb");
-    if (f==NULL) return false;
-    fseek (f , 0 , SEEK_END);
-    size_t lSize = ftell (f), readsize;
-    rewind (f);
-    if (!(lSize%sizeof(reco))&&(lSize%sizeof(rec64)))winformat=1;
-    //printf("%lu %lu\n",lSize%sizeof(reco),lSize%sizeof(rec64));
-    ok= readMas(filename);
-    nr=0;
-    if (!ok) {
-      char masname[4096];
-      int len=strlen(filename);
-      strncpy(masname,filename,len-3);
-      strcat(masname,"mas");
-      fprintf(stderr,"Problems while reading XD master file! [%s]\n",masname);
+  const int it[480]= {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 20, 21, 22, 24, 25, 26, 27,
+    28, 30, 32, 33, 35, 36, 39, 40, 42, 44, 45, 48, 49, 50, 52, 54, 55, 56, 60, 63, 64, 65, 66, 70, 72, 75, 77,
+    78, 80, 81, 84, 88, 90, 91, 96, 98, 99, 100, 104, 105, 108, 110, 112, 117, 120, 125, 126, 128, 130, 132, 135,
+    140, 143, 144, 147, 150, 154, 156, 160, 162, 165, 168, 175, 176, 180, 182, 189, 192, 195, 196, 198, 200, 208,
+    210, 216, 220, 224, 225, 231, 234, 240, 243, 245, 250, 252, 256, 260, 264, 270, 273, 275, 280, 286, 288, 294,
+    297, 300, 308, 312, 315, 320, 324, 325, 330, 336, 343, 350, 351, 352, 360, 364, 375, 378, 384, 385, 390, 392,
+    396, 400, 405, 416, 420, 429, 432, 440, 441, 448, 450, 455, 462, 468, 480, 486, 490, 495, 500, 504, 512, 520,
+    525, 528, 539, 540, 546, 550, 560, 567, 572, 576, 585, 588, 594, 600, 616, 624, 625, 630, 637, 640, 648, 650,
+    660, 672, 675, 686, 693, 700, 702, 704, 715, 720, 728, 729, 735, 750, 756, 768, 770, 780, 784, 792, 800, 810,
+    819, 825, 832, 840, 858, 864, 875, 880, 882, 891, 896, 900, 910, 924, 936, 945, 960, 972, 975, 980, 990, 1000,
+    1001, 1008, 1024, 1029, 1040, 1050, 1053, 1056, 1078, 1080, 1092, 1100, 1120, 1125, 1134, 1144, 1152, 1155,
+    1170, 1176, 1188, 1200, 1215, 1225, 1232, 1248, 1250, 1260, 1274, 1280, 1287, 1296, 1300, 1320, 1323, 1344,
+    1350, 1365, 1372, 1375, 1386, 1400, 1404, 1408, 1430, 1440, 1456, 1458, 1470, 1485, 1500, 1512, 1536, 1540,
+    1560, 1568, 1575, 1584, 1600, 1617, 1620, 1625, 1638, 1650, 1664, 1680, 1701, 1715, 1716, 1728, 1750, 1755,
+    1760, 1764, 1782, 1792, 1800, 1820, 1848, 1872, 1875, 1890, 1911, 1920, 1925, 1944, 1950, 1960, 1980, 2000,
+    2002, 2016, 2025, 2048, 2058, 2079, 2080, 2100, 2106, 2112, 2145, 2156, 2160, 2184, 2187, 2200, 2205, 2240,
+    2250, 2268, 2275, 2288, 2304, 2310, 2340, 2352, 2376, 2400, 2401, 2430, 2450, 2457, 2464, 2475, 2496, 2500,
+    2520, 2548, 2560, 2574, 2592, 2600, 2625, 2640, 2646, 2673, 2688, 2695, 2700, 2730, 2744, 2750, 2772, 2800,
+    2808, 2816, 2835, 2860, 2880, 2912, 2916, 2925, 2940, 2970, 3000, 3003, 3024, 3072, 3080, 3087, 3120, 3125,
+    3136, 3150, 3159, 3168, 3185, 3200, 3234, 3240, 3250, 3276, 3300, 3328, 3360, 3375, 3402, 3430, 3432, 3456,
+    3465, 3500, 3510, 3520, 3528, 3564, 3575, 3584, 3600, 3640, 3645, 3675, 3696, 3744, 3750, 3773, 3780, 3822,
+    3840, 3850, 3861, 3888, 3900, 3920, 3960, 3969, 4000, 4004, 4032, 4050, 4095, 4096, 4116, 4125, 4158, 4160,
+    4200, 4212, 4224, 4290, 4312, 4320, 4368, 4374, 4375, 4400, 4410, 4455, 4459, 4480, 4500, 4536, 4550, 4576,
+    4608, 4620, 4680, 4704, 4725, 4752, 4800, 4802, 4851, 4860, 4875, 4900, 4914, 4928, 4950, 4992, 5000};
+  chgl->fofcact->setVisible(false);
+  chgl->foact->setVisible(false);
+  chgl->f1f2act->setVisible(false);
+  if (datfo!=NULL) free(datfo);
+  if (datfo_fc!=NULL) free(datfo_fc);
+  if (datf1_f2!=NULL) free(datf1_f2);
+  deleteLists();
+  if (nodex!=NULL) free(nodex);
+  if (nodey!=NULL) free(nodey);
+  if (nodez!=NULL) free(nodez);
+  nodex=nodey=nodez=NULL;
+  int winformat=0,ok;
+  if (strstr(filename,"xd.fou")==NULL) return false;
+  FILE *f;
+  f=fopen(filename,"rb");
+  if (f==NULL) return false;
+  fseek (f , 0 , SEEK_END);
+  size_t lSize = ftell (f), readsize;
+  rewind (f);
+  if (!(lSize%sizeof(reco))&&(lSize%sizeof(rec64)))winformat=1;
+  //printf("%lu %lu\n",lSize%sizeof(reco),lSize%sizeof(rec64));
+  ok= readMas(filename);
+  nr=0;
+  if (!ok) {
+    char masname[4096];
+    int len=strlen(filename);
+    strncpy(masname,filename,len-3);
+    strcat(masname,"mas");
+    fprintf(stderr,"Problems while reading XD master file! [%s]\n",masname);
+    return false;
+  }
+  emit bigmessage(filename);
+  while (!feof(f)){
+    if (winformat) {
+      readsize = fread(&wr[nr],sizeof(reco),1,f);
+      lr[nr].ih=wr[nr].ih;
+      lr[nr].ik=wr[nr].ik;
+      lr[nr].il=wr[nr].il;
+      lr[nr].d1=wr[nr].d1;
+      lr[nr].d2=wr[nr].d2;
+      lr[nr].d3=wr[nr].d3;
+      lr[nr].d4=wr[nr].d4;
+      lr[nr].d5=wr[nr].d5;
+      lr[nr].d6=wr[nr].d6;
+      lr[nr].d7=wr[nr].d7;
+    }
+    else readsize = fread(&lr[nr],sizeof(rec64),1,f);
+    if ((lr[nr].ih|lr[nr].ik|lr[nr].il)!=0) nr++;
+    if (nr>=LM) {
+      fprintf(stderr,"to many reflections in xd.fou file\n");
       return false;
     }
-    emit bigmessage(filename);
-    while (!feof(f)){
-      if (winformat) {
-        readsize = fread(&wr[nr],sizeof(reco),1,f);
-        lr[nr].ih=wr[nr].ih;
-        lr[nr].ik=wr[nr].ik;
-        lr[nr].il=wr[nr].il;
-        lr[nr].d1=wr[nr].d1;
-        lr[nr].d2=wr[nr].d2;
-        lr[nr].d3=wr[nr].d3;
-        lr[nr].d4=wr[nr].d4;
-        lr[nr].d5=wr[nr].d5;
-        lr[nr].d6=wr[nr].d6;
-        lr[nr].d7=wr[nr].d7;
-      }
-      else readsize = fread(&lr[nr],sizeof(rec64),1,f);
-      if ((lr[nr].ih|lr[nr].ik|lr[nr].il)!=0) nr++;
-      if (nr>=LM) {
-          fprintf(stderr,"to many reflections in xd.fou file\n");
-          return false;
-      }
-    }
-    fclose(f);
-    for (int i=0;i<nr;i++){
-      double u=lr[i].ih,v=lr[i].ik,w=lr[i].il;
-      int mh=lr[i].ih,mk=lr[i].ik,ml=lr[i].il;
-      double p,q=lr[i].d3;
-      lr[i].d3=fmod(4*M_PI+q,2*M_PI);
-      for (int k=0; k<ns; k++){
-        int nh,nk,nl;
-        double t=1.0;
-        nh=(int) (u*sy[0][k]+ v*sy[3][k] + w*sy[6][k]);
-        nk=(int) (u*sy[1][k]+ v*sy[4][k] + w*sy[7][k]);
-        nl=(int) (u*sy[2][k]+ v*sy[5][k] + w*sy[8][k]);
-        if((nl<0)||((nl==0)&&(nk<0))||((nl==0)&&(nk==0)&&(nh<0)))
-        {nh*=-1;nk*=-1;nl*=-1;t=-1.0;}
-        if ((nl<ml)||((nl==ml)&&(nk<mk))||((nl==ml)&&(nk==mk)&&(nh<=mh))) continue;
-        mh=nh;mk=nk;ml=nl;
-        p=u*sy[9][k]+v*sy[10][k]+w*sy[11][k];
-        lr[i].d3=fmod(4*M_PI+t*fmod(q-2*M_PI*p,2*M_PI)-0.01,2*M_PI)+0.01;
+  }
+  fclose(f);
+  for (int i=0;i<nr;i++){
+    double u=lr[i].ih,v=lr[i].ik,w=lr[i].il;
+    int mh=lr[i].ih,mk=lr[i].ik,ml=lr[i].il;
+    double p,q=lr[i].d3;
+    lr[i].d3=fmod(4*M_PI+q,2*M_PI);
+    for (int k=0; k<ns; k++){
+      int nh,nk,nl;
+      double t=1.0;
+      nh=(int) (u*sy[0][k]+ v*sy[3][k] + w*sy[6][k]);
+      nk=(int) (u*sy[1][k]+ v*sy[4][k] + w*sy[7][k]);
+      nl=(int) (u*sy[2][k]+ v*sy[5][k] + w*sy[8][k]);
+      if((nl<0)||((nl==0)&&(nk<0))||((nl==0)&&(nk==0)&&(nh<0)))
+      {nh*=-1;nk*=-1;nl*=-1;t=-1.0;}
+      if ((nl<ml)||((nl==ml)&&(nk<mk))||((nl==ml)&&(nk==mk)&&(nh<=mh))) continue;
+      mh=nh;mk=nk;ml=nl;
+      p=u*sy[9][k]+v*sy[10][k]+w*sy[11][k];
+      lr[i].d3=fmod(4*M_PI+t*fmod(q-2*M_PI*p,2*M_PI)-0.01,2*M_PI)+0.01;
 
-      }
-      lr[i].ih=mh;
-      lr[i].ik=mk;
-      lr[i].il=ml;
     }
-    sorthkl(nr,lr);
-    int n=-1;
-    {int i=0;
-      while(i<nr){
-        double t=0.;
-        double u=0.;
-        double v=0.;
-        double z=0.;
-        double y=0.;
-        double p=0.;
-        int m;
-        int k=i;
-        while ((i<nr)&&(lr[i].ih==lr[k].ih)&&(lr[i].ik==lr[k].ik)&&(lr[i].il==lr[k].il)) {
-          t=t+1.;
-          u+=lr[i].d1;
-          v+=1./(lr[i].d2*lr[i].d2);
-          y=lr[i].d5;
-          z+=lr[i].d4;
-          p=lr[i].d3;
-          i++;
-        }
-        m=n+1;
-        lr[m].d1=fmax(0.,u/t);
-        lr[m].d2=sqrt(1./v);
-        lr[m].d5=y;
-        lr[m].d4=z/t;
-        lr[m].d3=p;
-        n=m;
-        lr[n].ih=lr[k].ih;
-        lr[n].ik=lr[k].ik;
-        lr[n].il=lr[k].il;
+    lr[i].ih=mh;
+    lr[i].ik=mk;
+    lr[i].il=ml;
+  }
+  sorthkl(nr,lr);
+  int n=-1;
+  {int i=0;
+    while(i<nr){
+      double t=0.;
+      double u=0.;
+      double v=0.;
+      double z=0.;
+      double y=0.;
+      double p=0.;
+      int m;
+      int k=i;
+      while ((i<nr)&&(lr[i].ih==lr[k].ih)&&(lr[i].ik==lr[k].ik)&&(lr[i].il==lr[k].il)) {
+	t=t+1.;
+	u+=lr[i].d1;
+	v+=1./(lr[i].d2*lr[i].d2);
+	y=lr[i].d5;
+	z+=lr[i].d4;
+	p=lr[i].d3;
+	i++;
       }
+      m=n+1;
+      lr[m].d1=fmax(0.,u/t);
+      lr[m].d2=sqrt(1./v);
+      lr[m].d5=y;
+      lr[m].d4=z/t;
+      lr[m].d3=p;
+      n=m;
+      lr[n].ih=lr[k].ih;
+      lr[n].ik=lr[k].ik;
+      lr[n].il=lr[k].il;
     }
-    n++;
-    nr=n;
-    {
+  }
+  n++;
+  nr=n;
+  {
     float DX;
     float DY;
     float DZ;	
@@ -157,16 +181,16 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu){
     {
       int mh=0, mk=0, ml=0,j;
       for (int n=0; n<nr; n++){
-        double u=lr[n].ih,v=lr[n].ik,w=lr[n].il;
-        double a,b,c;
-        for (int k=0; k<ns;k++){
-          a=abs((int)(u*sy[0][k]+v*sy[3][k]+w*sy[6][k]));
-          b=abs((int)(u*sy[1][k]+v*sy[4][k]+w*sy[7][k]));
-          c=abs((int)(u*sy[2][k]+v*sy[5][k]+w*sy[8][k]));
-          mh=(mh<a)?a:mh;
-          mk=(mk<b)?b:mk;
-          ml=(ml<c)?c:ml;
-        }
+	double u=lr[n].ih,v=lr[n].ik,w=lr[n].il;
+	double a,b,c;
+	for (int k=0; k<ns;k++){
+	  a=abs((int)(u*sy[0][k]+v*sy[3][k]+w*sy[6][k]));
+	  b=abs((int)(u*sy[1][k]+v*sy[4][k]+w*sy[7][k]));
+	  c=abs((int)(u*sy[2][k]+v*sy[5][k]+w*sy[8][k]));
+	  mh=(mh<a)?a:mh;
+	  mk=(mk<b)?b:mk;
+	  ml=(ml<c)?c:ml;
+	}
       }
       j=(int)(rr*mh+.5);
       for (int i=0; it[i]< j; i++)n1=it[i+1];
@@ -176,9 +200,6 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu){
       for (int i=0; (it[i]< j)||((nc)&&(it[i]%2)); i++) n3=it[i+1];
       n4=n2*n1;
       n5=n3*n4;
-      if (datfo!=NULL) free(datfo);
-      if (datfo_fc!=NULL) free(datfo_fc);
-      if (datf1_f2!=NULL) free(datf1_f2);
       datfo=(float*) malloc(sizeof(float)*n5);
       datfo_fc=(float*) malloc(sizeof(float)*n5);
       datf1_f2=(float*) malloc(sizeof(float)*n5);
@@ -257,62 +278,61 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu){
       fftwf_free(B);
       fprintf(stderr,"Finished! sigma %g %g %g\n",t,DS,DM);
     }//1
-    }//2
-    extern QList<INP> xdinp;      
-    urs=V3(0,0,0);int gt=0;
-    for (int i=0; i<xdinp.size();i++) {
-      urs+=xdinp.at(i).frac;
-      gt++;
-    }
-    urs*=1.0/gt;
-    urs=V3(1,1,1)-1.0*urs;
-    mole->frac2kart(urs,urs);
-//    printf("ursprung %g %g %g \n",urs.x,urs.y,urs.z);
-
-    nodex= (FNode*)malloc(sizeof(FNode)*n5);
-    nodey= (FNode*)malloc(sizeof(FNode)*n5);
-    nodez= (FNode*)malloc(sizeof(FNode)*n5);
-    for (int o=0; o<n5;o++){
-      nodex[o].flag=0;
-      nodey[o].flag=0;
-      nodez[o].flag=0;
-    }
-    dx=V3(1.0/(n1),0,0);
-    dy=V3(0,1.0/(n2),0);
-    dz=V3(0,0,1.0/(n3));
-    mole->frac2kart(dx,dx); 
-    mole->frac2kart(dy,dy); 
-    mole->frac2kart(dz,dz);     
-    delDA[ 0]=  -n1*dx -n2*dy -n3*dz;//nx ny,nz??
-    delDA[ 1]=         -n2*dy -n3*dz;
-    delDA[ 2]=   n1*dx -n2*dy -n3*dz;
-    delDA[ 3]=  -n1*dx        -n3*dz;
-    delDA[ 4]=                -n3*dz;
-    delDA[ 5]=   n1*dx        -n3*dz;
-    delDA[ 6]=  -n1*dx +n2*dy -n3*dz;
-    delDA[ 7]=          n2*dy -n3*dz;
-    delDA[ 8]=   n1*dx +n2*dy -n3*dz;
-    delDA[ 9]=  -n1*dx -n2*dy       ;
-    delDA[10]=         -n2*dy       ;
-    delDA[11]=   n1*dx -n2*dy       ;
-    delDA[12]=  -n1*dx              ;
-    delDA[13]=  V3(0,0,0)           ;
-    delDA[14]=   n1*dx              ;
-    delDA[15]=  -n1*dx +n2*dy       ;
-    delDA[16]=          n2*dy       ;
-    delDA[17]=   n1*dx +n2*dy       ;
-    delDA[18]=  -n1*dx -n2*dy +n3*dz;
-    delDA[19]=         -n2*dy +n3*dz;
-    delDA[20]=   n1*dx -n2*dy +n3*dz;
-    delDA[21]=  -n1*dx        +n3*dz;
-    delDA[22]=                +n3*dz;
-    delDA[23]=   n1*dx        +n3*dz;
-    delDA[24]=  -n1*dx +n2*dy +n3*dz;
-    delDA[25]=          n2*dy +n3*dz;
-    delDA[26]=   n1*dx +n2*dy +n3*dz;
-    gen_surface(neu);
-    return true;
+  }//2
+  extern QList<INP> xdinp;      
+  urs=V3(0,0,0);int gt=0;
+  for (int i=0; i<xdinp.size();i++) {
+    urs+=xdinp.at(i).frac;
+    gt++;
   }
+  urs*=1.0/gt;
+  urs=V3(1,1,1)-1.0*urs;
+  mole->frac2kart(urs,urs);
+  //    printf("ursprung %g %g %g \n",urs.x,urs.y,urs.z);
+  nodex= (FNode*)malloc(sizeof(FNode)*n5);
+  nodey= (FNode*)malloc(sizeof(FNode)*n5);
+  nodez= (FNode*)malloc(sizeof(FNode)*n5);
+  for (int o=0; o<n5;o++){
+    nodex[o].flag=0;
+    nodey[o].flag=0;
+    nodez[o].flag=0;
+  }
+  dx=V3(1.0/(n1),0,0);
+  dy=V3(0,1.0/(n2),0);
+  dz=V3(0,0,1.0/(n3));
+  mole->frac2kart(dx,dx); 
+  mole->frac2kart(dy,dy); 
+  mole->frac2kart(dz,dz);     
+  delDA[ 0]=  -n1*dx -n2*dy -n3*dz;//nx ny,nz??
+  delDA[ 1]=         -n2*dy -n3*dz;
+  delDA[ 2]=   n1*dx -n2*dy -n3*dz;
+  delDA[ 3]=  -n1*dx        -n3*dz;
+  delDA[ 4]=                -n3*dz;
+  delDA[ 5]=   n1*dx        -n3*dz;
+  delDA[ 6]=  -n1*dx +n2*dy -n3*dz;
+  delDA[ 7]=          n2*dy -n3*dz;
+  delDA[ 8]=   n1*dx +n2*dy -n3*dz;
+  delDA[ 9]=  -n1*dx -n2*dy       ;
+  delDA[10]=         -n2*dy       ;
+  delDA[11]=   n1*dx -n2*dy       ;
+  delDA[12]=  -n1*dx              ;
+  delDA[13]=  V3(0,0,0)           ;
+  delDA[14]=   n1*dx              ;
+  delDA[15]=  -n1*dx +n2*dy       ;
+  delDA[16]=          n2*dy       ;
+  delDA[17]=   n1*dx +n2*dy       ;
+  delDA[18]=  -n1*dx -n2*dy +n3*dz;
+  delDA[19]=         -n2*dy +n3*dz;
+  delDA[20]=   n1*dx -n2*dy +n3*dz;
+  delDA[21]=  -n1*dx        +n3*dz;
+  delDA[22]=                +n3*dz;
+  delDA[23]=   n1*dx        +n3*dz;
+  delDA[24]=  -n1*dx +n2*dy +n3*dz;
+  delDA[25]=          n2*dy +n3*dz;
+  delDA[26]=   n1*dx +n2*dy +n3*dz;
+  gen_surface(neu);
+  return true;
+}
 
 void FourMCQ::deleteLists(){
  for (int fac=0; fac<5; fac++){
@@ -534,7 +554,7 @@ void FourMCQ::sorthkl(int nr, rec64 r[]){
      r[j].d7=hilf[i].d7;
    }/*/6*/
   }/*/spalten*/
-
+free(hilf);
 }
 
 void FourMCQ::bewegt(V3 nm){
@@ -696,6 +716,9 @@ void FourMCQ::gen_surface(bool neu,int imin,int imax){
   connect(chgl,SIGNAL(inimibas()),this,SLOT(inimap()));
   connect(chgl,SIGNAL(neuemitte(V3)),this, SLOT(bewegt(V3)));
   connect(chgl,SIGNAL(diffscroll(int ,int )),this,SLOT(change_iso(int ,int )));
+  chgl->fofcact->setVisible(((chgl->foubas[0])&&(glIsList(chgl->foubas[0]))));
+  chgl->foact->setVisible(((chgl->foubas[2])&&(glIsList(chgl->foubas[2]))));
+  chgl->f1f2act->setVisible(((chgl->foubas[3])&&(glIsList(chgl->foubas[3]))));
 }
 
 void FourMCQ::change_iso(int numsteps,int diff){

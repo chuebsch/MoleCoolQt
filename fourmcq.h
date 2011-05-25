@@ -51,7 +51,7 @@ class FourMCQ:public QObject{
 Q_OBJECT
   public:
           float *datfo,*datfo_fc,*datf1_f2;
-          FourMCQ(molekul *mole_, CubeGL *chgl_, double resol=2.0, double wght=1.0);
+          FourMCQ(molekul *mole_, CubeGL *chgl_,QToolBar *toolView, double resol=2.0, double wght=1.0);
 	  ~FourMCQ();
           bool loadFouAndPerform(const char filename[],bool neu=true);
           float sigma[3];

@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=258;
+int rev=260;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -960,7 +960,7 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
   toolView->addAction(showface);
   toolView->addAction(showLeg);
 
-  fmcq = new FourMCQ(&mol,cubeGL);
+  fmcq = new FourMCQ(&mol,cubeGL,toolView);
   /////////////
   {
   QDialogButtonBox *buttonBoxMC = new QDialogButtonBox( QDialogButtonBox::Apply | QDialogButtonBox::Cancel);
@@ -1043,15 +1043,6 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
   md->hide();
   }
   /////////////
-  cubeGL->foact=toolView->addAction(QIcon(":/images/fomap.png"),"toggle Fo map",cubeGL,SLOT(updateGL()));
-  cubeGL->foact->setCheckable(true);
-  cubeGL->foact->setChecked(false);
-  cubeGL->fofcact=toolView->addAction(QIcon(":/images/diffmap.png"),"toggle Fo-Fc map",cubeGL,SLOT(updateGL()));
-  cubeGL->fofcact->setCheckable(true);
-  cubeGL->fofcact->setChecked(true);
-  cubeGL->f1f2act=toolView->addAction(QIcon(":/images/f12map.png"),"toggle F1-F2 map",cubeGL,SLOT(updateGL()));
-  cubeGL->f1f2act->setCheckable(true);
-  cubeGL->f1f2act->setChecked(false);
   toolView->setWhatsThis("This is the view tool bar. You can move it to any window border if you want."
                          " By clicking right on the menu or tool bar region, you can toggel the toolbars.");
   settings = new QSettings( QSettings::IniFormat, QSettings::UserScope ,"Christian_B._Huebschle","MoleCoolQt" );
@@ -1326,8 +1317,7 @@ void MyWindow::genMoliso() {
     adpName=msgdlg->adp_struct_name;
     mol.initDir();
   }
-  else
-  {
+  else {
     delete(cubeGL->moliso);
     cubeGL->moliso=NULL;
     return;
@@ -4954,14 +4944,14 @@ void MyWindow::growSymm(int packart,int packatom){
   //Vs.x=xs;
   //Vs.y=ys;
   //Vs.z=zs;
-  mol.frac2kart(uz0f,mol.uz0k);mol.uz0k=mol.uz0k-Vs;//
-  mol.frac2kart(uz1f,mol.uz1k);mol.uz1k=mol.uz1k-Vs;//
-  mol.frac2kart(uz2f,mol.uz2k);mol.uz2k=mol.uz2k-Vs;//
-  mol.frac2kart(uz3f,mol.uz3k);mol.uz3k=mol.uz3k-Vs;//
-  mol.frac2kart(uz4f,mol.uz4k);mol.uz4k=mol.uz4k-Vs;//
-  mol.frac2kart(uz5f,mol.uz5k);mol.uz5k=mol.uz5k-Vs;//
-  mol.frac2kart(uz6f,mol.uz6k);mol.uz6k=mol.uz6k-Vs;//
-  mol.frac2kart(uz7f,mol.uz7k);mol.uz7k=mol.uz7k-Vs;//
+  mol.frac2kart(uz0f,mol.uz0k);//mol.uz0k=mol.uz0k-Vs;
+  mol.frac2kart(uz1f,mol.uz1k);//mol.uz1k=mol.uz1k-Vs;
+  mol.frac2kart(uz2f,mol.uz2k);//mol.uz2k=mol.uz2k-Vs;
+  mol.frac2kart(uz3f,mol.uz3k);//mol.uz3k=mol.uz3k-Vs;
+  mol.frac2kart(uz4f,mol.uz4k);//mol.uz4k=mol.uz4k-Vs;
+  mol.frac2kart(uz5f,mol.uz5k);//mol.uz5k=mol.uz5k-Vs;
+  mol.frac2kart(uz6f,mol.uz6k);//mol.uz6k=mol.uz6k-Vs;
+  mol.frac2kart(uz7f,mol.uz7k);//mol.uz7k=mol.uz7k-Vs;
 
   if ((Norm(atom1Pos)>0)&&(Norm(atom2Pos)>0)){
     Matrix OM;
