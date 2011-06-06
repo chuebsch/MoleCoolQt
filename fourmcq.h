@@ -54,6 +54,7 @@ Q_OBJECT
           FourMCQ(molekul *mole_, CubeGL *chgl_,QToolBar *toolView, double resol=2.0, double wght=1.0);
 	  ~FourMCQ();
           bool loadFouAndPerform(const char filename[],bool neu=true);
+          double lintrans,linwidth;
           float sigma[3];
           float iso[3];
           V3 urs;
@@ -77,7 +78,7 @@ Q_OBJECT
 	  V3  delDA[27];
 	  fftwf_plan  fwd_plan;
           fftwf_complex *B;
-	  FNode *nodex,*nodey,*nodez;
+          FNode *nodex,*nodey,*nodez;
 	  rec64 lr[LM];
 	  reco wr[LM];
 	  char cen,git;

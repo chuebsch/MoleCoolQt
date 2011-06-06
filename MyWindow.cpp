@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=260;
+int rev=261;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -837,6 +837,7 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
   
   QAction *a;
   QToolBar *tb= new QToolBar("Atom Selection Tools",this);
+  tb->setIconSize(QSize(23,23));
   a=hFilter=tb->addAction("Hide hydrogen atoms",this, SLOT(filterHydrogens(bool) ));
   hFilter->setCheckable ( true );
   hFilter->setChecked (  true );
@@ -882,6 +883,7 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
   addToolBar(Qt::BottomToolBarArea,tb);
       
   toolFile = addToolBar(tr("File"));
+  toolFile->setIconSize(QSize(23,23));
   toolFile->setAllowedAreas(Qt::AllToolBarAreas );
   toolFile->addAction(act2);
   toolFile->addAction(createmoliso);
@@ -897,6 +899,7 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
 			 " By clicking right on the menu or tool bar region, you can toggel the tool bars.");
 
   toolSettings = addToolBar(tr("Settings"));
+  toolSettings->setIconSize(QSize(23,23));
   toolSettings->setMovable(true);
   toolSettings->addAction(editAtomAct);
   toolSettings->addAction(filterAct);
@@ -912,6 +915,7 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
   toolSettings->addAction(packAct);
 
   toolMove = addToolBar(tr("Move"));
+  toolMove->setIconSize(QSize(23,23));
   toolMove->setMovable(true);
   toolMove->addAction(zoomInAct);
   toolMove->addAction(zoomOutAct);
@@ -948,6 +952,7 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
  "</table>" );
   toolMove->hide();
   toolView=addToolBar(tr("View"));
+  toolView->setIconSize(QSize(23,23));
   toolView->setMovable(true);
   toolView->addAction(togAtom);
   toolView->addAction(togElli);
@@ -972,6 +977,8 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
   QLabel *ol= new QLabel("F-observed map: ");
   QLabel *rl= new QLabel("Map radius: ");
   QLabel *sl= new QLabel("Map truncation type: ");
+  QLabel *lw= new QLabel("Line width: ");
+  QLabel *lt= new QLabel("Line transparency: ");
   md = new QDialog(this);
   md->setWindowTitle("Map Control");
   connect(applyMC , SIGNAL(clicked()), this , SLOT(controlMap()));
@@ -983,6 +990,18 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
   mapprec->setMaximum(8.0);
   mapprec->setValue(fmcq->rr);
   mapprec->setSingleStep(0.1);
+
+  lineTrans = new QDoubleSpinBox();
+  lineTrans->setMinimum(0.1);
+  lineTrans->setMaximum(1.0);
+  lineTrans->setValue(fmcq->lintrans);
+  lineTrans->setSingleStep(0.1);
+
+  lineWidth = new QDoubleSpinBox();
+  lineWidth->setMinimum(0.5);
+  lineWidth->setMaximum(4.0);
+  lineWidth->setValue(fmcq->linwidth);
+  lineWidth->setSingleStep(0.1);
 
   weak = new QDoubleSpinBox();
   weak->setMinimum(0.1);
@@ -1030,6 +1049,8 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
   mdl->addWidget(f12maps,4,1);
   mdl->addWidget(maprad,5,1);
   mdl->addWidget(mapSchnitt,6,1);
+  mdl->addWidget(lineTrans,7,1);
+  mdl->addWidget(lineWidth,8,1);
   mdl->addWidget(pl,0,0);
   mdl->addWidget(wl,1,0);
   mdl->addWidget(dl,2,0);
@@ -1037,6 +1058,8 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
   mdl->addWidget(d12,4,0);
   mdl->addWidget(rl,5,0);
   mdl->addWidget(sl,6,0);
+  mdl->addWidget(lt,7,0);
+  mdl->addWidget(lw,8,0);
   mdl->addWidget(buttonBoxMC,10,0,3,3);
   md->setLayout(mdl);
   md->setModal (false);
@@ -1263,7 +1286,8 @@ void MyWindow::openMapControl(){
   difmaps->setSingleStep(fabs(fmcq->iso[1])/10.0);
   f12maps->setValue(fabs(fmcq->iso[2]));
   f12maps->setSingleStep(fabs(fmcq->iso[2])/10.0);
-
+  lineTrans->setValue(fmcq->lintrans);
+  lineWidth->setValue(fmcq->linwidth);
   fomaps->setValue(fmcq->iso[0]);
   fomaps->setSingleStep(fmcq->iso[0]/10.0);
   maprad->setValue(fmcq->map_radius);
@@ -1287,6 +1311,9 @@ void MyWindow::controlMap(){
 
     }
   }    
+
+  fmcq->lintrans = lineTrans->value();
+  fmcq->linwidth = lineWidth->value();
   fmcq->map_radius = maprad->value();
   fmcq->iso[0] = fomaps->value();
   fmcq->iso[1] = -difmaps->value();
@@ -1301,6 +1328,7 @@ void MyWindow::genMoliso() {
   smx=0;
   xdinp.clear();
   asymmUnit.clear();
+  cubeGL->pause=true;
   if (cubeGL->moliso){
     delete cubeGL->moliso;
     cubeGL->moliso=NULL;
@@ -1319,7 +1347,8 @@ void MyWindow::genMoliso() {
   }
   else {
     delete(cubeGL->moliso);
-    cubeGL->moliso=NULL;
+    cubeGL->moliso=NULL;    
+    cubeGL->pause=false;
     return;
   }
   GradDlg *grdlg = new GradDlg(cubeGL->moliso );
@@ -1331,7 +1360,8 @@ void MyWindow::genMoliso() {
       dock->show();
       dock2->show();
       delete(cubeGL->moliso);
-    cubeGL->moliso=NULL;
+      cubeGL->moliso=NULL;
+      cubeGL->pause=false;
       return;
     }
   delete grdlg;
@@ -1424,6 +1454,7 @@ void MyWindow::genMoliso() {
   cubeGL->moliso->readXDGridHeader(isof);
   mol.adp=0;
   cubeGL->L = 100.0/dimension(asymmUnit);
+  cubeGL->moliso->L=cubeGL->L;
   if (smx>7){
   atom1Pos=asymmUnit[0].kart;
   atom2Pos=asymmUnit[1].kart;
@@ -1460,6 +1491,8 @@ void MyWindow::genMoliso() {
   updateStatusBar();
     setCursor(Qt::BusyCursor);
     loadFile(adpName);
+    cubeGL->moliso->L=cubeGL->L;
+
   }
   if ((lfaceFile.isEmpty())||(lfaceFile.contains('!'))) {
     if (sfaceFile.contains('!'))sfaceFile.clear();
@@ -1493,7 +1526,8 @@ void MyWindow::genMoliso() {
   QMainWindow::tabifyDockWidget (dock2,dock3);
   QMainWindow::tabifyDockWidget (dock2,dock);
   createmoliso->setVisible(false);
-  noMoliso->setVisible(true);
+  noMoliso->setVisible(true);  
+  cubeGL->pause=false;
 }
 
 void MyWindow::syncMconf(){
@@ -2001,7 +2035,7 @@ void Uf2Uo(const Matrix x, Matrix & y) {
 void Usym (Matrix x,Matrix sym, Matrix & y){
   y=(sym*x)*transponse(sym);
 }
-double xs=0,ys=0,zs=0;//GLOBAL def
+//double xs=0,ys=0,zs=0;//GLOBAL def
 double MyWindow::dimension(QList<INP> xnp ){
   double max=0,gg=0;
   int nimanda=0;
@@ -2118,17 +2152,17 @@ void MyWindow::load_fchk(QString fileName){
       asymmUnit[i].kart.y*=0.529177;
       asymmUnit[i].kart.z*=0.529177;
       asymmUnit[i].frac=asymmUnit[i].kart;
-      xs+=asymmUnit[i].kart.x;
-      ys+=asymmUnit[i].kart.y;
-      zs+=asymmUnit[i].kart.z;
+      //xs+=asymmUnit[i].kart.x;
+      //ys+=asymmUnit[i].kart.y;
+      //zs+=asymmUnit[i].kart.z;
     }
   }
-  xs/=(smx);ys/=(smx);zs/=(smx);
+  /*xs/=(smx);ys/=(smx);zs/=(smx);
   for (int i=0; i<smx; i++){
     asymmUnit[i].kart.x-=xs;
     asymmUnit[i].kart.y-=ys;
     asymmUnit[i].kart.z-=zs;  
-  }
+  }*/
   packAct->setVisible(false);
   mol.zelle.a=1.0;
   mol.zelle.b=1.0;
@@ -3229,6 +3263,7 @@ void MyWindow::load_pdb(QString fileName){
     }
   } 
   smx=atmax;
+  /*
   for (int i=0; i<smx; i++){
     if (asymmUnit[i].OrdZahl!=-1){
       xs+=asymmUnit[i].kart.x;
@@ -3242,7 +3277,7 @@ void MyWindow::load_pdb(QString fileName){
     asymmUnit[i].kart.y-=ys;
     asymmUnit[i].kart.z-=zs;    
   }
-
+*/
   for (int i=0;i<asymmUnit.size();i++) {
     asymmUnit[i].u.m22=asymmUnit[i].u.m33=asymmUnit[i].u.m11=asymmUnit[i].u.m11/(8*M_PI*M_PI);
     asymmUnit[i].u.m12=asymmUnit[i].u.m13=asymmUnit[i].u.m23=asymmUnit[i].u.m21=asymmUnit[i].u.m31=asymmUnit[i].u.m32=0.00001;}
@@ -3421,7 +3456,7 @@ void MyWindow::load_gaus(QString fileName){
   }else{ 
     smx=atmax+dummax;mol.nListe=0;
   }
-
+/*
   for (int i=0;i<smx;i++)
     if (asymmUnit[i].OrdZahl>-1){
       xs+=asymmUnit[i].kart.x;
@@ -3436,7 +3471,7 @@ void MyWindow::load_gaus(QString fileName){
     asymmUnit[i].kart.y-=ys;
     asymmUnit[i].kart.z-=zs;
   }
-
+*/
   fclose(adp);
 
   packAct->setVisible(false);
@@ -4888,8 +4923,8 @@ void MyWindow::growSymm(int packart,int packatom){
   for (int i=0; i<smx; i++){
     mol.frac2kart(xdinp[i].frac,xdinp[i].kart);
   }
-  int atoms=0;
-  xs=0;ys=0,zs=0;
+  //int atoms=0;
+  /*xs=0;ys=0,zs=0;
   for (int i=0; i<smx; i++){
     if (xdinp[i].OrdZahl>-1){
       atoms++;
@@ -4897,15 +4932,15 @@ void MyWindow::growSymm(int packart,int packatom){
       ys+=xdinp[i].kart.y;
       zs+=xdinp[i].kart.z;
     }
-  }
+  }*/
   for (int i=0;i<smx;i++){
     if (xdinp[i].OrdZahl<0){
       xdinp[i].u.m11=xdinp[i].u.m22=xdinp[i].u.m33=xdinp[i].u.m12=xdinp[i].u.m13=xdinp[i].u.m23=xdinp[i].u.m21=xdinp[i].u.m31=xdinp[i].u.m32=0.0;
     }
   }
 
-  xs/=(atoms);ys/=(atoms);zs/=(atoms);
-/*
+/*  xs/=(atoms);ys/=(atoms);zs/=(atoms);
+
   for (int i=0; i<smx; i++){
     xdinp[i].kart.x-=xs;
     xdinp[i].kart.y-=ys;
@@ -4940,18 +4975,15 @@ void MyWindow::growSymm(int packart,int packatom){
   uz5f.x=1.0;  uz5f.y=0.0;  uz5f.z=1.0;
   uz6f.x=0.0;  uz6f.y=1.0;  uz6f.z=1.0;
   uz7f.x=1.0;  uz7f.y=1.0;  uz7f.z=1.0;
-  V3 Vs=V3(0,0,0);
-  //Vs.x=xs;
-  //Vs.y=ys;
-  //Vs.z=zs;
-  mol.frac2kart(uz0f,mol.uz0k);//mol.uz0k=mol.uz0k-Vs;
-  mol.frac2kart(uz1f,mol.uz1k);//mol.uz1k=mol.uz1k-Vs;
-  mol.frac2kart(uz2f,mol.uz2k);//mol.uz2k=mol.uz2k-Vs;
-  mol.frac2kart(uz3f,mol.uz3k);//mol.uz3k=mol.uz3k-Vs;
-  mol.frac2kart(uz4f,mol.uz4k);//mol.uz4k=mol.uz4k-Vs;
-  mol.frac2kart(uz5f,mol.uz5k);//mol.uz5k=mol.uz5k-Vs;
-  mol.frac2kart(uz6f,mol.uz6k);//mol.uz6k=mol.uz6k-Vs;
-  mol.frac2kart(uz7f,mol.uz7k);//mol.uz7k=mol.uz7k-Vs;
+  if (cubeGL->moliso!=NULL) cubeGL->moliso->orig=Vector3(0,0,0);
+  mol.frac2kart(uz0f,mol.uz0k);
+  mol.frac2kart(uz1f,mol.uz1k);
+  mol.frac2kart(uz2f,mol.uz2k);
+  mol.frac2kart(uz3f,mol.uz3k);
+  mol.frac2kart(uz4f,mol.uz4k);
+  mol.frac2kart(uz5f,mol.uz5k);
+  mol.frac2kart(uz6f,mol.uz6k);
+  mol.frac2kart(uz7f,mol.uz7k);
 
   if ((Norm(atom1Pos)>0)&&(Norm(atom2Pos)>0)){
     Matrix OM;
@@ -4979,9 +5011,13 @@ void MyWindow::growSymm(int packart,int packatom){
     kl1min=(kl1<kl1min)?kl1:kl1min;
 
     if (kl1>0.002){
-      Vs=atom1Pos-xdinp[0].kart;
+        V3 rrr=xdinp[0].kart-atom1Pos;
+      if (cubeGL->moliso!=NULL) cubeGL->moliso->orig=Vector3(rrr.x,rrr.y,rrr.z);
       for (int ii=0; ii<xdinp.size(); ii++)
-	printf("%-8s %12.5f  %12.5f  %12.5f\n",xdinp.at(ii).atomname,xdinp.at(ii).kart.x+Vs.x,xdinp.at(ii).kart.y+Vs.y,xdinp.at(ii).kart.z+Vs.z);
+        printf("%-8s %12.5f  %12.5f  %12.5f\n",xdinp.at(ii).atomname,
+               xdinp.at(ii).kart.x+cubeGL->moliso->orig.x,
+               xdinp.at(ii).kart.y+cubeGL->moliso->orig.y,
+               xdinp.at(ii).kart.z+cubeGL->moliso->orig.z);
       printf("Atom1 %12.5f %12.5f %12.5f\n",atom1Pos.x,atom1Pos.y,atom1Pos.z);
       printf("Atom2 %12.5f %12.5f %12.5f\n",atom2Pos.x,atom2Pos.y,atom2Pos.z);
       printf("Atom3 %12.5f %12.5f %12.5f\n",atom3Pos.x,atom3Pos.y,atom3Pos.z);
@@ -5025,9 +5061,10 @@ void MyWindow::growSymm(int packart,int packatom){
       xdinp[i].ax3=r1;
     }
 
-    Vs=atom1Pos-xdinp[idx1].kart;
+    V3 rrr=xdinp[idx1].kart-atom1Pos;
+    if (cubeGL->moliso!=NULL) cubeGL->moliso->orig=Vector3(rrr.x,rrr.y,rrr.z);
+
     for(int i=0; i<smx;i++){
-      xdinp[i].kart+=Vs;
       Usym(xdinp[i].u,OM,xdinp[i].u);
     }
 
@@ -5055,14 +5092,14 @@ void MyWindow::growSymm(int packart,int packatom){
     r1=OM*mol.uz7k;
     mol.uz7k=r1;
 
-    mol.uz0k=mol.uz0k+Vs;
-    mol.uz1k=mol.uz1k+Vs;
-    mol.uz2k=mol.uz2k+Vs;
-    mol.uz3k=mol.uz3k+Vs;
-    mol.uz4k=mol.uz4k+Vs;
-    mol.uz5k=mol.uz5k+Vs;
-    mol.uz6k=mol.uz6k+Vs;
-    mol.uz7k=mol.uz7k+Vs;
+    //mol.uz0k=mol.uz0k+cubeGL->moliso->orig;
+    //mol.uz1k=mol.uz1k+cubeGL->moliso->orig;
+    //mol.uz2k=mol.uz2k+cubeGL->moliso->orig;
+    //mol.uz3k=mol.uz3k+cubeGL->moliso->orig;
+    //mol.uz4k=mol.uz4k+cubeGL->moliso->orig;
+    //mol.uz5k=mol.uz5k+cubeGL->moliso->orig;
+    //mol.uz6k=mol.uz6k+cubeGL->moliso->orig;
+    //mol.uz7k=mol.uz7k+cubeGL->moliso->orig;
   }
 
   double dim=dimension(xdinp);

@@ -147,7 +147,7 @@ protected:
     QSlider *legendSize,*strikesSldr,*swidthSldr;
     QCheckBox *zebraBox,*mt;
     QComboBox *mapSchnitt;
-    QDoubleSpinBox *maprad,*fomaps,*difmaps,*f12maps,*weak,*mapprec;
+    QDoubleSpinBox *maprad,*fomaps,*difmaps,*f12maps,*weak,*mapprec,*lineTrans,*lineWidth;
     QDialog *md;
     QRadioButton *cullNone,*cullBack,*cullFront;
     QSpinBox *fos;

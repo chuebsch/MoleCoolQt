@@ -135,9 +135,9 @@ void MolIso::loadMI(QString fname){
       if (tok.size()==8){
 
 	balken->setValue(i);
-	v.vertex.x = x_dim*(tok.at(1).toFloat()-0.5);
-	v.vertex.y = x_dim*(tok.at(2).toFloat()-0.5);
-	v.vertex.z = x_dim*(tok.at(3).toFloat()-0.5);
+        v.vertex.x = tok.at(1).toFloat();
+        v.vertex.y = tok.at(2).toFloat();
+        v.vertex.z = tok.at(3).toFloat();
 //
 
 	v.normal.x = tok.at(4).toFloat();
@@ -172,7 +172,7 @@ void MolIso::loadMI(QString fname){
   balken->setValue(lines[0].toInt());
   glNewList(mibas, GL_COMPILE );{                       //Isooberfl"ache ::Perspektive 1     
     glPushMatrix();{
-      glScaled( L, L*y_dim/x_dim, L*z_dim/x_dim );           
+      glScaled( L, L, L );
       PXsort();
       DrawPlys();
     }glPopMatrix();
@@ -182,7 +182,7 @@ void MolIso::loadMI(QString fname){
   balken->setValue(2*lines[0].toInt());
   glNewList(mibas+1, GL_COMPILE  );{                       //Isooberfl"ache ::Perspektive 1     
     glPushMatrix();{
-      glScaled( L, L*y_dim/x_dim, L*z_dim/x_dim );           
+      glScaled( L, L, L );
       Pxsort();
       DrawPlys();
     }glPopMatrix();
@@ -191,7 +191,7 @@ void MolIso::loadMI(QString fname){
   balken->setValue(3*lines[0].toInt());
   glNewList(mibas+2, GL_COMPILE  );{                       //Isooberfl"ache ::Perspektive 1     
     glPushMatrix();{
-      glScaled( L, L*y_dim/x_dim, L*z_dim/x_dim );           
+      glScaled( L, L, L );
       PYsort();
       DrawPlys();
     }glPopMatrix();
@@ -200,7 +200,7 @@ void MolIso::loadMI(QString fname){
   balken->setValue(4*lines[0].toInt());
   glNewList(mibas+3, GL_COMPILE  );{                       //Isooberfl"ache ::Perspektive 1     
     glPushMatrix();{
-      glScaled( L, L*y_dim/x_dim, L*z_dim/x_dim );           
+      glScaled( L, L, L );
       Pysort();
       DrawPlys();
     }glPopMatrix();
@@ -209,7 +209,7 @@ void MolIso::loadMI(QString fname){
     balken->setValue(5*lines[0].toInt());
   glNewList(mibas+4, GL_COMPILE  );{                       //Isooberfl"ache ::Perspektive 1     
     glPushMatrix();{
-      glScaled( L, L*y_dim/x_dim, L*z_dim/x_dim );           
+      glScaled( L, L, L );
       PZsort();
       DrawPlys();
     }glPopMatrix();
@@ -218,7 +218,7 @@ void MolIso::loadMI(QString fname){
   balken->setValue(6*lines[0].toInt());  
   glNewList(mibas+5, GL_COMPILE  );{                       //Isooberfl"ache ::Perspektive 1     
     glPushMatrix();{
-      glScaled( L, L*y_dim/x_dim, L*z_dim/x_dim );           
+      glScaled( L, L, L );
       Pzsort();
       DrawPlys();
     }glPopMatrix();
@@ -312,9 +312,9 @@ void MolIso::readXDGridHeader(QString fname){
     tiefe=  tok.at(2).toInt();
     bh = hoehe*breite;
     tok = lines[i+3].split(' ',QString::SkipEmptyParts);
-    x_dim = tok.at(0).toDouble();
-    y_dim = tok.at(1).toDouble();
-    z_dim = tok.at(2).toDouble();
+    x_dim = Vector3(tok.at(0).toFloat()/breite,0,0);
+    y_dim = Vector3(0,tok.at(1).toFloat()/hoehe,0);
+    z_dim = Vector3(0,0,tok.at(2).toFloat()/tiefe);
     while (!lines.at(i).contains("Objects")) i++;
     {
       i++;
@@ -343,9 +343,10 @@ void MolIso::readXDGridHeader(QString fname){
     for (int iz=0; iz <2;iz++)
       for (int iy=0; iy <2;iy++)
 	for (int ix=0; ix <2;ix++) {
-	newAtom.kart.x=ix*x_dim-x_dim/2.0;
-	newAtom.kart.y=iy*y_dim-y_dim/2.0;
-	newAtom.kart.z=iz*z_dim-z_dim/2.0;
+        Vector3 ppp =  ((ix*breite)*x_dim);
+        ppp += ((iy*hoehe)*y_dim);
+        ppp += ((iz*tiefe)*z_dim);
+        newAtom.kart=V3(ppp.x,ppp.y,ppp.z);
 	newAtom.OrdZahl=-1;
 	strcpy(newAtom.atomname,"x");
 	asymmUnit.append(newAtom);
@@ -374,17 +375,18 @@ void MolIso::readXDGridHeader(QString fname){
 	b=tok.at(2).toDouble();
 	c=tok.at(3).toDouble();
 	tok=lines.at(3).split(QRegExp("\\s+"),QString::SkipEmptyParts);	
-	breite= tok.at(0).toInt();
-	xst=tok.at(1).toDouble();
+        breite= tok.at(0).toInt();
+        x_dim = Vector3(tok.at(1).toFloat(),tok.at(2).toFloat(),tok.at(3).toFloat());
 	tok=lines.at(4).split(QRegExp("\\s+"),QString::SkipEmptyParts);	
 	hoehe=  tok.at(0).toInt();
-	yst=tok.at(2).toDouble();
+
+        y_dim = Vector3(tok.at(1).toFloat(),tok.at(2).toFloat(),tok.at(3).toFloat());
 	tok=lines.at(5).split(QRegExp("\\s+"),QString::SkipEmptyParts);	
-	tiefe=  tok.at(0).toInt();
-	zst=tok.at(3).toDouble();
-	x_dim = (breite-1)*xst*bohr;
-	y_dim = (hoehe-1) *yst*bohr;
-	z_dim = (tiefe-1) *zst*bohr;
+        tiefe=  tok.at(0).toInt();
+        z_dim = Vector3(tok.at(1).toFloat(),tok.at(2).toFloat(),tok.at(3).toFloat());
+        x_dim *= bohr;
+        y_dim *= bohr;
+        z_dim *= bohr;
         bh = hoehe*breite;
 	for (int i=0;i<atmax;i++){
 	  tok=lines.at(6+i).split(QRegExp("\\s+"),QString::SkipEmptyParts);
@@ -542,7 +544,9 @@ void MolIso::simpelGrad(void){
 }
 void MolIso::CalcVertex( int ix, int iy, int iz ) {
   GLfloat vo, vx=0, vy=0, vz=0,sig;
-  Vector3 movo(0.5,0.5,0.5);
+  //Vector3 movo(0.5,0.5,0.5);
+  Vector3 test3= (breite/-2.0) *  x_dim + (hoehe/-2.0) * y_dim + (tiefe/-2.0) * z_dim + orig;
+  if (cubeiso) test3 =orig;
   Ort o;
   sig = (iso_level>0)?-1:1;
   vo = data.at(ix+iy*breite+iz*bh)  - iso_level;
@@ -550,8 +554,8 @@ void MolIso::CalcVertex( int ix, int iy, int iz ) {
   if( iy != hoehe-1 ) vy = data.at(ix+(iy+1)*breite+iz*bh) - iso_level;
   if( iz != tiefe-1 ) vz = data.at(ix+iy*breite+(iz+1)*bh) - iso_level;
   if( ix != breite-1 && Intersect(vo,vx) ){
-    o.vertex= Vector3( ((ix+vo/(vo-vx))+0.5)/breite, (iy+0.5)/hoehe, (iz+0.5)/tiefe );
-    if (cubeiso) o.vertex+=movo;
+    o.vertex= x_dim*((vo/(vo-vx))+ix) + y_dim*iy + z_dim*iz;
+    o.vertex+=test3;
     o.normal= Normalize(sig*( grad[ix+iy*breite+iz*bh]*(1.0-vo/(vo-vx)) +grad[(1+ix)+iy*breite+iz*bh]*(1.0-vo/(vo-vx))));
     o.color= mdata[ix+iy*breite+iz*bh]*(1.0-vo/(vo-vx))+vo/(vo-vx)*mdata[(1+ix)+iy*breite+iz*bh];
     orte.append(o);
@@ -561,8 +565,8 @@ void MolIso::CalcVertex( int ix, int iy, int iz ) {
     nodex[ix+iy*breite+iz*bh].flag   = 0;
   }
   if( iy != hoehe-1 && Intersect(vo,vy) ){
-    o.vertex=Vector3( (ix+0.5)/breite, (iy+vo/(vo-vy)+0.5)/hoehe, (iz+0.5)/tiefe );
-    if (cubeiso) o.vertex+=movo;
+    o.vertex = x_dim*ix + y_dim*((vo/(vo-vy))+iy) + z_dim*iz;
+    o.vertex+=test3;
     o.normal=Normalize(sig*( grad[ix+iy*breite+iz*bh]*(1.0-vo/(vo-vy)) +grad[ix+(iy+1)*breite+iz*bh]*(1.0-vo/(vo-vy))));
     o.color=mdata[ix+iy*breite+iz*bh]*(1.0-vo/(vo-vy))+ vo/(vo-vy)*mdata[ix+(iy+1)*breite+iz*bh];
     orte.append(o);
@@ -572,8 +576,8 @@ void MolIso::CalcVertex( int ix, int iy, int iz ) {
     nodey[ix+iy*breite+iz*bh].flag=0;
   }
   if( iz != tiefe-1 && Intersect(vo,vz) ){
-    o.vertex = Vector3( (ix+0.5)/breite, (iy+0.5)/hoehe, (iz+vo/(vo-vz)+0.5)/tiefe );
-    if (cubeiso) o.vertex+=movo;
+    o.vertex = x_dim*ix + y_dim*iy + ((vo/(vo-vz))+iz)*z_dim;
+    o.vertex+=test3;
     o.normal = Normalize(sig*( grad[ix+iy*breite+iz*bh]*(1.0-vo/(vo-vz)) +grad[ix+iy*breite+(iz+1)*bh]*(1.0-vo/(vo-vz))));
     o.color = mdata[ix+iy*breite+iz*bh]*(1.0-vo/(vo-vz))+vo/(vo-vz)*mdata[ix+iy*breite+(iz+1)*bh];
     orte.append(o);
@@ -585,10 +589,10 @@ void MolIso::CalcVertex( int ix, int iy, int iz ) {
 }
 
 void MolIso::CalcVertexes( void ) {
-  for( int ix=0; ix<breite; ix++ ){
-    for( int iy=0; iy<hoehe; iy++ ){
-      for( int iz=0; iz<tiefe; iz++ ){
-	CalcVertex(ix,iy,iz);
+    for( int ix=0; ix<breite; ix++ ){
+        for( int iy=0; iy<hoehe; iy++ ){
+            for( int iz=0; iz<tiefe; iz++ ){
+                CalcVertex(ix,iy,iz);
       }
     }
   }

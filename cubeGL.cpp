@@ -12,7 +12,7 @@ CubeGL::CubeGL(QWidget *parent) : QGLWidget(parent) {
    setFormat(QGLFormat(QGL::DoubleBuffer | QGL::DepthBuffer) );
    atomsClickable=true;
    faceCull=0;
-   monochrom=false;
+   pause = monochrom = false;
    altemitte=V3(0,0,0);
    reSe=false;
    rotze=-1;
@@ -3216,6 +3216,7 @@ void CubeGL::along100(){
 }
 
 void CubeGL::draw() {
+    if (pause) return;
   if (depthCueing) glEnable(GL_FOG);
   else glDisable(GL_FOG);
 
@@ -3383,11 +3384,11 @@ if (!selectedAtoms.isEmpty()){
     glEnable(GL_BLEND);
     if (rmode==GL_RENDER){
       if (drawAx) glCallList(bas+2);
-      if (drawUz) glCallList(bas+3);   
-      if (foubas[0]|foubas[1]|foubas[2]|foubas[3]|foubas[4]) {
-	glDisable(GL_CULL_FACE);
-	glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
-	glDisable(GL_LIGHTING);
+      if (drawUz) glCallList(bas+3);
+      /*if (foubas[0]|foubas[1]|foubas[2]|foubas[3]|foubas[4]) {
+        glDisable(GL_CULL_FACE);
+        glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
+        glDisable(GL_LIGHTING);
         glLineWidth(0.5);
         glEnable(GL_BLEND);
         if (fofcact->isChecked()) {
@@ -3400,10 +3401,10 @@ if (!selectedAtoms.isEmpty()){
             glCallList(foubas[4]);
         }
         glEnable(GL_LIGHTING);
-	glDisable(GL_BLEND);
-	glEnable(GL_CULL_FACE); 
-	glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
-      } 
+        glDisable(GL_BLEND);
+        glEnable(GL_CULL_FACE);
+        glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+      }*/
       if ((MIS)&&(moliso->mibas)) { 
 	glDisable(GL_CULL_FACE);
 	if (molisoTransparence) glEnable(GL_BLEND);
@@ -3501,6 +3502,28 @@ if (!selectedAtoms.isEmpty()){
 	glScaled( L, L, L ); 
 	dieDiPole();
 	glPopMatrix();
+      }
+
+      if (foubas[0]|foubas[1]|foubas[2]|foubas[3]|foubas[4]) {
+        if ((MIS)&&(moliso->mibas)) glClear( GL_DEPTH_BUFFER_BIT);
+        glDisable(GL_CULL_FACE);
+        glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
+        glDisable(GL_LIGHTING);
+        glLineWidth(0.5);
+        glEnable(GL_BLEND);
+        if (fofcact->isChecked()) {
+            glCallList(foubas[0]);
+            glCallList(foubas[1]);
+        }
+        if (foact->isChecked()) glCallList(foubas[2]);
+        if (f1f2act->isChecked()){
+            glCallList(foubas[3]);
+            glCallList(foubas[4]);
+        }
+        glEnable(GL_LIGHTING);
+        glDisable(GL_BLEND);
+        glEnable(GL_CULL_FACE);
+        glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
       }
       if ((drawLa))
       {	

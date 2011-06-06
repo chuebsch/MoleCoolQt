@@ -16,6 +16,7 @@ public:
   CubeGL(QWidget *parent = 0);
   MolIso *moliso;
   double L;
+  bool pause;
   int stereo_mode;
   QAction *changeGDAct;
   QCheckBox *invertMouseZoom,*minus;

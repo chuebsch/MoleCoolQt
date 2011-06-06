@@ -141,12 +141,13 @@ class MolIso{
   QList<double> isoValues;
   QString GHName;
   QString faceFile;
-  double x_dim,y_dim,z_dim;
+  Vector3 x_dim, y_dim, z_dim;
   double fixmax,fixmin;
   int Farben;
   GLclampd farbe[7][4];
   int mibas;
   double min,max;
+  Vector3 orig;
   MolIso();
   ~MolIso();
   void loadMI(QString fname);

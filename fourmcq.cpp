@@ -16,6 +16,8 @@ FourMCQ::FourMCQ(molekul *mole_, CubeGL *chgl_,QToolBar *toolView, double resol,
   urs=V3(0,0,0);
   nr=0;
   nc=0;
+  lintrans=0.6;
+  linwidth=1.0;
   rr=resol;
   rw=wght; 
   chgl->foact=toolView->addAction(QIcon(":/images/fomap.png"),"toggle Fo map",chgl,SLOT(updateGL()));
@@ -622,37 +624,38 @@ void FourMCQ::gen_surface(bool neu,int imin,int imax){
     if ((chgl->foubas[fac])&&(glIsList(chgl->foubas[fac]))) glDeleteLists(chgl->foubas[fac],1);
     if (!chgl->foubas[fac]) chgl->foubas[fac]=glGenLists(1);
     glNewList(chgl->foubas[fac], GL_COMPILE );
+    glLineWidth(linwidth);
     switch (fac){
 	    case 0:
-                    glColor4d(0.0, 0.7, 0.0, 0.4);
+                    glColor4d(0.0, 0.7, 0.0, lintrans);
                     if (neu) iso[1]=sigma[0]*2.7;
                     else iso[1]=fabs(iso[1]);
 		    mtyp=1;
 //		    printf("fac %d case %d %g %g\n",fac,mtyp,iso[1],sigma[0]);
 		    break;
 	    case 1:
-                    glColor4d(0.8, 0.0, 0.0, 0.4);
+                    glColor4d(0.8, 0.0, 0.0, lintrans);
                     if (neu) iso[1]=-sigma[0]*2.7;
                     else iso[1]=-fabs(iso[1]);
                     mtyp=1;
 //		    printf("fac %d case %d %g %g\n",fac,mtyp,iso[1],sigma[0]);
 		    break;
 	    case 2:
-                    glColor4d(0.0, 0.0, 1.0, 0.24);
+                    glColor4d(0.0, 0.0, 1.0, lintrans);
                    if (neu) iso[0]=sigma[1]*1.2;
 		    mtyp=0;
 //		    printf("fac %d case %d %g %g\n",fac,mtyp,iso[0],sigma[1]);
 
 		    break;
 	    case 3:
-                    glColor4d(0.0, 0.7, 0.9, 0.6);
+                    glColor4d(0.0, 0.7, 0.9, lintrans);
                     if (neu) iso[2]=sigma[2]*1.7;
                     else iso[2]=fabs(iso[2]);
                     mtyp=2;
 //		    printf("fac %d case %d %g %g\n",fac,mtyp,iso[2],sigma[2]);
 		    break;
 	    case 4:
-                    glColor4d(0.9, 0.6, 0.0, 0.6);
+                    glColor4d(0.9, 0.6, 0.0, lintrans);
                     if (neu) iso[2]=-sigma[2]*1.7;
                     else iso[2]=-fabs(iso[2]);
                     mtyp=2;

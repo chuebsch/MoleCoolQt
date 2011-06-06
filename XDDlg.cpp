@@ -996,14 +996,14 @@ void xdEditDlg::accept () {
       while (symmignore+di+dumcnt<alle->size()){
 	if (alle->at(symmignore+di+dumcnt).Label.contains("DUM",Qt::CaseInsensitive)){
 	  extern molekul mol;
-	  extern double xs;
-	  extern double ys;
-	  extern double zs;
+         // extern double xs;
+         // extern double ys;
+         // extern double zs;
 	  V3 frac,kart;
 	  kart=alle->at(symmignore+di+dumcnt).pos;
-	  kart.x+=xs;
-	  kart.y+=ys;
-	  kart.z+=zs;
+         // kart.x+=xs;
+         // kart.y+=ys;
+         // kart.z+=zs;
 	  mol.kart2frac(kart,frac);
 	  masli.insert(i+dumcnt,QString("%1 %2 %3 %4 !%5 %6 %7 %8%9")
 			  .arg(QString("DUM%1").arg(dumcnt))
@@ -1042,14 +1042,14 @@ void xdEditDlg::accept () {
   while (symmignore+di+dumcnt<alle->size()){    
     if (alle->at(symmignore+di+dumcnt).Label.contains("DUM",Qt::CaseInsensitive)){
       extern molekul mol;
-      extern double xs;
-      extern double ys;
-      extern double zs;
+//      extern double xs;
+//      extern double ys;
+//      extern double zs;
       V3 frac,kart;
       kart=alle->at(symmignore+di+dumcnt).pos;
-      kart.x+=xs;
-      kart.y+=ys;
-      kart.z+=zs;
+//      kart.x+=xs;
+//      kart.y+=ys;
+//      kart.z+=zs;
       mol.kart2frac(kart,frac);
       resli.insert(9+dumcnt,QString(" %1  %2  %3 \n").arg(frac.x,8,'f').arg(frac.y,8,'f').arg(frac.z,8,'f'));
       dumcnt++;
