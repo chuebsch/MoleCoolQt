@@ -9,6 +9,7 @@
 #include "molekul.h"
 #include "cubeGL.h"
 #include <QObject>
+#include <QCheckBox>
 #pragma pack(push)  /* push current alignment to stack */
 #pragma pack(1)     /* set alignment to 1 byte boundary */
 typedef struct  {
@@ -58,12 +59,14 @@ Q_OBJECT
           float sigma[3];
           float iso[3];
           V3 urs;
+	  QCheckBox *doMaps;
           double rr,rw;
 	  int maptrunc;
           molekul *mole;
 	  double map_radius;
 	  CubeGL *chgl;
 	  void deleteLists();
+	  void killmaps();
   public slots:
           void bewegt(V3 v);
           void inimap();

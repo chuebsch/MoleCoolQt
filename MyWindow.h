@@ -110,6 +110,7 @@ public slots:
      void rotUp();
      void rotDown();
      void openMapControl();
+     void doMapsNow(bool b);
      void controlMap();
      void wasistdas();
      void togglSt();

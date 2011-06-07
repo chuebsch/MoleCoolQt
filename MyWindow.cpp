@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=261;
+int rev=263;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -857,6 +857,7 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
   ignorant->setStatusTip("Toggle mouse-over-atom identification"); 
  
   cubeGL->invertMouseZoom = new QCheckBox("invert mouse zoom");
+ 
   cubeGL->minus = new QCheckBox("switch eyes");
   cubeGL->minus->hide();
   cubeGL->minus->setShortcut(tr("W"));
@@ -1063,6 +1064,11 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
   mdl->addWidget(buttonBoxMC,10,0,3,3);
   md->setLayout(mdl);
   md->setModal (false);
+  fmcq->doMaps = new QCheckBox("Calculate Maps");
+  fmcq->doMaps->setChecked(true);
+  connect(fmcq->doMaps,SIGNAL(toggled(bool)),this , SLOT(doMapsNow(bool)));
+//  fmcq->doMaps->hide();
+  tb->addWidget(fmcq->doMaps);
   md->hide();
   }
   /////////////
@@ -1294,6 +1300,24 @@ void MyWindow::openMapControl(){
   mapSchnitt->setCurrentIndex(fmcq->maptrunc);
   md->show();
 }
+
+void MyWindow::doMapsNow(bool b){
+  if (!b) {
+    fmcq->killmaps(); 
+    cubeGL->updateGL();
+    return;
+  } else {
+    QString fouName;
+    fouName=dirName;
+    fouName.chop(3);
+    fouName.append("fou");
+    if (fmcq->loadFouAndPerform(fouName.toStdString().c_str()),false){
+      infoKanalNews(QString("<font color=red>Could not load %1!</font><br>").arg(fouName));
+      fmcq->deleteLists();
+    }  
+    cubeGL->updateGL();
+  }
+} 
 
 void MyWindow::controlMap(){
   fmcq->maptrunc=mapSchnitt->currentIndex (); 
@@ -1572,6 +1596,7 @@ void MyWindow::destroyMoliso(){
     delete cubeGL->moliso;
     cubeGL->moliso=NULL;
   }
+  cubeGL->rotze=-1;
 filtered=0;
 oxd.clear();
 unfilterAct->setVisible(false);
@@ -2705,9 +2730,11 @@ dummax=smx-atmax;
     else Uf2Uo(asymmUnit[i].uf,asymmUnit[i].u);}
   growSymm(6);
   if (!fmcq->loadFouAndPerform(fouName.toStdString().c_str())) {
-    infoKanalNews(QString("<font color=red>Could not load %1!</font><br>").arg(fouName));
+    if (fmcq->doMaps->isChecked()) infoKanalNews(QString("<font color=red>Could not load %1!</font><br>").arg(fouName));
     fmcq->deleteLists();
+    fmcq->doMaps->hide();
   }
+  fmcq->doMaps->show();
 }
 
 //----------------------------------S H E L D R I C K -----------------------------------------
@@ -3991,10 +4018,12 @@ void MyWindow::showPackDlg(){
 
 void MyWindow::loadFile(QString fileName,double GD){//empty
   infoKanal->clear();
+  fmcq->killmaps();
   QDir directory(fileName);
   dirName=directory.canonicalPath();
   fileName=dirName;
   cubeGL->afilename=fileName.section("/",-1);
+  cubeGL->rotze=-1;
   if (cubeGL->afilename.contains("."))
     cubeGL->afilename=cubeGL->afilename.section(".",-2,-2);
   infoKanal->setHtml(QString("<strong>File name:</strong><br> %1<hr>").arg(fileName));

@@ -37,7 +37,26 @@ FourMCQ::FourMCQ(molekul *mole_, CubeGL *chgl_,QToolBar *toolView, double resol,
 FourMCQ::~FourMCQ(){
 }
 
+void FourMCQ::killmaps(){
+  chgl->fofcact->setVisible(false);
+  chgl->foact->setVisible(false);
+  chgl->f1f2act->setVisible(false);
+  if (datfo!=NULL) free(datfo);
+  if (datfo_fc!=NULL) free(datfo_fc);
+  if (datf1_f2!=NULL) free(datf1_f2);
+  datfo=datfo_fc=datf1_f2=NULL;
+  deleteLists();
+  if (nodex!=NULL) free(nodex);
+  if (nodey!=NULL) free(nodey);
+  if (nodez!=NULL) free(nodez);
+  nodex=nodey=nodez=NULL;
+  disconnect(chgl,SIGNAL(diffscroll(int ,int )),0,0);
+  disconnect(chgl,SIGNAL(neuemitte(V3)),0,0);
+  disconnect(chgl,SIGNAL(inimibas()),0,0);
+
+}
 bool FourMCQ::loadFouAndPerform(const char filename[],bool neu){
+
   const int it[480]= {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 20, 21, 22, 24, 25, 26, 27,
     28, 30, 32, 33, 35, 36, 39, 40, 42, 44, 45, 48, 49, 50, 52, 54, 55, 56, 60, 63, 64, 65, 66, 70, 72, 75, 77,
     78, 80, 81, 84, 88, 90, 91, 96, 98, 99, 100, 104, 105, 108, 110, 112, 117, 120, 125, 126, 128, 130, 132, 135,
@@ -62,18 +81,9 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu){
     3840, 3850, 3861, 3888, 3900, 3920, 3960, 3969, 4000, 4004, 4032, 4050, 4095, 4096, 4116, 4125, 4158, 4160,
     4200, 4212, 4224, 4290, 4312, 4320, 4368, 4374, 4375, 4400, 4410, 4455, 4459, 4480, 4500, 4536, 4550, 4576,
     4608, 4620, 4680, 4704, 4725, 4752, 4800, 4802, 4851, 4860, 4875, 4900, 4914, 4928, 4950, 4992, 5000};
-  chgl->fofcact->setVisible(false);
-  chgl->foact->setVisible(false);
-  chgl->f1f2act->setVisible(false);
-  if (datfo!=NULL) free(datfo);
-  if (datfo_fc!=NULL) free(datfo_fc);
-  if (datf1_f2!=NULL) free(datf1_f2);
-  deleteLists();
-  if (nodex!=NULL) free(nodex);
-  if (nodey!=NULL) free(nodey);
-  if (nodez!=NULL) free(nodez);
-  nodex=nodey=nodez=NULL;
+  killmaps();
   int winformat=0,ok;
+  if (!doMaps->isChecked()) return false;
   if (strstr(filename,"xd.fou")==NULL) return false;
   FILE *f;
   f=fopen(filename,"rb");
@@ -617,7 +627,8 @@ void FourMCQ::gen_surface(bool neu,int imin,int imax){
   */
   disconnect(chgl,SIGNAL(diffscroll(int ,int )),0,0);
   disconnect(chgl,SIGNAL(neuemitte(V3)),0,0);
-  disconnect(chgl,SIGNAL(inimibas()),0,0);/*
+  disconnect(chgl,SIGNAL(inimibas()),0,0);
+  /*
   if ((mode==0)&&(!scroller)) chgl->mibas=glGenLists(2);
   scroller=false;*/
  for (int fac=imin; fac<imax; fac++){
