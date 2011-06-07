@@ -355,7 +355,7 @@ void MolIso::readXDGridHeader(QString fname){
   }
   }else{//may be this is a cube file?
     printf("cubefile?\n");
-    double a,b,c,xst,yst,zst;
+    double a,b,c;
     double bohr=0.5291775108;
     if (lines.size()>6) {
       QStringList tok;
