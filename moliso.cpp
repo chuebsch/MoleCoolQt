@@ -84,6 +84,7 @@ MolIso::MolIso(){
   farbe[6][1]=0;    
   farbe[6][2]=0;    
   farbe[6][3]=0.5;
+  mibas=0;
 }
 void MolIso::legende(){
   glNewList(mibas+6, GL_COMPILE ); 

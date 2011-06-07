@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=263;
+int rev=264;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -408,19 +408,19 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
   zoomOutAct->setShortcut(Qt::Key_PageDown);
   zoomOutAct->setIcon(QIcon(":/images/zoomout.png"));
 
-  rotLeftAct->setShortcut(tr("Left"));
+  rotLeftAct->setShortcut(tr("Alt+Left"));
   rotLeftAct->setStatusTip(tr("Rotate molecule around Y-axis"));
   rotLeftAct->setIcon(QIcon(":/images/rotateleft.png") );
 
-  rotRightAct->setShortcut(tr("Right"));
+  rotRightAct->setShortcut(tr("Alt+Right"));
   rotRightAct->setStatusTip(tr("Rotate molecule around Y-axis") );
   rotRightAct->setIcon(QIcon(":/images/rotateright.png") );
 
-  rotUpAct->setShortcut(tr("Up"));
+  rotUpAct->setShortcut(tr("Alt+Up"));
   rotUpAct->setStatusTip(tr("Rotate molecule around X-axis") );
   rotUpAct->setIcon(QIcon(":/images/rotateup.png") );
 
-  rotDownAct->setShortcut(tr("Down"));
+  rotDownAct->setShortcut(tr("Alt+Down"));
   rotDownAct->setStatusTip(tr("Rotate molecule around X-axis") );
   rotDownAct->setIcon(QIcon(":/images/rotatedown.png") );
     
@@ -1431,6 +1431,7 @@ void MyWindow::genMoliso() {
   zla->addWidget(cullFront);
   QToolBar *tb = new QToolBar("Moliso toolbar",zebraZwinger);
   tb->setOrientation(Qt::Vertical);
+  tb->setIconSize(QSize(16,16));
   tb->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
   tb->addAction(showface);
   tb->addAction(showLeg);
@@ -1529,6 +1530,7 @@ void MyWindow::genMoliso() {
   if (cubeGL->moliso->mibas) glDeleteLists(cubeGL->moliso->mibas,6);
   cubeGL->moliso->mibas=glGenLists(6);
   statusBar()->showMessage(tr("loading surfaces...") );
+  //qDebug()<<cubeGL->moliso->mibas<<cubeGL->foubas[0];
   cubeGL->moliso->loadMI(lfaceFile);
   updateStatusBar();
   statusBar()->showMessage(tr("surfaces loaded") );
