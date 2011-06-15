@@ -119,7 +119,7 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu){
       lr[nr].d7=wr[nr].d7;
     }
     else readsize = fread(&lr[nr],sizeof(rec64),1,f);
-    if ((lr[nr].ih|lr[nr].ik|lr[nr].il)!=0) nr++;
+    if (((lr[nr].ih|lr[nr].ik|lr[nr].il)!=0)&&(abs(lr[nr].ih)<130)&&(abs(lr[nr].ik)<130)&&(abs(lr[nr].il)<130)) nr++;
     if (nr>=LM) {
       fprintf(stderr,"to many reflections in xd.fou file\n");
       return false;
@@ -204,6 +204,7 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu){
 	  ml=(ml<c)?c:ml;
 	}
       }
+      printf("max hkl = %d %d %d\n",mh,mk,ml);
       j=(int)(rr*mh+.5);
       for (int i=0; it[i]< j; i++)n1=it[i+1];
       j=(int)(rr*mk+.5);

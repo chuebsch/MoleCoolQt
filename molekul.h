@@ -346,6 +346,10 @@ struct INP {
   double screenX,screenY;
   uint GLname;
 }; 
+
+inline bool operator < (const INP &a1, const INP &a2){
+  return a1.peakHeight>a2.peakHeight;
+}
 struct Cell {
   double a,b,c,al,be,ga;
   double phi,V,as,bs,cs,lambda;

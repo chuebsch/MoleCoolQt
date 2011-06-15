@@ -58,6 +58,7 @@ Q_OBJECT
           double lintrans,linwidth;
           float sigma[3];
           float iso[3];
+	  int n1,n2,n3,n4,n5;
           V3 urs;
 	  QCheckBox *doMaps;
           double rr,rw;
@@ -76,7 +77,6 @@ Q_OBJECT
 
   private:
 	  double C[15],D[9],sy[12][192],wave;
-	  int n1,n2,n3,n4,n5;
 	  inline int Intersect( double& vm, double& vp ){ return vm*vp <= 0.0 && (vm<0.0 || vp<0.0); }
 	  V3  delDA[27];
 	  fftwf_plan  fwd_plan;

@@ -70,6 +70,7 @@ public:
      QComboBox *filterColumnComboBox;
 
 public slots:
+     void addMoreQPeaks();
      void syncMconf();
      void changeGD();
      void expandAround();

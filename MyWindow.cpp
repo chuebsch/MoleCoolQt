@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=265;
+int rev=266;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -212,6 +212,7 @@ MyWindow::MyWindow( QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(pa
   xdMenu->addAction(xdpropAct); 
   xdMenu->addAction(tidyCPSAct); 
   xdMenu->addSeparator();
+  xdMenu->addAction("Find all uniq peaks in Fo-Fc map > iso surface value.",this,SLOT(addMoreQPeaks())) ;
   xdMenu->addAction(xdEnvAct);
   xdMenu->setEnabled(false);
 
@@ -1011,6 +1012,7 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
   weak->setSingleStep(0.1);
 
   difmaps = new QDoubleSpinBox();
+  difmaps->setDecimals(4);
   difmaps->setMinimum(0);
   difmaps->setMaximum(94);
   difmaps->setValue(fabs(fmcq->iso[1]));
@@ -1025,6 +1027,7 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
   fomaps->setSuffix("e/A^3");
   
   f12maps = new QDoubleSpinBox();
+  f12maps->setDecimals(4);
   f12maps->setMinimum(0);
   f12maps->setMaximum(94);
   f12maps->setValue(fabs(fmcq->iso[2]));
@@ -1346,6 +1349,109 @@ void MyWindow::controlMap(){
   cubeGL->updateGL();
 }
 
+void MyWindow::addMoreQPeaks(){
+  if (fmcq->n5==0) return;
+   
+  INP newAtom;
+  newAtom.part=0;
+  newAtom.sg=0;
+  newAtom.OrdZahl=-3;
+  for (int i=0; i<asymmUnit.size(); i++){
+    if (asymmUnit.at(i).OrdZahl!=-3)continue;
+    asymmUnit.removeAt(i);
+    i--;
+  }
+  //htest.ownStyle=false;
+  //htest.style=3;
+  //htest.rad=0.2;
+  //htest.color=QColor("seagreen");
+  float x,y,z,u,v,w,p,q,r,t;
+  int ipeak=0;
+  for (int k=0;k<fmcq->n3;k++){
+    for (int j=0;j<fmcq->n2;j++){
+      for (int i=0;i<fmcq->n1;i++){
+	t = fmcq->datfo_fc[i+ fmcq->n1*(j+k*fmcq->n2)];
+	x = t -  fmcq->datfo_fc[((i+1)%fmcq->n1) + fmcq->n1*(j+k*fmcq->n2)];
+	y = t -  fmcq->datfo_fc[i+ fmcq->n1*(((j+1)%fmcq->n2)+k*fmcq->n2)];
+	z = t -  fmcq->datfo_fc[i+ fmcq->n1*(j+((k+1)%fmcq->n3)*fmcq->n2)];
+	u = t -  fmcq->datfo_fc[((i+fmcq->n1-1)%fmcq->n1)+ fmcq->n1*(j+k*fmcq->n2)];
+	v = t -  fmcq->datfo_fc[i+ fmcq->n1*(((j+fmcq->n2-1)%fmcq->n2)+k*fmcq->n2)];
+	w = t -  fmcq->datfo_fc[i+ fmcq->n1*(j+((k+fmcq->n2-1)%fmcq->n3)*fmcq->n2)];
+	if (fmin(x,fmin(y,fmin(z,fmin(u,fmin(v,w)))))<0) continue;
+	p=0.5*(u-x)/(u+x);
+	q=0.5*(v-y)/(v+y);
+	r=0.5*(w-z)/(w+z);
+	t=t+0.25*(p*(u-x)+q*(v-y)+r*(w-z));
+	if (t<(fabs(fmcq->iso[1])*1.02)) continue;
+	newAtom.peakHeight=t;  
+	newAtom.frac.x = ((double) i + p +0.5)/fmcq->n1; 
+	newAtom.frac.y = ((double) j + q +0.5)/fmcq->n2;
+	newAtom.frac.z = ((double) k + r +0.5)/fmcq->n3;
+	mol.frac2kart( newAtom.frac, newAtom.kart);
+	if (!finite(newAtom.frac.x)||!finite(newAtom.frac.y)||!finite(newAtom.frac.z))continue;
+	ipeak++;
+//	newAtom.atomname=QString("Q%1").arg(ipeak,3,36,QChar('0'));
+	sprintf(newAtom.atomname,"PK%d",ipeak);
+	asymmUnit.append(newAtom);
+
+      }
+    }
+  }
+  smx+=ipeak;
+  cubeGL->pause=true;
+  growSymm(6);
+  for (int i=0; i<smx; i++){
+    mol.frac2kart(asymmUnit[i].frac,asymmUnit[i].kart);
+  }
+  
+  for (int i=0; i<asymmUnit.size(); i++){
+    for (int j=i+1; j<asymmUnit.size(); j++){
+      if ((asymmUnit.at(i).OrdZahl!=-3)||(asymmUnit.at(j).OrdZahl!=-3)) continue;
+      if (j==i)continue;
+      double dd=0;
+      if ((dd=Distance(asymmUnit.at(i).kart,asymmUnit.at(j).kart))<0.1) {
+	asymmUnit.removeAt(j);j--;
+      }
+    }
+  }
+
+  QList<INP> pks;
+  for (int i=0; i<asymmUnit.size(); i++){
+    if (asymmUnit.at(i).OrdZahl!=-3)continue;
+    pks.append(asymmUnit[i]);
+    asymmUnit.removeAt(i);
+    i--;
+  }
+  qSort(pks.begin(),pks.end());
+  for (int i=0; i<pks.size(); i++) sprintf(pks[i].atomname,"Q%d",i+1);
+  mol.pmax=pks.first().peakHeight;
+  mol.pmin=pks.last().peakHeight;
+  asymmUnit+=pks;
+
+  QFile o;
+  o.setFileName("mcq_peaklist.txt");
+  if (o.open(QIODevice::WriteOnly|QIODevice::Text)){
+o.write(QString("(%1 < %2) >%3 %4\n").arg( mol.pmin).arg(mol.pmax).arg(fmcq->iso[1]).arg(fabs(fmcq->iso[1])).toLatin1());
+    for (int i=0; i<asymmUnit.size(); i++){
+      if (asymmUnit.at(i).OrdZahl!=-3)continue;
+      o.write(QString("%1 frac: %2 %3 %4  height: %5  cart: %6 %7 %8\n")
+		      .arg(asymmUnit.at(i).atomname,-8)
+		      .arg(asymmUnit.at(i).frac.x,12,'f',7)
+		      .arg(asymmUnit.at(i).frac.y,12,'f',7)
+		      .arg(asymmUnit.at(i).frac.z,12,'f',7)
+		      .arg(asymmUnit.at(i).peakHeight,9,'f',5)
+		      .arg(asymmUnit.at(i).kart.x,12,'f',7)
+		      .arg(asymmUnit.at(i).kart.y,12,'f',7)
+		      .arg(asymmUnit.at(i).kart.z,12,'f',7).toLatin1());
+
+    }
+  o.close();
+  }
+  smx=asymmUnit.size();
+  growSymm(6);
+  cubeGL->pause=false;
+  cubeGL->updateGL();
+}
 
 void MyWindow::genMoliso() {
   atmax=0;
