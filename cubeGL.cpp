@@ -412,6 +412,8 @@ void  CubeGL::toggInvEdit(bool on){
 
 void CubeGL::toggXDSetup(bool on){
   xdSetupMode=on;
+
+  printf("ist %s\n",(on)?"":"nicht");
 }
 
 void  CubeGL::setLabels(bool on){
@@ -1142,7 +1144,7 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 	  }
 	  static char PSE_Symbol[109][3] = {"H","He","Li","Be","B","C","N","O","F","Ne","Na","Mg","Al","Si","P","S","Cl","Ar",
 	    "K","Ca","Sc","Ti","V","Cr","Mn","Fe","Co","Ni","Cu","Zn","Ga","Ge","As","Se","Br","Kr",
-	    "Rb","Sr","Y","Zr","Nb","Mo","Tc","Ru","Rh","Pd","Ag","Cd","In","Sn","Sb","Te","J","Xe",
+	    "Rb","Sr","Y","Zr","Nb","Mo","Tc","Ru","Rh","Pd","Ag","Cd","In","Sn","Sb","Te","I","Xe",
 	    "Cs","Ba", "La","Ce","Pr","Nd","Pm","Sm","Eu","Gd","Tb","Dy","Ho","Er","Tm","Yb","Lu",
 	    "Hf","Ta","W","Re","Os","Ir","Pt","Au","Hg","Tl","Pb","Bi","Po","At","Rn","Fr","Ra",
 	    "Ac","Th","Pa","U","Np","Pu","Am","Cm","Bk","Cf","Es","Fm","Md","No","Lr","Ku","Ha","Rf","Ns","Hs","Mt"};
@@ -1199,6 +1201,11 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 	  invom.an=xdinp[index].OrdZahl;
 	  invom.part=xdinp[index].part;
 	  invom.Symbol=PSE_Symbol[xdinp[index].OrdZahl];
+	  if (rename){
+	  invom.Label=rn.Label;
+	  invom.an=rn.an;
+	  invom.Symbol=PSE_Symbol[rn.an];
+	  }
 	  cel.append(invom);	  
 	  for (int i=0;i<xdinp.size();i++){
 	    if((xdinp[i].OrdZahl<0)||(xdinp[index].OrdZahl<0)) continue;
@@ -1259,7 +1266,7 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 		invom.pos=xdinp[i].kart;
 		invom.an=-1;
 		invom.Symbol="X";
-		cel.append(invom);
+		if (xdinp[i].OrdZahl>-2)cel.append(invom);
 	      }
 	    }
 	  }
@@ -1288,7 +1295,7 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 	    CEnvironment all;	  
 	    MyAtom xdall;
 	    //	    printf
-	    for (int i=0; i<xdinp.size(); i++){
+	    for (int i=0; i<xdinp.size(); i++) if(xdinp[i].OrdZahl>-2) {
 	      xdall.Label=xdinp[i].atomname;
 	      xdall.pos=xdinp[i].kart;
 	      xdall.an=xdinp[i].OrdZahl;
@@ -1298,9 +1305,11 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 	      all.append(xdall);
 
 	    }
-
+printf("jetzt wirds lustig\n");
 	    xdEditDlg *id=new xdEditDlg(&cel,&cll,&all);
+printf("jetzt wirds rigtig lustig\n");
 	    id->update();
+printf("jetzt wirds super lustig\n");
 	    if (QDialog::Accepted==id->exec()) emit reloadXD() ;
 	  }
 	  setMatrix();

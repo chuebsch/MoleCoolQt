@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=267;
+int rev=269;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -661,7 +661,7 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
   labelColor->setShortcut(tr("Shift+T"));
   labelFont->setShortcut(tr("Shift+F"));
   scalePicAct->setShortcut(tr("Ctrl+S"));
-
+createRenameWgd();
   connect(viewAlong100,SIGNAL(triggered ()),
 		  cubeGL,SLOT(along100()));
   connect(viewAlong010,SIGNAL(triggered ()),
@@ -1451,6 +1451,193 @@ o.write(QString("(%1 < %2) >%3 %4\n").arg( mol.pmin).arg(mol.pmax).arg(fmcq->iso
   growSymm(6);
   cubeGL->pause=false;
   cubeGL->updateGL();
+}
+
+void MyWindow::createRenameWgd(){
+  ///RENAME DOCK
+  renamDock = new QDockWidget("Rename Mode");
+  renamDock->setObjectName("Rename");
+  renamDock->hide();
+  enterRenameMode = renamDock->toggleViewAction ();
+  connect(enterRenameMode,SIGNAL(triggered(bool)),this,SLOT(renamUpdate(bool)));
+  renamDock->setFeatures(
+		  QDockWidget::DockWidgetMovable|
+		  QDockWidget::DockWidgetFloatable|
+		  QDockWidget::DockWidgetClosable);
+
+  QGroupBox *renameBox = new QGroupBox();
+  QVBoxLayout *rnla= new QVBoxLayout();
+  QLabel *nliL = new QLabel("You are in 'rename mode' now.<br> Next Label is:");
+  nliL->setFont(QFont("Helvetica",18,QFont::Bold));
+  rnla->addWidget(nliL);
+  nextNameL = new QLabel("<font color=\"red\">C(1)</font>");
+  nextNameL->setFont(QFont("Helvetica",14,QFont::Bold));
+  rnla->addWidget(nextNameL);
+  labelSuffix="";
+  nextLabel="C(1)";
+  labelIndex=1;
+  labelPSE="C";
+  sfacBox = new QGroupBox("Scattering factors");
+  sfacBox->setFixedSize(110*52,70);
+  QHBoxLayout *sfacla = new QHBoxLayout();
+
+  dsm= new QSignalMapper(this);
+  sfacla->addWidget(pserbt[0] = new QRadioButton("??"));
+  dsm->setMapping(pserbt[0],"?");
+  connect(pserbt[0], SIGNAL(clicked()), dsm, SLOT(map()));
+  for (int i=1; i<109; i++){
+    sfacla->addWidget(pserbt[i] = new QRadioButton(mol.pse(i-1)));
+    dsm->setMapping(pserbt[i],mol.pse(i-1));
+    connect(pserbt[i], SIGNAL(clicked()), dsm, SLOT(map()));
+    pserbt[i]->hide();
+  }
+  connect(dsm, SIGNAL(mapped(const QString &)), this, SLOT(changeElemetofLabel(const QString &)));
+
+  sfacBox->setLayout(sfacla);
+  QScrollArea *qsa =new QScrollArea();
+  qsa->setWidget(sfacBox);
+  qsa->setMaximumHeight(100);
+  rnla->addWidget(qsa);
+  PSEWidget *psew = new PSEWidget(this);
+  psew->selection=0;
+  psew->setVisible(false);
+  psew->setMaximumHeight(200);
+  rnla->addWidget(psew);
+  QPushButton *willpse = new QPushButton("more scattering factors");
+  willpse->setStyleSheet(
+		  QString(
+			  "QPushButton {"
+			  "border: 1px solid #000000;"
+			  "border-radius: 9px;"
+			  "background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 %1, stop: 0.5 %3, stop: 1 %2);"
+			  "}"
+			  "QPushButton:hover {"
+			  "background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 %2, stop: 0.5 %1, stop: 1 %2);"
+			  "}"
+			  "QPushButton:flat {"
+			  "    border: none; /* no border for a flat push button */"
+			  "}"
+			 ).arg("#dedede").arg("#eeeeee").arg("#aeaeae"));
+
+  connect(willpse,SIGNAL(clicked()),psew,SLOT(show()));
+  QTimer *hidwillpse=new QTimer();
+  hidwillpse->setSingleShot(true);
+  hidwillpse->setInterval(100);
+
+  connect(willpse,SIGNAL(clicked()),hidwillpse,SLOT(start()));
+  connect(hidwillpse,SIGNAL(timeout()),willpse,SLOT(hide()));
+  connect(psew,SIGNAL(pseSelected(int)),psew,SLOT(hide()));
+  connect(psew,SIGNAL(pseSelected(int)),willpse,SLOT(show()));
+  connect(psew,SIGNAL(pseSelected(int)),this,SLOT(addNewScatteringFactor(int)));
+
+  rnla->addWidget(willpse);
+  QHBoxLayout *indexla = new QHBoxLayout();
+  QLabel *indexL = new QLabel("Number");
+  indexSpin = new QSpinBox();
+  indexSpin->setMinimum(-1);
+  indexSpin->setMaximum(999);
+  indexSpin->setValue(labelIndex);
+  connect(indexSpin,SIGNAL(valueChanged(int )),this,SLOT(changeIndexofLabel(int ))); 
+  sufixBox = new QComboBox();
+  QLabel *sufixL =new QLabel("Suffix");
+  QStringList alpha;
+  alpha<<"'"<<""<<"A"<<"B"<<"C"<<"D"<<"E"<<"F"<<"G"<<"H"<<"I"<<"J"<<"K"
+	  <<"L"<<"M"<<"N"<<"O"<<"P"<<"Q"<<"R"<<"S"<<"T"<<"U"<<"V"<<"W"<<"X"<<"Y"<<"Z"
+	  <<"A'"<<"B'"<<"C'"<<"D'"<<"E'"<<"F'"<<"G'"<<"H'"<<"I'"<<"J'"<<"K'"<<"L'"<<"M'"
+	  <<"N'"<<"O'"<<"P'"<<"Q'"<<"R'"<<"S'"<<"T'"<<"U'"<<"V'"<<"W'"<<"X'"<<"Y'"<<"Z'";
+  sufixBox->addItems(alpha);
+  sufixBox->setCurrentIndex(1);
+  sufixBox->setEditable(true);
+  connect(sufixBox,SIGNAL( currentIndexChanged ( const QString &)),this,SLOT(changeSuffixofLabel( const QString & )));
+  indexla->addWidget(indexL);
+  indexla->addWidget(indexSpin);
+  indexla->addWidget(sufixL);
+  indexla->addWidget(sufixBox);
+  rnla->addLayout(indexla);
+  renameBox->setLayout(rnla);
+  renamDock->setWidget(renameBox);
+  addDockWidget(Qt::RightDockWidgetArea, renamDock);
+  ///RENAME DOCK
+
+}
+
+void MyWindow::changeElemetofLabel(const QString &pse){
+  labelPSE=pse;
+  bool inuse=isLabelInUse();
+  nextNameL->setText(QString("<font size=\"+19\" color=\"%2\">%1</font>%3")
+		  .arg(nextLabel)
+		  .arg((inuse)?"red":"green")
+		  .arg((inuse)?"<font size=\"-19\"><br>Label is already in use.</font>":""));
+  cubeGL->rn.Label=nextLabel;
+  cubeGL->rn.an=mol.Get_OZ(labelPSE);
+  update();
+}
+
+void MyWindow::changeIndexofLabel(int i){
+  labelIndex=i;
+  bool inuse=isLabelInUse();
+  nextNameL->setText(QString("<font size=\"+19\" color=\"%2\">%1</font>%3")
+		  .arg(nextLabel)
+		  .arg((inuse)?"red":"green")
+		  .arg((inuse)?"<font size=\"-19\"><br>Label is already in use.</font>":""));
+  cubeGL->rn.Label=nextLabel;
+  cubeGL->rn.an=mol.Get_OZ(labelPSE);
+  update();
+}
+
+void MyWindow::changeSuffixofLabel(const QString &fix){
+  labelSuffix=fix;
+  bool inuse=isLabelInUse();
+  nextNameL->setText(QString("<font size=\"+19\" color=\"%2\">%1</font>%3")
+		  .arg(nextLabel)
+		  .arg((inuse)?"red":"green")
+		  .arg((inuse)?"<font size=\"-19\"><br>Label is already in use.</font>":""));
+  cubeGL->rn.Label=nextLabel;
+  cubeGL->rn.an=mol.Get_OZ(labelPSE);
+  update();
+}
+
+void MyWindow::updateLabel(){
+  indexSpin->setValue(labelIndex);
+  bool inuse=isLabelInUse();
+  nextNameL->setText(QString("<font size=\"+19\" color=\"%2\">%1</font>%3")
+		  .arg(nextLabel)
+		  .arg((inuse)?"red":"green")
+		  .arg((inuse)?"<font size=\"-19\"><br>Label is already in use.</font>":""));
+
+  cubeGL->rn.Label=nextLabel;
+  cubeGL->rn.an=mol.Get_OZ(labelPSE);
+  update();
+}
+
+bool MyWindow::isLabelInUse(){
+  if (labelIndex<0) nextLabel=QString("%1(%2)").arg(labelPSE).arg(labelSuffix);
+  else nextLabel=QString("%1(%2%3)").arg(labelPSE).arg(labelIndex).arg(labelSuffix);
+  QStringList alab;
+  for (int i =0; i<asymmUnit.size(); i++){
+    alab.append(asymmUnit.at(i).atomname);
+  }
+  QString nn=nextLabel;
+  return (alab.contains(nn,Qt::CaseInsensitive));
+}
+
+void MyWindow::addNewScatteringFactor(int oz){
+  printf("geht (noch) nicht!\n"); 
+}
+
+void MyWindow::renamUpdate(bool vis){
+  enterRenameMode->setChecked(vis);
+  enterRenameMode->setText((vis)?"Exit Rename Mode":"Rename Mode");
+  cubeGL->rename=false;
+  cubeGL->toggXDSetup(xdSetupAct->isChecked());
+  if (vis) {
+    updateLabel();
+    renamDock->show();
+    renamDock->raise();
+    cubeGL->rename=true;
+    cubeGL->toggXDSetup(true);
+    printf("sollte\n");
+  }
 }
 
 void MyWindow::genMoliso() {
@@ -2642,7 +2829,7 @@ void MyWindow::load_xdres(QString fileName) {
      if (!mol.decodeSymmCard(line)){qDebug()<<line<<"Sorry, but I can't understand this SymmCard";exit(-1);}
     egal=fscanf(mas,"%[^\n\r]\n\r",line);
   }
-
+  for (int i=1; i<107; i++)  pserbt[i]->hide();
   rewind(mas);
   char Centr,gitt;
   while (strstr(line,"LATT")==NULL) {egal=fscanf(mas,"%[^\n\r]\n\r",line);}
@@ -2652,8 +2839,14 @@ void MyWindow::load_xdres(QString fileName) {
   while (strstr(line,"SCAT")==NULL) {egal=fscanf(mas,"%[^\n\r]\n\r",line);}
   while (strstr(line,"END")==NULL){  
     egal=fscanf(mas,"%[^\n\r]\n\r",line);
-    if (isalpha(line[0])) atypen.append(strtok(line," "));
+    if ((isalpha(line[0]))&&((strstr(line,"END")==NULL))) {
+
+      atypen.append(strtok(line," "));
+      pserbt[mol.Get_OZ(atypen.last())+1]->show();
+      if (mol.Get_OZ(atypen.last())==5) pserbt[mol.Get_OZ(atypen.last())+1]->setChecked(true); 
+    }
   }
+  sfacBox->setFixedSize((atypen.size()+1)*52,70);
   fclose(mas);
   }
   FILE *adp;

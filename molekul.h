@@ -582,6 +582,7 @@ class molekul {
   V3* smoothPoints(V3 *vListe, int N);
   void drawSline(V3 *vL,int N);
   int highlightResi(QList<INP> xdinp,int inv,GLfloat L,bool el);
+  QString pse(int oz);
  private:
   void ellipse(int style);
   struct knpf{

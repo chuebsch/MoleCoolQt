@@ -21,6 +21,7 @@ XDDlg::XDDlg(CEnvironment ch,Connection cll,CEnvironment lc,CEnvironment *all,QW
    cl=cll;
    mitsav=mitte;
    imFokus=-1;
+   printf("test\n");
 }
 void XDDlg::initializeGL(){
   glEnable(GL_LINE_SMOOTH);  
@@ -620,14 +621,28 @@ CEnvironment xdEditDlg::calcAxis(QString masstr,CEnvironment *all){
   MyAtom xp,yp,zp;
   MyAtom at0,at1,at2;
   reststr="  ";
+  int find=0;
+  int lastatom=0;
   QStringList parsed=masstr.split(" ",QString::SkipEmptyParts);
   for (int i=7; i<parsed.size();i++) reststr+=parsed.at(i)+"  "+((i==8)?" ":(i==9)?" ":"");
-  for (int i=0; i<all->size();i++) if (!all->at(i).Label.compare(parsed.at(0),Qt::CaseInsensitive)) {atooo=i+1;ato=all->at(i);break;}
-  for (int i=0; i<all->size();i++) if (!all->at(i).Label.compare(parsed.at(1),Qt::CaseInsensitive)) {at0=all->at(i);iax1=i;break;}
-  for (int i=0; i<all->size();i++) if (!all->at(i).Label.compare(parsed.at(3),Qt::CaseInsensitive)) {at1=all->at(i);break;}
-  for (int i=0; i<all->size();i++) if (!all->at(i).Label.compare(parsed.at(4),Qt::CaseInsensitive)) {at2=all->at(i);iax2=i;break;}
+  for (int i=0; i<all->size();i++) if (!all->at(i).Label.compare(parsed.at(0),Qt::CaseInsensitive)) 
+  {atooo=i+1;ato=all->at(i);find=1;break;}
+  if (!find) {
+    for (int i=0; i<all->size();i++) if (Distance(chm->at(0).pos,all->at(i).pos)<0.1) all->removeAt(i);
+    for (int i=0; i<all->size();i++) {if (all->at(i).an==chm->at(0).an) lastatom=i+1; }
+    all->insert(lastatom,chm->at(0)); 
+    atooo=lastatom+1;
+    ato=all->at(lastatom);
+  }
+  for (int i=0; i<all->size();i++) if (!all->at(i).Label.compare(parsed.at(1),Qt::CaseInsensitive)) 
+  {at0=all->at(i);iax1=i;find=1;break;}
+  for (int i=0; i<all->size();i++) if (!all->at(i).Label.compare(parsed.at(3),Qt::CaseInsensitive)) 
+  {at1=all->at(i);find=1;break;}
+  for (int i=0; i<all->size();i++) if (!all->at(i).Label.compare(parsed.at(4),Qt::CaseInsensitive)) 
+  {at2=all->at(i);iax2=i;find=1;break;}
   ic1=0;
   ic2=1;
+  for (int i=0; i<all->size();i++) { printf("%s %d %d\n",all->at(i).Label.toStdString().c_str(),i,all->at(i).an);}
   const char axl[3][2]={"X","Y","Z"};
   for (int i=0;i<3;i++) if (parsed.at(2)==axl[i]) ic1=i;
   for (int i=0;i<3;i++) if (parsed.at(5)==axl[i]) ic2=i;
@@ -714,12 +729,16 @@ xdEditDlg::xdEditDlg(CEnvironment *ch,const Connection *cll,CEnvironment *all): 
    }
    if (lines.at(i0).startsWith(ch->at(0).Label,Qt::CaseInsensitive)) sLabel.setText(lines.at(i0));
    }
-
+   if (sLabel.text().isEmpty()) sLabel.setText(QString("%1 %2 Z  %1 %3     X   R   2  3   1   4  NO").arg(ch->at(0).Label).arg(ch->at(1).Label).arg(ch->at(2).Label));
+   printf("jetzt 1\n");
    for (i2=i0; (!(lines.at(i2).startsWith("KEY",Qt::CaseInsensitive))) ;i2++){}
    do {
      i2++; 
      keyline=lines.at(i2);
-   }while (!(lines.at(i2).startsWith(ch->at(0).Label,Qt::CaseInsensitive))); 
+   }while (((i2-1)<lines.size())&&(!(lines.at(i2).startsWith("END")))&&(!(lines.at(i2).startsWith(ch->at(0).Label,Qt::CaseInsensitive)))); 
+   if (keyline.startsWith("END")) keyline = QString("%1 111 111111 0000000000 000000000000000 10 111 11111 1111111 111111111").arg(ch->at(0).Label,-7);
+   printf("jetzt 2 %s\n",keyline.toStdString().c_str());
+   for (i2=i0; (!(lines.at(i2).startsWith("KEY",Qt::CaseInsensitive))) ;i2++){}
   QVBoxLayout *srl= new QVBoxLayout();
    srl->setAlignment(Qt::AlignTop);
    X_1 = new QCheckBox("-1 'along' X");srl->addWidget(X_1); X_1 ->setToolTip(X_1 ->text());
@@ -773,7 +792,9 @@ xdEditDlg::xdEditDlg(CEnvironment *ch,const Connection *cll,CEnvironment *all): 
   sRGroupBox = new QGroupBox("Symmetry elements"); 
   sRGroupBox->setLayout(srl);
 
+   printf("jetzt 3 %s\n",sLabel.text().toStdString().c_str());
   locCo=calcAxis(sLabel.text(),all);
+   printf("jetzt 4\n");
 
   id= new  XDDlg(*ch,*cll,locCo,alle,this);
   id->duminuse=duminuse;

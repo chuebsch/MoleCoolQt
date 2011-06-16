@@ -32,8 +32,9 @@ public:
   int expandatom;
   double milsize;
   bool back_grad;
-  bool drawAt,elli,drawBo,drawLa,drawHb,Luftschlange,invEditAble,moveLab,moveLeg,xdSetupMode,reSe,depthCueing,moai,horizont,monochrom;
+  bool drawAt,elli,drawBo,drawLa,drawHb,Luftschlange,invEditAble,moveLab,moveLeg,xdSetupMode,reSe,depthCueing,moai,horizont,monochrom,rename;
   QStringList invariomsComplete, invariomsUnique;
+  MyAtom rn;
   QFont myFont;
   QFont MLegendFont;
   GLdouble MM[16];

@@ -5,6 +5,7 @@
 #include "cubeGL.h"
 #include "moliso.h"
 #include "fourmcq.h"
+#include "psewidget.h"
  class MySortFilterProxyModel : public QSortFilterProxyModel {
      Q_OBJECT
 
@@ -34,11 +35,11 @@ class MyWindow : public QMainWindow {
 public:
      MyWindow( QMainWindow *parent = 0,
                Qt::WindowFlags flags = 0);
-     QDockWidget *dock,*dock2,*dock3;
+     QDockWidget *dock,*dock2,*dock3, *renamDock;
      QTextBrowser *infoKanal,*hbKanal ;
      CubeGL *cubeGL;
      QSlider *speedSldr;
-     QAction* act1, *act2, *act3, *act4, *ldipAct, *nodipAct ;
+     QAction *act1, *act2, *act3, *act4, *ldipAct, *nodipAct, *enterRenameMode;
      QAction *xdSetupAct;
      QAction *xdRestoreAct;
      QAction *Start;
@@ -142,10 +143,18 @@ public slots:
      void valFilterChanged();
      void setGD(double gd);
      void SDM(QStringList &brauchSymm,int packart=0);
+     void renamUpdate(bool vis);
+     void changeElemetofLabel(const QString &pse);
+     void changeIndexofLabel(const int i);
+     void changeSuffixofLabel(const QString &fix);
+     void addNewScatteringFactor(int oz);
+     void updateLabel();
+
 protected:
      void paintEvent(QPaintEvent *event);
      void moveEvent(QMoveEvent *event);
  private:
+     bool isLabelInUse();
     QSlider *legendSize,*strikesSldr,*swidthSldr;
     QCheckBox *zebraBox,*mt;
     QComboBox *mapSchnitt;
@@ -162,6 +171,7 @@ protected:
      void readXDPartAux();
      bool george,fck;
      void searchchanged(bool current,bool back);
+     void createRenameWgd();
      QTextEdit *editor ;
      QLineEdit *search ;
      QDoubleSpinBox *gdedit ;
@@ -198,6 +208,14 @@ protected:
      enum { MaxRecentFiles = 10 };
      QAction *recentFileActs[MaxRecentFiles];
      QAction *grdpckAct;
+     QLabel *nextNameL;
+     QString labelPSE,labelSuffix,nextLabel;
+     int labelIndex;
+     QGroupBox *sfacBox;
+     QSignalMapper *dsm;
+     QRadioButton *pserbt[110];
+     QSpinBox *indexSpin;
+     QComboBox *sufixBox;
 };
 
 
