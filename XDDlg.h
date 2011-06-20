@@ -61,7 +61,7 @@ Q_OBJECT
   *Y2,*Ym,*Y3,*Y_3,*Y4,*Y_4,
   *Z2,*Zm,*Z3,*Z_3,*Z4,*Z_4;   
  QGroupBox * sRGroupBox ;
-
+ MyAtom oa;
 	public:
   QLabel sLabel;
   QStringList duminuse;
@@ -82,7 +82,7 @@ Q_OBJECT
   void symmetryReducer(QString text);
   void molman(QString text);
   CEnvironment *chm;
-  xdEditDlg(CEnvironment *ch,const Connection *cl,CEnvironment *all);
+  xdEditDlg(CEnvironment *ch,const Connection *cl,CEnvironment *all,MyAtom orgAtom);
   QDoubleSpinBox tol;
   QLabel messi;
   QString checkSymmOnAx(V3 ax,double TOL=0.03);

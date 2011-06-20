@@ -685,7 +685,8 @@ void xdEditDlg::setKeyLine(const QString &s){
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-xdEditDlg::xdEditDlg(CEnvironment *ch,const Connection *cll,CEnvironment *all): QDialog(){
+xdEditDlg::xdEditDlg(CEnvironment *ch,const Connection *cll,CEnvironment *all,MyAtom orgAtom): QDialog(){
+  oa=orgAtom;
   keyLineEdit = new QLineEdit("",this);
   connect(keyLineEdit, SIGNAL(textChanged(const QString &)),
 	  this, SLOT(setKeyLine(const QString &)));
@@ -966,6 +967,17 @@ void xdEditDlg::updatesLabel2(){
   molman(symmdiag);
   update();
 }
+  struct KAP {
+    int ifz;
+    double k[6];
+  };
+  struct RES {
+    char atom[9];
+    int icor1,icor2,nax,nay,nay2,jtf,itbl,isfz,lmax,isym,ichcon;
+    double x,y,z,amult;
+    double u[31];//adp
+    double m[26];//multipoles
+  };
 void xdEditDlg::accept () {  
   QFile mas("xd.mas");
   QDateTime Time = QDateTime::currentDateTime();
@@ -973,8 +985,521 @@ void xdEditDlg::accept () {
   QString ttext = Time.toString("hh-mm-ss-dd-MM-yyyy");
   mas.copy("xd.mas_MCQsave"+ttext);
   mas.close();
-  mas.open(QIODevice::ReadOnly);
-  QStringList masli;
+  mas.open(QIODevice::ReadOnly|QIODevice::Text);
+  QStringList masli = QString(mas.readAll()).split('\n');
+  mas.close();
+  QStringList lsmBlock,restBlock,keyBlock,keyBlock2;
+  bool lsmb = true,keyb =false;
+  for (int i=0;i<masli.size();i++){
+    if (lsmb) {
+      lsmBlock.append(masli.at(i));
+//      printf("%s\n",masli.at(i).toStdString().c_str());
+    }else{
+      restBlock.append(masli.at(i));
+    }
+    if (masli.at(i).contains("END XDLSM"))lsmb = false;
+    if ((keyb)&&(!masli.at(i).contains("KAPPA"))) keyBlock.append(masli.at(i));
+    if (masli.at(i).contains("KEY     XYZ --U2-- ----U3---- ------U4------- M- -D- --Q-- ---O--- ----H----")) keyb=true;
+    if (masli.at(i).contains("KAPPA")) keyb=false;
+
+  }
+/*
+ * |       sscanf(line, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
+ * |              usage,
+ * |              &na,       //number of atoms
+ * |              &ntmx,     //number of displacement tensor components
+ * |              &npolmax,  //maximum level of multipole expansion
+ * |              &nz,       // number of kappa sets
+ * |              &nto,      //
+ * |              &nq,       //scale factors
+ * |              &next,     //extinction model
+ * |              &ncon,     //number of constraints
+ * |              &ntbl,     //number of scattering factor tables
+ * |              &ns,       //number of symmetry cards
+ * |              &nv,       //number of variables
+ * |              &nqq,      //
+ * |              &nc,       //number of cycles
+ * |              &nad);     //number of dummy atoms
+ *
+ * */
+  QString cid;
+  int na,ntmx,npolmax,nz,nto,nq,next,ncon,ntbl,ns,nv,nqq,nc,nad;
+  double r1o,r2o,r1,r2,r1w,r2w,gof,sig;//r-values
+  double a,b,c,d,e,f;//whgt
+  RES aatm;
+  QList<RES> oats,nats;
+  KAP akap;
+  QList<KAP> kaps; 
+  double extcn[7];
+  double out;
+  double *sc;
+
+  QFile res("xd.res");
+  if (!res.exists()) res.setFileName("xd.inp");
+  res.copy("xd.res_MCQsave"+ttext);
+  res.close();
+  res.open(QIODevice::ReadOnly|QIODevice::Text);
+  QStringList resli = QString(res.readAll()).split('\n');
+  res.close();
+  int lix,mli;
+  mli= lix=resli.indexOf(QRegExp("^USAGE.*"));
+  QStringList usag = resli.at(lix).split(' ',QString::SkipEmptyParts);
+  na      = usag.at( 1).toInt();
+  ntmx    = usag.at( 2).toInt();
+  npolmax = usag.at( 3).toInt();
+  nz      = usag.at( 4).toInt();
+  nto     = usag.at( 5).toInt();
+  nq      = usag.at( 6).toInt();
+  next    = usag.at( 7).toInt();
+  ncon    = usag.at( 8).toInt();
+  ntbl    = usag.at( 9).toInt();
+  ns      = usag.at(10).toInt();
+  nv      = usag.at(11).toInt();
+  nqq     = usag.at(12).toInt();
+  nc      = usag.at(13).toInt();
+  nad     = usag.at(14).toInt();
+  printf("%d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",na,ntmx,npolmax,nz,nto,nq,next,ncon,ntbl,ns,nv,nqq,nc,nad);
+  lix++;
+  QStringList rvals = resli.at(lix).split(' ',QString::SkipEmptyParts);
+  r1o = rvals.at( 0).toDouble();
+  r2o = rvals.at( 1).toDouble();
+  r1  = rvals.at( 2).toDouble();
+  r2  = rvals.at( 3).toDouble();
+  r1w = rvals.at( 4).toDouble();
+  r2w = rvals.at( 5).toDouble();
+  gof = rvals.at( 6).toDouble();
+  sig = rvals.at( 7).toDouble();
+  lix++;
+  QStringList wght = resli.at(lix).split(' ',QString::SkipEmptyParts);
+  a = wght.at( 0).toDouble();
+  b = wght.at( 1).toDouble();
+  c = wght.at( 2).toDouble();
+  d = wght.at( 3).toDouble();
+  e = wght.at( 4).toDouble();
+  f = wght.at( 5).toDouble();
+  QStringList adum;
+  for (int i=0; i<nad; i++) adum.append(QString("DUM%1").arg(i));
+  lix+=nad+1;
+
+  for (int i=0; i<na; i++){
+    QStringList stk= resli.at(lix).split(' ',QString::SkipEmptyParts);
+    strncpy(aatm.atom,stk.at( 0).toStdString().c_str(),8);
+    aatm.icor1   = stk.at( 1).toInt(); 
+    aatm.icor2  = stk.at( 2).toInt();
+    aatm.nax    = stk.at( 3).toInt();
+    aatm.nay    = stk.at( 4).toInt();
+    aatm.nay2   = stk.at( 5).toInt();
+    aatm.jtf    = stk.at( 6).toInt();
+    aatm.itbl   = stk.at( 7).toInt();
+    aatm.isfz   = stk.at( 8).toInt();
+    aatm.lmax   = stk.at( 9).toInt();
+    aatm.isym   = stk.at(10).toInt();
+    aatm.ichcon = stk.at(11).toInt();
+    aatm.x      = stk.at(12).toDouble();
+    aatm.y      = stk.at(13).toDouble();
+    aatm.z      = stk.at(14).toDouble();
+    aatm.amult  = stk.at(15).toDouble();
+    lix++;
+    stk= resli.at(lix).split(' ',QString::SkipEmptyParts);
+    for (int ui=0; ui<6;ui++) aatm.u[ui]=stk.at(ui).toDouble();
+    if (aatm.jtf>2){
+      lix++;
+      stk= resli.at(lix).split(' ',QString::SkipEmptyParts);
+      for (int ui=0; ui<5;ui++) aatm.u[ui+6]=stk.at(ui).toDouble();
+      lix++;
+      stk= resli.at(lix).split(' ',QString::SkipEmptyParts);
+      for (int ui=0; ui<5;ui++) aatm.u[ui+11]=stk.at(ui).toDouble();  
+    }
+    if (aatm.jtf>2){
+      lix++;
+      stk= resli.at(lix).split(' ',QString::SkipEmptyParts);
+      for (int ui=0; ui<5;ui++) aatm.u[ui+16]=stk.at(ui).toDouble();
+      lix++;
+      stk= resli.at(lix).split(' ',QString::SkipEmptyParts);
+      for (int ui=0; ui<5;ui++) aatm.u[ui+21]=stk.at(ui).toDouble();
+      lix++;
+      stk= resli.at(lix).split(' ',QString::SkipEmptyParts);
+      for (int ui=0; ui<5;ui++) aatm.u[ui+26]=stk.at(ui).toDouble();  
+    }
+    lix++;
+    stk= resli.at(lix).split(' ',QString::SkipEmptyParts);
+    if (npolmax<1) for (int mi=0; mi<2; mi++) aatm.m[mi] = stk.at(mi).toDouble();
+    if (npolmax==1) for (int mi=0; mi<5; mi++) aatm.m[mi] = stk.at(mi).toDouble();
+    if (npolmax>1) for (int mi=0; mi<10; mi++) aatm.m[mi] = stk.at(mi).toDouble();
+    if (npolmax>2){
+      lix++;
+      stk= resli.at(lix).split(' ',QString::SkipEmptyParts);
+      if (npolmax==3) for (int mi=0; mi<7; mi++) aatm.m[mi+10] = stk.at(mi).toDouble();
+      else for (int mi=0; mi<10; mi++) aatm.m[mi+10] = stk.at(mi).toDouble();  
+    }
+    if (npolmax==4) {
+      lix++;
+      stk= resli.at(lix).split(' ',QString::SkipEmptyParts);
+      for (int mi=0; mi<6; mi++) aatm.m[mi+20] = stk.at(mi).toDouble();    
+    }    
+    printf("-->%s\n",aatm.atom);
+    lix++;
+    oats.append(aatm);
+  }
+  printf("%s\n",resli.at(lix).toStdString().c_str());
+  for (int i=0;i<nz;i++){
+    QStringList kapss = resli.at(lix).split(' ',QString::SkipEmptyParts);
+    akap.ifz = kapss.at( 0).toInt();
+    for (int ki=0;ki<6;ki++) akap.k[ki]= kapss.at(ki+1).toDouble();
+    kaps.append(akap);
+    lix++;
+  }
+  printf("%s\n",resli.at(lix).toStdString().c_str());
+  QStringList exts = resli.at(lix).split(' ',QString::SkipEmptyParts);
+  for (int i=0; i<7; i++) extcn[i]= exts.at(i).toDouble();
+  lix++;
+  out=resli.at(lix).toDouble();
+  lix++;
+  QStringList scas = resli.at(lix).split(' ',QString::SkipEmptyParts);
+  sc=(double*) malloc(sizeof(double)*nq);
+  for (int i=0;i<nq;i++) sc[i]=scas.at(i).toDouble();
+  QStringList allLab;
+  QList<MyAtom> dummys;MyAtom du;
+  extern molekul mol;
+
+  for (int i=0; i<alle->size();i++) if (alle->at(i).an>-1) allLab.append(alle->at(i).Label);
+  int atsi=allLab.size();
+  for (int i=0; i<alle->size();i++) if (alle->at(i).an==-1) {
+    du.Label = alle->at(i).Label.toStdString().c_str();
+    du.pos=alle->at(i).pos;
+    mol.kart2frac(du.pos, du.fpos);
+    dummys.append(du);
+    allLab.append(du.Label);
+  }
+
+  int dumsi=adum.size();
+  for (int i=0; i<na;i++) {
+  //  "O(5)     C(10)     X  O(5)     H(14)    Y   R   2  1   3   4  NO      O(4)"
+    //int icor1,icor2,nax,nay,nay2,jtf,itbl,isfz,lmax,isym,ichcon;
+
+  printf("%-8s %-8s  %c  %-8s %-8s %c   %c   %d  %d %3d %3d  NO %-8s  !%-8s\n",
+		  oats.at(i).atom,
+		  (abs(oats.at(i).nax)<=na)?oats.at(abs(oats.at(i).nax)-1).atom:adum.at(abs(oats.at(i).nax)-na-1).toStdString().c_str(),
+		  (oats.at(i).icor1==1)?'X':(oats.at(i).icor1==2)?'Y':'Z',
+		  (oats.at(i).nay<=na)?oats.at(oats.at(i).nay-1).atom:adum.at(oats.at(i).nay-na-1).toStdString().c_str(),
+		  (oats.at(i).nay2<=na)?oats.at(oats.at(i).nay2-1).atom:adum.at(oats.at(i).nay2-na-1).toStdString().c_str(),
+		  (oats.at(i).icor2==1)?'X':(oats.at(i).icor2==2)?'Y':'Z',
+                  (oats.at(i).nax<0)?'L':'R',  
+		  oats.at(i).jtf,
+                  oats.at(i).itbl,
+		  oats.at(i).isfz,
+		  oats.at(i).lmax,
+		  (oats.at(i).ichcon)?oats.at(oats.at(i).ichcon-1).atom:"",
+		  (alle->size()>i)?alle->at(i).Label.toStdString().c_str():"!!"
+	);
+  
+  }
+
+  printf("\n%d==%d %d==%d\n\n",atsi,na,dumsi,nad);
+  for (int i=0; i<alle->size();i++) if (alle->at(i).an>-1) {
+    printf("%d:\n",i);
+    int j;
+    for (j=0; j<oats.size(); j++) if (alle->at(i).Label==oats.at(j).atom){break;}
+    if (j==oats.size()) {
+      keyBlock2.append(keyline);
+      for (j=0; j<oats.size(); j++) if (oa.Label==oats.at(j).atom) {break;}
+      aatm=oats.at(j);
+
+    }
+    else {
+      keyBlock2.append(keyBlock.at(j));
+      aatm=oats.at(j);
+    }
+    strncpy(aatm.atom,alle->at(i).Label.toStdString().c_str(),8);
+    if (abs(oats.at(j).nax)<=na){
+      aatm.nax=allLab.indexOf(oats.at(abs(oats.at(j).nax)-1).atom);
+      if (aatm.nax==-1) aatm.nax=allLab.indexOf(chm->at(0).Label);
+      aatm.nax++;
+      if (oats.at(j).nax<0) aatm.nax*=-1;
+    }else{
+      aatm.nax=oats.at(j).nax-na+atsi;
+    }
+    if (abs(oats.at(j).nay)<=na){
+      aatm.nay=allLab.indexOf(oats.at(abs(oats.at(j).nay)-1).atom);
+      if (aatm.nay==-1) aatm.nay=allLab.indexOf(chm->at(0).Label);
+      aatm.nay++;
+    }else{
+      aatm.nay=oats.at(j).nay-na+atsi;
+    }
+    if (abs(oats.at(j).nay2)<=na){
+      aatm.nay2=allLab.indexOf(oats.at(abs(oats.at(j).nay2)-1).atom);
+      if (aatm.nay2==-1) aatm.nay2=allLab.indexOf(chm->at(0).Label);
+      aatm.nay2++;
+    }else{
+      aatm.nay2=oats.at(j).nay2-na+atsi;
+    }/*
+    aatm.icor1= oats.at(j).icor1;
+    aatm.icor2= oats.at(j).icor2;
+    aatm.jtf  = oats.at(j).jtf;
+    aatm.itbl = oats.at(j).itbl;
+    aatm.isfz = oats.at(j).isfz;
+    aatm.lmax = oats.at(j).lmax;
+    aatm.ichcon = oats.at(j).ichcon;*/
+    nats.append(aatm);
+  }
+  for (int i = 0; i<nats.size(); i++) {
+  printf("%-8s %-8s  %c  %-8s %-8s %c   %c   %d  %d %3d %3d  NO %-8s\n",
+		  nats.at(i).atom,
+		  (abs(nats.at(i).nax)<=na)?nats.at(abs(nats.at(i).nax)-1).atom:adum.at(abs(nats.at(i).nax)-na-1).toStdString().c_str(),
+		  (nats.at(i).icor1==1)?'X':(nats.at(i).icor1==2)?'Y':'Z',
+		  (nats.at(i).nay<=na)?nats.at(nats.at(i).nay-1).atom:adum.at(nats.at(i).nay-na-1).toStdString().c_str(),
+		  (nats.at(i).nay2<=na)?nats.at(nats.at(i).nay2-1).atom:adum.at(nats.at(i).nay2-na-1).toStdString().c_str(),
+		  (nats.at(i).icor2==1)?'X':(nats.at(i).icor2==2)?'Y':'Z',
+                  (nats.at(i).nax<0)?'L':'R',  
+		  nats.at(i).jtf,
+                  nats.at(i).itbl,
+		  nats.at(i).isfz,
+		  nats.at(i).lmax,
+		  (nats.at(i).ichcon)?nats.at(nats.at(i).ichcon-1).atom:""
+	);
+  }
+
+  res.open(QIODevice::WriteOnly|QIODevice::Text);
+  for (int i=0; i<mli; i++) {res.write(resli.at(i).toLatin1());res.write("\n");}
+  res.write(QString("USAGE %1 %2 %3 %4 %5 %6 %7 %8 %9 %10 %11 %12 %13 %14\n")
+		  .arg(atsi)
+		  .arg(ntmx)
+		  .arg(npolmax)
+		  .arg(nz)
+		  .arg(nto)
+		  .arg(nq)
+		  .arg(next)
+		  .arg(ncon)
+		  .arg(ntbl)
+		  .arg(ns)
+		  .arg(nv)
+		  .arg(nqq)
+		  .arg(nc)
+		  .arg(dumsi)
+		  .toLatin1());
+  res.write(QString(" %1 %2 %3 %4 %5 %6 %7 %8\n")
+		  .arg( r1o ,9,'f',6)
+		  .arg( r2o ,9,'f',6)
+		  .arg( r1  ,9,'f',6)
+		  .arg( r2  ,9,'f',6)
+		  .arg( r1w ,9,'f',6)
+		  .arg( r2w ,9,'f',6)
+		  .arg( gof ,9,'f',6)
+		  .arg( sig ,9,'E',3).toLatin1()); 
+  res.write(QString(" %1 %2 %3 %4 %5 %6\n")
+		  .arg(a,9,'f',6)
+		  .arg(b,9,'f',6)
+		  .arg(c,9,'f',6)
+		  .arg(d,9,'f',6)
+		  .arg(e,9,'f',6)
+		  .arg(f,9,'f',6).toLatin1());
+  for (int i=0; i<dumsi; i++) 
+    res.write(QString(" %1 %2 %3\n")
+		    .arg(dummys.at(i).fpos.x,14,'f',8)
+		    .arg(dummys.at(i).fpos.y,14,'f',8)
+		    .arg(dummys.at(i).fpos.z,14,'f',8).toLatin1());
+  for (int i=0; i<atsi; i++){
+    res.write(QString("%1%2%3%4%5%6%7%8%9%10%11%12%13%14%15%16\n")
+		    .arg(nats.at(i).atom,-8)
+		    .arg(nats.at(i).icor1,3  )
+		    .arg(nats.at(i).icor2,2  )
+		    .arg(nats.at(i).nax  ,5  )
+		    .arg(nats.at(i).nay  ,4  )
+		    .arg(nats.at(i).nay2 ,4  )
+		    .arg(nats.at(i).jtf  ,2  )
+		    .arg(nats.at(i).itbl ,3  )
+		    .arg(nats.at(i).isfz ,3  )
+		    .arg(nats.at(i).lmax ,2  )
+		    .arg(nats.at(i).isym ,3  )
+		    .arg(nats.at(i).ichcon,4 )
+		    .arg(nats.at(i).x     ,10,'f',6 )
+		    .arg(nats.at(i).y     ,10,'f',6  )
+		    .arg(nats.at(i).z     ,10,'f',6  )
+		    .arg(nats.at(i).amult ,7,'f',4 ).toLatin1());
+    res.write(QString(" %1 %2 %3 %4 %5 %6\n")
+		    .arg(nats.at(i).u[0],9,'f',6)
+		    .arg(nats.at(i).u[1],9,'f',6)
+		    .arg(nats.at(i).u[2],9,'f',6)
+		    .arg(nats.at(i).u[3],9,'f',6)
+		    .arg(nats.at(i).u[4],9,'f',6)
+		    .arg(nats.at(i).u[5],9,'f',6).toLatin1());
+    int gg=0;
+    if (nats.at(i).jtf==3) gg=10;
+    if (nats.at(i).jtf==4) gg=25;
+    for (int j=0; j<gg;j+=5)
+    res.write(QString(" %1 %2 %3 %4 %5\n")
+		    .arg(nats.at(i).u[j+6],13,'f',6)
+		    .arg(nats.at(i).u[j+6],13,'f',6)
+		    .arg(nats.at(i).u[j+6],13,'f',6)
+		    .arg(nats.at(i).u[j+6],13,'f',6)
+		    .arg(nats.at(i).u[j+6],13,'f',6).toLatin1());
+    switch (npolmax) {
+	    case 1://dip
+		    //"  6.1918  0.0000  0.0187 -0.0723  0.0000 -0.1097  0.0000  0.0000  0.0501  0.0239"
+		    //" -0.1097  0.0000  0.0000  0.0501  0.0239
+		    res.write(QString(" %1 %2 %3 %4 %5\n")
+				    .arg(nats.at(i).m[0],7,'f',4)
+				    .arg(nats.at(i).m[1],7,'f',4)
+				    .arg(nats.at(i).m[2],7,'f',4)
+				    .arg(nats.at(i).m[3],7,'f',4)
+				    .arg(nats.at(i).m[4],7,'f',4).toLatin1());
+
+		    break;
+	    case 2://quad
+		    res.write(QString(" %1 %2 %3 %4 %5 %6 %7 %8 %9 %10\n")
+				    .arg(nats.at(i).m[0],7,'f',4)
+				    .arg(nats.at(i).m[1],7,'f',4)
+				    .arg(nats.at(i).m[2],7,'f',4)
+				    .arg(nats.at(i).m[3],7,'f',4)
+				    .arg(nats.at(i).m[4],7,'f',4)
+				    .arg(nats.at(i).m[5],7,'f',4)
+				    .arg(nats.at(i).m[6],7,'f',4)
+				    .arg(nats.at(i).m[7],7,'f',4)
+				    .arg(nats.at(i).m[8],7,'f',4)
+				    .arg(nats.at(i).m[9],7,'f',4)
+				    .toLatin1());
+		    break;
+	    case 3://okt
+		    res.write(QString(" %1 %2 %3 %4 %5 %6 %7 %8 %9 %10\n %11 %12 %13 %14 %15 %16 %17\n")
+				    .arg(nats.at(i).m[0],7,'f',4)
+				    .arg(nats.at(i).m[1],7,'f',4)
+				    .arg(nats.at(i).m[2],7,'f',4)
+				    .arg(nats.at(i).m[3],7,'f',4)
+				    .arg(nats.at(i).m[4],7,'f',4)
+				    .arg(nats.at(i).m[5],7,'f',4)
+				    .arg(nats.at(i).m[6],7,'f',4)
+				    .arg(nats.at(i).m[7],7,'f',4)
+				    .arg(nats.at(i).m[8],7,'f',4)
+				    .arg(nats.at(i).m[9],7,'f',4)
+				    .arg(nats.at(i).m[10],7,'f',4)
+				    .arg(nats.at(i).m[11],7,'f',4)
+				    .arg(nats.at(i).m[12],7,'f',4)
+				    .arg(nats.at(i).m[13],7,'f',4)
+				    .arg(nats.at(i).m[14],7,'f',4)
+				    .arg(nats.at(i).m[15],7,'f',4)
+				    .arg(nats.at(i).m[16],7,'f',4)
+				    .toLatin1());
+		    break;
+	    case 4://hex
+		    res.write(QString(" %1 %2 %3 %4 %5 %6 %7 %8 %9 %10\n %11 %12 %13 %14 %15 %16 %17 %18 %19 %20\n %21 %22 %23 %24 %25 %26\n")
+				    .arg(nats.at(i).m[0],7,'f',4)
+				    .arg(nats.at(i).m[1],7,'f',4)
+				    .arg(nats.at(i).m[2],7,'f',4)
+				    .arg(nats.at(i).m[3],7,'f',4)
+				    .arg(nats.at(i).m[4],7,'f',4)
+				    .arg(nats.at(i).m[5],7,'f',4)
+				    .arg(nats.at(i).m[6],7,'f',4)
+				    .arg(nats.at(i).m[7],7,'f',4)
+				    .arg(nats.at(i).m[8],7,'f',4)
+				    .arg(nats.at(i).m[9],7,'f',4)
+				    .arg(nats.at(i).m[10],7,'f',4)
+				    .arg(nats.at(i).m[11],7,'f',4)
+				    .arg(nats.at(i).m[12],7,'f',4)
+				    .arg(nats.at(i).m[13],7,'f',4)
+				    .arg(nats.at(i).m[14],7,'f',4)
+				    .arg(nats.at(i).m[15],7,'f',4)
+				    .arg(nats.at(i).m[16],7,'f',4)
+				    .arg(nats.at(i).m[17],7,'f',4)
+				    .arg(nats.at(i).m[18],7,'f',4)
+				    .arg(nats.at(i).m[19],7,'f',4)
+				    .arg(nats.at(i).m[20],7,'f',4)
+				    .arg(nats.at(i).m[21],7,'f',4)
+				    .arg(nats.at(i).m[22],7,'f',4)
+				    .arg(nats.at(i).m[23],7,'f',4)
+				    .arg(nats.at(i).m[24],7,'f',4)
+				    .arg(nats.at(i).m[25],7,'f',4)
+				    .toLatin1());
+		    break;
+	    default ://other + mono
+		    res.write(QString(" %1 %2 %3 %4 %5\n")
+				    .arg(nats.at(i).m[0],7,'f',4)
+				    .arg(nats.at(i).m[1],7,'f',4)
+				    .toLatin1());
+    
+    } 
+  }
+
+
+
+  for (int i=0;i<nz;i++){
+    res.write(QString("%1 %2 %3 %4 %5 %6 %7\n")
+		    .arg(kaps.at(i).ifz,3)
+		    .arg(kaps.at(i).k[0],11,'f',6)
+		    .arg(kaps.at(i).k[1],11,'f',6)
+		    .arg(kaps.at(i).k[2],11,'f',6)
+		    .arg(kaps.at(i).k[3],11,'f',6)
+		    .arg(kaps.at(i).k[4],11,'f',6)
+		    .arg(kaps.at(i).k[5],11,'f',6).toLatin1());
+  }
+  res.write(QString("%1 %2 %3 %4 %5 %6 %7\n")
+		    .arg(extcn[0],10,'E',4)
+		    .arg(extcn[1],10,'E',4)
+		    .arg(extcn[2],10,'E',4)
+		    .arg(extcn[3],10,'E',4)
+		    .arg(extcn[4],10,'E',4)
+		    .arg(extcn[5],10,'E',4)
+		    .arg(extcn[6],10,'E',4).toLatin1());
+  res.write(QString("%1\n").arg(out,10,'E',4).toLatin1());
+  for (int i=0; i<nq; i++){
+    res.write(QString("%1").arg(sc[i],12,'E',6).toLatin1());
+    if (((i+1)%6)==0) res.write("\n");
+  }
+  res.write("\n");
+  res.close();
+  mas.open(QIODevice::WriteOnly|QIODevice::Text);
+  for (int i=0; i<lsmBlock.size(); i++){
+    mas.write(lsmBlock.at(i).toLatin1());
+    mas.write("\n");
+    if (lsmBlock.at(i).startsWith("ATOM "))break;
+  }
+  for (int i=0; i<nats.size(); i++){
+    //%-8s %-8s  %c  %-8s %-8s %c   %c   %d  %d %3d %3d  NO %-8s\n
+    mas.write(QString("%1 %2  %3  %4 %5 %6   %7   %8  %9 %10 %11  NO %12\n")
+		    .arg(nats.at(i).atom,-8)
+		    .arg((abs(nats.at(i).nax)<=na)?nats.at(abs(nats.at(i).nax)-1).atom:adum.at(abs(nats.at(i).nax)-na-1),-8)
+		    .arg((nats.at(i).icor1==1)?'X':(nats.at(i).icor1==2)?'Y':'Z')
+		    .arg((nats.at(i).nay<=na)?nats.at(nats.at(i).nay-1).atom:adum.at(nats.at(i).nay-na-1),-8)
+		    .arg((nats.at(i).nay2<=na)?nats.at(nats.at(i).nay2-1).atom:adum.at(nats.at(i).nay2-na-1),-8)
+		    .arg((nats.at(i).icor2==1)?'X':(nats.at(i).icor2==2)?'Y':'Z')
+		    .arg((nats.at(i).nax<0)?'L':'R')
+		    .arg(nats.at(i).jtf)
+		    .arg(nats.at(i).itbl)
+		    .arg(nats.at(i).isfz,3)
+		    .arg(nats.at(i).lmax,3)
+		    .arg((nats.at(i).ichcon)?nats.at(nats.at(i).ichcon-1).atom:"",-8).toLatin1());
+  }
+  for (int i=0; i<dumsi; i++){
+    mas.write(QString("DUM%1 %2 %3 %4\n")
+		    .arg(i,-6)
+		    .arg(dummys.at(i).fpos.x,14,'f',8)
+		    .arg(dummys.at(i).fpos.y,14,'f',8)
+		    .arg(dummys.at(i).fpos.z,14,'f',8).toLatin1());
+  }
+  int gg=lsmBlock.indexOf(QRegExp("^END ATOM\\s*"));
+  printf("%d !!!\n",gg);
+  for (int i=gg; i<lsmBlock.size(); i++){
+    mas.write(lsmBlock.at(i).toLatin1());
+    mas.write("\n");
+    if (lsmBlock.at(i).startsWith("KEY "))break;
+  }
+  for (int i=0; i<keyBlock2.size();i++){
+    mas.write(keyBlock2.at(i).toLatin1());
+    mas.write("\n");
+  
+  }
+  gg=lsmBlock.indexOf(QRegExp("^KAPPA\\s*.*"));
+  printf("%d !!!\n",gg);
+  for (int i=gg; i<lsmBlock.size(); i++){
+    mas.write(lsmBlock.at(i).toLatin1());
+    mas.write("\n");
+  }
+
+  for (int i=0; i<restBlock.size();i++) {
+    mas.write(restBlock.at(i).toLatin1());
+    mas.write("\n");  
+  }
+  mas.close();
+  /*
   while (!mas.atEnd()){
     QString line = QString(mas.readLine(150));
     masli.append(line);
@@ -1103,6 +1628,6 @@ void xdEditDlg::accept () {
   res.open(QIODevice::WriteOnly);
   res.write(resli.join("").toLatin1(),resli.join("").length());
   res.close();
-  if (!QFile::exists ("xd.res")) res.copy("xd.res");
+  if (!QFile::exists ("xd.res")) res.copy("xd.res");*/
   done(QDialog::Accepted);
 }

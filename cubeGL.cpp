@@ -1149,7 +1149,7 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 	    "Hf","Ta","W","Re","Os","Ir","Pt","Au","Hg","Tl","Pb","Bi","Po","At","Rn","Fr","Ra",
 	    "Ac","Th","Pa","U","Np","Pu","Am","Cm","Bk","Cf","Es","Fm","Md","No","Lr","Ku","Ha","Rf","Ns","Hs","Mt"};
 
-	  MyAtom invom;
+	  MyAtom invom,orgAtom;
 	  double soll_abst,gg;
 	  MyBond bond;
 	  if (ce.size()==0)
@@ -1201,6 +1201,7 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 	  invom.an=xdinp[index].OrdZahl;
 	  invom.part=xdinp[index].part;
 	  invom.Symbol=PSE_Symbol[xdinp[index].OrdZahl];
+          orgAtom=invom;
 	  if (rename){
 	  invom.Label=rn.Label;
 	  invom.an=rn.an;
@@ -1295,7 +1296,7 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 	    CEnvironment all;	  
 	    MyAtom xdall;
 	    //	    printf
-	    for (int i=0; i<xdinp.size(); i++) if(xdinp[i].OrdZahl>-2) {
+	    for (int i=0; i<xdinp.size(); i++) {//if (xdinp[i].OrdZahl>-2){
 	      xdall.Label=xdinp[i].atomname;
 	      xdall.pos=xdinp[i].kart;
 	      xdall.an=xdinp[i].OrdZahl;
@@ -1305,11 +1306,8 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 	      all.append(xdall);
 
 	    }
-printf("jetzt wirds lustig\n");
-	    xdEditDlg *id=new xdEditDlg(&cel,&cll,&all);
-printf("jetzt wirds rigtig lustig\n");
+	    xdEditDlg *id=new xdEditDlg(&cel,&cll,&all,orgAtom);
 	    id->update();
-printf("jetzt wirds super lustig\n");
 	    if (QDialog::Accepted==id->exec()) emit reloadXD() ;
 	  }
 	  setMatrix();

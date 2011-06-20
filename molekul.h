@@ -95,7 +95,7 @@ static V3 erg=V3(0,0,0);
 typedef struct MyAtom{
   QString Label;
   QString Symbol;
-  V3 pos;
+  V3 pos,fpos;
 double screenX,screenY;
   int an;
   int part;
