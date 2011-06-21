@@ -413,7 +413,7 @@ void  CubeGL::toggInvEdit(bool on){
 void CubeGL::toggXDSetup(bool on){
   xdSetupMode=on;
 
-  printf("ist %s\n",(on)?"":"nicht");
+//  printf("ist %s\n",(on)?"":"nicht");
 }
 
 void  CubeGL::setLabels(bool on){
@@ -1136,12 +1136,16 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 
 	//888
 	if ((xdinp.size())&&((invEditAble)||(xdSetupMode))) {
-	  if (xdinp[index].OrdZahl<0)return;
+//	  printf("¿%d %d %d\n",xdSetupMode,rename,xdinp[index].OrdZahl);
+	  if ((!rename)&&(xdinp[index].OrdZahl<0))return;
+	  if ((rename)&&(xdinp[index].OrdZahl==-1)) return;
+	  if (xdinp[index].sg) return; 
+//	  printf("!%d %d %d sg%d\n",xdSetupMode,rename,xdinp[index].OrdZahl,xdinp[index].sg);
 	  int na=0;
 	  for (int i=0; (i<xdinp.size())&&(xdinp[i].OrdZahl>=0); i++) na++;
-	  if (((int)index)>na) {
-	    return;
-	  }
+	  //if (((int)index)>na) {
+	  //  return;
+	  //}
 	  static char PSE_Symbol[109][3] = {"H","He","Li","Be","B","C","N","O","F","Ne","Na","Mg","Al","Si","P","S","Cl","Ar",
 	    "K","Ca","Sc","Ti","V","Cr","Mn","Fe","Co","Ni","Cu","Zn","Ga","Ge","As","Se","Br","Kr",
 	    "Rb","Sr","Y","Zr","Nb","Mo","Tc","Ru","Rh","Pd","Ag","Cd","In","Sn","Sb","Te","I","Xe",
@@ -1203,19 +1207,20 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 	  invom.Symbol=PSE_Symbol[xdinp[index].OrdZahl];
           orgAtom=invom;
 	  if (rename){
+//	    printf("ich nename\n");
 	  invom.Label=rn.Label;
 	  invom.an=rn.an;
 	  invom.Symbol=PSE_Symbol[rn.an];
 	  }
 	  cel.append(invom);	  
 	  for (int i=0;i<xdinp.size();i++){
-	    if((xdinp[i].OrdZahl<0)||(xdinp[index].OrdZahl<0)) continue;
+	    if((xdinp[i].OrdZahl<0)||(invom.an<0)) continue;
 	    if ((xdinp[i].part>0)&&(xdinp[index].part>0)&&(xdinp[i].part!=xdinp[index].part)) continue;
-	    if ((xdinp[i].OrdZahl<83)&&(xdinp[index].OrdZahl<83)&&(xdinp[i].OrdZahl>=0)&&(xdinp[index].OrdZahl>=0)){
+	    if ((xdinp[i].OrdZahl<83)&&(invom.an<83)&&(xdinp[i].OrdZahl>=0)&&(invom.an>=0)){
 	      soll_abst=((mol.Kovalenz_Radien[xdinp[i].OrdZahl]+
-				      mol.Kovalenz_Radien[xdinp[index].OrdZahl])
+				      mol.Kovalenz_Radien[invom.an])
 			      -(0.08*fabs((double)mol.ElNeg[xdinp[i].OrdZahl]
-					      -mol.ElNeg[xdinp[index].OrdZahl])))*1.2;
+					      -mol.ElNeg[invom.an])))*1.2;
 	      gg=100.0*sqrt( Distance(xdinp[i].kart,xdinp[index].kart));
 	      if ((gg<soll_abst)&&(!(xdinp[i].kart==cel[0].pos))){		
 		invom.Label=xdinp[i].atomname;

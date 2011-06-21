@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=269;
+int rev=271;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -1460,6 +1460,7 @@ void MyWindow::createRenameWgd(){
   renamDock->hide();
   enterRenameMode = renamDock->toggleViewAction ();
   connect(enterRenameMode,SIGNAL(triggered(bool)),this,SLOT(renamUpdate(bool)));
+  connect(renamDock,SIGNAL(visibilityChanged(bool)),this,SLOT(renamUpdate(bool)));
   renamDock->setFeatures(
 		  QDockWidget::DockWidgetMovable|
 		  QDockWidget::DockWidgetFloatable|
@@ -1484,6 +1485,7 @@ void MyWindow::createRenameWgd(){
   dsm= new QSignalMapper(this);
   sfacla->addWidget(pserbt[0] = new QRadioButton("??"));
   dsm->setMapping(pserbt[0],"?");
+  pserbt[0]->hide();
   connect(pserbt[0], SIGNAL(clicked()), dsm, SLOT(map()));
   for (int i=1; i<109; i++){
     sfacla->addWidget(pserbt[i] = new QRadioButton(mol.pse(i-1)));
@@ -1618,10 +1620,18 @@ bool MyWindow::isLabelInUse(){
     alab.append(asymmUnit.at(i).atomname);
   }
   QString nn=nextLabel;
-  return (alab.contains(nn,Qt::CaseInsensitive));
+  bool inu=(alab.contains(nn,Qt::CaseInsensitive));
+//  printf("%s\n",(inu)?"Ja":"Nein");
+  cubeGL->rename=!inu;
+  cubeGL->toggXDSetup(!inu);
+//   printf("rename: -->%s\n",(cubeGL->rename)?"Ja":"Nein");
+//   printf("xdSetupMode: -->%s\n",(cubeGL->xdSetupMode)?"Ja":"Nein");
+
+  return inu;
 }
 
 void MyWindow::addNewScatteringFactor(int oz){
+  qDebug()<<mol.pse(oz)<<oz<<"This does not work! (Yet)"; 
   printf("geht (noch) nicht!\n"); 
 }
 
@@ -1634,10 +1644,9 @@ void MyWindow::renamUpdate(bool vis){
     updateLabel();
     renamDock->show();
     renamDock->raise();
-    cubeGL->rename=true;
-    cubeGL->toggXDSetup(true);
-    printf("sollte\n");
-  }
+//    printf("sollte\n");
+  }//else {     printf("sollte nicht\n");   }
+
 }
 
 void MyWindow::genMoliso() {

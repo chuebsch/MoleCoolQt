@@ -62,6 +62,8 @@ Q_OBJECT
   *Z2,*Zm,*Z3,*Z_3,*Z4,*Z_4;   
  QGroupBox * sRGroupBox ;
  MyAtom oa;
+ QMap<int,int> atypen;
+ QMap<int,int> monocharge;
 	public:
   QLabel sLabel;
   QStringList duminuse;
