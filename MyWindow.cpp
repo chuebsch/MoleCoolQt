@@ -2128,6 +2128,7 @@ void MyWindow::searchchanged(bool current,bool back){
 void MyWindow::reloadXDfiles(){
   someThingToRestore();
   loadFile(QDir::currentPath()+"/xd.mas",mol.gd);
+  updateLabel();
 }
 
 void MyWindow::reloadFiles(){

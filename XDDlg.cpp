@@ -1221,12 +1221,15 @@ void xdEditDlg::accept () {
       for (j=0; j<oats.size(); j++) if (oa.Label==oats.at(j).atom) {break;}
     }
     if ((j==oats.size())||(oa.Label==oats.at(j).atom)){
+      if (j==oats.size()) {
       V3 fpo;
       mol.kart2frac(chm->takeAt(0).pos,fpo);
       aatm.x=fpo.x;
       aatm.y=fpo.y;
       aatm.z=fpo.z;
       aatm.amult=1.0;
+      }else aatm=oats.at(j);
+
 //      printf("%s %s %s\n",chm->at(0).Label.toStdString().c_str(),oa.Label.toStdString().c_str(),alle->at(i).Label.toStdString().c_str());
 
       strncpy(aatm.atom,alle->at(i).Label.toStdString().c_str(),8);
@@ -1243,14 +1246,15 @@ void xdEditDlg::accept () {
       if (alle->at(i).an!=oa.an){
 	aatm.m[0]=monocharge.value(aatm.itbl);
 	for (int mm=1; mm<26; mm++) aatm.m[mm]=0;
-      }
-      if (aatm.jtf==2) {
-	aatm.u[0]=aatm.u[1]=aatm.u[2]=0.05;
-	for (int uu = 3; uu<31; uu++) aatm.u[uu]=0;      
-      }
-      else {
-      aatm.u[0]=0.05;
-      for (int uu = 1; uu<31; uu++) aatm.u[uu]=0;
+      
+	if (aatm.jtf==2) {
+	  aatm.u[0]=aatm.u[1]=aatm.u[2]=0.05;
+	  for (int uu = 3; uu<31; uu++) aatm.u[uu]=0;      
+	}
+	else {
+	  aatm.u[0]=0.05;
+	  for (int uu = 1; uu<31; uu++) aatm.u[uu]=0;
+	}
       }
       aatm.ichcon=aatm.isym=0;
       keyBlock2.append(keyline);
