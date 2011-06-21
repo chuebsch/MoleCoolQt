@@ -18,14 +18,14 @@ Q_OBJECT
   XDDlg(CEnvironment ch,const Connection cll,CEnvironment lc,CEnvironment *all,QWidget *parent = 0,xdEditDlg *id=0 );
   QString name;
   Connection cl;
-  QStringList dkilllist;
+  //QStringList dkilllist;
   QStringList duminuse;
   CEnvironment locCo;
   V3 mitsav; 
 public slots:
   void setLinMode();
   void setXprMode();
-  void killDuMode();
+  //void killDuMode();
  protected:
   void initializeGL();
   void resizeGL(int width, int height);
@@ -33,7 +33,7 @@ public slots:
   void mousePressEvent(QMouseEvent *event);
   void mouseMoveEvent(QMouseEvent *event);
  private:
-  CEnvironment *alle;
+  CEnvironment alle;
   int imFokus;
   int oldindex;
   int dummyMode;
@@ -74,7 +74,7 @@ Q_OBJECT
   MyAtom ato;
   int atooo;
   QString reststr;
-  CEnvironment *alle;
+  CEnvironment alle;
   QComboBox *ax1lab;
   QComboBox *ax2lab;
   QComboBox *ax1type;
@@ -90,7 +90,7 @@ Q_OBJECT
   QString checkSymmOnAx(V3 ax,double TOL=0.03);
   CEnvironment locCo;
   XDDlg *id;
-  CEnvironment calcAxis(QString masstr,CEnvironment *all);
+  CEnvironment calcAxis(QString masstr);
   QStatusBar *statbar;
 public slots:
   void setKeyLine(const QString &s);	

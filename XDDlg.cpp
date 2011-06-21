@@ -9,8 +9,8 @@ XDDlg::XDDlg(CEnvironment ch,Connection cll,CEnvironment lc,CEnvironment *all,QW
    setFormat(QGLFormat(QGL::DoubleBuffer | QGL::DepthBuffer) );
    papi=invD;
    locCo=lc;
-   alle=all;
-   dkilllist.clear();
+   alle=*all;
+   //dkilllist.clear();
    dummyMode=0;
    ce=ch;
    V3 mitte(0,0,0);
@@ -145,7 +145,7 @@ void XDDlg::mousePressEvent(QMouseEvent *event){
      }else if (nahdai<ce.size()) {
        GLuint index=nahdai;
        if(dummyMode){
-	 if ((dummyMode==3)&&(ce.at(index).an<0)) {
+         /*if ((dummyMode==3)&&(ce.at(index).an<0)) {
 	   if (duminuse.contains(ce.at(index).Label,Qt::CaseInsensitive)){
 	     emit message("Sorry this dummy is still in use! Press kill button again, if you want!");
 	     for (int oo=0; oo<duminuse.size();oo++) std::cout<<duminuse.at(oo).toStdString()<<std::endl;
@@ -156,7 +156,7 @@ void XDDlg::mousePressEvent(QMouseEvent *event){
 	   }
 	   dkilllist.append(ce.at(index).Label);
 	   emit message(QString("You killed %1.").arg(ce.at(index).Label));
-	   alle->removeAt(alle->indexOf(ce.at(index))); 
+           alle.removeAt(alle.indexOf(ce.at(index)));
 	   emit delatom(ce.at(index));
 	   ce.removeAt(index);
 	   dummyMode=0;
@@ -169,7 +169,7 @@ void XDDlg::mousePressEvent(QMouseEvent *event){
 	   this->setCursor(Qt::ArrowCursor);
 	   updateGL();
 	   return;
-	 }
+         }*/
 	 if (!durchlauf) emit message(QString("You clicked on %1. Click on next atom now!").arg(ce.at(index).Label));
 	 if (!durchlauf) dpos=V3(0,0,0);
 	 dpos+=Normalize(ce.at(index).pos-ce.at(0).pos);
@@ -177,16 +177,19 @@ void XDDlg::mousePressEvent(QMouseEvent *event){
 	 if ((durchlauf==2)){
 	   emit message(QString("You clicked on %1. and %2").arg(ce.at(oldindex).Label).arg(ce.at(index).Label));
 	   MyAtom newDummy;
-	   QString prev=alle->at(alle->size()-1).Label;
-	   prev.remove(0,3);
-	   int num = prev.toInt();
-	   newDummy.Label="dum"+QString::number(num+1);
+           QString prev="DUM-1";
+           for (int i=0; i<alle.size();i++) if (alle.at(i).an==-1) prev=alle.at(i).Label;
+           prev.remove(0,3);
+           int num = prev.toInt()+1;
+
+           newDummy.Label="DUM"+QString::number(num);
 	   if (dummyMode==1)newDummy.pos=Normalize(dpos)+ce.at(0).pos;
 	   if (dummyMode==2)newDummy.pos=(Normalize(ce.at(index).pos-ce.at(0).pos)%dpos)+ce.at(0).pos;
 	   newDummy.an=-1;
+           duminuse.append(newDummy.Label);
 	   ce.append(newDummy);
-	   alle->append(newDummy);
-	   allLab.append(newDummy.Label);
+           alle.append(newDummy);
+           allLab.append(newDummy.Label);
 	   emit addatom(newDummy);
 	   this->setCursor(Qt::ArrowCursor);
 	   dummyMode=0;
@@ -234,7 +237,7 @@ void XDDlg::mouseMoveEvent(QMouseEvent *event){
 }
 void XDDlg::setLinMode(){this->setCursor(Qt::CrossCursor);dummyMode=1;durchlauf=0;emit message("To create a linear-combination dummy click on two atoms bonded to the central atom.");}
 void XDDlg::setXprMode(){this->setCursor(Qt::CrossCursor);dummyMode=2;durchlauf=0;emit message("To create a cross-product dummy click on two atoms bonded to the central atom.");}
-void XDDlg::killDuMode(){this->setCursor(Qt::CrossCursor);dummyMode=3;durchlauf=0;emit message("Click on a dummy atom to remove it from the atoms list.");}
+//void XDDlg::killDuMode(){this->setCursor(Qt::CrossCursor);dummyMode=3;durchlauf=0;emit message("Click on a dummy atom to remove it from the atoms list.");}
 #define TWOPI 6.28318530719586
 #define C cos(TWOPI/(double)i)
 #define S sin(TWOPI/(double)i)
@@ -627,7 +630,7 @@ void XDDlg::draw(){
   glPopMatrix();
   glPopMatrix();
 }
-CEnvironment xdEditDlg::calcAxis(QString masstr,CEnvironment *all){
+CEnvironment xdEditDlg::calcAxis(QString masstr){
   MyAtom xp,yp,zp;
   MyAtom at0,at1,at2;
   reststr="  ";
@@ -635,24 +638,25 @@ CEnvironment xdEditDlg::calcAxis(QString masstr,CEnvironment *all){
   int lastatom=0;
   QStringList parsed=masstr.split(" ",QString::SkipEmptyParts);
   for (int i=7; i<parsed.size();i++) reststr+=parsed.at(i)+"  "+((i==8)?" ":(i==9)?" ":"");
-  for (int i=0; i<all->size();i++) if (!all->at(i).Label.compare(parsed.at(0),Qt::CaseInsensitive)) 
-  {atooo=i+1;ato=all->at(i);find=1;break;}
+  for (int i=0; i<alle.size();i++) if (!alle.at(i).Label.compare(parsed.at(0),Qt::CaseInsensitive))
+  {atooo=i+1;ato=alle.at(i);find=1;break;}
   if (!find) {
-    for (int i=0; i<all->size();i++) if (Distance(chm->at(0).pos,all->at(i).pos)<0.1) all->removeAt(i);
-    for (int i=0; i<all->size();i++) {if (all->at(i).an==chm->at(0).an) lastatom=i+1; }
-    all->insert(lastatom,chm->at(0)); 
+    for (int i=0; i<alle.size();i++) if (Distance(chm->at(0).pos,alle.at(i).pos)<0.1) alle.removeAt(i);
+    for (int i=0; i<alle.size();i++) {if (alle.at(i).an==chm->at(0).an) lastatom=i+1; }
+    alle.insert(lastatom,chm->at(0));
     atooo=lastatom+1;
-    ato=all->at(lastatom);
+    ato=alle.at(lastatom);
   }
-  for (int i=0; i<all->size();i++) if (!all->at(i).Label.compare(parsed.at(1),Qt::CaseInsensitive)) 
-  {at0=all->at(i);iax1=i;find=1;break;}
-  for (int i=0; i<all->size();i++) if (!all->at(i).Label.compare(parsed.at(3),Qt::CaseInsensitive)) 
-  {at1=all->at(i);find=1;break;}
-  for (int i=0; i<all->size();i++) if (!all->at(i).Label.compare(parsed.at(4),Qt::CaseInsensitive)) 
-  {at2=all->at(i);iax2=i;find=1;break;}
+  find=0;
+  for (int i=0; i<alle.size();i++) if (!alle.at(i).Label.compare(parsed.at(1),Qt::CaseInsensitive))
+  {at0=alle.at(i);iax1=i;find=1;break;}
+  for (int i=0; i<alle.size();i++) if (!alle.at(i).Label.compare(parsed.at(3),Qt::CaseInsensitive))
+  {at1=alle.at(i);find=1;break;}
+  for (int i=0; i<alle.size();i++) if (!alle.at(i).Label.compare(parsed.at(4),Qt::CaseInsensitive))
+  {at2=alle.at(i);iax2=i;find=1;break;}
   ic1=0;
   ic2=1;
-//  for (int i=0; i<all->size();i++) { printf("%s %d %d\n",all->at(i).Label.toStdString().c_str(),i,all->at(i).an);}
+//  for (int i=0; i<alle.size();i++) { printf("%s %d %d\n",alle.at(i).Label.toStdString().c_str(),i,alle.at(i).an);}
   const char axl[3][2]={"X","Y","Z"};
   for (int i=0;i<3;i++) if (parsed.at(2)==axl[i]) ic1=i;
   for (int i=0;i<3;i++) if (parsed.at(5)==axl[i]) ic2=i;
@@ -702,7 +706,7 @@ xdEditDlg::xdEditDlg(CEnvironment *ch,const Connection *cll,CEnvironment *all,My
 	  this, SLOT(setKeyLine(const QString &)));
   setMinimumSize(1050,400);
   chm=ch;
-  alle=all;
+  alle=*all;
   duminuse.clear();
   allLab.clear();
   keyline=QString("no noit!");
@@ -712,7 +716,7 @@ xdEditDlg::xdEditDlg(CEnvironment *ch,const Connection *cll,CEnvironment *all,My
   font.setFamily("Courier");
   font.setFixedPitch(true);
   font.setPointSize(10);  
-  for (int i=0; i<alle->size();i++) allLab.append(alle->at(i).Label);
+  for (int i=0; i<alle.size();i++) allLab.append(alle.at(i).Label);
    QFile mas("xd.mas");
    mas.open(QIODevice::ReadOnly|QIODevice::Text);
    QString allM = mas.readAll();
@@ -759,7 +763,7 @@ xdEditDlg::xdEditDlg(CEnvironment *ch,const Connection *cll,CEnvironment *all,My
    if (lines.at(i0).startsWith(chm->at(0).Label,Qt::CaseInsensitive)) sLabel.setText(lines.at(i0));
    }
    if (chm->size()>3) {if (sLabel.text().isEmpty()) sLabel.setText(QString("%1 %2 Z  %1 %3     X   R   2  3   1   4  NO").arg(chm->at(0).Label).arg(chm->at(1).Label).arg(chm->at(2).Label));}
-   else {if (sLabel.text().isEmpty()) sLabel.setText(QString("%1 %2 Z  %1 %3     X   R   2  3   1   4  NO").arg(chm->at(0).Label).arg(alle->at(1).Label).arg(alle->at(2).Label));}
+   else {if (sLabel.text().isEmpty()) sLabel.setText(QString("%1 %2 Z  %1 %3     X   R   2  3   1   4  NO").arg(chm->at(0).Label).arg(alle.at(1).Label).arg(alle.at(2).Label));}
 
    for (i2=i0; (!(lines.at(i2).startsWith("KEY",Qt::CaseInsensitive))) ;i2++){}
    do {
@@ -821,9 +825,9 @@ xdEditDlg::xdEditDlg(CEnvironment *ch,const Connection *cll,CEnvironment *all,My
   sRGroupBox = new QGroupBox("Symmetry elements"); 
   sRGroupBox->setLayout(srl);
 
-  locCo=calcAxis(sLabel.text(),all);
+  locCo=calcAxis(sLabel.text());
 
-  id= new  XDDlg(*ch,*cll,locCo,alle,this);
+  id= new  XDDlg(*ch,*cll,locCo,&alle,this);
   id->duminuse=duminuse;
   lhand =new QCheckBox ("Left handed");
   lhand->setCheckState(Qt::Unchecked);
@@ -861,11 +865,11 @@ xdEditDlg::xdEditDlg(CEnvironment *ch,const Connection *cll,CEnvironment *all,My
   QGroupBox *horizontalGroupBox2 = new QGroupBox("xd.mas line:");
   QPushButton *lincomb = new QPushButton("Create a linear-combination dummy");
   QPushButton *xprod = new QPushButton("Create a cross-product dummy");
-  QPushButton *killdu = new QPushButton("Kill a dummy");
+  //QPushButton *killdu = new QPushButton("Kill a dummy");
 
   dummyCreate->addWidget(lincomb);
   dummyCreate->addWidget(xprod);
-  dummyCreate->addWidget(killdu);
+  //dummyCreate->addWidget(killdu);
   QGroupBox *dummybox = new QGroupBox("Create or kill DUMMYS");
   dummybox->setLayout(dummyCreate);
   horizontalGroupBox2->setLayout(qhbl2);
@@ -908,7 +912,7 @@ xdEditDlg::xdEditDlg(CEnvironment *ch,const Connection *cll,CEnvironment *all,My
   connect(id,SIGNAL(delatom(const MyAtom &)),this,SLOT(updateAtoms2(const MyAtom&)));
   connect(lincomb,SIGNAL(clicked(bool)),id,SLOT(setLinMode()));
   connect(xprod,SIGNAL(clicked(bool)),id,SLOT(setXprMode()));
-  connect(killdu,SIGNAL(clicked(bool)),id,SLOT(killDuMode()));
+  //connect(killdu,SIGNAL(clicked(bool)),id,SLOT(killDuMode()));
   connect(lhand,SIGNAL(stateChanged(int)),this,SLOT(updatesLabel()));
   connect(&tol,SIGNAL(valueChanged(double)),this,SLOT(updatesLabel()));
   connect(ax1lab, SIGNAL(currentIndexChanged(int)),this,SLOT(updatesLabel()));
@@ -925,7 +929,8 @@ void xdEditDlg::updateStatusBar(const QString& s){
 void xdEditDlg::updateAtoms(const MyAtom& atm){
   ax1lab->addItem(atm.Label);
   ax2lab->addItem(atm.Label);
-  
+  alle.append(atm);
+  if (atm.an==-1)duminuse.append(atm.Label);
 }
 void xdEditDlg::updateAtoms2(const MyAtom& atm){
   ax1lab->removeItem(ax1lab->findText(atm.Label));
@@ -944,9 +949,9 @@ void xdEditDlg::updatesLabel(){
     return;
   }
   QString LH=(lhand->checkState () ==Qt::Checked)?"  L ":"  R ";
-  if(ax1lab->currentIndex()==ax2lab->currentIndex()) ax2lab->setCurrentIndex((ax2lab->currentIndex()+1)%alle->size());
-  if(ax1lab->currentText()==ato.Label) ax2lab->setCurrentIndex((ax2lab->currentIndex()+1)%alle->size());
-  if(ato.Label==ax2lab->currentText()) ax2lab->setCurrentIndex((ax2lab->currentIndex()+1)%alle->size());
+  if(ax1lab->currentIndex()==ax2lab->currentIndex()) ax2lab->setCurrentIndex((ax2lab->currentIndex()+1)%alle.size());
+  if(ax1lab->currentText()==ato.Label) ax2lab->setCurrentIndex((ax2lab->currentIndex()+1)%alle.size());
+  if(ato.Label==ax2lab->currentText()) ax2lab->setCurrentIndex((ax2lab->currentIndex()+1)%alle.size());
   if(ax1type->currentIndex()==ax2type->currentIndex()) ax2type->setCurrentIndex((ax2type->currentIndex()+1)%3);
   QString text=QString("%1 %2 %3 %1 %4 %5 %6 %7 ")
 	  .arg(chm->at(0).Label,-8)
@@ -959,7 +964,7 @@ void xdEditDlg::updatesLabel(){
 
   sLabel.setText(text);
   locCo.clear();
-  locCo=calcAxis(text,alle);
+  locCo=calcAxis(text);
   id->locCo=locCo;
   id->updateGL();
   update();
@@ -997,7 +1002,19 @@ void xdEditDlg::updatesLabel2(){
   molman(symmdiag);
   update();
 }
-void xdEditDlg::accept () {  
+void xdEditDlg::accept () {
+    QMap<int,int> dummap;
+
+  for (int i=0,j=0; i<alle.size();i++,j++)if (alle.at(i).an==-1){
+      if (!duminuse.contains(alle.at(i).Label,Qt::CaseInsensitive)) {
+          dummap.remove(i);
+          alle.removeAt(i);
+          i--;
+     //     printf("kill\n");
+      }
+      dummap[j]=i;
+  //    printf("--->>%d %d\n",i,j);
+  }
   QFile mas("xd.mas");
   QDateTime Time = QDateTime::currentDateTime();
   // Formatieren
@@ -1022,25 +1039,6 @@ void xdEditDlg::accept () {
     if (masli.at(i).contains("KAPPA")) keyb=false;
 
   }
-/*
- * |       sscanf(line, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
- * |              usage,
- * |              &na,       //number of atoms
- * |              &ntmx,     //number of displacement tensor components
- * |              &npolmax,  //maximum level of multipole expansion
- * |              &nz,       // number of kappa sets
- * |              &nto,      //
- * |              &nq,       //scale factors
- * |              &next,     //extinction model
- * |              &ncon,     //number of constraints
- * |              &ntbl,     //number of scattering factor tables
- * |              &ns,       //number of symmetry cards
- * |              &nv,       //number of variables
- * |              &nqq,      //
- * |              &nc,       //number of cycles
- * |              &nad);     //number of dummy atoms
- *
- * */
   QString cid;
   int na,ntmx,npolmax,nz,nto,nq,next,ncon,ntbl,ns,nv,nqq,nc,nad;
   double r1o,r2o,r1,r2,r1w,r2w,gof,sig;//r-values
@@ -1097,7 +1095,7 @@ void xdEditDlg::accept () {
   e = wght.at( 4).toDouble();
   f = wght.at( 5).toDouble();
   QStringList adum;
-  for (int i=0; i<nad; i++) adum.append(QString("DUM%1").arg(i));
+  //for (int i=0; i<nad; i++) adum.append(QString("DUM%1").arg(i));
   lix+=nad+1;
 
   for (int i=0; i<na; i++){
@@ -1178,14 +1176,17 @@ void xdEditDlg::accept () {
   QList<MyAtom> dummys;MyAtom du;
   extern molekul mol;
 
-  for (int i=0; i<alle->size();i++) if (alle->at(i).an>-1) allLab.append(alle->at(i).Label);
+  for (int i=0; i<alle.size();i++) if (alle.at(i).an>-1) allLab.append(alle.at(i).Label);
   int atsi=allLab.size();
-  for (int i=0; i<alle->size();i++) if (alle->at(i).an==-1) {
-    du.Label = alle->at(i).Label.toStdString().c_str();
-    du.pos=alle->at(i).pos;
+  for (int i=0; i<alle.size();i++) if (alle.at(i).an==-1) {
+    du.Label = QString("DUM%1").arg(adum.size());
+    alle[i].Label=du.Label;
+    du.pos=alle.at(i).pos;
     mol.kart2frac(du.pos, du.fpos);
     dummys.append(du);
     allLab.append(du.Label);
+    adum.append(du.Label);
+    //printf("%s  $$\n",du.Label.toStdString().c_str());
   }
 
   int dumsi=adum.size();
@@ -1207,16 +1208,16 @@ void xdEditDlg::accept () {
 		  oats.at(i).isfz,
 		  oats.at(i).lmax,
 		  (oats.at(i).ichcon)?oats.at(oats.at(i).ichcon-1).atom:"",
-		  (alle->size()>i)?alle->at(i).Label.toStdString().c_str():"!!"
+                  (alle.size()>i)?alle.at(i).Label.toStdString().c_str():"!!"
 	);
   
   }
 */
-//  printf("\n%d==%d %d==%d\n\n",atsi,na,dumsi,nad);
-  for (int i=0; i<alle->size();i++) if (alle->at(i).an>-1) {
-//    printf("%d:\n",i);
+ // printf("\n%d==%d %d==%d\n\n",atsi,na,dumsi,nad);
+  for (int i=0; i<alle.size();i++) if (alle.at(i).an>-1) {
+ //   printf("%d:\n",i);
     int j;
-    for (j=0; j<oats.size(); j++) if (alle->at(i).Label==oats.at(j).atom){break;}
+    for (j=0; j<oats.size(); j++) if (alle.at(i).Label==oats.at(j).atom){break;}
     if (j==oats.size()) {
       for (j=0; j<oats.size(); j++) if (oa.Label==oats.at(j).atom) {break;}
     }
@@ -1230,20 +1231,20 @@ void xdEditDlg::accept () {
       aatm.amult=1.0;
       }else aatm=oats.at(j);
 
-//      printf("%s %s %s\n",chm->at(0).Label.toStdString().c_str(),oa.Label.toStdString().c_str(),alle->at(i).Label.toStdString().c_str());
+   //   printf("%s %s %s\n",chm->at(0).Label.toStdString().c_str(),oa.Label.toStdString().c_str(),alle.at(i).Label.toStdString().c_str());
 
-      strncpy(aatm.atom,alle->at(i).Label.toStdString().c_str(),8);
+      strncpy(aatm.atom,alle.at(i).Label.toStdString().c_str(),8);
       aatm.nax=ax1lab->currentIndex()+1;
       if (lhand->isChecked()) aatm.nax*=-1;
       aatm.nay=nats.size()+1;
       aatm.nay2=ax2lab->currentIndex()+1;
       aatm.icor1=ax1type->currentIndex()+1;
       aatm.icor2=ax2type->currentIndex()+1;
-      aatm.jtf=(alle->at(i).an)?2:1;
-      aatm.itbl=atypen.key(alle->at(i).an);
+      aatm.jtf=(alle.at(i).an)?2:1;
+      aatm.itbl=atypen.key(alle.at(i).an);
       for (int kk=0; kk<kaps.size();kk++) if (kaps.at(kk).ifz==aatm.itbl) {aatm.isfz=kk+1;break;}
-      aatm.lmax=(alle->at(i).an)?4:1;
-      if (alle->at(i).an!=oa.an){
+      aatm.lmax=(alle.at(i).an)?4:1;
+      if (alle.at(i).an!=oa.an){
 	aatm.m[0]=monocharge.value(aatm.itbl);
 	for (int mm=1; mm<26; mm++) aatm.m[mm]=0;
       
@@ -1261,28 +1262,28 @@ void xdEditDlg::accept () {
     }else{
       aatm=oats.at(j);
       keyBlock2.append(keyBlock.at(j));
-    strncpy(aatm.atom,alle->at(i).Label.toStdString().c_str(),8);
+    strncpy(aatm.atom,alle.at(i).Label.toStdString().c_str(),8);
     if (abs(oats.at(j).nax)<=na){
       aatm.nax=allLab.indexOf(oats.at(abs(oats.at(j).nax)-1).atom);
       if (aatm.nax==-1) aatm.nax=allLab.indexOf(chm->at(0).Label);
       aatm.nax++;
       if (oats.at(j).nax<0) aatm.nax*=-1;
     }else{
-      aatm.nax=oats.at(j).nax-na+atsi;
+      aatm.nax=dummap[oats.at(j).nax-na+atsi-1]+1;
     }
     if (abs(oats.at(j).nay)<=na){
       aatm.nay=allLab.indexOf(oats.at(abs(oats.at(j).nay)-1).atom);
       if (aatm.nay==-1) aatm.nay=allLab.indexOf(chm->at(0).Label);
       aatm.nay++;
     }else{
-      aatm.nay=oats.at(j).nay-na+atsi;
+      aatm.nay=dummap[oats.at(j).nay-na+atsi-1]+1;
     }
     if (abs(oats.at(j).nay2)<=na){
       aatm.nay2=allLab.indexOf(oats.at(abs(oats.at(j).nay2)-1).atom);
       if (aatm.nay2==-1) aatm.nay2=allLab.indexOf(chm->at(0).Label);
       aatm.nay2++;
     }else{
-      aatm.nay2=oats.at(j).nay2-na+atsi;
+      aatm.nay2=dummap[oats.at(j).nay2-na+atsi-1]+1;
     }
     } /*
     aatm.icor1= oats.at(j).icor1;
@@ -1294,9 +1295,9 @@ void xdEditDlg::accept () {
     aatm.ichcon = oats.at(j).ichcon;*/
     nats.append(aatm);
   }
-//  printf("tes D\n");
-  na=nats.size();
-/*  for (int i = 0; i<nats.size(); i++) {
+ // printf("tes D %d %d\n",na,atsi);
+  na=nats.size();/*
+  for (int i = 0; i<nats.size(); i++) {
     printf("%d %d %d %d %d %d %d %d \n",nats.at(i).nax,nats.at(i).icor1,nats.at(i).nay,nats.at(i).nay2,nats.at(i).icor2,
 		    nats.at(i).jtf, nats.at(i).itbl,nats.at(i).isfz); 
   printf("%-8s %-8s  %c  %-8s %-8s %c   %c   %d  %d %3d %3d  NO %-8s\n",
@@ -1313,7 +1314,7 @@ void xdEditDlg::accept () {
 		  nats.at(i).lmax,
 		  (nats.at(i).ichcon)?nats.at(nats.at(i).ichcon-1).atom:""
 	);
-  }*/
+  }// */
 
   res.open(QIODevice::WriteOnly|QIODevice::Text);
   for (int i=0; i<mli; i++) {res.write(resli.at(i).toLatin1());res.write("\n");}
@@ -1586,7 +1587,7 @@ void xdEditDlg::accept () {
   }
   int di=0;
   int symmignore=0;
-  while ((di<alle->size())&&(alle->at(di).an>-1))di++;
+  while ((di<alle.size())&&(alle.at(di).an>-1))di++;
   for (int i=0;i<masli.size();i++) if(masli.at(i).startsWith("DUM",Qt::CaseInsensitive)) {masli.removeAt(i); i--;}
   for (int i=0;i<masli.size();i++){
     if (masli.at(i).contains("ATOM0")) flag=1;
@@ -1595,14 +1596,14 @@ void xdEditDlg::accept () {
     if((flag==2)&&(masli.at(i).startsWith(chm->at(0).Label))) masli[i] = keyline+((masli.at(i).contains('\r'))?"\r\n":"\n");
     if (masli.at(i).startsWith("END KEY"))flag=0;
     if (masli.at(i).startsWith("END ATOM")) {
-      while (symmignore+di+dumcnt<alle->size()){
-	if (alle->at(symmignore+di+dumcnt).Label.contains("DUM",Qt::CaseInsensitive)){
+      while (symmignore+di+dumcnt<alle.size()){
+        if (alle.at(symmignore+di+dumcnt).Label.contains("DUM",Qt::CaseInsensitive)){
 	  extern molekul mol;
          // extern double xs;
          // extern double ys;
          // extern double zs;
 	  V3 frac,kart;
-	  kart=alle->at(symmignore+di+dumcnt).pos;
+          kart=alle.at(symmignore+di+dumcnt).pos;
          // kart.x+=xs;
          // kart.y+=ys;
          // kart.z+=zs;
@@ -1615,7 +1616,7 @@ void xdEditDlg::accept () {
 			  .arg(kart.x).
 			  arg(kart.y)
 			  .arg(kart.z)
-			  .arg(alle->at(symmignore+di+dumcnt).Label)
+                          .arg(alle.at(symmignore+di+dumcnt).Label)
 			  .arg((masli.at(i).contains('\r'))?"\r\n":"\n"));
 	  dumcnt++;
 	}else symmignore++;
@@ -1641,14 +1642,14 @@ void xdEditDlg::accept () {
   symmignore=0;
   int nad=resli.at(6).split(" ",QString::SkipEmptyParts).at(14).toInt();
   for (int i=0;i<nad;i++) resli.removeAt(9);
-  while (symmignore+di+dumcnt<alle->size()){    
-    if (alle->at(symmignore+di+dumcnt).Label.contains("DUM",Qt::CaseInsensitive)){
+  while (symmignore+di+dumcnt<alle.size()){
+    if (alle.at(symmignore+di+dumcnt).Label.contains("DUM",Qt::CaseInsensitive)){
       extern molekul mol;
 //      extern double xs;
 //      extern double ys;
 //      extern double zs;
       V3 frac,kart;
-      kart=alle->at(symmignore+di+dumcnt).pos;
+      kart=alle.at(symmignore+di+dumcnt).pos;
 //      kart.x+=xs;
 //      kart.y+=ys;
 //      kart.z+=zs;
@@ -1661,10 +1662,10 @@ void xdEditDlg::accept () {
     int w;
     for (int i=10; i<resli.size();i++){
       if (resli.at(i).split(" ",QString::SkipEmptyParts).at(0).contains(QRegExp("^[A-Z]+"))){
-	if ((w=resli.at(i).split(" ",QString::SkipEmptyParts).at(3).toInt())>alle->size()){
+        if ((w=resli.at(i).split(" ",QString::SkipEmptyParts).at(3).toInt())>alle.size()){
 	  resli[i].replace(15,3,QString("%1").arg(w-id->dkilllist.size(),3,10,QChar(' ')));
 	}
-	if ((w=resli.at(i).split(" ",QString::SkipEmptyParts).at(5).toInt())>alle->size())
+        if ((w=resli.at(i).split(" ",QString::SkipEmptyParts).at(5).toInt())>alle.size())
 	  resli[i].replace(23,3,QString("%1").arg(w-id->dkilllist.size(),3,10,QChar(' ')));
       }
     }

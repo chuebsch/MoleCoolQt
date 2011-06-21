@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=271;
+int rev=273;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -1621,12 +1621,10 @@ bool MyWindow::isLabelInUse(){
   }
   QString nn=nextLabel;
   bool inu=(alab.contains(nn,Qt::CaseInsensitive));
-//  printf("%s\n",(inu)?"Ja":"Nein");
-  cubeGL->rename=!inu;
-  cubeGL->toggXDSetup(!inu);
-//   printf("rename: -->%s\n",(cubeGL->rename)?"Ja":"Nein");
-//   printf("xdSetupMode: -->%s\n",(cubeGL->xdSetupMode)?"Ja":"Nein");
-
+  if (enterRenameMode->isChecked()){
+      cubeGL->rename=!inu;
+      cubeGL->toggXDSetup(!inu);
+  }
   return inu;
 }
 
