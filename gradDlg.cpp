@@ -564,7 +564,7 @@ void GradDlg::gradientpunktdat(){
 void GradDlg::savegradientpunktdat(){  
   QString fileName;;
   fileName = QFileDialog::getSaveFileName(this, tr("Save 'Gradient.dat' "), "Gradient.dat",//dirName,
-					    "MolIso Gradient.dat(*.dat);;");
+					    "MolIso Gradient.dat(*.dat);;",&selectedFilter,QFileDialog::DontUseNativeDialog );
   if (!fileName.isEmpty()) {
     QFile gdat(fileName);
     gdat.open(QIODevice::WriteOnly);

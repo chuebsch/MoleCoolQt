@@ -135,7 +135,7 @@ void CubeGL::togglMonoChrom(bool b){
 }
 void CubeGL::saveMISettings(){
   QString fn=QFileDialog::getSaveFileName(this, tr("Save MoleCoolQt MolIso Settings file "), "MoleCoolQt.moliso.ini",
-		                         "MoleCoolQt.moliso.ini (*.ini);;");
+		                         "MoleCoolQt.moliso.ini (*.ini);;",&selectedFilter,QFileDialog::DontUseNativeDialog );
 
    QFile mconf(fn);
    mconf.open(QIODevice::WriteOnly);
