@@ -172,7 +172,7 @@ void CubeGL::saveMISettings(){
 }
 void CubeGL::loadMISettings(){
   QString fn=QFileDialog::getOpenFileName(this, tr("Open MoleCoolQt MolIso Settings file "), "MoleCoolQt.moliso.ini",
-		                         "MoleCoolQt.moliso.ini (*.ini);;");
+		                         "MoleCoolQt.moliso.ini (*.ini);;",&selectedFilter,QFileDialog::DontUseNativeDialog );
 
   if (fn.isEmpty()) return;
   QFile miconf(fn);
@@ -879,7 +879,7 @@ void CubeGL::paintGL() {
 }
 
 void CubeGL::loadDataBase(){
-  QString fileName = QFileDialog::getOpenFileName(this,QString(tr("Open invariom data base.")), "DABA.txt","All files (*)" );
+  QString fileName = QFileDialog::getOpenFileName(this,QString(tr("Open invariom data base.")), "DABA.txt","All files (*)" ,&selectedFilter,QFileDialog::DontUseNativeDialog );
   if (!fileName.isEmpty()){
     QFile daba(fileName);
     daba.open(QIODevice::ReadOnly);

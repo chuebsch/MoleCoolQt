@@ -202,13 +202,13 @@ void settingsDlg::brwsData(){
 }
 void settingsDlg::brwsLsm(){
   QString fileName = QFileDialog::getOpenFileName(this, "path to xdlsm executeable", lsmL->text(),
-						  "xdlsm (*);;" );
+						  "xdlsm (*);;",&selectedFilter,QFileDialog::DontUseNativeDialog  );
   if (!fileName.isEmpty())lsmL->setText(fileName);
   update();
 }
 void settingsDlg::brwsProp(){
   QString fileName = QFileDialog::getOpenFileName(this, "path to xdprop executeable", propL->text(),
-						  "xdprop (*);;" );
+						  "xdprop (*);;" ,&selectedFilter,QFileDialog::DontUseNativeDialog );
   if (!fileName.isEmpty())propL->setText(fileName);
   update();
 }

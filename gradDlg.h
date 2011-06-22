@@ -31,6 +31,7 @@ Q_OBJECT
   gradientWidget *gw;
   QComboBox *cmbx;
   QString valuesString;
+  QString selectedFilter;
  public:
   void loadSettings();
   GradDlg(MolIso *mi);

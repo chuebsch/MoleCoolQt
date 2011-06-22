@@ -948,6 +948,8 @@ void xdEditDlg::updatesLabel(){
     ax2lab->setCurrentIndex(((ax2lab->currentIndex()+1)<ax2lab->count())?ax2lab->currentIndex()+1:ax2lab->currentIndex()-1);
     return;
   }
+  if (ax1lab->currentText().contains("DUM")) duminuse.append(ax1lab->currentText());
+  if (ax2lab->currentText().contains("DUM")) duminuse.append(ax2lab->currentText());
   QString LH=(lhand->checkState () ==Qt::Checked)?"  L ":"  R ";
   if(ax1lab->currentIndex()==ax2lab->currentIndex()) ax2lab->setCurrentIndex((ax2lab->currentIndex()+1)%alle.size());
   if(ax1lab->currentText()==ato.Label) ax2lab->setCurrentIndex((ax2lab->currentIndex()+1)%alle.size());

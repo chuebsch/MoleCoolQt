@@ -31,6 +31,7 @@ Q_OBJECT
  private:
   void searchchanged(bool current,bool back);
   bool isFirstTime;
+  QString selectedFilter;
   QSettings *settings;
   QLineEdit *search;
   QTextEdit *editor; 
@@ -48,6 +49,7 @@ Q_OBJECT
   settingsDlg(QString xd_data_dir,QString xdLsmPath,QString xdPropPath);
  private:  
   QLineEdit *dataL,*lsmL,*propL;
+  QString selectedFilter;
   QPushButton *dataBrws,*lsmBrws,*propBrws;
   public slots:
   void brwsData();

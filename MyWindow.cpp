@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=273;
+int rev=274;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -2501,7 +2501,7 @@ void MyWindow::load_fchk(QString fileName){
   mol.adp=0;
   xdinp=asymmUnit;
   double dim=dimension(xdinp);
-  if (Norm(atom1Pos)==0) cubeGL->L=100.0/dim;
+  if ((Norm(atom1Pos)==0)&&(Norm(atom2Pos)==0)) cubeGL->L=100.0/dim;
   if (mol.nListe>2) {
     free(mol.vL);
     mol.vL=NULL;
@@ -3821,7 +3821,7 @@ void MyWindow::load_gaus(QString fileName){
 
   xdinp=asymmUnit;
   double dim=dimension(xdinp);
-  if (Norm(atom1Pos)==0) cubeGL->L=100.0/dim;
+  if ((Norm(atom1Pos)==0)&&(Norm(atom2Pos)==0)) cubeGL->L=100.0/dim;
   if (mol.nListe>2) {
     free(mol.vL);
     mol.vL=NULL;
@@ -5322,8 +5322,7 @@ void MyWindow::growSymm(int packart,int packatom){
   mol.frac2kart(uz5f,mol.uz5k);
   mol.frac2kart(uz6f,mol.uz6k);
   mol.frac2kart(uz7f,mol.uz7k);
-
-  if ((Norm(atom1Pos)>0)&&(Norm(atom2Pos)>0)){
+  if ((Norm(atom1Pos)>0)||(Norm(atom2Pos)>0)){
     Matrix OM;
     V3 r1,r2,r3,t1,t2,t3;
     double l1,l2,kl1,kl2;
@@ -5441,7 +5440,7 @@ void MyWindow::growSymm(int packart,int packatom){
   }
 
   double dim=dimension(xdinp);
-  if (Norm(atom1Pos)==0) cubeGL->L=100.0/dim;
+  if ((Norm(atom1Pos)==0)&&(Norm(atom2Pos)==0)) cubeGL->L=100.0/dim;
   if (mol.nListe>2) {
     free(mol.vL);
     mol.vL=NULL;

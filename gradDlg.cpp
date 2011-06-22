@@ -543,7 +543,7 @@ void GradDlg::gradientpunktdat(){
   QString fileName;;
   fileName = QFileDialog::getOpenFileName(this, tr("Open 'Gradient.dat' "), "",//dirName,
 					    "MolIso Gradient.dat(*.dat);;"
-					    "All files (*);;");
+					    "All files (*);;",&selectedFilter,QFileDialog::DontUseNativeDialog );
   if (!fileName.isEmpty()) {
     QFile gdat(fileName);
     gdat.open(QIODevice::ReadOnly);
