@@ -55,8 +55,8 @@ void FourMCQ::killmaps(){
   disconnect(chgl,SIGNAL(inimibas()),0,0);
 
 }
-bool FourMCQ::loadFouAndPerform(const char filename[],bool neu){
 
+bool FourMCQ::loadFouAndPerform(const char filename[],bool neu){
   const int it[480]= {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 20, 21, 22, 24, 25, 26, 27,
     28, 30, 32, 33, 35, 36, 39, 40, 42, 44, 45, 48, 49, 50, 52, 54, 55, 56, 60, 63, 64, 65, 66, 70, 72, 75, 77,
     78, 80, 81, 84, 88, 90, 91, 96, 98, 99, 100, 104, 105, 108, 110, 112, 117, 120, 125, 126, 128, 130, 132, 135,
@@ -350,9 +350,10 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu){
 void FourMCQ::deleteLists(){
  for (int fac=0; fac<5; fac++){
     if ((chgl->foubas[fac])&&(glIsList(chgl->foubas[fac]))) {
-      //printf("deleting list #%d\n",chgl->foubas[fac]);
+     // printf("deleting list #%d\n",chgl->foubas[fac]);
       glDeleteLists(chgl->foubas[fac],1);
       chgl->foubas[fac]=0;
+     // printf("deleted list %d #%d\n",fac, chgl->foubas[fac]);
     }//else printf("NOT deleting list #%d %d\n",chgl->foubas[fac],glIsList(chgl->foubas[fac]));
  }
 }
@@ -626,6 +627,7 @@ void FourMCQ::gen_surface(bool neu,int imin,int imax){
     return ;
   }
   */
+  if (!n5) return;
   disconnect(chgl,SIGNAL(diffscroll(int ,int )),0,0);
   disconnect(chgl,SIGNAL(neuemitte(V3)),0,0);
   disconnect(chgl,SIGNAL(inimibas()),0,0);

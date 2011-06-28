@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=276;
+int rev=278;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -1653,6 +1653,12 @@ void MyWindow::genMoliso() {
   xdinp.clear();
   asymmUnit.clear();
   cubeGL->pause=true;
+  fmcq->deleteLists();
+  fmcq->doMaps->hide();
+  cubeGL->fofcact->setVisible(false);
+  cubeGL->foact->setVisible(false);
+  cubeGL->f1f2act->setVisible(false);
+  fmcq->n1 = fmcq->n2 = fmcq->n3 = fmcq->n4 = fmcq->n5=0;
   if (cubeGL->moliso){
     delete cubeGL->moliso;
     cubeGL->moliso=NULL;

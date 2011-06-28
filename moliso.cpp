@@ -128,29 +128,71 @@ void MolIso::loadMI(QString fname){
   max=-1e99;
   if (lines.size()){
 
-  balken->setMinimum(0);
-  balken->setMaximum(lines[0].toInt()*7);
-  balken->show();
+    balken->setMinimum(0);
+    balken->setMaximum(lines[0].toInt()*7);
+    balken->show();
+    double dm=0,ds=0,sigma=0,dmp=0,dmm=0,dsp=0,dsm=0,sigmap=0,sigmam=0,api;
+    int np=0,nm=0;
     for (int i = 1; i <= lines[0].toInt();i++){
       QStringList tok = lines[i].split(' ',QString::SkipEmptyParts);
       if (tok.size()==8){
 
 	balken->setValue(i);
-        v.vertex.x = tok.at(1).toFloat();
-        v.vertex.y = tok.at(2).toFloat();
-        v.vertex.z = tok.at(3).toFloat();
-//
+	v.vertex.x = tok.at(1).toFloat();
+	v.vertex.y = tok.at(2).toFloat();
+	v.vertex.z = tok.at(3).toFloat();
+	//
 
 	v.normal.x = tok.at(4).toFloat();
 	v.normal.y = tok.at(5).toFloat();
 	v.normal.z = tok.at(6).toFloat();
-	v.color = tok.at(7).toFloat();
+	dm+=v.color = tok.at(7).toFloat();
+	ds+=v.color*v.color;
+	if (v.color>0){
+	  dmp+=v.color;
+	  dsp+=(v.color* v.color);
+	  np++;
+	}else{
+	  dmm+=v.color;
+	  dsm+= v.color* v.color;
+	  nm++;
+	}
+
 	v.direct=0;
 	min=(min>v.color)?v.color:min;
 	max=(max<v.color)?v.color:max;
 	orte.append(v);
       }
     }
+    ds/=fmax(np+nm,1);;
+    dm/=fmax(np+nm,1);;
+    dmp/=fmax(np,1);
+    dsp/=fmax(np,1);
+    dmm/=fmax(nm,1);
+    dsm/=fmax(nm,1);
+
+    sigma=(ds-(dm*dm));
+    sigmap=(dsp-(dmp*dmp));
+    sigmam=(dsm-(dmm*dmm));
+    api=0;
+    for (int i=0; i< orte.size(); i++){
+       api+=fabs(orte.at(i).color-dmm);    
+    }
+    api/=np+nm;
+    printf("\nAvarage of positive surface values VS+= %f\nAvarage of negative surface values VS-= %f\nsigma square + = %f\nsigma square - = %f\n%f %f n+ %d n- %d\n%g  \n"
+		    ,dmp
+		    ,dmm
+		    ,sigmap
+		    ,sigmam
+		    ,sigmam+sigmap
+		    ,sigma
+		    ,np,nm
+		    ,api);
+
+    /*potnu=potsigplus*potsigminus/(potsigtot*potsigtot);
+      printf("\nAvarage of positive surface values VS+= %f %s\n Avarage of negative surface values VS-= %f %s\n Avarage deviation from the avarage surface value PI= %f %s\n sigma square + = %f (%s)^2\n sigma square - = %f (%s)^2\n sigma square total = %f (%s)^2\n nu = %f \n\n",
+      avpotplus,lul,avpotminus,lul,avdevPI,lul,potsigplus,lul,potsigminus,lul,potsigtot,lul,potnu);*/
+
     max+=0.00001;
     if (fixmin!=666.666) min=fixmin;
     if (fixmax!=666.666) max=fixmax;
@@ -207,7 +249,7 @@ void MolIso::loadMI(QString fname){
     }glPopMatrix();
   }glEndList();
 
-    balken->setValue(5*lines[0].toInt());
+  balken->setValue(5*lines[0].toInt());
   glNewList(mibas+4, GL_COMPILE  );{                       //Isooberfl"ache ::Perspektive 1     
     glPushMatrix();{
       glScaled( L, L, L );
