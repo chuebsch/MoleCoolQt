@@ -588,7 +588,7 @@ void MolIso::simpelGrad(void){
 void MolIso::CalcVertex( int ix, int iy, int iz ) {
   GLfloat vo, vx=0, vy=0, vz=0,sig;
   //Vector3 movo(0.5,0.5,0.5);
-  Vector3 test3= (breite/-2.0) *  x_dim + (hoehe/-2.0) * y_dim + (tiefe/-2.0) * z_dim + orig;
+  Vector3 test3= ((breite-1)/-2.0) *  x_dim + ((hoehe-1)/-2.0) * y_dim + ((tiefe-1)/-2.0) * z_dim + orig;
   if (cubeiso) test3 =orig;
   Ort o;
   sig = (iso_level>0)?-1:1;

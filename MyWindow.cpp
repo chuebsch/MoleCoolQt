@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=279;
+int rev=281;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -1665,6 +1665,7 @@ void MyWindow::genMoliso() {
   }
   cubeGL->moliso = new MolIso();
   cubeGL->moliso->L=cubeGL->L;
+  cubeGL->moliso->orig=Vector3(0.0,0.0,0.0);
   QString isof,mapf,lfaceFile,sfaceFile,adpName;
   MolisoStartDlg *msgdlg = new MolisoStartDlg();
   if (msgdlg->exec()==QDialog::Accepted) {
@@ -1791,6 +1792,9 @@ void MyWindow::genMoliso() {
   atom2Pos=asymmUnit[1].kart;
   atom3Pos=asymmUnit[2].kart;
   }
+//  printf("%10g %10g %10g   %10g %10g %10g   %10g %10g %10g\n",atom1Pos.x,atom1Pos.y,atom1Pos.z,atom2Pos.x,atom2Pos.y,atom2Pos.z,atom3Pos.x,atom3Pos.y,atom3Pos.z);
+
+
   if ((adpName.isEmpty())||(adpName.contains('!'))){
     togElli->setVisible ( false );
   toggleElli(false);
@@ -1837,6 +1841,7 @@ void MyWindow::genMoliso() {
   cubeGL->moliso->mibas=glGenLists(6);
   statusBar()->showMessage(tr("loading surfaces...") );
   //qDebug()<<cubeGL->moliso->mibas<<cubeGL->foubas[0];
+//  printf("L= %g   %g %g %g\n",cubeGL->moliso->L, cubeGL->moliso->orig.x, cubeGL->moliso->orig.y, cubeGL->moliso->orig.z);
   cubeGL->moliso->loadMI(lfaceFile);
   updateStatusBar();
   statusBar()->showMessage(tr("surfaces loaded") );
