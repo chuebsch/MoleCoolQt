@@ -155,6 +155,9 @@ protected:
      void moveEvent(QMoveEvent *event);
  private:
      bool isLabelInUse();
+     double pdf2(INP atom, V3 pos);
+     double ueq(const Matrix m);
+     void makePDFGrid(INP atom);
     QSlider *legendSize,*strikesSldr,*swidthSldr;
     QCheckBox *zebraBox,*mt;
     QComboBox *mapSchnitt;

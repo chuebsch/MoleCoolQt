@@ -10,7 +10,6 @@ XDDlg::XDDlg(CEnvironment ch,Connection cll,CEnvironment lc,CEnvironment *all,QW
    papi=invD;
    locCo=lc;
    alle=*all;
-   //dkilllist.clear();
    dummyMode=0;
    ce=ch;
    V3 mitte(0,0,0);
@@ -145,31 +144,6 @@ void XDDlg::mousePressEvent(QMouseEvent *event){
      }else if (nahdai<ce.size()) {
        GLuint index=nahdai;
        if(dummyMode){
-         /*if ((dummyMode==3)&&(ce.at(index).an<0)) {
-	   if (duminuse.contains(ce.at(index).Label,Qt::CaseInsensitive)){
-	     emit message("Sorry this dummy is still in use! Press kill button again, if you want!");
-	     for (int oo=0; oo<duminuse.size();oo++) std::cout<<duminuse.at(oo).toStdString()<<std::endl;
-	     dummyMode=0;
-	     this->setCursor(Qt::ArrowCursor);
-	     updateGL();
-	     return;
-	   }
-	   dkilllist.append(ce.at(index).Label);
-	   emit message(QString("You killed %1.").arg(ce.at(index).Label));
-           alle.removeAt(alle.indexOf(ce.at(index)));
-	   emit delatom(ce.at(index));
-	   ce.removeAt(index);
-	   dummyMode=0;
-	   this->setCursor(Qt::ArrowCursor);
-	   updateGL();
-	   return;
-	 }else if (dummyMode==3) {
-	   emit message("Sorry this is not a dummy. Press kill button again, if want!");
-	   dummyMode=0;
-	   this->setCursor(Qt::ArrowCursor);
-	   updateGL();
-	   return;
-         }*/
 	 if (!durchlauf) emit message(QString("You clicked on %1. Click on next atom now!").arg(ce.at(index).Label));
 	 if (!durchlauf) dpos=V3(0,0,0);
 	 dpos+=Normalize(ce.at(index).pos-ce.at(0).pos);
@@ -237,7 +211,6 @@ void XDDlg::mouseMoveEvent(QMouseEvent *event){
 }
 void XDDlg::setLinMode(){this->setCursor(Qt::CrossCursor);dummyMode=1;durchlauf=0;emit message("To create a linear-combination dummy click on two atoms bonded to the central atom.");}
 void XDDlg::setXprMode(){this->setCursor(Qt::CrossCursor);dummyMode=2;durchlauf=0;emit message("To create a cross-product dummy click on two atoms bonded to the central atom.");}
-//void XDDlg::killDuMode(){this->setCursor(Qt::CrossCursor);dummyMode=3;durchlauf=0;emit message("Click on a dummy atom to remove it from the atoms list.");}
 #define TWOPI 6.28318530719586
 #define C cos(TWOPI/(double)i)
 #define S sin(TWOPI/(double)i)
@@ -865,12 +838,10 @@ xdEditDlg::xdEditDlg(CEnvironment *ch,const Connection *cll,CEnvironment *all,My
   QGroupBox *horizontalGroupBox2 = new QGroupBox("xd.mas line:");
   QPushButton *lincomb = new QPushButton("Create a linear-combination dummy");
   QPushButton *xprod = new QPushButton("Create a cross-product dummy");
-  //QPushButton *killdu = new QPushButton("Kill a dummy");
 
   dummyCreate->addWidget(lincomb);
   dummyCreate->addWidget(xprod);
-  //dummyCreate->addWidget(killdu);
-  QGroupBox *dummybox = new QGroupBox("Create or kill DUMMYS");
+  QGroupBox *dummybox = new QGroupBox("Create DUMMY atoms");
   dummybox->setLayout(dummyCreate);
   horizontalGroupBox2->setLayout(qhbl2);
   connect(buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
@@ -912,7 +883,6 @@ xdEditDlg::xdEditDlg(CEnvironment *ch,const Connection *cll,CEnvironment *all,My
   connect(id,SIGNAL(delatom(const MyAtom &)),this,SLOT(updateAtoms2(const MyAtom&)));
   connect(lincomb,SIGNAL(clicked(bool)),id,SLOT(setLinMode()));
   connect(xprod,SIGNAL(clicked(bool)),id,SLOT(setXprMode()));
-  //connect(killdu,SIGNAL(clicked(bool)),id,SLOT(killDuMode()));
   connect(lhand,SIGNAL(stateChanged(int)),this,SLOT(updatesLabel()));
   connect(&tol,SIGNAL(valueChanged(double)),this,SLOT(updatesLabel()));
   connect(ax1lab, SIGNAL(currentIndexChanged(int)),this,SLOT(updatesLabel()));
@@ -1012,7 +982,6 @@ void xdEditDlg::accept () {
           dummap.remove(i);
           alle.removeAt(i);
           i--;
-     //     printf("kill\n");
       }
       dummap[j]=i;
   //    printf("--->>%d %d\n",i,j);
@@ -1535,7 +1504,6 @@ void xdEditDlg::accept () {
 		    .arg(dummys.at(i).fpos.z,14,'f',8).toLatin1());
   }
   int gg=lsmBlock.indexOf(QRegExp("^END ATOM\\s*"));
-//  printf("%d !!!\n",gg);
   for (int i=gg; i<lsmBlock.size(); i++){
     mas.write(lsmBlock.at(i).toLatin1());
     mas.write("\n");
@@ -1547,7 +1515,6 @@ void xdEditDlg::accept () {
   
   }
   gg=lsmBlock.indexOf(QRegExp("^KAPPA\\s*.*"));
-  //printf("%d !!!\n",gg);
   for (int i=gg; i<lsmBlock.size(); i++){
     mas.write(lsmBlock.at(i).toLatin1());
     mas.write("\n");
@@ -1558,135 +1525,5 @@ void xdEditDlg::accept () {
     mas.write("\n");  
   }
   mas.close();
-  /*
-  while (!mas.atEnd()){
-    QString line = QString(mas.readLine(150));
-    masli.append(line);
-  }    
-  mas.close();
-  QStringList alteDummys= masli.filter(QRegExp("^DUM\\d{1,}")); 
-  for (int i=0; i<alteDummys.size();i++) {
-    alteDummys[i].remove(QRegExp("\\s+.{1,}\n"));
-    masli.replaceInStrings(alteDummys.at(i),QString("DUM_%1").arg(i),Qt::CaseInsensitive );
-  }
-  masli.replaceInStrings("DUM_","DUM",Qt::CaseInsensitive);
-  int flag=0;
-  int dumcnt=0;
-  for (int i=0; i<id->dkilllist.size();i++){
-    QString bef=id->dkilllist.at(i);
-    bef.remove(0,3);
-    bool drin=false;
-    int num,stn;num=stn=bef.toInt();
-    bef=QString("DUM%1").arg(num+1);
-    for (int j=0;j<masli.size();j++) drin=(drin)?drin:masli.at(j).contains(bef,Qt::CaseInsensitive );
-    
-    while (drin) {
-      drin=false;
-      bef=QString("DUM%1").arg(++num);
-      for (int j=0;j<masli.size();j++) drin=(drin)?drin:masli.at(j).contains(bef,Qt::CaseInsensitive );
-      masli.replaceInStrings(bef, QString("DUM%1").arg(stn++),Qt::CaseInsensitive );
-    }         
-  }
-  int di=0;
-  int symmignore=0;
-  while ((di<alle.size())&&(alle.at(di).an>-1))di++;
-  for (int i=0;i<masli.size();i++) if(masli.at(i).startsWith("DUM",Qt::CaseInsensitive)) {masli.removeAt(i); i--;}
-  for (int i=0;i<masli.size();i++){
-    if (masli.at(i).contains("ATOM0")) flag=1;
-    if (masli.at(i).contains("--U2--")) flag=2;
-    if((flag==1)&&(masli.at(i).startsWith(chm->at(0).Label))) masli[i] = sLabel.text()+((masli.at(i).contains('\r'))?"\r\n":"\n");
-    if((flag==2)&&(masli.at(i).startsWith(chm->at(0).Label))) masli[i] = keyline+((masli.at(i).contains('\r'))?"\r\n":"\n");
-    if (masli.at(i).startsWith("END KEY"))flag=0;
-    if (masli.at(i).startsWith("END ATOM")) {
-      while (symmignore+di+dumcnt<alle.size()){
-        if (alle.at(symmignore+di+dumcnt).Label.contains("DUM",Qt::CaseInsensitive)){
-	  extern molekul mol;
-         // extern double xs;
-         // extern double ys;
-         // extern double zs;
-	  V3 frac,kart;
-          kart=alle.at(symmignore+di+dumcnt).pos;
-         // kart.x+=xs;
-         // kart.y+=ys;
-         // kart.z+=zs;
-	  mol.kart2frac(kart,frac);
-	  masli.insert(i+dumcnt,QString("%1 %2 %3 %4 !%5 %6 %7 %8%9")
-			  .arg(QString("DUM%1").arg(dumcnt))
-			  .arg(frac.x)
-			  .arg(frac.y)
-			  .arg(frac.z)
-			  .arg(kart.x).
-			  arg(kart.y)
-			  .arg(kart.z)
-                          .arg(alle.at(symmignore+di+dumcnt).Label)
-			  .arg((masli.at(i).contains('\r'))?"\r\n":"\n"));
-	  dumcnt++;
-	}else symmignore++;
-      }
-      flag=0;
-    }
-  }
-  mas.open(QIODevice::WriteOnly);
-  mas.write(masli.join("").toLatin1(),masli.join("").length());
-  mas.close();
-  QFile res("xd.res");
-  if (!res.exists()) res.setFileName("xd.inp");
-  res.copy("xd.res_MCQsave"+ttext);
-  res.close();
-  res.open(QIODevice::ReadOnly);
-  QStringList resli;
-  while (!res.atEnd()){
-    QString line = QString(res.readLine(150));
-    resli.append(line);
-  }    
-  res.close();
-  dumcnt=0;
-  symmignore=0;
-  int nad=resli.at(6).split(" ",QString::SkipEmptyParts).at(14).toInt();
-  for (int i=0;i<nad;i++) resli.removeAt(9);
-  while (symmignore+di+dumcnt<alle.size()){
-    if (alle.at(symmignore+di+dumcnt).Label.contains("DUM",Qt::CaseInsensitive)){
-      extern molekul mol;
-//      extern double xs;
-//      extern double ys;
-//      extern double zs;
-      V3 frac,kart;
-      kart=alle.at(symmignore+di+dumcnt).pos;
-//      kart.x+=xs;
-//      kart.y+=ys;
-//      kart.z+=zs;
-      mol.kart2frac(kart,frac);
-      resli.insert(9+dumcnt,QString(" %1  %2  %3 \n").arg(frac.x,8,'f').arg(frac.y,8,'f').arg(frac.z,8,'f'));
-      dumcnt++;
-    }else {symmignore++;}
-  }
-  if (id->dkilllist.size()){
-    int w;
-    for (int i=10; i<resli.size();i++){
-      if (resli.at(i).split(" ",QString::SkipEmptyParts).at(0).contains(QRegExp("^[A-Z]+"))){
-        if ((w=resli.at(i).split(" ",QString::SkipEmptyParts).at(3).toInt())>alle.size()){
-	  resli[i].replace(15,3,QString("%1").arg(w-id->dkilllist.size(),3,10,QChar(' ')));
-	}
-        if ((w=resli.at(i).split(" ",QString::SkipEmptyParts).at(5).toInt())>alle.size())
-	  resli[i].replace(23,3,QString("%1").arg(w-id->dkilllist.size(),3,10,QChar(' ')));
-      }
-    }
-  }
-  int i=0;
-  while (i<resli.size()){
-    if (resli.at(i).startsWith(chm->at(0).Label)) resli[i].replace(10,16,
-		    QString("%1 %2 %3 %4 %5")
-		    .arg(ax1type->currentIndex()+1)
-		    .arg(ax2type->currentIndex()+1)
-		    .arg(ax1lab->currentIndex()+1,4,10,QChar(' '))
-		    .arg(atooo,3,10,QChar(' '))
-		    .arg(ax2lab->currentIndex()+1,3,10,QChar(' ')));
-    i++;
-  }
-  resli[6].replace(62,2,QString("%1").arg(dumcnt,2,10,QChar(' ')));
-  res.open(QIODevice::WriteOnly);
-  res.write(resli.join("").toLatin1(),resli.join("").length());
-  res.close();
-  if (!QFile::exists ("xd.res")) res.copy("xd.res");*/
   done(QDialog::Accepted);
 }

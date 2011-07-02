@@ -718,8 +718,8 @@ void FourMCQ::gen_surface(bool neu,int imin,int imax){
   QString info=QString("<b>Fo-Fc1 Map:</b><font color=green>%1 e&Aring;<sup>-3</sup></font>"
 		  "<font color=red> %2 e&Aring;<sup>-3</sup> </font><br><font color=grey> Hint:  [%3 Scroll (up or down)] to change. </font><br>"
 		  "<b>Fo-Map:</b><font color=blue>%4  e&Aring;<sup>-3</sup></font><br><font color=grey> Hint:  [%5 Scroll (up or down)] to change. </font><br>"
-		  "<b>F1-Fc2 Map:</b><font color=orange>%6 e&Aring;<sup>-3</sup></font>"
-		  "<font color=cyan> %7 e&Aring;<sup>-3</sup> </font><br><font color=grey> Hint:  [%8 Scroll (up or down)] to change. </font><br>")
+		  "<b>F1-Fc2 Map:</b><font color=cyan> %6 e&Aring;<sup>-3</sup> </font><font color=orange>%7 e&Aring;<sup>-3</sup></font>"
+		  "<br><font color=grey> Hint:  [%8 Scroll (up or down)] to change. </font><br>")
 	  .arg(-iso[1],6,'g',2)
 	  .arg(iso[1],6,'g',2)
 	  .arg(QKeySequence(Qt::ControlModifier).toString(QKeySequence::NativeText))

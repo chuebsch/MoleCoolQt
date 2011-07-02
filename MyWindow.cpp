@@ -11,11 +11,12 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=283;
+int rev=284;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
 molekul mol;
+int pdfOnAtom=-1;
 const double g2r=180.0/M_PI;
 double fl(double x,double y,double z){
 	double a,b,c;
@@ -1261,7 +1262,10 @@ createRenameWgd();
 	i++;	
 	if (i<=argc) gd=QCoreApplication::arguments().at(i).toDouble(); else gd=-1;
       }
-
+      if (QCoreApplication::arguments().at(i).contains("-pdf")){
+      i++;
+      if (i<=argc)pdfOnAtom=QCoreApplication::arguments().at(i).toInt();else i--;
+      }
       if (QCoreApplication::arguments().at(i).contains("-HADist")) {
 	i++;	
 	if (i<=argc) mol.HAMax=QCoreApplication::arguments().at(i).toDouble(); 
@@ -2371,6 +2375,19 @@ void Uf2Uo(const Matrix x, Matrix & y) {
  y=(o*w)*transponse(o);
 }
 
+double MyWindow::pdf2(INP atom, V3 pos){
+  double p=0;
+  Matrix U=atom.u;
+  double DI=1.0/determinant(U);
+  Matrix UI=inverse(U);
+  V3 X=pos-atom.kart;
+  const double base=DI/8*M_PI*M_PI*M_PI;
+  double ponent=-1.0*((X*UI)*X);
+ // printf("PDF?? D%g D**(-1)%g x=%g \n",D,DI,ponent);
+  p=sqrt(base)*exp(ponent/2.0);
+  return p;
+}
+
 void Usym (Matrix x,Matrix sym, Matrix & y){
   y=(sym*x)*transponse(sym);
 }
@@ -2810,6 +2827,21 @@ dummys.append(newAtom);
     growSymm(6);
 }
 
+double MyWindow::ueq(const Matrix m){
+  double erg=0;
+  erg+=m.m11*mol.zelle.as*mol.zelle.a*mol.zelle.a*mol.zelle.as;
+  erg+=m.m12*mol.zelle.as*mol.zelle.a*mol.zelle.b*mol.zelle.bs;
+  erg+=m.m13*mol.zelle.as*mol.zelle.a*mol.zelle.c*mol.zelle.cs;
+  erg+=m.m21*mol.zelle.bs*mol.zelle.b*mol.zelle.a*mol.zelle.as;
+  erg+=m.m22*mol.zelle.bs*mol.zelle.b*mol.zelle.b*mol.zelle.bs;
+  erg+=m.m23*mol.zelle.bs*mol.zelle.b*mol.zelle.c*mol.zelle.cs;
+  erg+=m.m31*mol.zelle.cs*mol.zelle.c*mol.zelle.a*mol.zelle.as;
+  erg+=m.m32*mol.zelle.cs*mol.zelle.c*mol.zelle.b*mol.zelle.bs;
+  erg+=m.m33*mol.zelle.cs*mol.zelle.c*mol.zelle.c*mol.zelle.cs;
+  erg*=1/3.0;
+  return erg;
+}
+
 void MyWindow::load_xdres(QString fileName) {
   INP newAtom;
   newAtom.part=0;
@@ -3047,16 +3079,73 @@ dummax=smx-atmax;
     if ((asymmUnit[i].uf.m22==0.0)&&(asymmUnit[i].uf.m33==0.0)){
       asymmUnit[i].u.m11=asymmUnit[i].u.m22=asymmUnit[i].u.m33=asymmUnit[i].uf.m11;
       asymmUnit[i].u.m12=asymmUnit[i].u.m13=asymmUnit[i].u.m23=asymmUnit[i].u.m21=asymmUnit[i].u.m31=asymmUnit[i].u.m32=0.0;}
-    else Uf2Uo(asymmUnit[i].uf,asymmUnit[i].u);}
+    else {
+      Uf2Uo(asymmUnit[i].uf,asymmUnit[i].u);
+
+    }
+  }
+
   growSymm(6);
+/*  for (int i=0;i<asymmUnit.size();i++) {
+      printf("%-8s %12.5f %12.5f %12.5f  pdf(0)=%18.9g %18.9g\n",xdinp[i].atomname,
+		      xdinp[i].kart.x,
+		      xdinp[i].kart.y,
+		      xdinp[i].kart.z,
+		      pdf2(xdinp[i],xdinp[i].kart),pdf2(xdinp[i],xdinp[i].kart+V3(0.8,0,0)));
+
+  }*/
   if (!fmcq->loadFouAndPerform(fouName.toStdString().c_str())) {
     if (fmcq->doMaps->isChecked()) infoKanalNews(QString("<font color=red>Could not load %1!</font><br>").arg(fouName));
     fmcq->deleteLists();
     fmcq->doMaps->hide();
   }
   fmcq->doMaps->show();
+  if (pdfOnAtom!=-1) makePDFGrid(xdinp[pdfOnAtom]);
+  pdfOnAtom=-1;
 }
 
+void MyWindow::makePDFGrid(INP atom){
+  double p=0;
+  Matrix U=atom.u;//kartesian U
+  double DI=1.0/determinant(U);
+  Matrix UI=inverse(U);
+  V3 X=V3(1,0,0);
+  const double base=sqrt(DI/8*M_PI*M_PI*M_PI);
+  double nn=sqrt((X*U)*X)*1.5382;
+  X=V3(nn,0,0);
+  double ponent=((X*UI)*X)/-2.0;
+  p=base*exp(ponent);
+  printf("50%%  are at a iso value of %12.5g %12.5g Ang from %s in x direction\n",p,nn,atom.atomname); 
+  QFile grd("testPDF.grd");
+  int breite=151;
+  grd.open(QIODevice::WriteOnly|QIODevice::Text);
+  grd.write(QString("3DGRDFIL  0\n         PDF\n\n! Gridpoints, Origin, Physical Dimensions\n            %1            %1            %1\n    0.80000E+00    0.80000E+00    0.80000E+00\n    0.16000E+01    0.16000E+01    0.16000E+01\n! Objects\n")
+		  .arg(breite).toLatin1());
+  grd.write(QString("  %1\n").arg(atmax).toLatin1());
+  for (int i=0; i<atmax;i++){
+    grd.write(QString("%1  %2 %3 %4 ATOM\n").arg(xdinp[i].atomname,-8)
+		    .arg(xdinp[i].kart.x-atom.kart.x,12,'f',6)
+		    .arg(xdinp[i].kart.y-atom.kart.y,12,'f',6)
+		    .arg(xdinp[i].kart.z-atom.kart.z,12,'f',6).toLatin1());
+  }
+  grd.write("! Connections\n         0\n! Values\n");
+  int z=0;
+  double df=0.16000E+01/breite;
+  V3 t=V3(((breite-1)/-2.0)*df,((breite-1)/-2.0)*df,((breite-1)/-2.0)*df);
+      for (int k=0; k<breite; k++)
+    for (int j=0; j<breite; j++)
+  for (int i=0; i<breite; i++)
+      {
+	X=V3(i*df,j*df,k*df)+t;
+	ponent=((X*UI)*X)/-2.0;
+	p=base*exp(ponent);
+	grd.write(QString("%1").arg(p,13,'E',5).toLatin1());
+	z++;
+	if (!(z%6))grd.write("\n");
+      }
+  grd.write("\n");
+  grd.close();
+}
 //----------------------------------S H E L D R I C K -----------------------------------------
 //----------------------------------S H E L D R I C K -----------------------------------------
 //----------------------------------S H E L D R I C K -----------------------------------------

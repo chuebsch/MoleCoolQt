@@ -144,6 +144,20 @@ double m11, m21, m31, m12, m22, m32, m13, m23, m33;
 		  a.m21, a.m22, a.m23,
 		  a.m31, a.m32, a.m33);
  }
+inline double determinant (Matrix a){
+return a.m11*a.m22*a.m33 - a.m11*a.m23*a.m32 - a.m12*a.m21*a.m33 + a.m12*a.m23*a.m31 +a.m13*a.m21*a.m32 -a.m13*a.m22*a.m31;
+}
+inline Matrix inverse (Matrix A){
+  double D = determinant(A);
+  if (D==0) return A;
+  D=1.0/D;
+  return Matrix(
+		  D*(A.m22*A.m33-A.m23*A.m32),D*(A.m13*A.m32-A.m12*A.m33),D*(A.m21*A.m23-A.m13*A.m22), 
+		  D*(A.m23*A.m31-A.m21*A.m33),D*(A.m11*A.m33-A.m13*A.m31),D*(A.m13*A.m21-A.m11*A.m23), 
+		  D*(A.m21*A.m32-A.m22*A.m31),D*(A.m12*A.m31-A.m11*A.m32),D*(A.m11*A.m22-A.m12*A.m21));
+}
+
+
 inline Matrix operator * (const Matrix &a,const Matrix &b){
   Matrix erg;
   erg.m11 = a.m11 * b.m11 + a.m21 * b.m12 + a.m31 * b.m13;
@@ -158,7 +172,7 @@ inline Matrix operator * (const Matrix &a,const Matrix &b){
   erg.m23 = a.m13 * b.m21 + a.m23 * b.m22 + a.m33 * b.m23;
   erg.m33 = a.m13 * b.m31 + a.m23 * b.m32 + a.m33 * b.m33;
   return erg;
-} 
+}
 inline V3 operator * (const Matrix &a, const V3 &b){
   V3 erg;
   erg.x = a.m11*b.x + a.m21*b.y + a.m31*b.z;
@@ -329,6 +343,7 @@ struct INP {
   V3   frac;          // Fraktionelle Koordinaten in X-Richtung 
   Matrix uf;           // Temperaturparameter 
   Matrix u;
+  double c111, c222, c333, c112, c122, c113, c133, c223, c233, c123;
                         // Bis hier alles Einträge in xd.inp, danach berechnet   
   V3   kart;          // Berechnete kart. Koordinaten in X-Richtung 
   V3   ax1;           // Berechnete Achse 0 
