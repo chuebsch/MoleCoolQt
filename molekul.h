@@ -393,6 +393,8 @@ inline bool operator < (const SdmItem &a1, const SdmItem &a2){
 class molekul {
  public:
   Cell zelle;
+
+  Matrix jacobi(Matrix A, V3 &D);
   int adp,intern;
   double bondStrength;
   GLuint hbtex, hbtex2;
@@ -614,7 +616,6 @@ class molekul {
   void make_bonds(QList<INP> xdinp );
   void make_knopf(QList<INP> xdinp );
 
-  // jacobi durch genauen algo ersetzen
   double * jacobi(double a[3][3], double d[3]); 
 };
 #endif

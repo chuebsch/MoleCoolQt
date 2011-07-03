@@ -193,7 +193,7 @@ void MolIso::loadMI(QString fname){
       printf("\nAvarage of positive surface values VS+= %f %s\n Avarage of negative surface values VS-= %f %s\n Avarage deviation from the avarage surface value PI= %f %s\n sigma square + = %f (%s)^2\n sigma square - = %f (%s)^2\n sigma square total = %f (%s)^2\n nu = %f \n\n",
       avpotplus,lul,avpotminus,lul,avdevPI,lul,potsigplus,lul,potsigminus,lul,potsigtot,lul,potnu);*/
 
-    max+=0.00001;
+    max+=max*0.001;
     if (fixmin!=666.666) min=fixmin;
     if (fixmax!=666.666) max=fixmax;
     for (int i=lines[0].toInt()+1;i<lines.size();i++){

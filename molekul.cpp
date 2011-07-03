@@ -869,6 +869,95 @@ double * molekul::jacobi(double a[3][3], double d[3]) {
 
  return (double*)erg;
 }
+
+Matrix molekul::jacobi(Matrix A, V3 &D) {
+    double a[3][3]={{A.m11,A.m12,A.m13},
+                    {A.m21,A.m22,A.m23},
+                    {A.m31,A.m32,A.m33}};
+    double d[3]={D.x,D.y,D.z};
+  int j,iq,ip,i,n=3,nrot;
+  double tresh=0,theta,tau,t,sm,s,h,g,c;
+  double b[3],z[3],v[3][3];
+  for (ip=1;ip<=n;ip++) {
+    for (iq=1;iq<=n;iq++) v[ip-1][iq-1]=0.0;
+    v[ip-1][ip-1]=1.0;
+  }
+  for (ip=1;ip<=n;ip++) {
+    b[ip-1]=d[ip-1]=a[ip-1][ip-1];
+    z[ip-1]=0.0;
+  }
+  nrot=0;
+  for (i=1;i<=150;i++) {
+    sm=0.0;
+    for (ip=1;ip<=n-1;ip++) {
+      for (iq=ip+1;iq<=n;iq++)
+        sm += fabs(a[ip-1][iq-1]);
+    }
+
+
+
+    if (float(sm) <tresh) {
+        D=V3(d[0],d[1],d[2]);
+      return Matrix(v[0][0],v[0][1],v[0][2],
+                    v[1][0],v[1][1],v[1][2],
+                    v[2][0],v[2][1],v[2][2]);
+    }
+    if (i < 4) tresh=0.0001;
+    else tresh=0.000001;
+    for (ip=1;ip<=n-1;ip++) {
+      for (iq=ip+1;iq<=n;iq++) {
+
+        g=100.0*fabs(a[ip-1][iq-1]);
+        if ((i > 4) && ((fabs(d[ip-1])+g) == fabs(d[ip-1])) && ((fabs(d[iq-1])+g) == fabs(d[iq-1]))) {a[ip-1][iq-1]=0.0;}
+        else if (fabs(a[ip-1][iq-1]) >= tresh) {
+          h=d[iq-1]-d[ip-1];
+          if ((fabs(h)+g) == fabs(h)) {t=(a[ip-1][iq-1])/h; }
+          else { theta=0.5*h/(a[ip-1][iq-1]);
+          t=1.0/(fabs(theta)+sqrt(1.0+theta*theta));
+          if (theta < 0.0) {t = -1.0*t;}
+          }
+          c=1.0/sqrt(1+t*t);
+          s=t*c;
+          tau=s/(1.0+c);
+          h=t*a[ip-1][iq-1];
+          z[ip-1] -= h;
+          z[iq-1] += h;
+          d[ip-1] -= h;
+          d[iq-1] += h;
+          a[ip-1][iq-1]=0.0;
+          for (j=1;j<=ip-1;j++) {
+           ROTATE(a,j-1,ip-1,j-1,iq-1)
+
+              }
+          for (j=ip+1;j<=iq-1;j++) {
+           ROTATE(a,ip-1,j-1,j-1,iq-1)
+
+              }
+          for (j=iq+1;j<=n;j++) {
+           ROTATE(a,ip-1,j-1,iq-1,j-1)
+
+              }
+          for (j=1;j<=n;j++) {
+           ROTATE(v,j-1,ip-1,j-1,iq-1)
+              }
+          ++(nrot);
+
+        }
+      }
+    }
+    for (ip=1;ip<=n;ip++) {
+      b[ip-1] += z[ip-1];
+      d[ip-1] =b[ip-1];
+      z[ip-1] =0.0;
+    }
+  }
+
+  D=V3(d[0],d[1],d[2]);
+  return Matrix(v[0][0],v[0][1],v[0][2],
+                v[1][0],v[1][1],v[1][2],
+                v[2][0],v[2][1],v[2][2]);
+}
+
 void molekul::atoms(QList<INP> xdinp,const int proba){//ADP Schwingungsellipsoide
   GLfloat black[4]={0.0, 0.0, 0.0, 1.0};
   GLfloat white[4]={0.2, 0.2, 0.2, 0.0};

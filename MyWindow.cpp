@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=284;
+int rev=285;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -2947,7 +2947,22 @@ void MyWindow::load_xdres(QString fileName) {
 		      &asymmUnit[i].uf.m32);//32 == 23 
       asymmUnit[i].uf.m23=asymmUnit[i].uf.m32;
       asymmUnit[i].uf.m13=asymmUnit[i].uf.m31;
-      asymmUnit[i].uf.m12=asymmUnit[i].uf.m21;      
+      asymmUnit[i].uf.m12=asymmUnit[i].uf.m21;
+      if (asymmUnit[i].jtf>2){
+      printf("%-8s %d\n",asymmUnit[i].atomname,i);
+      egal=fscanf(adp,"%lf%lf%lf%lf%lf\n\r",
+      &asymmUnit[i].c111,
+      &asymmUnit[i].c222,
+      &asymmUnit[i].c333,
+      &asymmUnit[i].c112,
+      &asymmUnit[i].c122);
+      egal=fscanf(adp,"%lf%lf%lf%lf%lf\n\r",
+      &asymmUnit[i].c113,
+      &asymmUnit[i].c133,
+      &asymmUnit[i].c223,
+      &asymmUnit[i].c233,
+      &asymmUnit[i].c123);
+      }
       i++;
     }
   }
@@ -3104,23 +3119,157 @@ dummax=smx-atmax;
   pdfOnAtom=-1;
 }
 
+V3 eigenvalues(const Matrix m){
+  double r, s, t;
+  double p, q, phi;
+  double D;
+  double const pi   = 3.14159265358979323846;
+  double const eps  = 0.000001;
+  V3 l=V3(0.05,0.05,0.05);
+
+  r = -1.0 * (m.m11+m.m22+m.m33);
+  s = -1.0 * (m.m12 * m.m12
+                  + m.m13 * m.m13
+                  + m.m23 * m.m23
+                  - m.m11 * m.m22
+                  - m.m22 * m.m33
+                  - m.m33 * m.m11);
+  t = -1.0 * (m.m11  * m.m22 * m.m33
+                  +2.0*m.m12 * m.m13 * m.m23
+                  -m.m11 * m.m23 * m.m23
+                  -m.m22 * m.m13 * m.m13
+                  -m.m33 * m.m12 * m.m12);
+
+  p = (r*r - 3.0*s) / 9.0;
+  if (fabs(p)<eps) return V3(m.m11,m.m22,m.m33);
+  q = (2.0*r*r*r - 9.0*r*s +27.0*t)/54.0;
+  D = q/sqrt(p*p*p);
+  if ( (D*D-1.0) > eps ){  // we need |D|<=1 for acos()
+    exit(1);
+  }
+  else
+  {
+    if ( fabs(D) > 1 ){ // computer precision makes this necessary
+      phi = 0;
+    }
+    else        {
+      phi = acos(D);
+    }
+    l.x = -2.0*sqrt(p)*cos(phi/3.0)            - r/3.0;
+    l.y = -2.0*sqrt(p)*cos((phi + 2.0*pi)/3.0) - r/3.0;
+    l.z = -2.0*sqrt(p)*cos((phi + 4.0*pi)/3.0) - r/3.0;
+
+  }
+  return l;
+}
+Matrix eigenvectors(const Matrix m,const V3 l){
+    double B,C,D,E;
+
+    V3 e1,e2,e3;
+    B=(m.m22-l.x)-(m.m23*m.m12/m.m13);
+    C= m.m23-((m.m33-l.x)*m.m12/m.m13);
+    D= m.m23-((m.m22-l.x)*m.m13/m.m12);
+    E=(m.m33-l.x)-(m.m23*m.m13/m.m12);
+    e1.z=-(C-(B*E/D));
+    e1.y=E*e1.z/D;
+    e1.x=(-m.m12*e1.y-m.m13*e1.z)/m.m11;
+
+
+    B=(m.m22-l.y)-(m.m23*m.m12/m.m13);
+    C= m.m23-((m.m33-l.y)*m.m12/m.m13);
+    D= m.m23-((m.m22-l.y)*m.m13/m.m12);
+    E=(m.m33-l.y)-(m.m23*m.m13/m.m12);
+    e2.z=-(C-(B*E/D));
+    e2.y=E*e2.z/D;
+    e2.x=(-m.m12*e2.y-m.m13*e2.z)/m.m11;
+
+
+    B=(m.m22-l.z)-(m.m23*m.m12/m.m13);
+    C= m.m23-((m.m33-l.z)*m.m12/m.m13);
+    D= m.m23-((m.m22-l.z)*m.m13/m.m12);
+    E=(m.m33-l.z)-(m.m23*m.m13/m.m12);
+    e3.z=-(C-(B*E/D));
+    e3.y=E*e3.z/D;
+    e3.x=(-m.m12*e3.y-m.m13*e3.z)/m.m11;
+
+    e1=Normalize(e1);
+    e2=Normalize(e2);
+    e3=Normalize(e3);
+    Matrix erg= Matrix(e1,e2,e3) ;
+    return erg;
+/*
+  double a1x,a1y,a1z, a2, a3, b2x, b2y, b2z, b3;
+  e1.z=e2.z=e3.z=1.0;
+  a1x = m.m11 - l.x;
+  a1y = m.m11 - l.y;
+  a1z = m.m11 - l.z;
+  a2 = m.m12;
+  a3 = m.m13;
+  b2x = m.m22 - l.x;
+  b2y = m.m22 - l.y;
+  b2z = m.m22 - l.z;
+  b3 = m.m23;
+  e1.y = (a2*a3 -a1x*b3)/(a1x*b2x -a2*a2);
+  e2.y = (a2*a3 -a1y*b3)/(a1y*b2y -a2*a2);
+  e3.y = (a2*a3 -a1z*b3)/(a1z*b2z -a2*a2);
+  e1.x = - (a3*a2*e1.y)/a1x;
+  e2.x = - (a3*a2*e2.y)/a1y;
+  e3.x = - (a3*a2*e3.y)/a1z;
+  e1=Normalize(e1);
+  e2=Normalize(e2);
+  e3=Normalize(e3);
+  Matrix erg= Matrix(e1,e2,e3) ;
+  return erg;
+  return transponse(erg);*/
+}
+
 void MyWindow::makePDFGrid(INP atom){
+    printf("\n%s\n\n",atom.atomname);
+    pdfOnAtom=-1;
   double p=0;
   Matrix U=atom.u;//kartesian U
-  double DI=1.0/determinant(U);
+  //double D=determinant(U);
   Matrix UI=inverse(U);
+  double DI=determinant(UI);
   V3 X=V3(1,0,0);
-  const double base=sqrt(DI/8*M_PI*M_PI*M_PI);
-  double nn=sqrt((X*U)*X)*1.5382;
-  X=V3(nn,0,0);
-  double ponent=((X*UI)*X)/-2.0;
+  V3 ev=V3(1,1,1);
+  Matrix evk=mol.jacobi(U,ev);
+
+  printf("%g %g %g  \n",ev.x,ev.y,ev.z);
+  double maxdim=2*sqrt(fmax(ev.x,fmax(ev.y,ev.z)))*2.8;
+
+  const double base=sqrt(DI)/sqrt((8*M_PI*M_PI*M_PI));
+  double p10,p90;
+  X=V3(evk.m11,evk.m12,evk.m13);
+  X*=sqrt(ev.x)*1.5382;
+  double ponent=((X*UI)*X)*-0.5;
   p=base*exp(ponent);
-  printf("50%%  are at a iso value of %12.5g %12.5g Ang from %s in x direction\n",p,nn,atom.atomname); 
+
+  X=V3(evk.m11,evk.m12,evk.m13);
+  X*=sqrt(ev.x)*0.7644;
+  ponent=((X*UI)*X)*-0.5;
+  p10=base*exp(ponent);
+
+  X=V3(evk.m11,evk.m12,evk.m13);
+  X*=sqrt(ev.x)*2.5003;
+  ponent=((X*UI)*X)*-0.5;
+  p90=base*exp(ponent);
+
   QFile grd("testPDF.grd");
-  int breite=151;
+  settings->beginGroup("Version 0.1");
+  settings->setValue("Iso-Values",QString("%1 %2 %3").arg(p10,0,'g',6).arg(p,0,'g',6).arg(p90,0,'g',6));
+  settings->setValue("adp_struct_name", dirName );
+  settings->setValue("load_face_name", QString());
+  settings->setValue("map_grid_name", QString());
+  settings->setValue("iso_grid_name", QFileInfo(grd).absoluteFilePath());
+  settings->endGroup();
+  int breite=91;
   grd.open(QIODevice::WriteOnly|QIODevice::Text);
-  grd.write(QString("3DGRDFIL  0\n         PDF\n\n! Gridpoints, Origin, Physical Dimensions\n            %1            %1            %1\n    0.80000E+00    0.80000E+00    0.80000E+00\n    0.16000E+01    0.16000E+01    0.16000E+01\n! Objects\n")
-		  .arg(breite).toLatin1());
+  grd.write(QString("3DGRDFIL  0\n         PDF\n\n! Gridpoints, Origin, Physical Dimensions\n"
+  "       %1            %1            %1\n    %2    %2    %2\n    %3    %3    %3\n! Objects\n")
+            .arg(breite)
+            .arg(maxdim*0.5,12,'E',5)
+            .arg(maxdim,12,'E',5).toLatin1());
   grd.write(QString("  %1\n").arg(atmax).toLatin1());
   for (int i=0; i<atmax;i++){
     grd.write(QString("%1  %2 %3 %4 ATOM\n").arg(xdinp[i].atomname,-8)
@@ -3130,21 +3279,39 @@ void MyWindow::makePDFGrid(INP atom){
   }
   grd.write("! Connections\n         0\n! Values\n");
   int z=0;
-  double df=0.16000E+01/breite;
+  double df=maxdim/breite;
+  double third=0,fourth=0,tmax=0,tmin=0;
   V3 t=V3(((breite-1)/-2.0)*df,((breite-1)/-2.0)*df,((breite-1)/-2.0)*df);
-      for (int k=0; k<breite; k++)
-    for (int j=0; j<breite; j++)
-  for (int i=0; i<breite; i++)
-      {
-	X=V3(i*df,j*df,k*df)+t;
-	ponent=((X*UI)*X)/-2.0;
-	p=base*exp(ponent);
-	grd.write(QString("%1").arg(p,13,'E',5).toLatin1());
-	z++;
-	if (!(z%6))grd.write("\n");
-      }
-  grd.write("\n");
+  QString txt;
+  for (int k=0; k<breite; k++)
+      for (int j=0; j<breite; j++)
+          for (int i=0; i<breite; i++){
+      X=V3(i*df,j*df,k*df)+t;
+      ponent=((X*UI)*X)/-2.0;
+      p=base*exp(ponent);
+      third= p*(((atom.c111*X.x*X.x*X.x+
+              atom.c222*X.y*X.y*X.y+
+              atom.c333*X.z*X.z*X.z+
+              atom.c112*X.x*X.x*X.y+
+              atom.c122*X.x*X.y*X.y+
+              atom.c113*X.x*X.x*X.z+
+              atom.c133*X.x*X.z*X.z+
+              atom.c223*X.y*X.y*X.z+
+              atom.c233*X.y*X.z*X.z+
+              atom.c123*X.x*X.y*X.z)*pow(2*M_PI,3))/6.0);
+      tmin=fmin(tmin,third);
+      tmax=fmax(tmax,third);
+      txt.append(QString("%1").arg(p,13,'E',5));
+      z++;
+      if (!(z%6))txt.append("\n");
+      if (!(z%(breite*breite*breite/100))) {printf(">");fflush(stdout);}
+  }
+  txt.append("\n");
+  printf("\ntestPDF.grd written.\n");
+  grd.write(txt.toLatin1());
+  printf("\ntestPDF.grd written. %g %g\n",tmin,tmax);
   grd.close();
+  genMoliso();
 }
 //----------------------------------S H E L D R I C K -----------------------------------------
 //----------------------------------S H E L D R I C K -----------------------------------------
