@@ -961,7 +961,7 @@ void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &st
     iso_level=isoValues.at(k);
     CalcVertexes();
     CalcNormals();
-//    std::cout<<
+    std::cout<<iso_level;
     tf->open(QIODevice::WriteOnly);
 
     tf->write(QString("%1\n").arg(orte.size()).toLatin1());

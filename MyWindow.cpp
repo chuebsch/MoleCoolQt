@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=285;
+int rev=286;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -3118,118 +3118,177 @@ dummax=smx-atmax;
   if (pdfOnAtom!=-1) makePDFGrid(xdinp[pdfOnAtom]);
   pdfOnAtom=-1;
 }
-
-V3 eigenvalues(const Matrix m){
-  double r, s, t;
-  double p, q, phi;
-  double D;
-  double const pi   = 3.14159265358979323846;
-  double const eps  = 0.000001;
-  V3 l=V3(0.05,0.05,0.05);
-
-  r = -1.0 * (m.m11+m.m22+m.m33);
-  s = -1.0 * (m.m12 * m.m12
-                  + m.m13 * m.m13
-                  + m.m23 * m.m23
-                  - m.m11 * m.m22
-                  - m.m22 * m.m33
-                  - m.m33 * m.m11);
-  t = -1.0 * (m.m11  * m.m22 * m.m33
-                  +2.0*m.m12 * m.m13 * m.m23
-                  -m.m11 * m.m23 * m.m23
-                  -m.m22 * m.m13 * m.m13
-                  -m.m33 * m.m12 * m.m12);
-
-  p = (r*r - 3.0*s) / 9.0;
-  if (fabs(p)<eps) return V3(m.m11,m.m22,m.m33);
-  q = (2.0*r*r*r - 9.0*r*s +27.0*t)/54.0;
-  D = q/sqrt(p*p*p);
-  if ( (D*D-1.0) > eps ){  // we need |D|<=1 for acos()
-    exit(1);
-  }
-  else
-  {
-    if ( fabs(D) > 1 ){ // computer precision makes this necessary
-      phi = 0;
-    }
-    else        {
-      phi = acos(D);
-    }
-    l.x = -2.0*sqrt(p)*cos(phi/3.0)            - r/3.0;
-    l.y = -2.0*sqrt(p)*cos((phi + 2.0*pi)/3.0) - r/3.0;
-    l.z = -2.0*sqrt(p)*cos((phi + 4.0*pi)/3.0) - r/3.0;
-
-  }
-  return l;
-}
-Matrix eigenvectors(const Matrix m,const V3 l){
-    double B,C,D,E;
-
-    V3 e1,e2,e3;
-    B=(m.m22-l.x)-(m.m23*m.m12/m.m13);
-    C= m.m23-((m.m33-l.x)*m.m12/m.m13);
-    D= m.m23-((m.m22-l.x)*m.m13/m.m12);
-    E=(m.m33-l.x)-(m.m23*m.m13/m.m12);
-    e1.z=-(C-(B*E/D));
-    e1.y=E*e1.z/D;
-    e1.x=(-m.m12*e1.y-m.m13*e1.z)/m.m11;
-
-
-    B=(m.m22-l.y)-(m.m23*m.m12/m.m13);
-    C= m.m23-((m.m33-l.y)*m.m12/m.m13);
-    D= m.m23-((m.m22-l.y)*m.m13/m.m12);
-    E=(m.m33-l.y)-(m.m23*m.m13/m.m12);
-    e2.z=-(C-(B*E/D));
-    e2.y=E*e2.z/D;
-    e2.x=(-m.m12*e2.y-m.m13*e2.z)/m.m11;
-
-
-    B=(m.m22-l.z)-(m.m23*m.m12/m.m13);
-    C= m.m23-((m.m33-l.z)*m.m12/m.m13);
-    D= m.m23-((m.m22-l.z)*m.m13/m.m12);
-    E=(m.m33-l.z)-(m.m23*m.m13/m.m12);
-    e3.z=-(C-(B*E/D));
-    e3.y=E*e3.z/D;
-    e3.x=(-m.m12*e3.y-m.m13*e3.z)/m.m11;
-
-    e1=Normalize(e1);
-    e2=Normalize(e2);
-    e3=Normalize(e3);
-    Matrix erg= Matrix(e1,e2,e3) ;
-    return erg;
 /*
-  double a1x,a1y,a1z, a2, a3, b2x, b2y, b2z, b3;
-  e1.z=e2.z=e3.z=1.0;
-  a1x = m.m11 - l.x;
-  a1y = m.m11 - l.y;
-  a1z = m.m11 - l.z;
-  a2 = m.m12;
-  a3 = m.m13;
-  b2x = m.m22 - l.x;
-  b2y = m.m22 - l.y;
-  b2z = m.m22 - l.z;
-  b3 = m.m23;
-  e1.y = (a2*a3 -a1x*b3)/(a1x*b2x -a2*a2);
-  e2.y = (a2*a3 -a1y*b3)/(a1y*b2y -a2*a2);
-  e3.y = (a2*a3 -a1z*b3)/(a1z*b2z -a2*a2);
-  e1.x = - (a3*a2*e1.y)/a1x;
-  e2.x = - (a3*a2*e2.y)/a1y;
-  e3.x = - (a3*a2*e3.y)/a1z;
-  e1=Normalize(e1);
-  e2=Normalize(e2);
-  e3=Normalize(e3);
-  Matrix erg= Matrix(e1,e2,e3) ;
-  return erg;
-  return transponse(erg);*/
-}
+double hermite4(V3 w, Matrix q, 
+double d1111, double d2222, double d3333, 
+double d1112, double d1113, double d1122, 
+double d1123, double d1133, double d1222,
+double d1223, double d1233, double d1333,
+double d2223, double d2233, double d2333
+){
+//D-tensor : 
+//D1111= 0.00000     D2222= 0.00000     D3333= 0.00000
+//D1112= 0.00000     D1113= 0.00000     D1122= 0.00000
+//D1123= 0.00000     D1133= 0.00000     D1222= 0.00000
+//D1223= 0.00000     D1233= 0.00000     D1333= 0.00000
+//D2223= 0.00000     D2233= 0.00000     D2333= 0.00000
 
+  / *
+  101 TERM1    = W11*W11
+  TERM2    = 6.*W11*Q(1,1)
+  TERM3    = 3.*Q(1,1)**2
+  HJKLM(1) = TERM1-TERM2+TERM3
+  TERM     = HJKLM(1)*DR(1,II)
+  102 IF(JFOUR(2))103,104,103
+  103 TERM1    = W22*W22
+  TERM2    = 6.*W22*Q(2,2)
+  TERM3    = 3.*Q(2,2)**2
+  HJKLM(2) = TERM1-TERM2+TERM3
+  TERM     = TERM + HJKLM(2)*DR(2,II)
+  104 IF(JFOUR(3))105,106,105
+  105 TERM1    = W33*W33
+  TERM2    = 6.*W33*Q(3,3)
+  TERM3    = 3.*Q(3,3)**2
+  HJKLM(3) = TERM1-TERM2+TERM3
+  TERM     = TERM + HJKLM(3)*DR(3,II)
+  106 IF(JFOUR(4))107,108,107
+  107 TERM1    = W11*W1*W2
+  TERM2    = (W11*Q(1,2)*3.+W1*W2*Q(1,1)*3.)
+  TERM3    = 3.*Q(1,1)*Q(1,2)
+  HJKLM(4) = TERM1-TERM2+TERM3
+  TERMZ    = HJKLM(4)*DR(4,II)
+  HJKLM(4) = HJKLM(4)*4.0
+  108 IF(JFOUR(5))109,110,109
+  109 TERM1    = W11*W1*W3
+  TERM2    = (W11*Q(1,3)*3.+W1*W3*Q(1,1)*3.)
+  TERM3    = 3.*Q(1,1)*Q(1,3)
+  HJKLM(5) = TERM1-TERM2+TERM3
+  TERMZ    = TERMZ + HJKLM(5)*DR(5,II)
+  HJKLM(5) =HJKLM(5)*4.0
+  110 IF(JFOUR(9))111,112,111
+  111 TERM1    = W22*W2*W1
+  TERM2    = (W22*Q(1,2)*3.+W2*W1*Q(2,2)*3.)
+  TERM3    = 3.*Q(2,2)*Q(1,2)
+  HJKLM(9) = TERM1-TERM2+TERM3
+  TERMZ    = TERMZ + HJKLM(9)*DR(9,II)
+  HJKLM(9) = HJKLM(9)*4.0
+  112 IF(JFOUR(12))113,114,113
+  113 TERM1    = W33*W3*W1
+  TERM2    = (W33*Q(1,3)*3.+W1*W3*Q(3,3)*3.)
+  TERM3    = 3.*Q(3,3)*Q(1,3)
+  HJKLM(12)= TERM1-TERM2+TERM3
+  TERMZ    = TERMZ + HJKLM(12)*DR(12,II)
+  HJKLM(12)= HJKLM(12)*4.0
+  114 IF(JFOUR(13))115,116,115
+  115 TERM1    = W22*W2*W3
+  TERM2    = (W22*Q(2,3)*3.+W2*W3*Q(2,2)*3.)
+  TERM3    = 3*Q(2,2)*Q(2,3)
+  HJKLM(13)= TERM1-TERM2+TERM3
+  TERMZ    = TERMZ + HJKLM(13)*DR(13,II)
+  HJKLM(13)= HJKLM(13)*4.0
+  116 IF(JFOUR(15))117,118,117
+  117 TERM1    = W33*W3*W2
+  TERM2    = (W33*Q(2,3)*3.+W2*W3*Q(3,3)*3.)
+  TERM3    = 3.*Q(3,3)*Q(2,3)
+  HJKLM(15)= TERM1-TERM2+TERM3
+  TERMZ    = TERMZ + HJKLM(15)*DR(15,II)
+  HJKLM(15)= HJKLM(15)*4.0
+  118 TERM     = TERM + TERMZ*4.0
+  TERMZ    = 0.0
+  IF(JFOUR(6))119,120,119
+  119 TERM1    = W11*W22
+  TERM2    = (W11*Q(2,2)+4.*W1*W2*Q(1,2)+W22*Q(1,1))
+  TERM3    = Q(1,1)*Q(2,2)+2.*Q(1,2)**2
+  HJKLM(6) = TERM1-TERM2+TERM3
+  TERMZ    = HJKLM(6)*DR(6,II)
+  120 IF(JFOUR(8))121,122,121
+  121 TERM1    = W11*W33
+  TERM2    = (W11*Q(3,3)+4.*W1*W3*Q(1,3)+W33*Q(1,1))
+  TERM3    = Q(1,1)*Q(3,3)+2.*Q(1,3)**2
+  HJKLM(8) = TERM1-TERM2+TERM3
+  TERMZ    = TERMZ + HJKLM(8)*DR(8,II)
+  HJKLM(8) = HJKLM(8)*6.0
+  122 IF(JFOUR(14))123,124,123
+  123 TERM1    = W33*W22
+  TERM2    = (W33*Q(2,2)+4.*W3*W2*Q(2,3)+W22*Q(3,3))
+  TERM3    = Q(3,3)*Q(2,2)+2.*Q(2,3)**2
+  HJKLM(14)= TERM1-TERM2+TERM3
+  TERMZ    = TERMZ + HJKLM(14)*DR(14,II)
+  HJKLM(14)= HJKLM(14)*6.0
+  124 TERM     = TERM + TERMZ*6.0
+  TERMZ    = 0.0
+  IF(JFOUR(10))125,126,125
+  125 TERM1    = W22*W3*W1
+  TERM2    = (W22*Q(1,3)+2.*W2*W3*Q(1,2)+2.*W2*W1*Q(2,3) +
+		  &           W3*W1*Q(2,2))
+  TERM3    = Q(2,2)*Q(1,3)+2.*Q(2,3)*Q(1,2)
+  HJKLM(10)= TERM1-TERM2+TERM3
+  TERMZ    = HJKLM(10)*DR(10,II)
+  HJKLM(10)= HJKLM(10)*12.0
+  126 IF(JFOUR(11))127,128,127
+  127 TERM1    = W1*W2*W33
+  TERM2    = (W1*W2*Q(3,3)+W2*W3*Q(1,3)*2.+W33*Q(1,2) +
+		  &           2.*W1*W3*Q(2,3))
+  TERM3    = Q(1,2)*Q(3,3)+2.*Q(1,3)*Q(2,3)
+  HJKLM(11)= TERM1-TERM2+TERM3
+  TERMZ    = TERMZ + HJKLM(11)*DR(11,II)
+  HJKLM(11)= HJKLM(11)*12.0
+  128 IF(JFOUR(7))129,130,129
+  129 TERM1    = W11*W2*W3
+  TERM2    = (W11*Q(2,3)+2.*W1*W2*Q(1,3)+2.*W1*W3*Q(1,2) +
+		  &           W2*W3*Q(1,1))
+  TERM3    = Q(1,1)*Q(2,3)+2.*Q(1,2)*Q(1,3)
+  HJKLM(7) = TERM1-TERM2+TERM3
+  TERMZ    = TERMZ + HJKLM(7)*DR(7,II)
+  HJKLM(7) = HJKLM(7)*12.0
+  130 CUM4     = TERM + TERMZ*12.0
+  CUM4     = CUM4 * 1.E-4
+* /
+
+
+}
+*/
+double hermite3(V3 w, Matrix q,double c111,double c222,double c333,double c112,double c122,double c113,double c133,double c223,double c233,double c123){
+  double t2,t=0,tz=0;
+  double w1=w.x,
+	 w2=w.y,
+	 w3=w.z,
+	 w11=w.x*w.x,
+	 w22=w.y*w.y,
+	 w33=w.z*w.z;
+  t2 = 3.*w1*q.m11;
+  t  = (w11*w1-t2)*c111;
+  t2 = 3.*w2*q.m22;
+  t  += (w22*w2-t2)*c222;
+  t2 = 3.*w3*q.m33;
+  t  += (w33*w3-t2)*c333;
+  t2 = (2.*w1*q.m12+w2*q.m11);
+  tz = (w11*w2-t2)*c112;
+  t2 = (w1*q.m22+2.*w2*q.m12);
+  tz += (w22*w1-t2)*c122;
+  t2 = (2.*w1*q.m13+w3*q.m11);
+  tz += (w11*w3-t2)*c113;
+  t2 = (w1*q.m33+2.*w3*q.m13);
+  tz += (w1*w33-t2)*c133;
+  t2 = (2.*w2*q.m23+w3*q.m22);
+  tz += (w22*w3-t2)*c223;
+  t2 = (w2*q.m33+2.*w3*q.m23);
+  tz += (w2*w33-t2)*c233;
+  t  += tz*3.0;
+  t2 = (w1*q.m23+w2*q.m13+w3*q.m12);
+  tz = (w1*w2*w3-t2)*c123*6.0;
+  return (t + tz);
+  //CUM3  = CUM3 * 1.E-3
+}
 void MyWindow::makePDFGrid(INP atom){
     printf("\n%s\n\n",atom.atomname);
     pdfOnAtom=-1;
   double p=0;
   Matrix U=atom.u;//kartesian U
+//  Matrix UF=atom.uf;
   //double D=determinant(U);
   Matrix UI=inverse(U);
+//  Matrix UIF=inverse(UF);
   double DI=determinant(UI);
   V3 X=V3(1,0,0);
   V3 ev=V3(1,1,1);
@@ -3288,20 +3347,17 @@ void MyWindow::makePDFGrid(INP atom){
           for (int i=0; i<breite; i++){
       X=V3(i*df,j*df,k*df)+t;
       ponent=((X*UI)*X)/-2.0;
+      V3 w=(X*UI);
+
       p=base*exp(ponent);
-      third= p*(((atom.c111*X.x*X.x*X.x+
-              atom.c222*X.y*X.y*X.y+
-              atom.c333*X.z*X.z*X.z+
-              atom.c112*X.x*X.x*X.y+
-              atom.c122*X.x*X.y*X.y+
-              atom.c113*X.x*X.x*X.z+
-              atom.c133*X.x*X.z*X.z+
-              atom.c223*X.y*X.y*X.z+
-              atom.c233*X.y*X.z*X.z+
-              atom.c123*X.x*X.y*X.z)*pow(2*M_PI,3))/6.0);
+      third= p+p*hermite3(w,UI,
+		      atom.c111*10,atom.c222*10,atom.c333*10,
+		      atom.c112*10,atom.c122*10,atom.c113*10,
+		      atom.c133*10,atom.c223*10,atom.c233*10,
+		      atom.c123*10)/6.0;      
       tmin=fmin(tmin,third);
       tmax=fmax(tmax,third);
-      txt.append(QString("%1").arg(p,13,'E',5));
+      txt.append(QString("%1").arg(third,13,'E',5));
       z++;
       if (!(z%6))txt.append("\n");
       if (!(z%(breite*breite*breite/100))) {printf(">");fflush(stdout);}
