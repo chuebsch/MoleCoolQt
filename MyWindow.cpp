@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=286;
+int rev=288;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -1689,7 +1689,7 @@ void MyWindow::genMoliso() {
   GradDlg *grdlg = new GradDlg(cubeGL->moliso );
   dock->hide();
   dock2->hide();
-  cubeGL->setVisible(false);
+ // cubeGL->setVisible(false);
   if (grdlg->exec()!=QDialog::Accepted){
       cubeGL->setVisible ( true );
       dock->show();
@@ -1847,6 +1847,7 @@ void MyWindow::genMoliso() {
   //qDebug()<<cubeGL->moliso->mibas<<cubeGL->foubas[0];
 //  printf("L= %g   %g %g %g\n",cubeGL->moliso->L, cubeGL->moliso->orig.x, cubeGL->moliso->orig.y, cubeGL->moliso->orig.z);
   cubeGL->moliso->loadMI(lfaceFile);
+
   updateStatusBar();
   statusBar()->showMessage(tr("surfaces loaded") );
   cubeGL->MIS=true;
@@ -2904,6 +2905,7 @@ void MyWindow::load_xdres(QString fileName) {
   {//RES  
   char line[85]="",dv[20],*dvv;
   int i=0;
+  //double cfac=6/(M_PI*M_PI*M_PI*8);
   mol.initDir();
   if ((adp=fopen(fileName.toLocal8Bit(),"r"))==NULL) {QMessageBox::critical(this,"Read Error!",QString("read error %1!").arg(fileName),QMessageBox::Ok);exit(2);}  
   i=0;
@@ -2962,6 +2964,18 @@ void MyWindow::load_xdres(QString fileName) {
       &asymmUnit[i].c223,
       &asymmUnit[i].c233,
       &asymmUnit[i].c123);
+      asymmUnit[i].c111/=mol.zelle.as*mol.zelle.as*mol.zelle.as;//*cfac//Ujkl's whanted
+      asymmUnit[i].c222/=mol.zelle.bs*mol.zelle.bs*mol.zelle.bs;//*cfac
+      asymmUnit[i].c333/=mol.zelle.cs*mol.zelle.cs*mol.zelle.cs;//*cfac
+      asymmUnit[i].c112/=mol.zelle.as*mol.zelle.as*mol.zelle.bs;//*cfac
+      asymmUnit[i].c122/=mol.zelle.as*mol.zelle.bs*mol.zelle.bs;//*cfac
+      asymmUnit[i].c113/=mol.zelle.as*mol.zelle.as*mol.zelle.cs;//*cfac
+      asymmUnit[i].c133/=mol.zelle.as*mol.zelle.cs*mol.zelle.cs;//*cfac
+      asymmUnit[i].c223/=mol.zelle.bs*mol.zelle.bs*mol.zelle.cs;//*cfac
+      asymmUnit[i].c233/=mol.zelle.bs*mol.zelle.cs*mol.zelle.cs;//*cfac
+      asymmUnit[i].c123/=mol.zelle.as*mol.zelle.bs*mol.zelle.cs;//*cfac
+
+
       }
       i++;
     }
@@ -3118,7 +3132,7 @@ dummax=smx-atmax;
   if (pdfOnAtom!=-1) makePDFGrid(xdinp[pdfOnAtom]);
   pdfOnAtom=-1;
 }
-/*
+
 double hermite4(V3 w, Matrix q, 
 double d1111, double d2222, double d3333, 
 double d1112, double d1113, double d1122, 
@@ -3133,108 +3147,112 @@ double d2223, double d2233, double d2333
 //D1223= 0.00000     D1233= 0.00000     D1333= 0.00000
 //D2223= 0.00000     D2233= 0.00000     D2333= 0.00000
 
-  / *
-  TERM1    = W11*W11
-  TERM2    = 6.*W11*Q(1,1)
-  TERM3    = 3.*Q(1,1)**2
-  HJKLM(1) = TERM1-TERM2+TERM3
-  TERM     = HJKLM(1)*DR(1,II)
-  TERM1    = W22*W22
-  TERM2    = 6.*W22*Q(2,2)
-  TERM3    = 3.*Q(2,2)**2
-  HJKLM(2) = TERM1-TERM2+TERM3
-  TERM     = TERM + HJKLM(2)*DR(2,II)
-  TERM1    = W33*W33
-  TERM2    = 6.*W33*Q(3,3)
-  TERM3    = 3.*Q(3,3)**2
-  HJKLM(3) = TERM1-TERM2+TERM3
-  TERM     = TERM + HJKLM(3)*DR(3,II)
-  TERM1    = W11*W1*W2
-  TERM2    = (W11*Q(1,2)*3.+W1*W2*Q(1,1)*3.)
-  TERM3    = 3.*Q(1,1)*Q(1,2)
-  HJKLM(4) = TERM1-TERM2+TERM3
-  TERMZ    = HJKLM(4)*DR(4,II)
-  HJKLM(4) = HJKLM(4)*4.0
-  TERM1    = W11*W1*W3
-  TERM2    = (W11*Q(1,3)*3.+W1*W3*Q(1,1)*3.)
-  TERM3    = 3.*Q(1,1)*Q(1,3)
-  HJKLM(5) = TERM1-TERM2+TERM3
-  TERMZ    = TERMZ + HJKLM(5)*DR(5,II)
-  HJKLM(5) =HJKLM(5)*4.0
-  TERM1    = W22*W2*W1
-  TERM2    = (W22*Q(1,2)*3.+W2*W1*Q(2,2)*3.)
-  TERM3    = 3.*Q(2,2)*Q(1,2)
-  HJKLM(9) = TERM1-TERM2+TERM3
-  TERMZ    = TERMZ + HJKLM(9)*DR(9,II)
-  HJKLM(9) = HJKLM(9)*4.0
-  TERM1    = W33*W3*W1
-  TERM2    = (W33*Q(1,3)*3.+W1*W3*Q(3,3)*3.)
-  TERM3    = 3.*Q(3,3)*Q(1,3)
-  HJKLM(12)= TERM1-TERM2+TERM3
-  TERMZ    = TERMZ + HJKLM(12)*DR(12,II)
-  HJKLM(12)= HJKLM(12)*4.0
-  TERM1    = W22*W2*W3
-  TERM2    = (W22*Q(2,3)*3.+W2*W3*Q(2,2)*3.)
-  TERM3    = 3*Q(2,2)*Q(2,3)
-  HJKLM(13)= TERM1-TERM2+TERM3
-  TERMZ    = TERMZ + HJKLM(13)*DR(13,II)
-  HJKLM(13)= HJKLM(13)*4.0
-  TERM1    = W33*W3*W2
-  TERM2    = (W33*Q(2,3)*3.+W2*W3*Q(3,3)*3.)
-  TERM3    = 3.*Q(3,3)*Q(2,3)
-  HJKLM(15)= TERM1-TERM2+TERM3
-  TERMZ    = TERMZ + HJKLM(15)*DR(15,II)
-  HJKLM(15)= HJKLM(15)*4.0
-  TERM     = TERM + TERMZ*4.0
-  TERMZ    = 0.0
-  TERM1    = W11*W22
-  TERM2    = (W11*Q(2,2)+4.*W1*W2*Q(1,2)+W22*Q(1,1))
-  TERM3    = Q(1,1)*Q(2,2)+2.*Q(1,2)**2
-  HJKLM(6) = TERM1-TERM2+TERM3
-  TERMZ    = HJKLM(6)*DR(6,II)
-  TERM1    = W11*W33
-  TERM2    = (W11*Q(3,3)+4.*W1*W3*Q(1,3)+W33*Q(1,1))
-  TERM3    = Q(1,1)*Q(3,3)+2.*Q(1,3)**2
-  HJKLM(8) = TERM1-TERM2+TERM3
-  TERMZ    = TERMZ + HJKLM(8)*DR(8,II)
-  HJKLM(8) = HJKLM(8)*6.0
-  TERM1    = W33*W22
-  TERM2    = (W33*Q(2,2)+4.*W3*W2*Q(2,3)+W22*Q(3,3))
-  TERM3    = Q(3,3)*Q(2,2)+2.*Q(2,3)**2
-  HJKLM(14)= TERM1-TERM2+TERM3
-  TERMZ    = TERMZ + HJKLM(14)*DR(14,II)
-  HJKLM(14)= HJKLM(14)*6.0
-  TERM     = TERM + TERMZ*6.0
-  TERMZ    = 0.0
-  TERM1    = W22*W3*W1
-  TERM2    = (W22*Q(1,3)+2.*W2*W3*Q(1,2)+2.*W2*W1*Q(2,3) +
-		  &           W3*W1*Q(2,2))
-  TERM3    = Q(2,2)*Q(1,3)+2.*Q(2,3)*Q(1,2)
-  HJKLM(10)= TERM1-TERM2+TERM3
-  TERMZ    = HJKLM(10)*DR(10,II)
-  HJKLM(10)= HJKLM(10)*12.0
-  TERM1    = W1*W2*W33
-  TERM2    = (W1*W2*Q(3,3)+W2*W3*Q(1,3)*2.+W33*Q(1,2) +
-		  &           2.*W1*W3*Q(2,3))
-  TERM3    = Q(1,2)*Q(3,3)+2.*Q(1,3)*Q(2,3)
-  HJKLM(11)= TERM1-TERM2+TERM3
-  TERMZ    = TERMZ + HJKLM(11)*DR(11,II)
-  HJKLM(11)= HJKLM(11)*12.0
-  TERM1    = W11*W2*W3
-  TERM2    = (W11*Q(2,3)+2.*W1*W2*Q(1,3)+2.*W1*W3*Q(1,2) +
-		  &           W2*W3*Q(1,1))
-  TERM3    = Q(1,1)*Q(2,3)+2.*Q(1,2)*Q(1,3)
-  HJKLM(7) = TERM1-TERM2+TERM3
-  TERMZ    = TERMZ + HJKLM(7)*DR(7,II)
-  HJKLM(7) = HJKLM(7)*12.0
-  CUM4     = TERM + TERMZ*12.0
-  CUM4     = CUM4 * 1.E-4
-* /
-
-
+  double t1,t2,t3,t=0,tz=0;
+  double w1=w.x,
+	 w2=w.y,
+	 w3=w.z,
+	 w11=w.x*w.x,
+	 w22=w.y*w.y,
+	 w33=w.z*w.z;
+  double hjklm[15];
+  t1    = w11*w11;
+  t2    = 6.*w11*q.m11;
+  t3    = 3.*q.m11*q.m11;
+  hjklm[0] = t1-t2+t3;
+  t     = hjklm[0]*d1111;
+  t1    = w22*w22;
+  t2    = 6.*w22*q.m22;
+  t3    = 3.*q.m22*q.m22;
+  hjklm[1] = t1-t2+t3;
+  t     += hjklm[1]*d2222;
+  t1    = w33*w33;
+  t2    = 6.*w33*q.m33;
+  t3    = 3.*q.m33*q.m33;
+  hjklm[2] = t1-t2+t3;
+  t     += hjklm[2]*d3333;
+  t1    = w11*w1*w2;
+  t2    = (w11*q.m12*3.+w1*w2*q.m11*3.);
+  t3    = 3.*q.m11*q.m12;
+  hjklm[3] = t1-t2+t3;
+  tz    = hjklm[3]*d1112;
+  hjklm[3] = hjklm[3]*4.0;
+  t1    = w11*w1*w3;
+  t2    = (w11*q.m13*3.+w1*w3*q.m11*3.);
+  t3    = 3.*q.m11*q.m13;
+  hjklm[4] = t1-t2+t3;
+  tz    += hjklm[4]*d1113;
+  hjklm[4] =hjklm[4]*4.0;
+  t1    = w22*w2*w1;
+  t2    = (w22*q.m12*3.+w2*w1*q.m22*3.);
+  t3    = 3.*q.m22*q.m12;
+  hjklm[8] = t1-t2+t3;
+  tz    += hjklm[8]*d1222;
+  hjklm[8] = hjklm[8]*4.0;
+  t1    = w33*w3*w1;
+  t2    = (w33*q.m13*3.+w1*w3*q.m33*3.);
+  t3    = 3.*q.m33*q.m13;
+  hjklm[11]= t1-t2+t3;
+  tz    += hjklm[11]*d1333;
+  hjklm[11]= hjklm[11]*4.0;
+  t1    = w22*w2*w3;
+  t2    = (w22*q.m23*3.+w2*w3*q.m22*3.);
+  t3    = 3*q.m22*q.m23;
+  hjklm[12]= t1-t2+t3;
+  tz    += hjklm[12]*d2223;
+  hjklm[12]= hjklm[12]*4.0;
+  t1    = w33*w3*w2;
+  t2    = (w33*q.m23*3.+w2*w3*q.m33*3.);
+  t3    = 3.*q.m33*q.m23;
+  hjklm[14]= t1-t2+t3;
+  tz    += hjklm[14]*d2333;
+  hjklm[14]= hjklm[14]*4.0;
+  t     += tz*4.0;
+  tz    = 0.0;
+  t1    = w11*w22;
+  t2    = (w11*q.m22+4.*w1*w2*q.m12+w22*q.m11);
+  t3    = q.m11*q.m22+2.*q.m12*q.m12;
+  hjklm[5] = t1-t2+t3;
+  tz    = hjklm[5]*d1122;
+  t1    = w11*w33;
+  t2    = (w11*q.m33+4.*w1*w3*q.m13+w33*q.m11);
+  t3    = q.m11*q.m33+2.*q.m13*q.m13;
+  hjklm[7] = t1-t2+t3;
+  tz    += hjklm[7]*d1133;
+  hjklm[7] = hjklm[7]*6.0;
+  t1    = w33*w22;
+  t2    = (w33*q.m22+4.*w3*w2*q.m23+w22*q.m33);
+  t3    = q.m33*q.m22+2.*q.m23*q.m23;
+  hjklm[13]= t1-t2+t3;
+  tz    += hjklm[13]*d2233;
+  hjklm[13]= hjklm[13]*6.0;
+  t     += tz*6.0;
+  tz    = 0.0;
+  t1    = w22*w3*w1;
+  t2    = (w22*q.m13+2.*w2*w3*q.m12+2.*w2*w1*q.m23 + w3*w1*q.m22);
+  t3    = q.m22*q.m13+2.*q.m23*q.m12;
+  hjklm[9]= t1-t2+t3;
+  tz    = hjklm[9]*d1223;
+  hjklm[9]= hjklm[9]*12.0;
+  t1    = w1*w2*w33;
+  t2    = (w1*w2*q.m33+w2*w3*q.m13*2.+w33*q.m12 + 2.*w1*w3*q.m23);
+  t3    = q.m12*q.m33+2.*q.m13*q.m23;
+  hjklm[10]= t1-t2+t3;
+  tz    += hjklm[10]*d1233;
+  hjklm[10]= hjklm[10]*12.0;
+  t1    = w11*w2*w3;
+  t2    = (w11*q.m23+2.*w1*w2*q.m13+2.*w1*w3*q.m12 + w2*w3*q.m11);
+  t3    = q.m11*q.m23+2.*q.m12*q.m13;
+  hjklm[6] = t1-t2+t3;
+  tz    += hjklm[6]*d1123;
+  hjklm[6] = hjklm[6]*12.0;
+  return  (t + tz*12.0)* 1.E-4;
 }
-*/
-double hermite3(V3 w, Matrix q,double c111,double c222,double c333,double c112,double c122,double c113,double c133,double c223,double c233,double c123){
+
+double hermite3(V3 w, Matrix q,
+		double c111,double c222,double c333,
+		double c112,double c122,double c113,
+		double c133,double c223,double c233,
+		double c123){
   double t2,t=0,tz=0;
   double w1=w.x,
 	 w2=w.y,
@@ -3263,12 +3281,20 @@ double hermite3(V3 w, Matrix q,double c111,double c222,double c333,double c112,d
   t  += tz*3.0;
   t2 = (w1*q.m23+w2*q.m13+w3*q.m12);
   tz = (w1*w2*w3-t2)*c123*6.0;
-  return (t + tz);
+  return (t + tz)* 1.E-3;
   //CUM3  = CUM3 * 1.E-3
 }
 void MyWindow::makePDFGrid(INP atom){
-    printf("\n%s\n\n",atom.atomname);
-    pdfOnAtom=-1;
+  QString fac("testpdf.face");
+  if (cubeGL->moliso){
+    delete cubeGL->moliso;
+    cubeGL->moliso=NULL;
+  }
+  cubeGL->moliso = new MolIso();
+  cubeGL->moliso->L=cubeGL->L;
+  cubeGL->moliso->lineNr=0;
+  //printf("\n%s\n\n",atom.atomname);
+  pdfOnAtom=-1;
   double p=0;
   Matrix U=atom.u;//kartesian U
 //  Matrix UF=atom.uf;
@@ -3280,16 +3306,16 @@ void MyWindow::makePDFGrid(INP atom){
   V3 ev=V3(1,1,1);
   Matrix evk=mol.jacobi(U,ev);
 
-  printf("%g %g %g  \n",ev.x,ev.y,ev.z);
+  //printf("%g %g %g  \n",ev.x,ev.y,ev.z);
   double maxdim=2*sqrt(fmax(ev.x,fmax(ev.y,ev.z)))*6;
 
   const double base=sqrt(DI)/sqrt((8*M_PI*M_PI*M_PI));
-  double p10,p90;
+  double p10,p90,p50,pt;
   double ponent;
-  p=  base*exp(-1.18302962);
+  p50=base*exp(-1.18302962);
   p10=base*exp(-0.29215368);
   p90=base*exp(-3.12575004);
-
+/*
   QFile grd("testPDF.grd");
   settings->beginGroup("Version 0.1");
   settings->setValue("Iso-Values",QString("%1 %2 %3").arg(p10,0,'g',6).arg(p,0,'g',6).arg(p90,0,'g',6));
@@ -3297,8 +3323,9 @@ void MyWindow::makePDFGrid(INP atom){
   settings->setValue("load_face_name", QString());
   settings->setValue("map_grid_name", QString());
   settings->setValue("iso_grid_name", QFileInfo(grd).absoluteFilePath());
-  settings->endGroup();
+  settings->endGroup();*/
   int breite=91;
+  /*
   grd.open(QIODevice::WriteOnly|QIODevice::Text);
   grd.write(QString("3DGRDFIL  0\n         PDF\n\n! Gridpoints, Origin, Physical Dimensions\n"
   "       %1            %1            %1\n    %2    %2    %2\n    %3    %3    %3\n! Objects\n")
@@ -3312,12 +3339,20 @@ void MyWindow::makePDFGrid(INP atom){
 		    .arg(xdinp[i].kart.y-atom.kart.y,12,'f',6)
 		    .arg(xdinp[i].kart.z-atom.kart.z,12,'f',6).toLatin1());
   }
-  grd.write("! Connections\n         0\n! Values\n");
-  int z=0;
+  grd.write("! Connections\n         0\n! Values\n");*/
   double df=maxdim/breite;
+  cubeGL->moliso->orig=Vector3(atom.kart.x,atom.kart.y,atom.kart.z);
+  cubeGL->moliso->x_dim=Vector3(df,0,0);
+  cubeGL->moliso->y_dim=Vector3(0,df,0);
+  cubeGL->moliso->z_dim=Vector3(0,0,df);
+  cubeGL->moliso->breite=cubeGL->moliso->hoehe=cubeGL->moliso->tiefe=breite;
+  cubeGL->moliso->data.clear();
+  cubeGL->moliso->mdata.clear();
+  int z=0;
   double third=0,fourth=0,tmax=0,tmin=0;
   V3 t=V3(((breite-1)/-2.0)*df,((breite-1)/-2.0)*df,((breite-1)/-2.0)*df);
-  QString txt;
+//  QString txt;
+  QProgressDialog progress(QString("Calculating PDF of %1").arg(atom.atomname),QString(),0,breite*breite*breite);
   for (int k=0; k<breite; k++)
       for (int j=0; j<breite; j++)
           for (int i=0; i<breite; i++){
@@ -3326,24 +3361,127 @@ void MyWindow::makePDFGrid(INP atom){
       V3 w=(X*UI);
 
       p=base*exp(ponent);
-      third= p+p*hermite3(w,UI,
+      if (atom.jtf>2) third= p*hermite3(w,UI,
                       atom.c111,atom.c222,atom.c333,
                       atom.c112,atom.c122,atom.c113,
                       atom.c133,atom.c223,atom.c233,
-                      atom.c123)/6.0;
+                      atom.c123);
+      if (atom.jtf==4) fourth= p*hermite4(w,UI,
+		       atom.d1111,atom.d2222,atom.d3333,
+		       atom.d1112,atom.d1113,atom.d1122,
+		       atom.d1123,atom.d1133,atom.d1222,
+		       atom.d1223,atom.d1233,atom.d1333,
+		       atom.d2223,atom.d2233,atom.d2333);
       tmin=fmin(tmin,third);
       tmax=fmax(tmax,third);
-      txt.append(QString("%1").arg(p,13,'E',5));
+      pt=p*(0.0 + third/6.0 + fourth/24.0);
+      cubeGL->moliso->data.append(pt);
+//      txt.append(QString("%1").arg(pt,13,'E',5));
       z++;
-      if (!(z%6))txt.append("\n");
-      if (!(z%(breite*breite*breite/100))) {printf(">");fflush(stdout);}
+  //    if (!(z%6))txt.append("\n");
+      if (!(z%(breite*breite*breite/100))) progress.setValue(z);
+  //    if (!(z%(breite*breite*breite/100))) {printf(">");fflush(stdout);}
   }
-  txt.append("\n");
-  printf("\ntestPDF.grd written.\n");
-  grd.write(txt.toLatin1());
-  printf("\ntestPDF.grd written. %g %g\n",tmin,tmax);
-  grd.close();
-  genMoliso();
+  progress.setValue(z);
+  cubeGL->moliso->iso_level=0.05;
+  cubeGL->moliso->createSurface(fac,50.0);
+  
+  cubeGL->pause=true;
+  if (cubeGL->moliso->mibas) glDeleteLists(cubeGL->moliso->mibas,6);
+  cubeGL->moliso->mibas=glGenLists(6);
+  statusBar()->showMessage(tr("loading surfaces...") );
+  //qDebug()<<cubeGL->moliso->mibas<<cubeGL->foubas[0];
+//  printf("L= %g   %g %g %g\n",cubeGL->moliso->L, cubeGL->moliso->orig.x, cubeGL->moliso->orig.y, cubeGL->moliso->orig.z);
+  cubeGL->moliso->loadMI(fac);
+  updateStatusBar();
+  statusBar()->showMessage(tr("surfaces loaded") );
+  cubeGL->MIS=true;
+  cubeGL->MILe=true;
+  showface->setChecked ( true );
+  showface->setVisible(true);
+  showLeg->setChecked ( true );
+  showLeg->setVisible(true);
+  movLeg->setChecked ( false );
+  movLeg->setVisible(true);
+  mildir->setChecked ( true  );
+  mildir->setVisible(true);
+  setCursor(Qt::ArrowCursor);
+  dock->hide();
+  dock2->hide();
+  cubeGL->setVisible ( true );
+  createmoliso->setVisible(false);
+  noMoliso->setVisible(true);  
+  cubeGL->pause=false;
+  cubeGL->updateGL();
+  dock3 = new QDockWidget("Moliso control area",this);
+  dock3->setAllowedAreas(Qt::AllDockWidgetAreas);
+  QGroupBox *zebraZwinger= new QGroupBox();
+  QVBoxLayout *zla= new QVBoxLayout();
+  mt = new QCheckBox("transparence");
+  mt->setChecked(true);
+  mt->setShortcut(tr("T"));
+  cubeGL->togglMolisoTransparence(true);
+  zla->addWidget(mt);
+  legendSize = new QSlider(Qt::Horizontal);
+  legendSize->setValue(30);
+  legendSize->setMaximum(100);
+  cullNone = new QRadioButton("No culling");
+  cullBack = new QRadioButton("Back face culling");
+  cullFront = new QRadioButton("Front face culling");
+  cullNone->setChecked(true);
+  cubeGL->noneCull(true);
+  connect(cullNone,SIGNAL(toggled(bool)),cubeGL,SLOT(noneCull(bool)));
+  connect(cullBack,SIGNAL(toggled(bool)),cubeGL,SLOT(backCull(bool)));
+  connect(cullFront,SIGNAL(toggled(bool)),cubeGL,SLOT(frontCull(bool)));
+  zla->addWidget(cullNone);
+  zla->addWidget(cullBack);
+  zla->addWidget(cullFront);
+  QToolBar *tb = new QToolBar("Moliso toolbar",zebraZwinger);
+  tb->setOrientation(Qt::Vertical);
+  tb->setIconSize(QSize(16,16));
+  tb->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+  tb->addAction(showface);
+  tb->addAction(showLeg);
+  tb->addAction(movLeg);
+  tb->addAction(mildir);
+  zla->addWidget(tb);
+  mclmox =new QCheckBox("Monochrome legend text");
+  mclmox->setChecked(false);
+  connect(mclmox,SIGNAL(toggled(bool)),cubeGL,SLOT(togglMonoChrom(bool)));
+
+  zla->addWidget(mclmox);
+  zla->addWidget(new QLabel("Scale legend"));
+  zla->addWidget(legendSize);
+  QPushButton *savset = new QPushButton("Save current settings");
+  connect(savset,SIGNAL(pressed()),cubeGL,SLOT(saveMISettings()));
+  QPushButton *lodset = new QPushButton("Load settings");
+  connect(lodset,SIGNAL(pressed()),cubeGL,SLOT(loadMISettings()));
+  mlf = new QFontComboBox();
+  mlf->setCurrentFont(cubeGL->MLegendFont);
+  connect(mlf,SIGNAL(currentFontChanged(QFont)),cubeGL,SLOT(setMLFont(QFont)));
+  fos = new QSpinBox();
+  fos->setMinimum(4);
+  fos->setMaximum(272);
+  fos->setValue(cubeGL->MLegendFont.pointSize());
+  connect(fos,SIGNAL(valueChanged(int)),cubeGL,SLOT(setMLFontSize(int)));
+  zla->addWidget(mlf);
+  zla->addWidget(fos);
+  zla->addWidget(savset);
+  zla->addWidget(lodset);
+  zla->addStretch(999);
+  connect(cubeGL,SIGNAL(mconf()),this,SLOT(syncMconf()));
+  cubeGL->togglContours(false);
+  cubeGL->scaleLegend(30);
+  cubeGL->setContourCnt(496);
+  cubeGL->setContourWidth(1);
+  connect(mt,SIGNAL(toggled(bool)),cubeGL,SLOT(togglMolisoTransparence(bool)));
+  connect(legendSize,SIGNAL(valueChanged(int)),cubeGL,SLOT(scaleLegend(int)));
+  zebraZwinger->setLayout(zla);
+  dock3->setWidget(zebraZwinger);
+  dock3->setFeatures(QDockWidget::DockWidgetMovable|QDockWidget::DockWidgetClosable);
+  addDockWidget(Qt::LeftDockWidgetArea, dock3);
+  QMainWindow::tabifyDockWidget (dock2,dock3);
+  QMainWindow::tabifyDockWidget (dock2,dock);
 }
 //----------------------------------S H E L D R I C K -----------------------------------------
 //----------------------------------S H E L D R I C K -----------------------------------------

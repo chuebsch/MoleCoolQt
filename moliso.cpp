@@ -1006,6 +1006,78 @@ void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &st
   orte.clear();
 }
 
+
+void MolIso::createSurface(QString &storeFaceName, double proba){
+  QFile *tf = new QFile(storeFaceName);
+  mdata=data;
+  bh=breite*hoehe;
+  extern QProgressBar *balken;
+  balken->setMinimum(0);
+  balken->setMaximum(100);
+  balken->show();
+  balken->setValue(1);
+  if (( grad =(Vector3*)malloc(sizeof(Vector3)*bh*tiefe))==NULL) {
+    fprintf(stderr ,"Less Memory(grad)%d !!\n",bh*tiefe);
+    exit(1);
+  }
+
+  if (( nodex =(Node*)malloc(sizeof(Node)*bh*tiefe*2))==NULL) {
+    fprintf(stderr ,"Less Memory(X) %d!!\n",bh*tiefe*2);
+    exit(1);  
+  } 
+  if (( nodey =(Node*)malloc(sizeof(Node)*bh*tiefe*2))==NULL) { 
+    fprintf(stderr ,"Less Memory(Y)!!\n");
+    exit(1); 
+  }
+  if (( nodez =(Node*)malloc(sizeof(Node)*bh*tiefe*2))==NULL) {
+    fprintf(stderr ,"Less Memory(Z)!!\n");
+    exit(1); 
+  }
+  simpelGrad();	
+  CalcVertexes();
+  CalcNormals();
+  tf->open(QIODevice::WriteOnly|QIODevice::Text);
+
+  tf->write(QString("%1\n").arg(orte.size()).toLatin1());
+  for (int i=0;i<orte.size();i++){
+    tf->write(QString("%1  %2 %3 %4   %5 %6 %7  %8\n")
+		    .arg(lineNr,-6)
+		    .arg(orte.at(i).vertex.x,9,'f',6)
+		    .arg(orte.at(i).vertex.y,9,'f',6)
+		    .arg(orte.at(i).vertex.z,9,'f',6)
+		    .arg(orte.at(i).normal.x,9,'f',6)
+		    .arg(orte.at(i).normal.y,9,'f',6)
+		    .arg(orte.at(i).normal.z,9,'f',6)
+		    .arg(proba,12,'f',7).toLatin1());
+    lineNr++;
+  }
+  for( int ix=0; ix<breite-1; ix++ )
+    for( int iy=0; iy<hoehe-1; iy++ )
+      for( int iz=0; iz<tiefe-1; iz++ )
+	MakeElement(ix,iy,iz,breite,bh);
+  PXsort();
+  QString Line="";
+  for (int i=0; i<pgns.size();i++) {
+    for (int j=0; j<pgns.at(i).n;j++){
+      Line.append(QString("%1 ").arg(pgns.at(i).ii[j],6));
+    }
+    if (pgns.at(i).n>0) {
+      Line.append("\n");
+      tf->write(Line.toLatin1());
+      Line.clear();
+    }
+  }
+  tf->close();
+  free(grad);
+  free(nodex);
+  free(nodey);
+  free(nodez);
+  mdata.clear();
+  data.clear();
+  pgns.clear();
+  orte.clear();
+}
+
 void MolIso::Farbverlauf (GLfloat wrt){
   static GLclampd ff[4];
   static GLdouble anf,lang;

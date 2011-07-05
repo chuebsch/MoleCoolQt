@@ -105,8 +105,6 @@ class MolIso{
   int atomanzahl;
   QVector<Ort> orte;
   QVector<Polygn> pgns;
-  int breite, hoehe, tiefe,bh;
-  double iso_level;
   void DrawPlys();
   void PXsort( void); 
   void Pxsort( void); 
@@ -116,8 +114,6 @@ class MolIso{
   void Pzsort( void); 
   void makeFaces(int nn, Node poly[] );
   void MakeElement( int ix, int iy, int iz ,int s1, int s2);
-  QList<double> data;
-  QList<double> mdata;
   void simpelGrad(void);
   void CalcVertex( int ix, int iy, int iz );
   void CalcVertexes( void );
@@ -136,6 +132,11 @@ class MolIso{
   Node *nodey;
   Node *nodez;
  public:
+  int breite, hoehe, tiefe,bh;
+  double iso_level;
+  int lineNr;
+  QList<double> data;
+  QList<double> mdata;
   double L;
   QColor qtFarbe(int index);
   QList<double> isoValues;
@@ -153,6 +154,7 @@ class MolIso{
   void loadMI(QString fname);
   void readXDGridHeader(QString fname);  
   void createSurface(QString isoFileName, QString mapFileName, QString &storeFaceName);
+  void createSurface(QString &storeFaceName, double proba);
   void legende();
   void Farbverlauf (GLfloat wrt);
 };

@@ -344,6 +344,9 @@ struct INP {
   Matrix uf;           // Temperaturparameter 
   Matrix u;
   double c111, c222, c333, c112, c122, c113, c133, c223, c233, c123;
+  double d1111,  d2222,  d3333, d1112,  d1113,  d1122, 
+	 d1123,  d1133,  d1222, d1223,  d1233,  d1333,
+	 d2223,  d2233,  d2333;
                         // Bis hier alles Einträge in xd.inp, danach berechnet   
   V3   kart;          // Berechnete kart. Koordinaten in X-Richtung 
   V3   ax1;           // Berechnete Achse 0 
