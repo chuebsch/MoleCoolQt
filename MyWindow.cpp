@@ -3134,114 +3134,100 @@ double d2223, double d2233, double d2333
 //D2223= 0.00000     D2233= 0.00000     D2333= 0.00000
 
   / *
-  101 TERM1    = W11*W11
+  TERM1    = W11*W11
   TERM2    = 6.*W11*Q(1,1)
   TERM3    = 3.*Q(1,1)**2
   HJKLM(1) = TERM1-TERM2+TERM3
   TERM     = HJKLM(1)*DR(1,II)
-  102 IF(JFOUR(2))103,104,103
-  103 TERM1    = W22*W22
+  TERM1    = W22*W22
   TERM2    = 6.*W22*Q(2,2)
   TERM3    = 3.*Q(2,2)**2
   HJKLM(2) = TERM1-TERM2+TERM3
   TERM     = TERM + HJKLM(2)*DR(2,II)
-  104 IF(JFOUR(3))105,106,105
-  105 TERM1    = W33*W33
+  TERM1    = W33*W33
   TERM2    = 6.*W33*Q(3,3)
   TERM3    = 3.*Q(3,3)**2
   HJKLM(3) = TERM1-TERM2+TERM3
   TERM     = TERM + HJKLM(3)*DR(3,II)
-  106 IF(JFOUR(4))107,108,107
-  107 TERM1    = W11*W1*W2
+  TERM1    = W11*W1*W2
   TERM2    = (W11*Q(1,2)*3.+W1*W2*Q(1,1)*3.)
   TERM3    = 3.*Q(1,1)*Q(1,2)
   HJKLM(4) = TERM1-TERM2+TERM3
   TERMZ    = HJKLM(4)*DR(4,II)
   HJKLM(4) = HJKLM(4)*4.0
-  108 IF(JFOUR(5))109,110,109
-  109 TERM1    = W11*W1*W3
+  TERM1    = W11*W1*W3
   TERM2    = (W11*Q(1,3)*3.+W1*W3*Q(1,1)*3.)
   TERM3    = 3.*Q(1,1)*Q(1,3)
   HJKLM(5) = TERM1-TERM2+TERM3
   TERMZ    = TERMZ + HJKLM(5)*DR(5,II)
   HJKLM(5) =HJKLM(5)*4.0
-  110 IF(JFOUR(9))111,112,111
-  111 TERM1    = W22*W2*W1
+  TERM1    = W22*W2*W1
   TERM2    = (W22*Q(1,2)*3.+W2*W1*Q(2,2)*3.)
   TERM3    = 3.*Q(2,2)*Q(1,2)
   HJKLM(9) = TERM1-TERM2+TERM3
   TERMZ    = TERMZ + HJKLM(9)*DR(9,II)
   HJKLM(9) = HJKLM(9)*4.0
-  112 IF(JFOUR(12))113,114,113
-  113 TERM1    = W33*W3*W1
+  TERM1    = W33*W3*W1
   TERM2    = (W33*Q(1,3)*3.+W1*W3*Q(3,3)*3.)
   TERM3    = 3.*Q(3,3)*Q(1,3)
   HJKLM(12)= TERM1-TERM2+TERM3
   TERMZ    = TERMZ + HJKLM(12)*DR(12,II)
   HJKLM(12)= HJKLM(12)*4.0
-  114 IF(JFOUR(13))115,116,115
-  115 TERM1    = W22*W2*W3
+  TERM1    = W22*W2*W3
   TERM2    = (W22*Q(2,3)*3.+W2*W3*Q(2,2)*3.)
   TERM3    = 3*Q(2,2)*Q(2,3)
   HJKLM(13)= TERM1-TERM2+TERM3
   TERMZ    = TERMZ + HJKLM(13)*DR(13,II)
   HJKLM(13)= HJKLM(13)*4.0
-  116 IF(JFOUR(15))117,118,117
-  117 TERM1    = W33*W3*W2
+  TERM1    = W33*W3*W2
   TERM2    = (W33*Q(2,3)*3.+W2*W3*Q(3,3)*3.)
   TERM3    = 3.*Q(3,3)*Q(2,3)
   HJKLM(15)= TERM1-TERM2+TERM3
   TERMZ    = TERMZ + HJKLM(15)*DR(15,II)
   HJKLM(15)= HJKLM(15)*4.0
-  118 TERM     = TERM + TERMZ*4.0
+  TERM     = TERM + TERMZ*4.0
   TERMZ    = 0.0
-  IF(JFOUR(6))119,120,119
-  119 TERM1    = W11*W22
+  TERM1    = W11*W22
   TERM2    = (W11*Q(2,2)+4.*W1*W2*Q(1,2)+W22*Q(1,1))
   TERM3    = Q(1,1)*Q(2,2)+2.*Q(1,2)**2
   HJKLM(6) = TERM1-TERM2+TERM3
   TERMZ    = HJKLM(6)*DR(6,II)
-  120 IF(JFOUR(8))121,122,121
-  121 TERM1    = W11*W33
+  TERM1    = W11*W33
   TERM2    = (W11*Q(3,3)+4.*W1*W3*Q(1,3)+W33*Q(1,1))
   TERM3    = Q(1,1)*Q(3,3)+2.*Q(1,3)**2
   HJKLM(8) = TERM1-TERM2+TERM3
   TERMZ    = TERMZ + HJKLM(8)*DR(8,II)
   HJKLM(8) = HJKLM(8)*6.0
-  122 IF(JFOUR(14))123,124,123
-  123 TERM1    = W33*W22
+  TERM1    = W33*W22
   TERM2    = (W33*Q(2,2)+4.*W3*W2*Q(2,3)+W22*Q(3,3))
   TERM3    = Q(3,3)*Q(2,2)+2.*Q(2,3)**2
   HJKLM(14)= TERM1-TERM2+TERM3
   TERMZ    = TERMZ + HJKLM(14)*DR(14,II)
   HJKLM(14)= HJKLM(14)*6.0
-  124 TERM     = TERM + TERMZ*6.0
+  TERM     = TERM + TERMZ*6.0
   TERMZ    = 0.0
-  IF(JFOUR(10))125,126,125
-  125 TERM1    = W22*W3*W1
+  TERM1    = W22*W3*W1
   TERM2    = (W22*Q(1,3)+2.*W2*W3*Q(1,2)+2.*W2*W1*Q(2,3) +
 		  &           W3*W1*Q(2,2))
   TERM3    = Q(2,2)*Q(1,3)+2.*Q(2,3)*Q(1,2)
   HJKLM(10)= TERM1-TERM2+TERM3
   TERMZ    = HJKLM(10)*DR(10,II)
   HJKLM(10)= HJKLM(10)*12.0
-  126 IF(JFOUR(11))127,128,127
-  127 TERM1    = W1*W2*W33
+  TERM1    = W1*W2*W33
   TERM2    = (W1*W2*Q(3,3)+W2*W3*Q(1,3)*2.+W33*Q(1,2) +
 		  &           2.*W1*W3*Q(2,3))
   TERM3    = Q(1,2)*Q(3,3)+2.*Q(1,3)*Q(2,3)
   HJKLM(11)= TERM1-TERM2+TERM3
   TERMZ    = TERMZ + HJKLM(11)*DR(11,II)
   HJKLM(11)= HJKLM(11)*12.0
-  128 IF(JFOUR(7))129,130,129
-  129 TERM1    = W11*W2*W3
+  TERM1    = W11*W2*W3
   TERM2    = (W11*Q(2,3)+2.*W1*W2*Q(1,3)+2.*W1*W3*Q(1,2) +
 		  &           W2*W3*Q(1,1))
   TERM3    = Q(1,1)*Q(2,3)+2.*Q(1,2)*Q(1,3)
   HJKLM(7) = TERM1-TERM2+TERM3
   TERMZ    = TERMZ + HJKLM(7)*DR(7,II)
   HJKLM(7) = HJKLM(7)*12.0
-  130 CUM4     = TERM + TERMZ*12.0
+  CUM4     = TERM + TERMZ*12.0
   CUM4     = CUM4 * 1.E-4
 * /
 
@@ -3295,24 +3281,14 @@ void MyWindow::makePDFGrid(INP atom){
   Matrix evk=mol.jacobi(U,ev);
 
   printf("%g %g %g  \n",ev.x,ev.y,ev.z);
-  double maxdim=2*sqrt(fmax(ev.x,fmax(ev.y,ev.z)))*2.8;
+  double maxdim=2*sqrt(fmax(ev.x,fmax(ev.y,ev.z)))*6;
 
   const double base=sqrt(DI)/sqrt((8*M_PI*M_PI*M_PI));
   double p10,p90;
-  X=V3(evk.m11,evk.m12,evk.m13);
-  X*=sqrt(ev.x)*1.5382;
-  double ponent=((X*UI)*X)*-0.5;
-  p=base*exp(ponent);
-
-  X=V3(evk.m11,evk.m12,evk.m13);
-  X*=sqrt(ev.x)*0.7644;
-  ponent=((X*UI)*X)*-0.5;
-  p10=base*exp(ponent);
-
-  X=V3(evk.m11,evk.m12,evk.m13);
-  X*=sqrt(ev.x)*2.5003;
-  ponent=((X*UI)*X)*-0.5;
-  p90=base*exp(ponent);
+  double ponent;
+  p=  base*exp(-1.18302962);
+  p10=base*exp(-0.29215368);
+  p90=base*exp(-3.12575004);
 
   QFile grd("testPDF.grd");
   settings->beginGroup("Version 0.1");
@@ -3351,13 +3327,13 @@ void MyWindow::makePDFGrid(INP atom){
 
       p=base*exp(ponent);
       third= p+p*hermite3(w,UI,
-		      atom.c111*10,atom.c222*10,atom.c333*10,
-		      atom.c112*10,atom.c122*10,atom.c113*10,
-		      atom.c133*10,atom.c223*10,atom.c233*10,
-		      atom.c123*10)/6.0;      
+                      atom.c111,atom.c222,atom.c333,
+                      atom.c112,atom.c122,atom.c113,
+                      atom.c133,atom.c223,atom.c233,
+                      atom.c123)/6.0;
       tmin=fmin(tmin,third);
       tmax=fmax(tmax,third);
-      txt.append(QString("%1").arg(third,13,'E',5));
+      txt.append(QString("%1").arg(p,13,'E',5));
       z++;
       if (!(z%6))txt.append("\n");
       if (!(z%(breite*breite*breite/100))) {printf(">");fflush(stdout);}
