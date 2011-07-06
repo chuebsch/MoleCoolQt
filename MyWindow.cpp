@@ -2407,19 +2407,43 @@ void tensmul(INP atom){
   for (int i=0; i<3;i++)
     for (int j=0; j<3;j++)
       for (int k=0; k<3;k++)
-	for (int u=0; u<3;u++)
-	  for (int v=0; v<3;v++)
-	    for (int w=0; w<3;w++){
-	      t[i][j][k]+=Cjkl(atom,i+1,j+1,k+1)*a[i][j]*a[j][k]*a[i][k];
-	    }
+        for (int u=0; u<3;u++)
+            for (int v=0; v<3;v++)
+                for (int w=0; w<3;w++){
+              r[i][j][k]+= Cjkl(atom,i+1,j+1,k+1)*a[i][u]*a[j][v]*a[k][w];
+            }
   for (int i=0; i<3;i++)
     for (int j=0; j<3;j++)
       for (int k=0; k<3;k++)
-	for (int u=0; u<3;u++)
-	  for (int v=0; v<3;v++)
-	    for (int w=0; w<3;w++){
-	      r[i][j][k]+=t[i][j][k]*a[v][u]*a[w][v]*a[u][w];
+        for (int u=0; u<3;u++)
+            for (int v=0; v<3;v++)
+                for (int w=0; w<3;w++){
+              s[i][j][k]+=r[i][j][k]*a[u][i]*a[v][j]*a[w][k];
 	    }
+
+  for (int i=0; i<3;i++)
+    for (int j=0; j<3;j++)
+      for (int k=0; k<3;k++)
+        for (int u=0; u<3;u++)
+            for (int v=0; v<3;v++)
+                for (int w=0; w<3;w++){
+              t[i][j][k]+=s[i][j][k]*o[u][i]*o[v][j]*o[w][k];
+            }
+
+  for (int i=0; i<3;i++)
+    for (int j=0; j<3;j++)
+      for (int k=0; k<3;k++){
+        r[i][j][k]=0;
+        s[i][j][k]=0;
+      }
+  for (int i=0; i<3;i++)
+    for (int j=0; j<3;j++)
+      for (int k=0; k<3;k++)
+        for (int u=0; u<3;u++)
+            for (int v=0; v<3;v++)
+                for (int w=0; w<3;w++){
+              r[i][j][k]+=t[i][j][k]*o[i][u]*o[j][v]*o[k][w];
+            }
   /*
      for (int i=0; i<3;i++)
      for (int j=0; j<3;j++)
@@ -2445,7 +2469,7 @@ void tensmul(INP atom){
   for (int i=0; i<3;i++){
     for (int j=0; j<3;j++)
       for (int k=0; k<3;k++){
-	printf("C%3d %20.10f ",srt(i,j,k),t[i][j][k]);
+        printf("C%3d %15.10f ",srt(i,j,k),r[i][j][k]);
       }
     printf("\n");
   }
@@ -3522,11 +3546,11 @@ tensmul(atom);
 		       atom.d1111,atom.d2222,atom.d3333,
 		       atom.d1112,atom.d1113,atom.d1122,
 		       atom.d1123,atom.d1133,atom.d1222,
-		       atom.d1223,atom.d1233,atom.d1333,
+                       atom.d1223,atom.d1233,atom.d1333,
 		       atom.d2223,atom.d2233,atom.d2333);
       tmin=fmin(tmin,third);
       tmax=fmax(tmax,third);
-      pt=p*(1.0 + third/6.0 + fourth/24.0);
+      pt=p*(0.0 + third/6.0 + fourth/24.0);
       cubeGL->moliso->data.append(pt);
 //      txt.append(QString("%1").arg(pt,13,'E',5));
       z++;
@@ -3535,7 +3559,7 @@ tensmul(atom);
   //    if (!(z%(breite*breite*breite/100))) {printf(">");fflush(stdout);}
   }
   progress.setValue(z);
-  cubeGL->moliso->iso_level=0.05;
+  cubeGL->moliso->iso_level=p90;
   cubeGL->moliso->createSurface(fac,50.0);
   
   cubeGL->pause=true;
