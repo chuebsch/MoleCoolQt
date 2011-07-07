@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=289;
+int rev=291;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -2350,7 +2350,7 @@ void MyWindow::printScene(){
   }
 }
 
-double Cjkl(INP a,int j, int k, int l){
+double &Cjkl(INP &a,int j, int k, int l){
 int pro=j*k*l;
 switch (pro){
 case 1:return a.c111;
@@ -2364,7 +2364,7 @@ case 12:return a.c223;
 case 18:return a.c233;
 case 27:return a.c333;
 }
-return 0;
+return a.c111; //this will never happen!
 }
 int srt(int i, int j, int k){
 int a,b,c,d=i+j+k;
@@ -2376,17 +2376,24 @@ b=d-a-c;
 return 100*a+10*b+c+111;
 }
 
-void tensmul(INP atom){
-  double a[3][3],o[3][3],t[3][3][3],s[3][3][3],r[3][3][3]; 
-  a[0][0] =mol.zelle.as;
-  a[0][1] = 0;
-  a[0][2] = 0;
-  a[1][0] = 0;
-  a[1][1] = mol.zelle.bs;
-  a[1][2] = 0;
-  a[2][0] = 0;
-  a[2][1] = 0;
-  a[2][2] = mol.zelle.cs;
+void tensmul(INP &atom){
+  if (atom.jtf<3) return;
+  atom.c111*=mol.zelle.as*mol.zelle.as*mol.zelle.as;
+  atom.c222*=mol.zelle.bs*mol.zelle.bs*mol.zelle.bs;
+  atom.c333*=mol.zelle.cs*mol.zelle.cs*mol.zelle.cs;
+  atom.c112*=mol.zelle.as*mol.zelle.as*mol.zelle.bs;
+  atom.c122*=mol.zelle.as*mol.zelle.bs*mol.zelle.bs;
+  atom.c113*=mol.zelle.as*mol.zelle.as*mol.zelle.cs;
+  atom.c133*=mol.zelle.as*mol.zelle.cs*mol.zelle.cs;
+  atom.c223*=mol.zelle.bs*mol.zelle.bs*mol.zelle.cs;
+  atom.c233*=mol.zelle.bs*mol.zelle.cs*mol.zelle.cs;
+  atom.c123*=mol.zelle.as*mol.zelle.bs*mol.zelle.cs;
+  int flag[3][3][3]={
+    {{1,1,1},{0,1,1},{0,0,1}},
+    {{0,0,0},{0,1,1},{0,0,1}},
+    {{0,0,0},{0,0,0},{0,0,1}}};
+                     
+  double o[3][3],t[3][3][3]; 
   const double tau=mol.zelle.c*((cos(mol.zelle.al/g2r)-cos(mol.zelle.be/g2r)*cos(mol.zelle.ga/g2r))/sin(mol.zelle.ga/g2r));
   o[0][0] =mol.zelle.a;
   o[0][1] = 0.0;
@@ -2400,76 +2407,24 @@ void tensmul(INP atom){
   for (int i=0; i<3;i++)
     for (int j=0; j<3;j++)
       for (int k=0; k<3;k++){
-	r[i][j][k]=0;
-	s[i][j][k]=0;
 	t[i][j][k]=0;
       }
-  for (int i=0; i<3;i++)
-    for (int j=0; j<3;j++)
-      for (int k=0; k<3;k++)
-        for (int u=0; u<3;u++)
-            for (int v=0; v<3;v++)
-                for (int w=0; w<3;w++){
-              r[i][j][k]+= Cjkl(atom,i+1,j+1,k+1)*a[i][u]*a[j][v]*a[k][w];
-            }
-  for (int i=0; i<3;i++)
-    for (int j=0; j<3;j++)
-      for (int k=0; k<3;k++)
-        for (int u=0; u<3;u++)
-            for (int v=0; v<3;v++)
-                for (int w=0; w<3;w++){
-              s[i][j][k]+=r[i][j][k]*a[u][i]*a[v][j]*a[w][k];
+  for (int u=0; u<3;u++)
+    for (int v=0; v<3;v++)
+      for (int w=0; w<3;w++)
+	for (int i=0; i<3;i++)
+	  for (int j=0; j<3;j++)
+	    for (int k=0; k<3;k++)
+	    if (flag[u][v][w]){
+	      t[u][v][w]+=Cjkl(atom,i+1,j+1,k+1)*o[i][u]*o[j][v]*o[k][w];
 	    }
-
-  for (int i=0; i<3;i++)
-    for (int j=0; j<3;j++)
-      for (int k=0; k<3;k++)
-        for (int u=0; u<3;u++)
-            for (int v=0; v<3;v++)
-                for (int w=0; w<3;w++){
-              t[i][j][k]+=s[i][j][k]*o[u][i]*o[v][j]*o[w][k];
-            }
-
-  for (int i=0; i<3;i++)
-    for (int j=0; j<3;j++)
-      for (int k=0; k<3;k++){
-        r[i][j][k]=0;
-        s[i][j][k]=0;
-      }
-  for (int i=0; i<3;i++)
-    for (int j=0; j<3;j++)
-      for (int k=0; k<3;k++)
-        for (int u=0; u<3;u++)
-            for (int v=0; v<3;v++)
-                for (int w=0; w<3;w++){
-              r[i][j][k]+=t[i][j][k]*o[i][u]*o[j][v]*o[k][w];
-            }
-  /*
-     for (int i=0; i<3;i++)
-     for (int j=0; j<3;j++)
-     for (int k=0; k<3;k++){
-     s[i][j][k]=0;
-     t[i][j][k]=0;
-     }
-     for (int i=0; i<3;i++)
-     for (int j=0; j<3;j++)
-     for (int k=0; k<3;k++)
-     for (int q=0; q<3;q++)
-     for (int w=0; w<3;w++){
-     t[i][j][k]+=r[i][j][k]*o[q][w];
-     }
-     for (int i=0; i<3;i++)
-     for (int j=0; j<3;j++)
-     for (int k=0; k<3;k++)
-     for (int q=0; q<3;q++)
-     for (int w=0; w<3;w++){
-     s[i][j][k]+=t[i][j][k]*o[w][q];
-     }
-     */
   for (int i=0; i<3;i++){
     for (int j=0; j<3;j++)
-      for (int k=0; k<3;k++){
-        printf("C%3d %15.10f ",srt(i,j,k),r[i][j][k]);
+      for (int k=0; k<3;k++)
+	if (flag[i][j][k]) {
+	  printf("C%3d %15.10f ",srt(i,j,k),t[i][j][k]);
+	  Cjkl(atom,i+1,j+1,k+1)=t[i][j][k];
+	//else printf("_%3d %15.10f ",srt(i,j,k),t[i][j][k]);
       }
     printf("\n");
   }
@@ -3031,7 +2986,7 @@ void MyWindow::load_xdres(QString fileName) {
   {//RES  
   char line[85]="",dv[20],*dvv;
   int i=0;
-  //double cfac=6/(M_PI*M_PI*M_PI*8);
+  double cfac=1.0;//6/(M_PI*M_PI*M_PI*8);
   mol.initDir();
   if ((adp=fopen(fileName.toLocal8Bit(),"r"))==NULL) {QMessageBox::critical(this,"Read Error!",QString("read error %1!").arg(fileName),QMessageBox::Ok);exit(2);}  
   i=0;
@@ -3097,7 +3052,7 @@ void MyWindow::load_xdres(QString fileName) {
       &asymmUnit[i].c233,
       &asymmUnit[i].c123);
       if (XDVERS < 4.105){
-	/*
+	
 	asymmUnit[i].c111/=cfac;
 	asymmUnit[i].c222/=cfac;
 	asymmUnit[i].c333/=cfac;
@@ -3107,18 +3062,18 @@ void MyWindow::load_xdres(QString fileName) {
 	asymmUnit[i].c133/=cfac;
 	asymmUnit[i].c223/=cfac;
 	asymmUnit[i].c233/=cfac;
-	asymmUnit[i].c123/=cfac;*/
+	asymmUnit[i].c123/=cfac;
       } else{
-	asymmUnit[i].c111/=mol.zelle.as*mol.zelle.as*mol.zelle.as;//*cfac//Ujkl's whanted
-	asymmUnit[i].c222/=mol.zelle.bs*mol.zelle.bs*mol.zelle.bs;//*cfac
-	asymmUnit[i].c333/=mol.zelle.cs*mol.zelle.cs*mol.zelle.cs;//*cfac
-	asymmUnit[i].c112/=mol.zelle.as*mol.zelle.as*mol.zelle.bs;//*cfac
-	asymmUnit[i].c122/=mol.zelle.as*mol.zelle.bs*mol.zelle.bs;//*cfac
-	asymmUnit[i].c113/=mol.zelle.as*mol.zelle.as*mol.zelle.cs;//*cfac
-	asymmUnit[i].c133/=mol.zelle.as*mol.zelle.cs*mol.zelle.cs;//*cfac
-	asymmUnit[i].c223/=mol.zelle.bs*mol.zelle.bs*mol.zelle.cs;//*cfac
-	asymmUnit[i].c233/=mol.zelle.bs*mol.zelle.cs*mol.zelle.cs;//*cfac
-	asymmUnit[i].c123/=mol.zelle.as*mol.zelle.bs*mol.zelle.cs;//*cfac
+	asymmUnit[i].c111/=mol.zelle.as*mol.zelle.as*mol.zelle.as*cfac;////Ujkl's whanted
+	asymmUnit[i].c222/=mol.zelle.bs*mol.zelle.bs*mol.zelle.bs*cfac;//
+	asymmUnit[i].c333/=mol.zelle.cs*mol.zelle.cs*mol.zelle.cs*cfac;//
+	asymmUnit[i].c112/=mol.zelle.as*mol.zelle.as*mol.zelle.bs*cfac;//
+	asymmUnit[i].c122/=mol.zelle.as*mol.zelle.bs*mol.zelle.bs*cfac;//
+	asymmUnit[i].c113/=mol.zelle.as*mol.zelle.as*mol.zelle.cs*cfac;//
+	asymmUnit[i].c133/=mol.zelle.as*mol.zelle.cs*mol.zelle.cs*cfac;//
+	asymmUnit[i].c223/=mol.zelle.bs*mol.zelle.bs*mol.zelle.cs*cfac;//
+	asymmUnit[i].c233/=mol.zelle.bs*mol.zelle.cs*mol.zelle.cs*cfac;//
+	asymmUnit[i].c123/=mol.zelle.as*mol.zelle.bs*mol.zelle.cs*cfac;//
       }
 
       }
@@ -3498,8 +3453,8 @@ void MyWindow::makePDFGrid(INP atom){
   cubeGL->moliso->data.clear();
   cubeGL->moliso->mdata.clear();
   int z=0;
-  double cfact=6/(M_PI*M_PI*M_PI*8);
-tensmul(atom);
+//  double cfact=6/(M_PI*M_PI*M_PI*8);
+  tensmul(atom);
   printf(
 		  "u111 %14.7g u222 %14.7g u333 %14.7g \n"
 		  "u112 %14.7g u122 %14.7g u113 %14.7g \n"
@@ -3550,7 +3505,7 @@ tensmul(atom);
 		       atom.d2223,atom.d2233,atom.d2333);
       tmin=fmin(tmin,third);
       tmax=fmax(tmax,third);
-      pt=p*(0.0 + third/6.0 + fourth/24.0);
+      pt=p*(1.0 + third/6.0 + fourth/24.0);
       cubeGL->moliso->data.append(pt);
 //      txt.append(QString("%1").arg(pt,13,'E',5));
       z++;
@@ -3559,7 +3514,7 @@ tensmul(atom);
   //    if (!(z%(breite*breite*breite/100))) {printf(">");fflush(stdout);}
   }
   progress.setValue(z);
-  cubeGL->moliso->iso_level=p90;
+  cubeGL->moliso->iso_level=p50;
   cubeGL->moliso->createSurface(fac,50.0);
   
   cubeGL->pause=true;
