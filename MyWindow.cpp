@@ -214,7 +214,9 @@ MyWindow::MyWindow( QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(pa
   xdMenu->addAction(tidyCPSAct); 
   xdMenu->addSeparator();
   xdMenu->addAction("Find all uniq peaks in Fo-Fc map > iso surface value.",this,SLOT(addMoreQPeaks())) ;
+  xdMenu->addAction("Calculate pdf of an antom.",this,SLOT(pdfDlg()));
   xdMenu->addAction(xdEnvAct);
+
   xdMenu->setEnabled(false);
 
   depthCueingAct = new  QAction(tr("Depth Cueing"),this);
@@ -2366,14 +2368,45 @@ case 27:return a.c333;
 }
 return a.c111; //this will never happen!
 }
-int srt(int i, int j, int k){
-int a,b,c,d=i+j+k;
-a=(i<j)?i:j;
-a=(k<a)?k:a;
-c=(i>j)?i:j;
-c=(k>c)?k:c;
-b=d-a-c;
-return 100*a+10*b+c+111;
+
+double &Djklm(INP &a,int j, int k, int l, int m){
+  /*
+   m jklm  product 
+   1 1111  1
+   4 1112  2
+   4 1113  3
+   6 1122  4
+  12 1123  6
+   4 1222  8
+   6 1223  9
+  12 1223 12
+   1 2222 16
+  12 1233 18
+   4 2223 24
+   4 1333 27
+   6 2233 36
+   4 2333 54
+   1 3333 81
+   * */
+int pro=j*k*l*m;
+switch (pro){
+case 1 :return a.d1111;
+case 2 :return a.d1112;
+case 3 :return a.d1113;
+case 4 :return a.d1122;
+case 6 :return a.d1123;
+case 8 :return a.d1222;
+case 9 :return a.d1223;
+case 12:return a.d1223;
+case 16:return a.d2222;
+case 18:return a.d1233;
+case 24:return a.d2223;
+case 27:return a.d1333;
+case 36:return a.d2233;
+case 54:return a.d2333;
+case 81:return a.d3333;
+}
+return a.d1111; //this will never happen!
 }
 
 void tensmul(INP &atom){
@@ -2422,11 +2455,72 @@ void tensmul(INP &atom){
     for (int j=0; j<3;j++)
       for (int k=0; k<3;k++)
 	if (flag[i][j][k]) {
-	  printf("C%3d %15.10f ",srt(i,j,k),t[i][j][k]);
 	  Cjkl(atom,i+1,j+1,k+1)=t[i][j][k];
-	//else printf("_%3d %15.10f ",srt(i,j,k),t[i][j][k]);
       }
-    printf("\n");
+  }
+  if (atom.jtf<4)return;
+  double r[3][3][3][3]={
+    {
+      {{0,0,0},{0,0,0},{0,0,0}},
+      {{0,0,0},{0,0,0},{0,0,0}},
+      {{0,0,0},{0,0,0},{0,0,0}}},
+    {
+      {{0,0,0},{0,0,0},{0,0,0}},
+      {{0,0,0},{0,0,0},{0,0,0}},
+      {{0,0,0},{0,0,0},{0,0,0}}},
+   {
+      {{0,0,0},{0,0,0},{0,0,0}},
+      {{0,0,0},{0,0,0},{0,0,0}},
+      {{0,0,0},{0,0,0},{0,0,0}}}
+  };
+  int flag2[3][3][3][3]={
+    {
+      {{1,1,1},{0,1,1},{0,0,1}},
+      {{0,0,0},{0,1,1},{0,0,1}},
+      {{0,0,0},{0,0,0},{0,0,1}}},
+    {
+      {{0,0,0},{0,0,0},{0,0,0}},
+      {{0,0,0},{0,1,1},{0,0,1}},
+      {{0,0,0},{0,0,0},{0,0,1}}},
+   {
+      {{0,0,0},{0,0,0},{0,0,0}},
+      {{0,0,0},{0,0,0},{0,0,0}},
+      {{0,0,0},{0,0,0},{0,0,1}}}
+  };
+	atom.d1111*= mol.zelle.as * mol.zelle.as * mol.zelle.as * mol.zelle.as;//
+	atom.d2222*= mol.zelle.bs * mol.zelle.bs * mol.zelle.bs * mol.zelle.bs;//
+	atom.d3333*= mol.zelle.cs * mol.zelle.cs * mol.zelle.cs * mol.zelle.cs;//
+	atom.d1112*= mol.zelle.as * mol.zelle.as * mol.zelle.as * mol.zelle.bs;//
+	atom.d1222*= mol.zelle.as * mol.zelle.bs * mol.zelle.bs * mol.zelle.bs;//
+	atom.d1113*= mol.zelle.as * mol.zelle.as * mol.zelle.as * mol.zelle.cs;//
+	atom.d1333*= mol.zelle.as * mol.zelle.cs * mol.zelle.cs * mol.zelle.cs;//
+	atom.d2223*= mol.zelle.bs * mol.zelle.bs * mol.zelle.bs * mol.zelle.cs;//
+	atom.d2333*= mol.zelle.bs * mol.zelle.cs * mol.zelle.cs * mol.zelle.cs;//
+	atom.d1122*= mol.zelle.as * mol.zelle.as * mol.zelle.bs * mol.zelle.bs;//
+	atom.d1133*= mol.zelle.as * mol.zelle.as * mol.zelle.cs * mol.zelle.cs;//
+	atom.d2233*= mol.zelle.bs * mol.zelle.bs * mol.zelle.cs * mol.zelle.cs;//
+	atom.d1123*= mol.zelle.as * mol.zelle.as * mol.zelle.bs * mol.zelle.cs;//
+	atom.d1223*= mol.zelle.as * mol.zelle.bs * mol.zelle.bs * mol.zelle.cs;//
+	atom.d1233*= mol.zelle.as * mol.zelle.bs * mol.zelle.cs * mol.zelle.cs;//
+                     
+  for (int u=0; u<3;u++)
+    for (int v=0; v<3;v++)
+      for (int w=0; w<3;w++)
+	for (int q=0; q<3;q++)
+	  for (int i=0; i<3;i++)
+	    for (int j=0; j<3;j++)
+	      for (int k=0; k<3;k++)
+		for (int l=0; l<3;l++)
+		  if (flag2[u][v][w][q]){
+		    r[u][v][w][q]+=Djklm(atom,i+1,j+1,k+1,l+1)*o[i][u]*o[j][v]*o[k][w]*o[l][q];
+		  }
+  for (int i=0; i<3;i++){
+    for (int j=0; j<3;j++)
+      for (int k=0; k<3;k++)
+      for (int l=0; l<3;l++)
+	if (flag2[i][j][k][l]) {
+	  Djklm(atom,i+1,j+1,k+1,l+1)=r[i][j][k][l];
+      }
   }
 }
 
@@ -2908,21 +3002,6 @@ dummys.append(newAtom);
     growSymm(6);
 }
 
-double MyWindow::ueq(const Matrix m){
-  double erg=0;
-  erg+=m.m11*mol.zelle.as*mol.zelle.a*mol.zelle.a*mol.zelle.as;
-  erg+=m.m12*mol.zelle.as*mol.zelle.a*mol.zelle.b*mol.zelle.bs;
-  erg+=m.m13*mol.zelle.as*mol.zelle.a*mol.zelle.c*mol.zelle.cs;
-  erg+=m.m21*mol.zelle.bs*mol.zelle.b*mol.zelle.a*mol.zelle.as;
-  erg+=m.m22*mol.zelle.bs*mol.zelle.b*mol.zelle.b*mol.zelle.bs;
-  erg+=m.m23*mol.zelle.bs*mol.zelle.b*mol.zelle.c*mol.zelle.cs;
-  erg+=m.m31*mol.zelle.cs*mol.zelle.c*mol.zelle.a*mol.zelle.as;
-  erg+=m.m32*mol.zelle.cs*mol.zelle.c*mol.zelle.b*mol.zelle.bs;
-  erg+=m.m33*mol.zelle.cs*mol.zelle.c*mol.zelle.c*mol.zelle.cs;
-  erg*=1/3.0;
-  return erg;
-}
-
 void MyWindow::load_xdres(QString fileName) {
   INP newAtom;
   newAtom.part=0;
@@ -3037,8 +3116,7 @@ void MyWindow::load_xdres(QString fileName) {
       asymmUnit[i].uf.m23=asymmUnit[i].uf.m32;
       asymmUnit[i].uf.m13=asymmUnit[i].uf.m31;
       asymmUnit[i].uf.m12=asymmUnit[i].uf.m21;
-      if (asymmUnit[i].jtf>2){
-      printf("%-8s %d\n",asymmUnit[i].atomname,i);
+      if (asymmUnit[i].jtf>2){ //      printf("%-8s %d\n",asymmUnit[i].atomname,i);
       egal=fscanf(adp,"%lf%lf%lf%lf%lf\n\r",
       &asymmUnit[i].c111,
       &asymmUnit[i].c222,
@@ -3077,6 +3155,44 @@ void MyWindow::load_xdres(QString fileName) {
       }
 
       }
+   if (asymmUnit[i].jtf>3){ 
+      egal=fscanf(adp,"%lf%lf%lf%lf%lf\n\r",
+      &asymmUnit[i].d1111,
+      &asymmUnit[i].d2222,
+      &asymmUnit[i].d3333,
+      &asymmUnit[i].d1112,
+      &asymmUnit[i].d1222);
+      egal=fscanf(adp,"%lf%lf%lf%lf%lf\n\r",
+      &asymmUnit[i].d1113,
+      &asymmUnit[i].d1333,
+      &asymmUnit[i].d2223,
+      &asymmUnit[i].d2333,
+      &asymmUnit[i].d1122);
+      egal=fscanf(adp,"%lf%lf%lf%lf%lf\n\r",
+      &asymmUnit[i].d1133,
+      &asymmUnit[i].d2233,
+      &asymmUnit[i].d1123,
+      &asymmUnit[i].d1223,
+      &asymmUnit[i].d1233);
+      if (XDVERS < 4.105){	
+      } else{
+	asymmUnit[i].d1111/= mol.zelle.as * mol.zelle.as * mol.zelle.as * mol.zelle.as;////Ujklm's whanted
+	asymmUnit[i].d2222/= mol.zelle.bs * mol.zelle.bs * mol.zelle.bs * mol.zelle.bs;//
+	asymmUnit[i].d3333/= mol.zelle.cs * mol.zelle.cs * mol.zelle.cs * mol.zelle.cs;//
+	asymmUnit[i].d1112/= mol.zelle.as * mol.zelle.as * mol.zelle.as * mol.zelle.bs;//
+	asymmUnit[i].d1222/= mol.zelle.as * mol.zelle.bs * mol.zelle.bs * mol.zelle.bs;//
+	asymmUnit[i].d1113/= mol.zelle.as * mol.zelle.as * mol.zelle.as * mol.zelle.cs;//
+	asymmUnit[i].d1333/= mol.zelle.as * mol.zelle.cs * mol.zelle.cs * mol.zelle.cs;//
+	asymmUnit[i].d2223/= mol.zelle.bs * mol.zelle.bs * mol.zelle.bs * mol.zelle.cs;//
+	asymmUnit[i].d2333/= mol.zelle.bs * mol.zelle.cs * mol.zelle.cs * mol.zelle.cs;//
+	asymmUnit[i].d1122/= mol.zelle.as * mol.zelle.as * mol.zelle.bs * mol.zelle.bs;//
+	asymmUnit[i].d1133/= mol.zelle.as * mol.zelle.as * mol.zelle.cs * mol.zelle.cs;//
+	asymmUnit[i].d2233/= mol.zelle.bs * mol.zelle.bs * mol.zelle.cs * mol.zelle.cs;//
+	asymmUnit[i].d1123/= mol.zelle.as * mol.zelle.as * mol.zelle.bs * mol.zelle.cs;//
+	asymmUnit[i].d1223/= mol.zelle.as * mol.zelle.bs * mol.zelle.bs * mol.zelle.cs;//
+	asymmUnit[i].d1233/= mol.zelle.as * mol.zelle.bs * mol.zelle.cs * mol.zelle.cs;//
+      }
+   }
       i++;
     }
   }
@@ -3384,24 +3500,176 @@ double hermite3(V3 w, Matrix q,
   return (t + tz)* 1.E-3;
   //CUM3  = CUM3 * 1.E-3
 }
-void MyWindow::makePDFGrid(INP atom){
+
+void MyWindow::pdfDlg(){
+
+  QDialog *dlg=new QDialog(this);
+  dlg->setWindowTitle("Probability Density Function");
+  QComboBox *atomBx = new QComboBox(this);
+  for (int i=0; i<xdinp.size();i++){
+  if (xdinp[i].OrdZahl<0)continue;
+  if (xdinp[i].sg) continue;
+  atomBx->addItem(QString(xdinp[i].atomname),i);
+  }
+  QDoubleSpinBox *proba=new QDoubleSpinBox(this);
+  proba->setMinimum(1);
+  proba->setMaximum(99);
+  proba->setDecimals(0);
+  proba->setValue(50);
+  QDialogButtonBox *buttonBox = new QDialogButtonBox( QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+  connect(buttonBox, SIGNAL(accepted()), dlg, SLOT(accept()));
+  connect(buttonBox, SIGNAL(rejected()), dlg, SLOT(reject()));  
+  QCheckBox *sec =new QCheckBox("Second order");
+  sec->setChecked(true);
+  QCheckBox *third =new QCheckBox("Third order");
+  third->setChecked(true); 
+  QCheckBox *fourth =new QCheckBox("Fourth order");
+  fourth->setChecked(true);
+  QLabel *l = new QLabel("Probability in %");
+  QGridLayout *la= new QGridLayout();
+  la->addWidget(atomBx,1,1,1,2);
+  la->addWidget(l,2,1);
+  la->addWidget(proba,2,2,1,2);
+  la->addWidget(sec,3,1);
+  la->addWidget(third,3,2);
+  la->addWidget(fourth,3,3);
+  la->addWidget(buttonBox,4,1,1,3);
+  dlg->setLayout(la);
+  if(dlg->exec()==QDialog::Accepted){
+    makePDFGrid(xdinp[atomBx->itemData(atomBx->currentIndex()).toInt()],proba->value(),sec->isChecked(),third->isChecked(),fourth->isChecked());
+  }
+
+  delete dlg;
+}
+
+void MyWindow::makePDFGrid(INP atom, double proba,bool c2,bool c3,bool c4){
+  int ppp=(int)(proba);
+  double piso=0;
+  pdfOnAtom=-1;
+  double p=0;
+  Matrix U=atom.u;//kartesian U
+  Matrix UI=inverse(U);
+  double DI=determinant(UI);
+  const double base=sqrt(DI)/sqrt((8*M_PI*M_PI*M_PI));
+  switch (ppp){
+	  case 1 :   piso=-0.5*(0.3389*0.3389);break;
+	  case 2 :   piso=-0.5*(0.4299*0.4299);break;
+	  case 3 :   piso=-0.5*(0.4951*0.4951);break;
+	  case 4 :   piso=-0.5*(0.5479*0.5479);break;
+	  case 5 :   piso=-0.5*(0.5932*0.5932);break;
+	  case 6 :   piso=-0.5*(0.6334*0.6334);break;
+	  case 7 :   piso=-0.5*(0.6699*0.6699);break;
+	  case 8 :   piso=-0.5*(0.7035*0.7035);break;
+	  case 9 :   piso=-0.5*(0.7349*0.7349);break;
+	  case 10:   piso=-0.5*(0.7644*0.7644);break;
+	  case 11:   piso=-0.5*(0.7924*0.7924);break;
+	  case 12:   piso=-0.5*(0.8192*0.8192);break;
+	  case 13:   piso=-0.5*(0.8447*0.8447);break;
+	  case 14:   piso=-0.5*(0.8694*0.8694);break;
+	  case 15:   piso=-0.5*(0.8932*0.8932);break;
+	  case 16:   piso=-0.5*(0.9162*0.9162);break;
+	  case 17:   piso=-0.5*(0.9386*0.9386);break;
+	  case 18:   piso=-0.5*(0.9605*0.9605);break;
+	  case 19:   piso=-0.5*(0.9818*0.9818);break;
+	  case 20:   piso=-0.5*(1.0026*1.0026);break;
+	  case 21:   piso=-0.5*(1.0230*1.0230);break;
+	  case 22:   piso=-0.5*(1.0430*1.0430);break;
+	  case 23:   piso=-0.5*(1.0627*1.0627);break;
+	  case 24:   piso=-0.5*(1.0821*1.0821);break;
+	  case 25:   piso=-0.5*(1.1012*1.1012);break;
+	  case 26:   piso=-0.5*(1.1200*1.1200);break;
+	  case 27:   piso=-0.5*(1.1386*1.1386);break;
+	  case 28:   piso=-0.5*(1.1570*1.1570);break;
+	  case 29:   piso=-0.5*(1.1751*1.1751);break;
+	  case 30:   piso=-0.5*(1.1932*1.1932);break;
+	  case 31:   piso=-0.5*(1.2110*1.2110);break;
+	  case 32:   piso=-0.5*(1.2288*1.2288);break;
+	  case 33:   piso=-0.5*(1.2464*1.2464);break;
+	  case 34:   piso=-0.5*(1.2638*1.2638);break;
+	  case 35:   piso=-0.5*(1.2812*1.2812);break;
+	  case 36:   piso=-0.5*(1.2985*1.2985);break;
+	  case 37:   piso=-0.5*(1.3158*1.3158);break;
+	  case 38:   piso=-0.5*(1.3330*1.3330);break;
+	  case 39:   piso=-0.5*(1.3501*1.3501);break;
+	  case 40:   piso=-0.5*(1.3672*1.3672);break;
+	  case 41:   piso=-0.5*(1.3842*1.3842);break;
+	  case 42:   piso=-0.5*(1.4013*1.4013);break;
+	  case 43:   piso=-0.5*(1.4183*1.4183);break;
+	  case 44:   piso=-0.5*(1.4354*1.4354);break;
+	  case 45:   piso=-0.5*(1.4524*1.4524);break;
+	  case 46:   piso=-0.5*(1.4695*1.4695);break;
+	  case 47:   piso=-0.5*(1.4866*1.4866);break;
+	  case 48:   piso=-0.5*(1.5037*1.5037);break;
+	  case 49:   piso=-0.5*(1.5209*1.5209);break;
+	  case 50:   piso=-0.5*(1.5382*1.5382);break;
+	  case 51:   piso=-0.5*(1.5555*1.5555);break;
+	  case 52:   piso=-0.5*(1.5729*1.5729);break;
+	  case 53:   piso=-0.5*(1.5904*1.5904);break;
+	  case 54:   piso=-0.5*(1.6080*1.6080);break;
+	  case 55:   piso=-0.5*(1.6257*1.6257);break;
+	  case 56:   piso=-0.5*(1.6436*1.6436);break;
+	  case 57:   piso=-0.5*(1.6616*1.6616);break;
+	  case 58:   piso=-0.5*(1.6797*1.6797);break;
+	  case 59:   piso=-0.5*(1.6980*1.6980);break;
+	  case 60:   piso=-0.5*(1.7164*1.7164);break;
+	  case 61:   piso=-0.5*(1.7351*1.7351);break;
+	  case 62:   piso=-0.5*(1.7540*1.7540);break;
+	  case 63:   piso=-0.5*(1.7730*1.7730);break;
+	  case 64:   piso=-0.5*(1.7924*1.7924);break;
+	  case 65:   piso=-0.5*(1.8119*1.8119);break;
+	  case 66:   piso=-0.5*(1.8318*1.8318);break;
+	  case 67:   piso=-0.5*(1.8519*1.8519);break;
+	  case 68:   piso=-0.5*(1.8724*1.8724);break;
+	  case 69:   piso=-0.5*(1.8932*1.8932);break;
+	  case 70:   piso=-0.5*(1.9144*1.9144);break;
+	  case 71:   piso=-0.5*(1.9360*1.9360);break;
+	  case 72:   piso=-0.5*(1.9580*1.9580);break;
+	  case 73:   piso=-0.5*(1.9804*1.9804);break;
+	  case 74:   piso=-0.5*(2.0034*2.0034);break;
+	  case 75:   piso=-0.5*(2.0269*2.0269);break;
+	  case 76:   piso=-0.5*(2.0510*2.0510);break;
+	  case 77:   piso=-0.5*(2.0757*2.0757);break;
+	  case 78:   piso=-0.5*(2.1012*2.1012);break;
+	  case 79:   piso=-0.5*(2.1274*2.1274);break;
+	  case 80:   piso=-0.5*(2.1544*2.1544);break;
+	  case 81:   piso=-0.5*(2.1824*2.1824);break;
+	  case 82:   piso=-0.5*(2.2114*2.2114);break;
+	  case 83:   piso=-0.5*(2.2416*2.2416);break;
+	  case 84:   piso=-0.5*(2.2730*2.2730);break;
+	  case 85:   piso=-0.5*(2.3059*2.3059);break;
+	  case 86:   piso=-0.5*(2.3404*2.3404);break;
+	  case 87:   piso=-0.5*(2.3767*2.3767);break;
+	  case 88:   piso=-0.5*(2.4153*2.4153);break;
+	  case 89:   piso=-0.5*(2.4563*2.4563);break;
+	  case 90:   piso=-0.5*(2.5003*2.5003);break;
+	  case 91:   piso=-0.5*(2.5478*2.5478);break;
+	  case 92:   piso=-0.5*(2.5997*2.5997);break;
+	  case 93:   piso=-0.5*(2.6571*2.6571);break;
+	  case 94:   piso=-0.5*(2.7216*2.7216);break;
+	  case 95:   piso=-0.5*(2.7955*2.7955);break;
+	  case 96:   piso=-0.5*(2.8829*2.8829);break;
+	  case 97:   piso=-0.5*(2.9912*2.9912);break;
+	  case 98:   piso=-0.5*(3.1365*3.1365);break;
+	  case 99:   piso=-0.5*(3.3682*3.3682);break;
+  }
+  piso=base*exp(piso);
+  printf("Piso= %g\n",piso);
   QString fac("testpdf.face");
   if (cubeGL->moliso){
-    delete cubeGL->moliso;
-    cubeGL->moliso=NULL;
+    glDeleteLists(cubeGL->moliso->mibas,6);
+    if (cubeGL->moliso){
+      delete cubeGL->moliso;
+      cubeGL->moliso=NULL;
+    }
+    delete dock3;
+    dock->show();
+    dock2->show();
+    createmoliso->setVisible(true);
+    noMoliso->setVisible(false);
   }
   cubeGL->moliso = new MolIso();
   cubeGL->moliso->L=cubeGL->L;
   cubeGL->moliso->lineNr=0;
-  //printf("\n%s\n\n",atom.atomname);
-  pdfOnAtom=-1;
-  double p=0;
-  Matrix U=atom.u;//kartesian U
-//  Matrix UF=atom.uf;
-  //double D=determinant(U);
-  Matrix UI=inverse(U);
-//  Matrix UIF=inverse(UF);
-  double DI=determinant(UI);
   printf("??%g %g %g\n",
 		  mol.zelle.as*mol.zelle.a,
 		  mol.zelle.bs*mol.zelle.b,
@@ -3413,7 +3681,6 @@ void MyWindow::makePDFGrid(INP atom){
   //printf("%g %g %g  \n",ev.x,ev.y,ev.z);
   double maxdim=2*sqrt(fmax(ev.x,fmax(ev.y,ev.z)))*6;
 
-  const double base=sqrt(DI)/sqrt((8*M_PI*M_PI*M_PI));
   double p10,p90,p50,pt;
   double ponent;
   p50=base*exp(-1.18302962);
@@ -3454,7 +3721,7 @@ void MyWindow::makePDFGrid(INP atom){
   cubeGL->moliso->mdata.clear();
   int z=0;
 //  double cfact=6/(M_PI*M_PI*M_PI*8);
-  tensmul(atom);
+  tensmul(atom);/*
   printf(
 		  "u111 %14.7g u222 %14.7g u333 %14.7g \n"
 		  "u112 %14.7g u122 %14.7g u113 %14.7g \n"
@@ -3479,7 +3746,7 @@ void MyWindow::makePDFGrid(INP atom){
 		  atom.c223*mol.zelle.bs*mol.zelle.bs*mol.zelle.cs,
 		  atom.c233*mol.zelle.bs*mol.zelle.cs*mol.zelle.cs,
 		  atom.c123*mol.zelle.as*mol.zelle.bs*mol.zelle.cs);
-
+*/
   double third=0,fourth=0,tmax=0,tmin=0;
   V3 t=V3(((breite-1)/-2.0)*df,((breite-1)/-2.0)*df,((breite-1)/-2.0)*df);
 //  QString txt;
@@ -3492,12 +3759,12 @@ void MyWindow::makePDFGrid(INP atom){
       V3 w=(X*UI);
 
       p=base*exp(ponent);
-      if (atom.jtf>2) third= p*hermite3(w,UI,
+      if ((c3)&&(atom.jtf>2)) third= p*hermite3(w,UI,
                       atom.c111,atom.c222,atom.c333,
                       atom.c112,atom.c122,atom.c113,
                       atom.c133,atom.c223,atom.c233,
                       atom.c123);
-      if (atom.jtf==4) fourth= p*hermite4(w,UI,
+      if ((c4)&&(atom.jtf==4)) fourth= p*hermite4(w,UI,
 		       atom.d1111,atom.d2222,atom.d3333,
 		       atom.d1112,atom.d1113,atom.d1122,
 		       atom.d1123,atom.d1133,atom.d1222,
@@ -3505,7 +3772,7 @@ void MyWindow::makePDFGrid(INP atom){
 		       atom.d2223,atom.d2233,atom.d2333);
       tmin=fmin(tmin,third);
       tmax=fmax(tmax,third);
-      pt=p*(1.0 + third/6.0 + fourth/24.0);
+      pt=p*((c2?1:0) + third/6.0 + fourth/24.0);
       cubeGL->moliso->data.append(pt);
 //      txt.append(QString("%1").arg(pt,13,'E',5));
       z++;
@@ -3514,8 +3781,8 @@ void MyWindow::makePDFGrid(INP atom){
   //    if (!(z%(breite*breite*breite/100))) {printf(">");fflush(stdout);}
   }
   progress.setValue(z);
-  cubeGL->moliso->iso_level=p50;
-  cubeGL->moliso->createSurface(fac,50.0);
+  cubeGL->moliso->iso_level=(c2)?piso:0.01;
+  cubeGL->moliso->createSurface(fac,(c2)?proba:0.01);
   
   cubeGL->pause=true;
   if (cubeGL->moliso->mibas) glDeleteLists(cubeGL->moliso->mibas,6);

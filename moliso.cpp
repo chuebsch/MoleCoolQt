@@ -193,7 +193,8 @@ void MolIso::loadMI(QString fname){
       printf("\nAvarage of positive surface values VS+= %f %s\n Avarage of negative surface values VS-= %f %s\n Avarage deviation from the avarage surface value PI= %f %s\n sigma square + = %f (%s)^2\n sigma square - = %f (%s)^2\n sigma square total = %f (%s)^2\n nu = %f \n\n",
       avpotplus,lul,avpotminus,lul,avdevPI,lul,potsigplus,lul,potsigminus,lul,potsigtot,lul,potnu);*/
 
-    max+=max*0.001;
+    max+=max*0.00001+0.00001;
+    min-=min*0.00001+0.00001;
     if (fixmin!=666.666) min=fixmin;
     if (fixmax!=666.666) max=fixmax;
     for (int i=lines[0].toInt()+1;i<lines.size();i++){
@@ -1008,6 +1009,31 @@ void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &st
 
 
 void MolIso::createSurface(QString &storeFaceName, double proba){
+  Farben=5;    
+  farbe[0][0]=1.0;    
+  farbe[0][1]=0;    
+  farbe[0][2]=0;    
+  farbe[0][3]=0.6;
+
+  farbe[1][0]=1.0;    
+  farbe[1][1]=0.0;    
+  farbe[1][2]=0.0;    
+  farbe[1][3]=0.5;
+
+  farbe[2][0]=0.3;    
+  farbe[2][1]=0.7;    
+  farbe[2][2]=0.3;    
+  farbe[2][3]=0.6;
+
+  farbe[3][0]=0.0;    
+  farbe[3][1]=0.0;    
+  farbe[3][2]=1.0;    
+  farbe[3][3]=0.5;
+
+  farbe[4][0]=0;    
+  farbe[4][1]=0;    
+  farbe[4][2]=1.0;    
+  farbe[4][3]=0.6;    
   QFile *tf = new QFile(storeFaceName);
   mdata=data;
   bh=breite*hoehe;
@@ -1033,7 +1059,50 @@ void MolIso::createSurface(QString &storeFaceName, double proba){
     fprintf(stderr ,"Less Memory(Z)!!\n");
     exit(1); 
   }
-  simpelGrad();	
+  simpelGrad();
+  if (proba<1) {  
+  CalcVertexes();
+  CalcNormals();
+  for( int ix=0; ix<breite-1; ix++ )
+    for( int iy=0; iy<hoehe-1; iy++ )
+      for( int iz=0; iz<tiefe-1; iz++ )
+	MakeElement(ix,iy,iz,breite,bh);
+  iso_level*=-1.0;
+  CalcVertexes();
+  CalcNormals();
+  tf->open(QIODevice::WriteOnly|QIODevice::Text);
+
+  tf->write(QString("%1\n").arg(orte.size()).toLatin1());
+  for (int i=0;i<orte.size();i++){
+    tf->write(QString("%1  %2 %3 %4   %5 %6 %7  %8\n")
+		    .arg(lineNr,-6)
+		    .arg(orte.at(i).vertex.x,9,'f',6)
+		    .arg(orte.at(i).vertex.y,9,'f',6)
+		    .arg(orte.at(i).vertex.z,9,'f',6)
+		    .arg(orte.at(i).normal.x,9,'f',6)
+		    .arg(orte.at(i).normal.y,9,'f',6)
+		    .arg(orte.at(i).normal.z,9,'f',6)
+		    .arg(orte.at(i).color,12,'f',7).toLatin1());
+    lineNr++;
+  }
+  for( int ix=0; ix<breite-1; ix++ )
+    for( int iy=0; iy<hoehe-1; iy++ )
+      for( int iz=0; iz<tiefe-1; iz++ )
+	MakeElement(ix,iy,iz,breite,bh);
+  PXsort();
+  QString Line="";
+  for (int i=0; i<pgns.size();i++) {
+    for (int j=0; j<pgns.at(i).n;j++){
+      Line.append(QString("%1 ").arg(pgns.at(i).ii[j],6));
+    }
+    if (pgns.at(i).n>0) {
+      Line.append("\n");
+      tf->write(Line.toLatin1());
+      Line.clear();
+    }
+  }
+  tf->close();
+  }else{
   CalcVertexes();
   CalcNormals();
   tf->open(QIODevice::WriteOnly|QIODevice::Text);
@@ -1068,6 +1137,7 @@ void MolIso::createSurface(QString &storeFaceName, double proba){
     }
   }
   tf->close();
+  }
   free(grad);
   free(nodex);
   free(nodey);
