@@ -97,6 +97,7 @@ Q_OBJECT
 
 char titl[80];/*fcmax=0,f000=0,resmax=99999.0,*/
 void trimm(char s[]);
+void decodeSymm(QString symmCard);
 void deletes(char *s, int count);
 int readMas(const char *filename);
 void sorthkl(int nr, rec64 r[]);

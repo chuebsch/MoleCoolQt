@@ -373,6 +373,30 @@ void FourMCQ::deletes(char *s, int count){
   trimm(s);
 }
 
+void FourMCQ::decodeSymm(QString symmCard){
+    QString sc=symmCard.toUpper().remove("SYMM").trimmed();
+    sc.remove("'");
+    sc.remove(" ");
+    QStringList axe=sc.split(",");
+    QStringList bruch;
+    //if (axe.size()!=3) return false;
+    for (int i=0; i<3; i++){
+      //sx[i]=0;sy[i]=0;sz[i]=0;t[i]=0;
+      if (axe.at(i).contains("-X")) {sy[i*3][ns]=-1.0;axe[i].remove("-X");}
+      else if (axe.at(i).contains("X")) {sy[i*3][ns]=1.0;axe[i].remove("X");}
+      if (axe.at(i).contains("-Y")) {sy[i*3+1][ns]=-1.0;axe[i].remove("-Y");}
+      else if (axe.at(i).contains("Y")) {sy[i*3+1][ns]=1.0;axe[i].remove("Y");}
+      if (axe.at(i).contains("-Z")) {sy[i*3+2][ns]=-1.0;axe[i].remove("-Z");}
+      else if (axe.at(i).contains("Z")) {sy[i*3+2][ns]=1.0;axe[i].remove("Z");}
+      if (axe.at(i).endsWith("+")) axe[i].remove("+");
+      if (axe.at(i).contains("/")) {
+        bruch=axe.at(i).split("/");
+        if (bruch.size()==2) sy[9+i][ns]=bruch.at(0).toDouble() / bruch.at(1).toDouble();
+      }
+      else if (!axe.at(i).isEmpty()) sy[9+i][ns]=axe.at(i).toDouble();
+    };
+}
+
 int FourMCQ::readMas(const char *filename){
   FILE *f;
   char masname[4096];
@@ -442,12 +466,15 @@ int FourMCQ::readMas(const char *filename){
 //      printf("Structure is %scentrosymmetric.\n",(nc)?"":"non-");
     }
     if (!strncmp(line,"SYMM",4)){
+        decodeSymm(line);
+        /*
       char s1[50],s2[50],s3[50];
       char *kill,*nom,*div ;
       sscanf(line,"SYMM %[^,],%[^,],%s",s1,s2,s3);
       trimm(s1);
       trimm(s2);
       trimm(s3);
+
       sy[0][ns]=(NULL!=(kill=strstr(s1,"-X")))?-1:(NULL!=(kill=strstr(s1,"X")))?+1:0;
       if (kill!=NULL) ((kill[0]=='-')||(kill[-1]=='+'))?deletes(kill,2):deletes(kill,1);
       sy[1][ns]=(NULL!=(kill=strstr(s1,"-Y")))?-1:(NULL!=(kill=strstr(s1,"Y")))?+1:0;
@@ -487,6 +514,7 @@ int FourMCQ::readMas(const char *filename){
 	nom=s3;
 	sy[11][ns]=atof(nom)/atof(div);
       }else sy[11][ns]=atof(s3);
+      */
 /*
       printf("%d\n%3g %3g %3g  %4g\n%3g %3g %3g  %4g\n%3g %3g %3g  %4g\n\n",ns+1
 		      ,sy[0][ns]
@@ -501,7 +529,7 @@ int FourMCQ::readMas(const char *filename){
 		      ,sy[7][ns]
 		      ,sy[8][ns]
 		      ,sy[11][ns] 
-	    );*/
+            );//  */
       ns++;
 
     }
