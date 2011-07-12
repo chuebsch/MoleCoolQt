@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=295;
+int rev=296;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -2412,16 +2412,6 @@ return a.d1111; //this will never happen!
 
 void tensmul(INP &atom){
   if (atom.jtf<3) return;
-  atom.c111*=mol.zelle.as*mol.zelle.as*mol.zelle.as;
-  atom.c222*=mol.zelle.bs*mol.zelle.bs*mol.zelle.bs;
-  atom.c333*=mol.zelle.cs*mol.zelle.cs*mol.zelle.cs;
-  atom.c112*=mol.zelle.as*mol.zelle.as*mol.zelle.bs;
-  atom.c122*=mol.zelle.as*mol.zelle.bs*mol.zelle.bs;
-  atom.c113*=mol.zelle.as*mol.zelle.as*mol.zelle.cs;
-  atom.c133*=mol.zelle.as*mol.zelle.cs*mol.zelle.cs;
-  atom.c223*=mol.zelle.bs*mol.zelle.bs*mol.zelle.cs;
-  atom.c233*=mol.zelle.bs*mol.zelle.cs*mol.zelle.cs;
-  atom.c123*=mol.zelle.as*mol.zelle.bs*mol.zelle.cs;
   int flag[3][3][3]={
     {{1,1,1},{0,1,1},{0,0,1}},
     {{0,0,0},{0,1,1},{0,0,1}},
@@ -2429,15 +2419,15 @@ void tensmul(INP &atom){
                      
   double o[3][3],t[3][3][3]; 
   const double tau=mol.zelle.c*((cos(mol.zelle.al/g2r)-cos(mol.zelle.be/g2r)*cos(mol.zelle.ga/g2r))/sin(mol.zelle.ga/g2r));
-  o[0][0] =mol.zelle.a;
+  o[0][0] = mol.zelle.as * mol.zelle.a;
   o[0][1] = 0.0;
   o[0][2] = 0.0;
-  o[1][0] = mol.zelle.b*cos(mol.zelle.ga/g2r);
-  o[1][1] = mol.zelle.b*sin(mol.zelle.ga/g2r);
+  o[1][0] = mol.zelle.bs * mol.zelle.b * cos(mol.zelle.ga/g2r);
+  o[1][1] = mol.zelle.bs * mol.zelle.b * sin(mol.zelle.ga/g2r);
   o[1][2] = 0.0;
-  o[2][0] = mol.zelle.c* cos(mol.zelle.be/g2r);
-  o[2][1] = tau; 
-  o[2][2] = mol.zelle.c* mol.zelle.phi / sin(mol.zelle.ga /g2r);
+  o[2][0] = mol.zelle.cs * mol.zelle.c * cos(mol.zelle.be/g2r);
+  o[2][1] = mol.zelle.cs * tau; 
+  o[2][2] = mol.zelle.cs * mol.zelle.c * mol.zelle.phi / sin(mol.zelle.ga /g2r);
   for (int i=0; i<3;i++)
     for (int j=0; j<3;j++)
       for (int k=0; k<3;k++){
@@ -2449,16 +2439,15 @@ void tensmul(INP &atom){
 	for (int i=0; i<3;i++)
 	  for (int j=0; j<3;j++)
 	    for (int k=0; k<3;k++)
-	    if (flag[u][v][w]){
-	      t[u][v][w]+=Cjkl(atom,i+1,j+1,k+1)*o[i][u]*o[j][v]*o[k][w];
-	    }
-  for (int i=0; i<3;i++){
+	      if (flag[u][v][w])
+		t[u][v][w]+=Cjkl(atom,i+1,j+1,k+1)*o[i][u]*o[j][v]*o[k][w];
+	      
+  for (int i=0; i<3;i++)
     for (int j=0; j<3;j++)
       for (int k=0; k<3;k++)
-	if (flag[i][j][k]) {
-	  Cjkl(atom,i+1,j+1,k+1)=t[i][j][k];
-      }
-  }
+	if (flag[i][j][k])  
+	  Cjkl(atom,i+1,j+1,k+1)=t[i][j][k]; 
+  
   if (atom.jtf<4)return;
   double r[3][3][3][3]={
     {
@@ -2488,21 +2477,6 @@ void tensmul(INP &atom){
       {{0,0,0},{0,0,0},{0,0,0}},
       {{0,0,0},{0,0,0},{0,0,1}}}
   };
-	atom.d1111*= mol.zelle.as * mol.zelle.as * mol.zelle.as * mol.zelle.as;//
-	atom.d2222*= mol.zelle.bs * mol.zelle.bs * mol.zelle.bs * mol.zelle.bs;//
-	atom.d3333*= mol.zelle.cs * mol.zelle.cs * mol.zelle.cs * mol.zelle.cs;//
-	atom.d1112*= mol.zelle.as * mol.zelle.as * mol.zelle.as * mol.zelle.bs;//
-	atom.d1222*= mol.zelle.as * mol.zelle.bs * mol.zelle.bs * mol.zelle.bs;//
-	atom.d1113*= mol.zelle.as * mol.zelle.as * mol.zelle.as * mol.zelle.cs;//
-	atom.d1333*= mol.zelle.as * mol.zelle.cs * mol.zelle.cs * mol.zelle.cs;//
-	atom.d2223*= mol.zelle.bs * mol.zelle.bs * mol.zelle.bs * mol.zelle.cs;//
-	atom.d2333*= mol.zelle.bs * mol.zelle.cs * mol.zelle.cs * mol.zelle.cs;//
-	atom.d1122*= mol.zelle.as * mol.zelle.as * mol.zelle.bs * mol.zelle.bs;//
-	atom.d1133*= mol.zelle.as * mol.zelle.as * mol.zelle.cs * mol.zelle.cs;//
-	atom.d2233*= mol.zelle.bs * mol.zelle.bs * mol.zelle.cs * mol.zelle.cs;//
-	atom.d1123*= mol.zelle.as * mol.zelle.as * mol.zelle.bs * mol.zelle.cs;//
-	atom.d1223*= mol.zelle.as * mol.zelle.bs * mol.zelle.bs * mol.zelle.cs;//
-	atom.d1233*= mol.zelle.as * mol.zelle.bs * mol.zelle.cs * mol.zelle.cs;//
                      
   for (int u=0; u<3;u++)
     for (int v=0; v<3;v++)
@@ -2526,7 +2500,7 @@ void tensmul(INP &atom){
 }
 
 void Uf2Uo(const Matrix x, Matrix & y) {
-  Matrix o,a,w;   /*Cholesky decomposition of the real space Metric tensor
+  Matrix o,a;   /*Cholesky decomposition of the real space Metric tensor
               Wird fr die Umrechnung von fraktionellen in kartesischen Korrdinaten benoetigt.*/
   a.m11 =mol.zelle.as;
   a.m12 = 0;
@@ -2537,7 +2511,7 @@ void Uf2Uo(const Matrix x, Matrix & y) {
   a.m31 = 0;
   a.m32 = 0;
   a.m33 = mol.zelle.cs;
-  w=(a*x)*a;
+  //w=(a*x)*a;
   const double tau=mol.zelle.c*((cos(mol.zelle.al/g2r)-cos(mol.zelle.be/g2r)*cos(mol.zelle.ga/g2r))/sin(mol.zelle.ga/g2r));
   o.m11 =mol.zelle.a;
   o.m12 = 0.0;
@@ -2548,7 +2522,8 @@ void Uf2Uo(const Matrix x, Matrix & y) {
   o.m31 = mol.zelle.c* cos(mol.zelle.be/g2r);
   o.m32 = tau; 
   o.m33 = mol.zelle.c* mol.zelle.phi / sin(mol.zelle.ga /g2r);
- y=(o*w)*transponse(o);
+  o=o*a;
+ y=(o*x)*transponse(o);
 }
 
 double MyWindow::pdf2(INP atom, V3 pos){
