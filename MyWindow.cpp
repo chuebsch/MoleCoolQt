@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=296;
+int rev=299;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -2500,29 +2500,18 @@ void tensmul(INP &atom){
 }
 
 void Uf2Uo(const Matrix x, Matrix & y) {
-  Matrix o,a;   /*Cholesky decomposition of the real space Metric tensor
+  Matrix o;   /*Cholesky decomposition of the real space Metric tensor
               Wird fr die Umrechnung von fraktionellen in kartesischen Korrdinaten benoetigt.*/
-  a.m11 =mol.zelle.as;
-  a.m12 = 0;
-  a.m13 = 0;
-  a.m21 = 0;
-  a.m22 = mol.zelle.bs;
-  a.m23 = 0;
-  a.m31 = 0;
-  a.m32 = 0;
-  a.m33 = mol.zelle.cs;
-  //w=(a*x)*a;
   const double tau=mol.zelle.c*((cos(mol.zelle.al/g2r)-cos(mol.zelle.be/g2r)*cos(mol.zelle.ga/g2r))/sin(mol.zelle.ga/g2r));
-  o.m11 =mol.zelle.a;
+  o.m11 =mol.zelle.as*mol.zelle.a;
   o.m12 = 0.0;
   o.m13 = 0.0;
-  o.m21 = mol.zelle.b*cos(mol.zelle.ga/g2r);
-  o.m22 = mol.zelle.b*sin(mol.zelle.ga/g2r);
+  o.m21 = mol.zelle.bs*mol.zelle.b*cos(mol.zelle.ga/g2r);
+  o.m22 = mol.zelle.bs*mol.zelle.b*sin(mol.zelle.ga/g2r);
   o.m23 = 0.0;
-  o.m31 = mol.zelle.c* cos(mol.zelle.be/g2r);
-  o.m32 = tau; 
-  o.m33 = mol.zelle.c* mol.zelle.phi / sin(mol.zelle.ga /g2r);
-  o=o*a;
+  o.m31 = mol.zelle.cs*mol.zelle.c* cos(mol.zelle.be/g2r);
+  o.m32 = mol.zelle.cs*tau;
+  o.m33 = mol.zelle.cs*mol.zelle.c* mol.zelle.phi / sin(mol.zelle.ga /g2r);
  y=(o*x)*transponse(o);
 }
 
