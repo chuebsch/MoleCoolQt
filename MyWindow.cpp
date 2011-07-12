@@ -1257,6 +1257,7 @@ createRenameWgd();
       (QCoreApplication::arguments().at(i).contains(".inp")) ||
       (QCoreApplication::arguments().at(i).contains(QRegExp(".\\d\\d$"))) ||
       (QCoreApplication::arguments().at(i).contains(".ins")) ||
+      (QCoreApplication::arguments().at(i).contains(".par")) ||
       (QCoreApplication::arguments().at(i).contains(".com")) ||
       (QCoreApplication::arguments().at(i).contains(".fchk",Qt::CaseInsensitive)) ||
       (QCoreApplication::arguments().at(i).contains(".cif")) ) fnam= QCoreApplication::arguments().at(i);
@@ -4360,6 +4361,8 @@ void MyWindow::load_pdb(QString fileName){
     egals=fgets(line,80,adp);
     if (strstr(line,"CRYST1")){
       sscanf(line,"CRYST1 %lf %lf %lf %lf %lf %lf",&mol.zelle.a,&mol.zelle.b,&mol.zelle.c,&mol.zelle.al,&mol.zelle.be,&mol.zelle.ga);
+//      printf ("CELL %f %f %f %f %f %f\n",mol.zelle.a,mol.zelle.b,mol.zelle.c,mol.zelle.al,mol.zelle.be,mol.zelle.ga);
+      setup_zelle();
     }
 
     if (strstr(line,"TITLE")){
@@ -4374,6 +4377,7 @@ void MyWindow::load_pdb(QString fileName){
 		      &newAtom.kart.y,
 		      &newAtom.kart.z,
 		      &newAtom.u.m11,dummy2);
+
       if (dummy2[0]==' ') {dummy2[0]=dummy2[1];dummy2[1]='\0';}
       if (line[16]!=' ') newAtom.part=(line[16]-'A')+1;
       else newAtom.part=0;
@@ -4384,7 +4388,9 @@ void MyWindow::load_pdb(QString fileName){
       mol.delBlanks(newAtom.atomname);
       strncpy(dummy,dummy2,2);
       newAtom.OrdZahl=mol.Get_OZ(dummy);
+      mol.kart2frac(newAtom.kart,newAtom.frac);
       asymmUnit.append(newAtom);
+   //   printf("%d %-12s %f %f %f\n",atmax,newAtom.atomname,newAtom.kart.x,newAtom.kart.y,newAtom.kart.z);
       atmax++;
     }
     if ((line[0]=='H')&&(strstr(line,"HETATM "))) { 
@@ -4429,7 +4435,9 @@ void MyWindow::load_pdb(QString fileName){
       dummy[2]='\0'; 
       strncpy(dummy,dummy2,2); 
       newAtom.OrdZahl=mol.Get_OZ(dummy);
+      mol.kart2frac(newAtom.kart,newAtom.frac);
       asymmUnit.append(newAtom);
+//      printf("%d %-12s %f %f %f HETATM\n",atmax,newAtom.atomname,newAtom.kart.x,newAtom.kart.y,newAtom.kart.z);
       atmax++; 
     }
   } 
@@ -4451,7 +4459,14 @@ void MyWindow::load_pdb(QString fileName){
 */
   for (int i=0;i<asymmUnit.size();i++) {
     asymmUnit[i].u.m22=asymmUnit[i].u.m33=asymmUnit[i].u.m11=asymmUnit[i].u.m11/(8*M_PI*M_PI);
-    asymmUnit[i].u.m12=asymmUnit[i].u.m13=asymmUnit[i].u.m23=asymmUnit[i].u.m21=asymmUnit[i].u.m31=asymmUnit[i].u.m32=0.00001;}
+    asymmUnit[i].u.m12=asymmUnit[i].u.m13=asymmUnit[i].u.m23=asymmUnit[i].u.m21=asymmUnit[i].u.m31=asymmUnit[i].u.m32=0.00001;
+  }
+
+   cubeGL->drawAx=false;
+   george=true ;
+   seReAct->setEnabled(true);
+   seReAct->setVisible(true);
+  growSymm(0);
 }
 
 void MyWindow::load_gaus(QString fileName){
@@ -5240,7 +5255,7 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
       load_xdres(fileName);    
     togAxen->setChecked ( cubeGL->drawAx );
   }
-  if (fileName.contains(QRegExp(".\\d\\d$"))){
+  if ((fileName.endsWith(".par"))||(fileName.contains(QRegExp(".\\d\\d$")))){
       cubeGL->setEllipsoidNoUpdate( true );
       togElli->setChecked ( true );
       togElli->setVisible ( true );
