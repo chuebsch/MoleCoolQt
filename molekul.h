@@ -136,7 +136,6 @@ double m11, m21, m31, m12, m22, m32, m13, m23, m33;
 	 m11(x11), m21(x21), m31(x31),
 	 m12(x12), m22(x22), m32(x32),
 	 m13(x13), m23(x23), m33(x33){;}
-
 };
  inline Matrix transponse (Matrix a){//transponse
     return Matrix(
@@ -376,6 +375,8 @@ struct Cell {
   int symuncent;
   QList<Matrix> symmops;
   QList<V3> trans;
+  double o[3][3];
+  Matrix o1;
 };
 struct bindi{
   int a;

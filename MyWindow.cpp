@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=299;
+int rev=300;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -41,6 +41,16 @@ void MyWindow::setup_zelle(){
   mol.zelle.as=mol.zelle.c*mol.zelle.b*sin(mol.zelle.al/g2r)/mol.zelle.V;
   mol.zelle.bs=mol.zelle.c*mol.zelle.a*sin(mol.zelle.be/g2r)/mol.zelle.V;
   mol.zelle.cs=mol.zelle.a*mol.zelle.b*sin(mol.zelle.ga/g2r)/mol.zelle.V;
+  const double tau=mol.zelle.c*((cos(mol.zelle.al/g2r)-cos(mol.zelle.be/g2r)*cos(mol.zelle.ga/g2r))/sin(mol.zelle.ga/g2r));
+  mol.zelle.o1.m11=mol.zelle.o[0][0] =mol.zelle.as*mol.zelle.a;
+  mol.zelle.o1.m12=mol.zelle.o[0][1] = 0.0;
+  mol.zelle.o1.m13=mol.zelle.o[0][2] = 0.0;
+  mol.zelle.o1.m21=mol.zelle.o[1][0] = mol.zelle.bs*mol.zelle.b*cos(mol.zelle.ga/g2r);
+  mol.zelle.o1.m22=mol.zelle.o[1][1] = mol.zelle.bs*mol.zelle.b*sin(mol.zelle.ga/g2r);
+  mol.zelle.o1.m23=mol.zelle.o[1][2] = 0.0;
+  mol.zelle.o1.m31=mol.zelle.o[2][0] = mol.zelle.cs*mol.zelle.c* cos(mol.zelle.be/g2r);
+  mol.zelle.o1.m32=mol.zelle.o[2][1] = mol.zelle.cs*tau;
+  mol.zelle.o1.m33=mol.zelle.o[2][2] = mol.zelle.cs*mol.zelle.c* mol.zelle.phi / sin(mol.zelle.ga /g2r);
 }
 char *egals;
 QProgressBar *balken;
@@ -2417,52 +2427,35 @@ void tensmul(INP &atom){
     {{0,0,0},{0,1,1},{0,0,1}},
     {{0,0,0},{0,0,0},{0,0,1}}};
                      
-  double o[3][3],t[3][3][3]; 
-  const double tau=mol.zelle.c*((cos(mol.zelle.al/g2r)-cos(mol.zelle.be/g2r)*cos(mol.zelle.ga/g2r))/sin(mol.zelle.ga/g2r));
-  o[0][0] = mol.zelle.as * mol.zelle.a;
-  o[0][1] = 0.0;
-  o[0][2] = 0.0;
-  o[1][0] = mol.zelle.bs * mol.zelle.b * cos(mol.zelle.ga/g2r);
-  o[1][1] = mol.zelle.bs * mol.zelle.b * sin(mol.zelle.ga/g2r);
-  o[1][2] = 0.0;
-  o[2][0] = mol.zelle.cs * mol.zelle.c * cos(mol.zelle.be/g2r);
-  o[2][1] = mol.zelle.cs * tau; 
-  o[2][2] = mol.zelle.cs * mol.zelle.c * mol.zelle.phi / sin(mol.zelle.ga /g2r);
-  for (int i=0; i<3;i++)
-    for (int j=0; j<3;j++)
-      for (int k=0; k<3;k++){
-	t[i][j][k]=0;
+  double t[3][3][3]; 
+  for (int u=0; u<3;u++){
+    for (int v=0; v<3;v++){
+      for (int w=0; w<3;w++){
+	if (flag[u][v][w]) {
+	  t[u][v][w]=0;
+	  for (int i=0; i<3;i++){
+	    for (int j=0; j<3;j++){
+	      for (int k=0; k<3;k++){
+		t[u][v][w]+=Cjkl(atom,i+1,j+1,k+1)*mol.zelle.o[i][u]*mol.zelle.o[j][v]*mol.zelle.o[k][w];
+	      }
+	    }
+	  }
+	}
       }
-  for (int u=0; u<3;u++)
-    for (int v=0; v<3;v++)
-      for (int w=0; w<3;w++)
-	for (int i=0; i<3;i++)
-	  for (int j=0; j<3;j++)
-	    for (int k=0; k<3;k++)
-	      if (flag[u][v][w])
-		t[u][v][w]+=Cjkl(atom,i+1,j+1,k+1)*o[i][u]*o[j][v]*o[k][w];
+    }
+  }
+  for (int u=0; u<3;u++){
+    for (int v=0; v<3;v++){
+      for (int w=0; w<3;w++){
+	if (flag[u][v][w]) {
+	  Cjkl(atom,u+1,v+1,w+1)=t[u][v][w];
+	}
+      }
+    }
+  }	      
 	      
-  for (int i=0; i<3;i++)
-    for (int j=0; j<3;j++)
-      for (int k=0; k<3;k++)
-	if (flag[i][j][k])  
-	  Cjkl(atom,i+1,j+1,k+1)=t[i][j][k]; 
-  
   if (atom.jtf<4)return;
-  double r[3][3][3][3]={
-    {
-      {{0,0,0},{0,0,0},{0,0,0}},
-      {{0,0,0},{0,0,0},{0,0,0}},
-      {{0,0,0},{0,0,0},{0,0,0}}},
-    {
-      {{0,0,0},{0,0,0},{0,0,0}},
-      {{0,0,0},{0,0,0},{0,0,0}},
-      {{0,0,0},{0,0,0},{0,0,0}}},
-   {
-      {{0,0,0},{0,0,0},{0,0,0}},
-      {{0,0,0},{0,0,0},{0,0,0}},
-      {{0,0,0},{0,0,0},{0,0,0}}}
-  };
+  double s[3][3][3][3];
   int flag2[3][3][3][3]={
     {
       {{1,1,1},{0,1,1},{0,0,1}},
@@ -2478,41 +2471,132 @@ void tensmul(INP &atom){
       {{0,0,0},{0,0,0},{0,0,1}}}
   };
                      
-  for (int u=0; u<3;u++)
-    for (int v=0; v<3;v++)
-      for (int w=0; w<3;w++)
-	for (int q=0; q<3;q++)
-	  for (int i=0; i<3;i++)
-	    for (int j=0; j<3;j++)
-	      for (int k=0; k<3;k++)
-		for (int l=0; l<3;l++)
-		  if (flag2[u][v][w][q]){
-		    r[u][v][w][q]+=Djklm(atom,i+1,j+1,k+1,l+1)*o[i][u]*o[j][v]*o[k][w]*o[l][q];
+  for (int u=0; u<3;u++){
+    for (int v=0; v<3;v++){
+      for (int w=0; w<3;w++){
+	for (int q=0; q<3;q++){
+	  if (flag2[u][v][w][q]){
+	    s[u][v][w][q]=0;
+	    for (int i=0; i<3;i++){
+	      for (int j=0; j<3;j++){
+		for (int k=0; k<3;k++){
+		  for (int l=0; l<3;l++){
+		    s[u][v][w][q]+=Djklm(atom,i+1,j+1,k+1,l+1)*mol.zelle.o[i][u]*mol.zelle.o[j][v]*mol.zelle.o[k][w]*mol.zelle.o[l][q];
 		  }
-  for (int i=0; i<3;i++){
-    for (int j=0; j<3;j++)
-      for (int k=0; k<3;k++)
-      for (int l=0; l<3;l++)
-	if (flag2[i][j][k][l]) {
-	  Djklm(atom,i+1,j+1,k+1,l+1)=r[i][j][k][l];
+		}
+	      }
+	    }
+	  }
+	}
       }
+    }
+  }
+  for (int u=0; u<3;u++){
+    for (int v=0; v<3;v++){
+      for (int w=0; w<3;w++){
+	for (int q=0; q<3;q++){
+	  if (flag2[u][v][w][q]){
+	    Djklm(atom,u+1,v+1,w+1,q+1)=s[u][v][w][q];
+	  }
+	}
+      }
+    }
+  }
+}
+
+void tensmul(INP &atom,Matrix om){
+  double o[3][3]={
+    {om.m11,om.m12,om.m13},
+    {om.m21,om.m22,om.m23},
+    {om.m31,om.m32,om.m33}};
+
+  if (atom.jtf<3) return;
+  int flag[3][3][3]={
+    {{1,1,1},{0,1,1},{0,0,1}},
+    {{0,0,0},{0,1,1},{0,0,1}},
+    {{0,0,0},{0,0,0},{0,0,1}}};
+             printf("mat\n%f %f %f\n%f %f %f\n%f %f %f\n"
+			     ,o[0][0],o[0][1],o[0][2]        
+			     ,o[1][0],o[1][1],o[1][2]        
+			     ,o[2][0],o[2][1],o[2][2]);        
+  double t[3][3][3]; 
+  for (int u=0; u<3;u++){
+    for (int v=0; v<3;v++){
+      for (int w=0; w<3;w++){
+	if (flag[u][v][w]) {
+	  t[u][v][w]=0;
+	  for (int i=0; i<3;i++){
+	    for (int j=0; j<3;j++){
+	      for (int k=0; k<3;k++){
+		t[u][v][w]+=Cjkl(atom,i+1,j+1,k+1)*o[i][u]*o[j][v]*o[k][w];
+	      }
+	    }
+	  }
+	}
+      }
+    }
+  }
+  for (int u=0; u<3;u++){
+    for (int v=0; v<3;v++){
+      for (int w=0; w<3;w++){
+	if (flag[u][v][w]) {
+	  Cjkl(atom,u+1,v+1,w+1)=t[u][v][w];
+	}
+      }
+    }
+  }	      
+  if (atom.jtf<4)return;
+  double s[3][3][3][3];
+  int flag2[3][3][3][3]={
+    {
+      {{1,1,1},{0,1,1},{0,0,1}},
+      {{0,0,0},{0,1,1},{0,0,1}},
+      {{0,0,0},{0,0,0},{0,0,1}}},
+    {
+      {{0,0,0},{0,0,0},{0,0,0}},
+      {{0,0,0},{0,1,1},{0,0,1}},
+      {{0,0,0},{0,0,0},{0,0,1}}},
+   {
+      {{0,0,0},{0,0,0},{0,0,0}},
+      {{0,0,0},{0,0,0},{0,0,0}},
+      {{0,0,0},{0,0,0},{0,0,1}}}
+  };
+                     
+  for (int u=0; u<3;u++){
+    for (int v=0; v<3;v++){
+      for (int w=0; w<3;w++){
+	for (int q=0; q<3;q++){
+	  if (flag2[u][v][w][q]){
+	    s[u][v][w][q]=0;
+	    for (int i=0; i<3;i++){
+	      for (int j=0; j<3;j++){
+		for (int k=0; k<3;k++){
+		  for (int l=0; l<3;l++){
+		    s[u][v][w][q]+=Djklm(atom,i+1,j+1,k+1,l+1)*o[i][u]*o[j][v]*o[k][w]*o[l][q];
+		  }
+		}
+	      }
+	    }
+	  }
+	}
+      }
+    }
+  }
+  for (int u=0; u<3;u++){
+    for (int v=0; v<3;v++){
+      for (int w=0; w<3;w++){
+	for (int q=0; q<3;q++){
+	  if (flag2[u][v][w][q]){
+	    Djklm(atom,u+1,v+1,w+1,q+1)=s[u][v][w][q];
+	  }
+	}
+      }
+    }
   }
 }
 
 void Uf2Uo(const Matrix x, Matrix & y) {
-  Matrix o;   /*Cholesky decomposition of the real space Metric tensor
-              Wird fr die Umrechnung von fraktionellen in kartesischen Korrdinaten benoetigt.*/
-  const double tau=mol.zelle.c*((cos(mol.zelle.al/g2r)-cos(mol.zelle.be/g2r)*cos(mol.zelle.ga/g2r))/sin(mol.zelle.ga/g2r));
-  o.m11 =mol.zelle.as*mol.zelle.a;
-  o.m12 = 0.0;
-  o.m13 = 0.0;
-  o.m21 = mol.zelle.bs*mol.zelle.b*cos(mol.zelle.ga/g2r);
-  o.m22 = mol.zelle.bs*mol.zelle.b*sin(mol.zelle.ga/g2r);
-  o.m23 = 0.0;
-  o.m31 = mol.zelle.cs*mol.zelle.c* cos(mol.zelle.be/g2r);
-  o.m32 = mol.zelle.cs*tau;
-  o.m33 = mol.zelle.cs*mol.zelle.c* mol.zelle.phi / sin(mol.zelle.ga /g2r);
- y=(o*x)*transponse(o);
+ y=(mol.zelle.o1*x)*transponse(mol.zelle.o1);
 }
 
 double MyWindow::pdf2(INP atom, V3 pos){
@@ -3515,7 +3599,7 @@ void MyWindow::makePDFGrid(INP atom, double proba,bool c2,bool c3,bool c4){
   Matrix U=atom.u;//kartesian U
   Matrix UI=inverse(U);
   double DI=determinant(UI);
-  const double base=sqrt(DI)/sqrt((8*M_PI*M_PI*M_PI));
+  double base=sqrt(DI)/sqrt((8*M_PI*M_PI*M_PI));
   switch (ppp){
 	  case 1 :   piso=-0.5*(0.3389*0.3389);break;
 	  case 2 :   piso=-0.5*(0.4299*0.4299);break;
@@ -3620,6 +3704,15 @@ void MyWindow::makePDFGrid(INP atom, double proba,bool c2,bool c3,bool c4){
   piso=base*exp(piso);
   printf("Piso= %g\n",piso);
   QString fac("testpdf.face");
+//  tensmul(atom);
+  Matrix roma(
+		  1,0,0,
+		  0,0.984807753012,-0.173648177667,
+		  0,0.173648177667, 0.984807753012);
+
+  for (int rot=0; rot<36; rot++){
+    Usym(U,roma,U);
+    UI=inverse(U);
   if (cubeGL->moliso){
     glDeleteLists(cubeGL->moliso->mibas,6);
     if (cubeGL->moliso){
@@ -3635,15 +3728,11 @@ void MyWindow::makePDFGrid(INP atom, double proba,bool c2,bool c3,bool c4){
   cubeGL->moliso = new MolIso();
   cubeGL->moliso->L=cubeGL->L;
   cubeGL->moliso->lineNr=0;
-  printf("??%g %g %g\n",
-		  mol.zelle.as*mol.zelle.a,
-		  mol.zelle.bs*mol.zelle.b,
-		  mol.zelle.cs*mol.zelle.c);
   V3 X=V3(1,0,0);
   V3 ev=V3(1,1,1);
   Matrix evk=mol.jacobi(U,ev);
 
-  //printf("%g %g %g  \n",ev.x,ev.y,ev.z);
+  printf("%g %g %g  \n",ev.x,ev.y,ev.z);
   double maxdim=2*sqrt(fmax(ev.x,fmax(ev.y,ev.z)))*6;
 
   double p10,p90,p50,pt;
@@ -3651,31 +3740,7 @@ void MyWindow::makePDFGrid(INP atom, double proba,bool c2,bool c3,bool c4){
   p50=base*exp(-1.18302962);
   p10=base*exp(-0.29215368);
   p90=base*exp(-3.12575004);
-/*
-  QFile grd("testPDF.grd");
-  settings->beginGroup("Version 0.1");
-  settings->setValue("Iso-Values",QString("%1 %2 %3").arg(p10,0,'g',6).arg(p,0,'g',6).arg(p90,0,'g',6));
-  settings->setValue("adp_struct_name", dirName );
-  settings->setValue("load_face_name", QString());
-  settings->setValue("map_grid_name", QString());
-  settings->setValue("iso_grid_name", QFileInfo(grd).absoluteFilePath());
-  settings->endGroup();*/
   int breite=91;
-  /*
-  grd.open(QIODevice::WriteOnly|QIODevice::Text);
-  grd.write(QString("3DGRDFIL  0\n         PDF\n\n! Gridpoints, Origin, Physical Dimensions\n"
-  "       %1            %1            %1\n    %2    %2    %2\n    %3    %3    %3\n! Objects\n")
-            .arg(breite)
-            .arg(maxdim*0.5,12,'E',5)
-            .arg(maxdim,12,'E',5).toLatin1());
-  grd.write(QString("  %1\n").arg(atmax).toLatin1());
-  for (int i=0; i<atmax;i++){
-    grd.write(QString("%1  %2 %3 %4 ATOM\n").arg(xdinp[i].atomname,-8)
-		    .arg(xdinp[i].kart.x-atom.kart.x,12,'f',6)
-		    .arg(xdinp[i].kart.y-atom.kart.y,12,'f',6)
-		    .arg(xdinp[i].kart.z-atom.kart.z,12,'f',6).toLatin1());
-  }
-  grd.write("! Connections\n         0\n! Values\n");*/
   double df=maxdim/breite;
   cubeGL->moliso->orig=Vector3(atom.kart.x,atom.kart.y,atom.kart.z);
   cubeGL->moliso->x_dim=Vector3(df,0,0);
@@ -3686,7 +3751,8 @@ void MyWindow::makePDFGrid(INP atom, double proba,bool c2,bool c3,bool c4){
   cubeGL->moliso->mdata.clear();
   int z=0;
 //  double cfact=6/(M_PI*M_PI*M_PI*8);
-  tensmul(atom);/*
+  tensmul(atom,roma);
+  
   printf(
 		  "u111 %14.7g u222 %14.7g u333 %14.7g \n"
 		  "u112 %14.7g u122 %14.7g u113 %14.7g \n"
@@ -3711,7 +3777,7 @@ void MyWindow::makePDFGrid(INP atom, double proba,bool c2,bool c3,bool c4){
 		  atom.c223*mol.zelle.bs*mol.zelle.bs*mol.zelle.cs,
 		  atom.c233*mol.zelle.bs*mol.zelle.cs*mol.zelle.cs,
 		  atom.c123*mol.zelle.as*mol.zelle.bs*mol.zelle.cs);
-*/
+// */
   double third=0,fourth=0,tmax=0,tmin=0;
   V3 t=V3(((breite-1)/-2.0)*df,((breite-1)/-2.0)*df,((breite-1)/-2.0)*df);
 //  QString txt;
@@ -3845,6 +3911,7 @@ void MyWindow::makePDFGrid(INP atom, double proba,bool c2,bool c3,bool c4){
   addDockWidget(Qt::LeftDockWidgetArea, dock3);
   QMainWindow::tabifyDockWidget (dock2,dock3);
   QMainWindow::tabifyDockWidget (dock2,dock);
+}
 }
 //----------------------------------S H E L D R I C K -----------------------------------------
 //----------------------------------S H E L D R I C K -----------------------------------------
