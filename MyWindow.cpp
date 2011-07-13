@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=300;
+int rev=301;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -3704,15 +3704,8 @@ void MyWindow::makePDFGrid(INP atom, double proba,bool c2,bool c3,bool c4){
   piso=base*exp(piso);
   printf("Piso= %g\n",piso);
   QString fac("testpdf.face");
-//  tensmul(atom);
-  Matrix roma(
-		  1,0,0,
-		  0,0.984807753012,-0.173648177667,
-		  0,0.173648177667, 0.984807753012);
+  tensmul(atom);
 
-  for (int rot=0; rot<36; rot++){
-    Usym(U,roma,U);
-    UI=inverse(U);
   if (cubeGL->moliso){
     glDeleteLists(cubeGL->moliso->mibas,6);
     if (cubeGL->moliso){
@@ -3751,9 +3744,9 @@ void MyWindow::makePDFGrid(INP atom, double proba,bool c2,bool c3,bool c4){
   cubeGL->moliso->mdata.clear();
   int z=0;
 //  double cfact=6/(M_PI*M_PI*M_PI*8);
-  tensmul(atom,roma);
+//  tensmul(atom,roma);
   
-  printf(
+/*  printf(
 		  "u111 %14.7g u222 %14.7g u333 %14.7g \n"
 		  "u112 %14.7g u122 %14.7g u113 %14.7g \n"
 		  "u133 %14.7g u223 %14.7g u233 %14.7g \n"
@@ -3911,7 +3904,7 @@ void MyWindow::makePDFGrid(INP atom, double proba,bool c2,bool c3,bool c4){
   addDockWidget(Qt::LeftDockWidgetArea, dock3);
   QMainWindow::tabifyDockWidget (dock2,dock3);
   QMainWindow::tabifyDockWidget (dock2,dock);
-}
+
 }
 //----------------------------------S H E L D R I C K -----------------------------------------
 //----------------------------------S H E L D R I C K -----------------------------------------
