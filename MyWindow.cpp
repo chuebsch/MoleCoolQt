@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=301;
+int rev=302;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -2431,7 +2431,7 @@ void tensmul(INP &atom){
   for (int u=0; u<3;u++){
     for (int v=0; v<3;v++){
       for (int w=0; w<3;w++){
-	if (flag[u][v][w]) {
+	//if (flag[u][v][w]) {
 	  t[u][v][w]=0;
 	  for (int i=0; i<3;i++){
 	    for (int j=0; j<3;j++){
@@ -2440,7 +2440,7 @@ void tensmul(INP &atom){
 	      }
 	    }
 	  }
-	}
+	//}
       }
     }
   }
