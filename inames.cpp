@@ -402,7 +402,8 @@ QString inames::invName(MyAtom core,Connection &cl, CEnvironment &sel ,int rung)
   while ((leerpos = nom.indexOf("[]"))!=-1) nom.remove(leerpos,2);
   nom=nom.toLower();  
   nom[0]=nom[0].toUpper();
-  if (sel.size()==5){
+  if ((sel.size()==5)&&(arms.size()==4)){
+//    printf("arme %d finger %d  sel %d\n",arms.size(),fingers.size(),sel.size());
     CEnvironment chiral;
     if ((sel.at(1).an!=sel.at(2).an)&&
 	(sel.at(1).an!=sel.at(3).an)&&

@@ -130,6 +130,15 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu){
     double u=lr[i].ih,v=lr[i].ik,w=lr[i].il;
     int mh=lr[i].ih,mk=lr[i].ik,ml=lr[i].il;
     double p,q=lr[i].d3;
+    double a12=lr[i].d4-lr[i].d6;
+    double b12=lr[i].d5-lr[i].d7;
+    double f12=sqrt(a12*a12+b12*b12);
+    double FF=(b12<0)?-1:1;
+//	float ZZ=((lr[i].d5<0)?-1:1)*acosf(lr[i].d4/sqrt(lr[i].d4*lr[i].d4+lr[i].d5*lr[i].d5));
+//	ZZ=(ZZ<=0)?ZZ+2*M_PI:ZZ;
+    double  phi12=(f12!=0)?FF*acosf(a12/f12):0;
+    lr[i].d6=f12;
+    lr[i].d7=fmod(4*M_PI+phi12,2*M_PI);
     lr[i].d3=fmod(4*M_PI+q,2*M_PI);
     for (int k=0; k<ns; k++){
       int nh,nk,nl;
@@ -143,7 +152,7 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu){
       mh=nh;mk=nk;ml=nl;
       p=u*sy[9][k]+v*sy[10][k]+w*sy[11][k];
       lr[i].d3=fmod(4*M_PI+t*fmod(q-2*M_PI*p,2*M_PI)-0.01,2*M_PI)+0.01;
-
+      lr[i].d7=fmod(4*M_PI+t*fmod(phi12-2*M_PI*p,2*M_PI)-0.01,2*M_PI)+0.01;
     }
     lr[i].ih=mh;
     lr[i].ik=mk;
@@ -158,6 +167,8 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu){
       double v=0.;
       double z=0.;
       double y=0.;
+      double z2=0.;
+      double y2=0.;
       double p=0.;
       int m;
       int k=i;
@@ -167,6 +178,8 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu){
 	v+=1./(lr[i].d2*lr[i].d2);
 	y=lr[i].d5;
 	z+=lr[i].d4;
+	y2=lr[i].d7;
+	z2=+lr[i].d6;
 	p=lr[i].d3;
 	i++;
       }
@@ -175,6 +188,8 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu){
       lr[m].d2=sqrt(1./v);
       lr[m].d5=y;
       lr[m].d4=z/t;
+      lr[m].d7=y2;
+      lr[m].d6=z2/t;
       lr[m].d3=p;
       n=m;
       lr[n].ih=lr[k].ih;
@@ -225,11 +240,6 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu){
       for (int i=0; i<n5; i++){B[i][0]=0;B[i][1]=0;}
       for (int i=0; i<nr;i++){
 	float fmod1 = sqrt(lr[i].d4*lr[i].d4+lr[i].d5*lr[i].d5);
-	float a12=lr[i].d4-lr[i].d6;
-	float b12=lr[i].d5-lr[i].d7;
-	float f12=sqrt(a12*a12+b12*b12);
-	b12=(b12<0)?-1:1;
-	float phi12=(f12!=0)?b12*acosf(a12/f12):0;
 	float  u,v,w;
 	u=lr[i].ih;
 	v=lr[i].ik;
@@ -245,14 +255,14 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu){
 	}
 	if(typ==0) ss=(lr[i].d1-fmod1)/(C[14]*(s+t));
 	else if (typ==1) ss=(lr[i].d1)/(C[14]*(s+t));
-	else ss=f12/(C[14]*(s+t));
+	else ss=lr[i].d6/(C[14]*(s+t));
 	if(fmod1>1.E-6) ss=ss/(1.+rw*pow(lr[i].d2/fmod1,4));
-	for (int n=0; n<ns;n++){
+	for (int n=0; n<ns;n++){ 
 	  int j,k,l,m;
 	  j=(int) (u*sy[0][n]+ v*sy[3][n] + w*sy[6][n]);
 	  k=(int) (u*sy[1][n]+ v*sy[4][n] + w*sy[7][n]);
 	  l=(int) (u*sy[2][n]+ v*sy[5][n] + w*sy[8][n]);
-	  if (typ==2) q=(phi12-2*M_PI*(u*sy[9][n]+v*sy[10][n]+w*sy[11][n]))-M_PI*(j*DX+k*DY+l*DZ);
+	  if (typ==2) q=(lr[i].d7-2*M_PI*(u*sy[9][n]+v*sy[10][n]+w*sy[11][n]))-M_PI*(j*DX+k*DY+l*DZ);
 	  else q=(lr[i].d3-2*M_PI*(u*sy[9][n]+v*sy[10][n]+w*sy[11][n]))-M_PI*(j*DX+k*DY+l*DZ);
 	  j=(999*n1+j)%n1;
 	  k=(999*n2+k)%n2;
