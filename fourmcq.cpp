@@ -88,11 +88,14 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu){
   FILE *f;
   f=fopen(filename,"rb");
   if (f==NULL) return false;
-  fseek (f , 0 , SEEK_END);
-  size_t lSize = ftell (f), readsize;
   rewind (f);
-  if (!(lSize%sizeof(reco))&&(lSize%sizeof(rec64)))winformat=1;
-  //printf("%lu %lu\n",lSize%sizeof(reco),lSize%sizeof(rec64));
+  size_t readsize=fread(&wr[0],sizeof(reco),1,f);
+  rewind (f);
+  readsize=fread(&lr[0],sizeof(rec64),1,f);
+  rewind (f);
+  if ((wr[0].size_head== wr[0].size_tail)&&  (wr[0].size_tail==40)) winformat=1;
+  else if ((lr[0].size_head|= lr[0].size_tail)||  (lr[0].size_tail|=40)) return false;
+  if (winformat) printf("gates\n");
   ok= readMas(filename);
   nr=0;
   if (!ok) {
