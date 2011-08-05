@@ -5,7 +5,7 @@ FourMCQ::FourMCQ(molekul *mole_, CubeGL *chgl_,QToolBar *toolView, double resol,
   mole =mole_;
   chgl=chgl_;
   map_radius=5.0;
-  maptrunc = 1;
+  maptrunc = 2;
   chgl->foubas[0]=0;
   chgl->foubas[1]=0;
   chgl->foubas[2]=0;
@@ -89,14 +89,18 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu){
   f=fopen(filename,"rb");
   if (f==NULL) return false;
   rewind (f);
+  nr=ns=0;
   size_t readsize=fread(&wr[0],sizeof(reco),1,f);
   rewind (f);
   readsize=fread(&lr[0],sizeof(rec64),1,f);
   rewind (f);
   if ((wr[0].size_head== wr[0].size_tail)&&  (wr[0].size_tail==40)) winformat=1;
-  else if ((lr[0].size_head|= lr[0].size_tail)||  (lr[0].size_tail|=40)) return false;
-  if (winformat) printf("gates\n");
+  else if ((lr[0].size_head!= lr[0].size_tail)||  (lr[0].size_tail!=40)) {
+    return false;
+  }
+ //   printf("%d %d |%d %d|  %d %d %d\n",lr[0].size_head,lr[0].size_tail,wr[0].size_head,wr[0].size_tail,(lr[0].size_head!= lr[0].size_tail),lr[0].size_tail!=40,winformat);
   ok= readMas(filename);
+  printf("read mas\n");
   nr=0;
   if (!ok) {
     char masname[4096];
@@ -127,8 +131,10 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu){
       fprintf(stderr,"to many reflections in xd.fou file\n");
       return false;
     }
+   // printf("read size %ld\n",readsize);
   }
   fclose(f);
+  printf("%d in file\n",nr);
   for (int i=0;i<nr;i++){
     double u=lr[i].ih,v=lr[i].ik,w=lr[i].il;
     int mh=lr[i].ih,mk=lr[i].ik,ml=lr[i].il;
@@ -140,8 +146,9 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu){
 //	float ZZ=((lr[i].d5<0)?-1:1)*acosf(lr[i].d4/sqrt(lr[i].d4*lr[i].d4+lr[i].d5*lr[i].d5));
 //	ZZ=(ZZ<=0)?ZZ+2*M_PI:ZZ;
     double  phi12=(f12!=0)?FF*acosf(a12/f12):0;
+    phi12=fmod(4*M_PI+phi12,2*M_PI);
     lr[i].d6=f12;
-    lr[i].d7=fmod(4*M_PI+phi12,2*M_PI);
+    lr[i].d7=phi12;
     lr[i].d3=fmod(4*M_PI+q,2*M_PI);
     for (int k=0; k<ns; k++){
       int nh,nk,nl;
@@ -160,6 +167,19 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu){
     lr[i].ih=mh;
     lr[i].ik=mk;
     lr[i].il=ml;
+/*    printf("%4d%4d%4d fo: %12.5f sfo: %10.5f phase: %10.6f a1: %12g b1: %12g f2c %12.5f f2cphase: %10.6f \n",
+		    lr[i].ih,
+		    lr[i].ik,
+		    lr[i].il,
+		    lr[i].d1,
+		    lr[i].d2,
+		    lr[i].d3,
+		    lr[i].d4,
+		    lr[i].d5,
+		    lr[i].d6,
+		    lr[i].d7); // */
+
+
   }
   sorthkl(nr,lr);
   int n=-1;
@@ -198,10 +218,23 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu){
       lr[n].ih=lr[k].ih;
       lr[n].ik=lr[k].ik;
       lr[n].il=lr[k].il;
+ /*   printf("%4d%4d%4d fo: %12.5f sfo: %10.5f phase: %10.6f a1: %12g b1: %12g f2c %12.5f f2cphase: %10.6f \n",
+		    lr[n].ih,
+		    lr[n].ik,
+		    lr[n].il,
+		    lr[n].d1,
+		    lr[n].d2,
+		    lr[n].d3,
+		    lr[n].d4,
+		    lr[n].d5,
+		    lr[n].d6,
+		    lr[n].d7); // */
     }
   }
   n++;
   nr=n;
+  
+  printf("%d after merging\n",nr);
   {
     float DX;
     float DY;
@@ -267,6 +300,7 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu){
 	  l=(int) (u*sy[2][n]+ v*sy[5][n] + w*sy[8][n]);
 	  if (typ==2) q=(lr[i].d7-2*M_PI*(u*sy[9][n]+v*sy[10][n]+w*sy[11][n]))-M_PI*(j*DX+k*DY+l*DZ);
 	  else q=(lr[i].d3-2*M_PI*(u*sy[9][n]+v*sy[10][n]+w*sy[11][n]))-M_PI*(j*DX+k*DY+l*DZ);
+//	  printf("%4d %4d %4d %12g %12g %d %12g %12g %12g\n",j,k,l,ss,q,n,sy[9][n],sy[10][n],sy[11][n]);
 	  j=(999*n1+j)%n1;
 	  k=(999*n2+k)%n2;
 	  l=(999*n3+l)%n3;
@@ -302,7 +336,7 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu){
       }
       sigma[typ]=t=sqrt((DS/n5)-((DM/n5)*(DM/n5)));
       fftwf_free(B);
-      fprintf(stderr,"Finished! sigma %g %g %g\n",t,DS,DM);
+      fprintf(stderr,"Finished! sigma %g %g %g %d\n",t,DS,DM,n5);
     }//1
   }//2
   extern QList<INP> xdinp;      
@@ -392,6 +426,9 @@ void FourMCQ::decodeSymm(QString symmCard){
     sc.remove(" ");
     QStringList axe=sc.split(",");
     QStringList bruch;
+    for (int i=0; i<3; i++){
+    sy[9+i][ns]=0;
+    }
     //if (axe.size()!=3) return false;
     for (int i=0; i<3; i++){
       //sx[i]=0;sy[i]=0;sz[i]=0;t[i]=0;
@@ -439,6 +476,21 @@ int FourMCQ::readMas(const char *filename){
   sy[9][ns]=0.0;
   sy[10][ns]=0.0;
   sy[11][ns]=0.0;
+ /*
+      printf("%d\n%3g %3g %3g  %4g\n%3g %3g %3g  %4g\n%3g %3g %3g  %4g\n\n",ns+1
+		      ,sy[0][ns]
+		      ,sy[1][ns]
+		      ,sy[2][ns]
+		      ,sy[9][ns] 
+		      ,sy[3][ns]
+		      ,sy[4][ns]
+		      ,sy[5][ns] 
+		      ,sy[10][ns] 
+		      ,sy[6][ns]
+		      ,sy[7][ns]
+		      ,sy[8][ns]
+		      ,sy[11][ns] 
+            );//  */
   ns=1;
   do{
     dum=fgets(line,120,f);
@@ -528,7 +580,7 @@ int FourMCQ::readMas(const char *filename){
 	sy[11][ns]=atof(nom)/atof(div);
       }else sy[11][ns]=atof(s3);
       */
-/*
+ /*
       printf("%d\n%3g %3g %3g  %4g\n%3g %3g %3g  %4g\n%3g %3g %3g  %4g\n\n",ns+1
 		      ,sy[0][ns]
 		      ,sy[1][ns]
@@ -547,7 +599,9 @@ int FourMCQ::readMas(const char *filename){
 
     }
     if (!strncmp(line,"BANK",4)) ok=1;
-  }while(!ok);
+    if (!strncmp(line,"SELECT",6)) ok=1;
+  }while((!ok)&&(!feof(f)));
+//  printf("%d nr %d ns\n",nr,ns);
   return 1;  
 }
 
