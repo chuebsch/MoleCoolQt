@@ -1495,7 +1495,6 @@ void CubeGL::invariomExport(){
   connect(exportXDbutton,SIGNAL(clicked()),this,SLOT(exportXDFiles()));
   connect(exportXDbutton,SIGNAL(clicked()),invExportDlg, SLOT(reject()));
   connect(exportMoProbutton,SIGNAL(clicked()),invExportDlg, SLOT(reject()));
-
   QString text;
   for (int ix=0;ix<asymmUnit.size();ix++){
     MyAtom invom;
@@ -1524,7 +1523,10 @@ void CubeGL::invariomExport(){
 
 	  if ((ce.at(i).an<0)||(ce.at(j).an<0)) continue;
 	  if (ce.at(i).pos==ce.at(j).pos) continue;
-	  if ((ce.at(i).part>0)&&(ce.at(j).part>0)&&(ce.at(j).part!=ce.at(i).part)) continue;
+
+	  if ((ce.at(i).an==0)&&(ce.at(j).an==0)) continue;
+	  if ((ce.at(i).part<0)&&(ce.at(j).part<0)&&(ce.at(j).Label.contains("_"))) continue;
+  	    if ((ce.at(i).part!=0)&&(ce.at(j).part!=0)&&(ce.at(j).part!=ce.at(i).part)) continue;
 	  if ((ce.at(i).an<83)&&(ce.at(j).an<83)&&(ce.at(i).an>=0)&&(ce.at(j).an>=0)){
 	    soll_abst=((mol.Kovalenz_Radien[ce.at(i).an]+
 				    mol.Kovalenz_Radien[ce.at(j).an])/100.0
@@ -1548,14 +1550,13 @@ void CubeGL::invariomExport(){
     if (bondList.size()!=cl.size()) {	    
       bondList=cl;
     }
-
     CEnvironment sel;
     QString ina;
     invom.Label=xdinp[ix].atomname;
     invom.pos=xdinp[ix].kart;
     invom.an=xdinp[ix].OrdZahl;
     invom.part=xdinp[ix].part;
-    invom.Symbol=PSE_Symbol[xdinp[ix].OrdZahl];
+   if (invom.an>-1) invom.Symbol=PSE_Symbol[xdinp[ix].OrdZahl];
     invom.index=ix;
     if (invom.an>-1 ){
       text+="<b>";
@@ -1575,6 +1576,7 @@ void CubeGL::invariomExport(){
       text+=ina;
       text+="<br>";
     }
+
   }
   browser->setHtml(text);
   invariomsUnique=invariomsComplete;
@@ -1591,6 +1593,7 @@ void CubeGL::invariomExport(){
     }
   }
 #endif
+  printf("test4\n");
   QVBoxLayout sss;
   sss.addWidget(browser);
   sss.addWidget(buttonBox);
@@ -1598,12 +1601,14 @@ void CubeGL::invariomExport(){
   sss.addWidget(exportXDbutton);
   invExportDlg->setLayout(&sss);
   invExportDlg->setWindowTitle("Export these Invaromnames to 'Invariome.in'");
+  printf("test5\n");
   if (QDialog::Accepted==invExportDlg->exec()){
     QFile in("Invariome.in");
     in.open(QIODevice::WriteOnly);
     in.write(browser->toPlainText().toLatin1(),browser->toPlainText().length());
     in.close();
   }
+  printf("test6\n");
 }
 
 QString CubeGL::inv2moproaxes(int index){
