@@ -981,6 +981,7 @@ void xdEditDlg::accept () {
       if (!duminuse.contains(alle.at(i).Label,Qt::CaseInsensitive)) {
           dummap.remove(i);
           alle.removeAt(i);
+	  printf("removed a dummy\n");
           i--;
       }
       dummap[j]=i;
@@ -1147,9 +1148,12 @@ void xdEditDlg::accept () {
   QList<MyAtom> dummys;MyAtom du;
   extern molekul mol;
 
-  for (int i=0; i<alle.size();i++) if (alle.at(i).an>-1) allLab.append(alle.at(i).Label);
+  for (int i=0; i<alle.size();i++) if ((alle.at(i).an>-1)&&(alle.at(i).sg==0)) {
+    allLab.append(alle.at(i).Label);
+  }
+
   int atsi=allLab.size();
-  for (int i=0; i<alle.size();i++) if (alle.at(i).an==-1) {
+  for (int i=0; i<alle.size();i++) if ((alle.at(i).an==-1)&&(alle.at(i).sg==0)) {
     du.Label = QString("DUM%1").arg(adum.size());
     alle[i].Label=du.Label;
     du.pos=alle.at(i).pos;
@@ -1184,8 +1188,9 @@ void xdEditDlg::accept () {
   
   }
 */
- // printf("\n%d==%d %d==%d\n\n",atsi,na,dumsi,nad);
+ printf("\n%d==%d %d==%d\n\n",atsi,na,dumsi,nad);
   for (int i=0; i<alle.size();i++) if (alle.at(i).an>-1) {
+    if (alle.at(i).sg) continue;
  //   printf("%d:\n",i);
     int j;
     for (j=0; j<oats.size(); j++) if (alle.at(i).Label==oats.at(j).atom){break;}

@@ -999,7 +999,7 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
   if((reSe | moveLab| invEditAble | atomsClickable| xdSetupMode) && (event->buttons() & Qt::LeftButton)){
 
     if (nahdai<xdinp.size()) {
-      extern QList<INP> xdinp;
+//      extern QList<INP> xdinp;
       extern molekul mol;
 	GLuint index=nahdai;
 	if (index==((GLuint)-1))return;
@@ -1162,6 +1162,7 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 	      invom.pos=xdinp[i].kart;
 	      invom.an=xdinp[i].OrdZahl;
 	      invom.part=xdinp[i].part;
+	      invom.sg=xdinp[i].sg;
 	      invom.Symbol=PSE_Symbol[xdinp[i].OrdZahl];
 	      invom.index=i;
 	      ce.append(invom);
@@ -1204,10 +1205,11 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 	  invom.pos=xdinp[index].kart;
 	  invom.an=xdinp[index].OrdZahl;
 	  invom.part=xdinp[index].part;
+	  invom.sg=xdinp[index].sg;
 	  invom.Symbol=PSE_Symbol[xdinp[index].OrdZahl];
           orgAtom=invom;
 	  if (rename){
-//	    printf("ich nename\n");
+//	    printf("ich rename\n");
 	  invom.Label=rn.Label;
 	  invom.an=rn.an;
 	  invom.Symbol=PSE_Symbol[rn.an];
@@ -1227,6 +1229,7 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 		invom.pos=xdinp[i].kart;
 		invom.part=xdinp[i].part;
 		invom.an=xdinp[i].OrdZahl;
+		invom.sg=xdinp[i].sg;
 		invom.Symbol=PSE_Symbol[xdinp[i].OrdZahl];
 		cel.append(invom);
 	      }
@@ -1256,6 +1259,7 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 		    invom.Label=xdinp[i].atomname;
 		    invom.pos=xdinp[i].kart;
 		    invom.part=xdinp[i].part;
+		    invom.sg=xdinp[i].sg;
 		    invom.an=xdinp[i].OrdZahl;
 		    invom.Symbol=PSE_Symbol[xdinp[i].OrdZahl];
 		    cel.append(invom);
@@ -1271,6 +1275,7 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 		invom.Label=xdinp[i].atomname;
 		invom.pos=xdinp[i].kart;
 		invom.an=-1;
+		invom.sg=xdinp[i].sg;
 		invom.Symbol="X";
 		if (xdinp[i].OrdZahl>-2)cel.append(invom);
 	      }
@@ -1305,6 +1310,7 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 	      xdall.Label=xdinp[i].atomname;
 	      xdall.pos=xdinp[i].kart;
 	      xdall.an=xdinp[i].OrdZahl;
+	      xdall.sg=xdinp[i].sg;
 	      if (xdinp[i].OrdZahl>-1){
 	      xdall.Symbol=PSE_Symbol[xdinp[i].OrdZahl];
 	      }else xdall.Symbol="X";
@@ -1393,6 +1399,7 @@ void CubeGL::editInv(const QUrl & link ){
   invom.pos=xdinp[index].kart;
   invom.an=xdinp[index].OrdZahl;
   invom.part=xdinp[index].part;
+  invom.sg=xdinp[index].sg;
   invom.Symbol=PSE_Symbol[xdinp[index].OrdZahl];
   cel.append(invom);	  
   for (int i=0;i<xdinp.size();i++){
@@ -1593,7 +1600,7 @@ void CubeGL::invariomExport(){
     }
   }
 #endif
-  printf("test4\n");
+  //printf("test4\n");
   QVBoxLayout sss;
   sss.addWidget(browser);
   sss.addWidget(buttonBox);
@@ -1601,14 +1608,14 @@ void CubeGL::invariomExport(){
   sss.addWidget(exportXDbutton);
   invExportDlg->setLayout(&sss);
   invExportDlg->setWindowTitle("Export these Invaromnames to 'Invariome.in'");
-  printf("test5\n");
+  //printf("test5\n");
   if (QDialog::Accepted==invExportDlg->exec()){
     QFile in("Invariome.in");
     in.open(QIODevice::WriteOnly);
     in.write(browser->toPlainText().toLatin1(),browser->toPlainText().length());
     in.close();
   }
-  printf("test6\n");
+  //printf("test6\n");
 }
 
 QString CubeGL::inv2moproaxes(int index){
