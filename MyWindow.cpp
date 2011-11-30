@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=310;
+int rev=311;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -3075,7 +3075,7 @@ void MyWindow::load_xdres(QString fileName) {
   QStringList atypen;
   {//MAS//
   FILE *mas;
-  char line[120];
+  char line[220];
   strcpy(line,"");
 
   if (NULL==(mas=fopen(masName.toLocal8Bit(),"r"))) {QMessageBox::critical(this,"Read Error!",QString("read error %1!").arg(masName),QMessageBox::Ok);exit(1);}
