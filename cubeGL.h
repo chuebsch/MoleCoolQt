@@ -18,6 +18,7 @@ public:
   double L;
   bool pause;
   int stereo_mode;
+  QTimer *moving;
   QAction *changeGDAct;
   QCheckBox *invertMouseZoom,*minus;
   QAction *rCenter;
@@ -27,7 +28,7 @@ public:
   bool molisoTransparence;
   bool zebra;
   double mixdim,miydim,mizdim;
-  int cbas, bas, ibas, iSel, foubas[5];
+  int wirbas,cbas, bas, ibas, iSel, foubas[5];
   int rotze;
   int expandatom;
   double milsize;
@@ -58,6 +59,7 @@ public:
   bool MIS,MILe;
   QList<INP> selectedAtoms;
   QList<V3> pole;
+  QList<V3> poleOrg;
   QList<QColor> farben;
   int faceCull;
 public slots:
@@ -155,7 +157,7 @@ private:
   double mlsc;
   int labToMove;
   void draw();
-  void dieDiPole();
+  void dieDiPole(V3 org);
   bool atomsClickable;
   double getHDist(int index);
   GLuint selectBuf[MAXSELECT];

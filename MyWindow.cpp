@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=314;
+int rev=315;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -351,7 +351,7 @@ MyWindow::MyWindow( QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(pa
   ldipAct->setWhatsThis("<img src=\":images/dipole.png\"> This loads dipole moments from a file.<br>\
 The first three numbers in a row are taken as xyz of the dipole vector.<br>\
 You can also specify acolor as RGB after ## or as in HTML after color= in &quot;&quot; here is a example:<br>\
-<pre>8.0 -4.0 3.0 \nxd_abbild:  px =      11.0      py =       0.5       pz =       9.2   ## 0.5 0.5 0.0\ngaussian: 6.8986     1.7407     6.1785        color=\"red\"\nInvtoolpx =       7.5  py =      -1.1  pz =       5.6     color=\"#ed0ed0\"\n</pre>");
+<pre>8.0 -4.0 3.0 \nxd_abbild:  px =      11.0      py =       0.5       pz =       9.2   ## 0.5 0.5 0.0\ngaussian: 6.8986     1.7407     6.1785        color=\"red\"\nInvtoolpx =       7.5  py =      -1.1  pz =       5.6     color=\"#ed0ed0\"\n6.8986     1.7407     6.1785 origin={-4.0,-4.0,-4.0}</pre>");
 
   nodipAct = fileMenu->addAction(QIcon(":images/nodipole.png"),tr("Remove Dipole moments"),this,SLOT(removeDipoleMoments())); 
   nodipAct->setVisible ( false);
@@ -5344,7 +5344,7 @@ void MyWindow::loadDipoleMoments(QString fileName){
     QStringList zeiger,zeilen=QString(DIPF.readAll()).split("\n",QString::SkipEmptyParts);
     for(int i=0; i<zeilen.size ();i++){
       zeiger=zeilen.at(i).split(QRegExp("[^\\-\\.0-9]+"),QString::SkipEmptyParts);
-      V3 dipl;
+      V3 dipl,org=V3(666,666,666);
       QColor color;
       if (zeilen.at(i).contains("(")) dipl=V3(zeiger.at(0).toDouble(),zeiger.at(2).toDouble(),zeiger.at(4).toDouble());
       else dipl=V3(zeiger.at(0).toDouble(),zeiger.at(1).toDouble(),zeiger.at(2).toDouble());
@@ -5353,12 +5353,20 @@ void MyWindow::loadDipoleMoments(QString fileName){
 	color.setRgbF(zeiger.at(3).toDouble(),zeiger.at(4).toDouble(),zeiger.at(5).toDouble());
 	cubeGL->farben.append(color);
       }
+      if (zeilen.at(i).contains(QRegExp("origin="))){
+          QString aname= zeilen.at(i).split(QRegExp("\\{|\\}"),QString::SkipEmptyParts).at(1);
+          QStringList oo= aname.split(QRegExp("[^\\-\\.0-9]+"),QString::SkipEmptyParts);
+          if (oo.size()>2) {
+              org=V3(oo.at(0).toDouble(),oo.at(1).toDouble(),oo.at(2).toDouble());
+          }
+      }
       if (zeilen.at(i).contains(QRegExp("color="))){
 	QString aname= zeilen.at(i).split(QRegExp("\""),QString::SkipEmptyParts).at(1);
 	color.setNamedColor(aname);
 	cubeGL->farben.append(color);
       }      
       cubeGL->pole.append(dipl);
+      cubeGL->poleOrg.append(org);
     }
     DIPF.close();
   }

@@ -19,6 +19,9 @@ CubeGL::CubeGL(QWidget *parent) : QGLWidget(parent) {
    imFokus=-1;
    cdens=16;
    cbas=0;
+   moving = new QTimer(this);
+   moving->setSingleShot(true);
+   connect(moving,SIGNAL(timeout()),this,SLOT(updateGL()));
    stereo_mode=0;
    awidth=cwid=1;
    milsize=1.0;
@@ -691,6 +694,7 @@ bool before=  mol.singleColorBonds;
       emit inimibas();
   }//else printf("dountinit\n");
 //  printf("init\n");
+  moving->start(80);
 }
 
 void CubeGL::resizeGL(int width, int height) {
@@ -699,6 +703,8 @@ void CubeGL::resizeGL(int width, int height) {
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   gluPerspective( 29.0, (double)_win_width/_win_height, 5.0, 8000.0 );
+
+  moving->start(80);
 }
 
 inline void __RotateCS( double c, double s, double& X, double& Y ) {
@@ -2977,26 +2983,31 @@ void CubeGL::checkTC(){
 }
 
 void CubeGL::zoom(double speed){
+    moving->start(80);
   glScaled(1.0+speed*0.1,1.0+speed*0.1,1.0+speed*0.1);  
   updateGL();  
 }
 
 void CubeGL::rotY(double speed){
+    moving->start(80);
   glRotateL(-20.0*speed,0.0f,1.0f,0.0f);
   updateGL();  
 }
 
 void CubeGL::moveY(double speed){
+    moving->start(80);
   glTranslateL(0.0,speed,0.0);
   updateGL();  
 }
 
 void CubeGL::moveX(double speed){
+    moving->start(80);
   glTranslateL(speed,0.0,0.0);
   updateGL();  
 }
 
 void CubeGL::rotX(double speed){
+    moving->start(80);
   glRotateL(-20.0*speed,1.0f,0.0f,0.0f);
   updateGL();  
 }
@@ -3041,10 +3052,12 @@ void CubeGL::mouseMoveEvent(QMouseEvent *event) {
     }
   }
   if (event->buttons() & Qt::MidButton){
+      moving->start(80);
     glTranslateL(dx*100.0,-dy*100.0,0);
     updateGL();
   }
   if ((event->buttons() & Qt::LeftButton)) {
+      moving->start(80);
     if (moveLab){
       extern QList<INP> xdinp;
       GLdouble ML[16];
@@ -3073,6 +3086,7 @@ void CubeGL::mouseMoveEvent(QMouseEvent *event) {
     updateGL();
   }
   else if((event->buttons() & Qt::RightButton)){
+      moving->start(80);
     if (invertMouseZoom->checkState()!=Qt::Checked){ 
       glScaled(1.0-dy,1.0-dy,1.0-dy);
       mlsc/=1.0-dy;
@@ -3362,6 +3376,52 @@ void CubeGL::draw() {
     glDisable(GL_BLEND);
     glEnable(GL_COLOR_MATERIAL);
   }  
+  if ((moving->isActive())) {
+
+      if (drawHb) glCallList(bas+5);
+      if (drawBo) {
+     if (mol.singleColorBonds) {
+       qglColor(mol.bondColor);
+       glCallList(bas+8);
+     }
+     else glCallList(bas+1);
+   }
+
+      if (pole.size()>0){
+        glPushMatrix();
+        glScaled( L, L, L );
+        //glTranslateL();
+
+        dieDiPole(sumse);
+        glPopMatrix();
+      }
+      if (drawAx) glCallList(bas+2);
+      if (drawUz) glCallList(bas+3);
+      if (foubas[0]|foubas[1]|foubas[2]|foubas[3]|foubas[4]) {
+        if ((MIS)&&(moliso->mibas)) glClear( GL_DEPTH_BUFFER_BIT);
+        glDisable(GL_CULL_FACE);
+        glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
+        glDisable(GL_LIGHTING);
+        glLineWidth(0.5);
+        glEnable(GL_BLEND);
+        if (fofcact->isChecked()) {
+            glCallList(foubas[0]);
+            glCallList(foubas[1]);
+        }
+        if (foact->isChecked()) glCallList(foubas[2]);
+        if (f1f2act->isChecked()){
+            glCallList(foubas[3]);
+            glCallList(foubas[4]);
+        }
+        glEnable(GL_LIGHTING);
+        glDisable(GL_BLEND);
+        glEnable(GL_CULL_FACE);
+        glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+      }
+   //qDebug()<<wirbas<<glIsList(wirbas+1)<<glIsList(wirbas);
+   //if (glIsList(bas+6)) glCallList(bas+6);
+  }
+  else {
   if (bas) {
     glDisable(GL_CULL_FACE);
     if (Luftschlange) glCallList(bas+6);      
@@ -3523,8 +3583,8 @@ if (!selectedAtoms.isEmpty()){
 
       if (pole.size()>0){ 
 	glPushMatrix();
-	glScaled( L, L, L ); 
-	dieDiPole();
+        glScaled( L, L, L );
+    dieDiPole(sumse);
 	glPopMatrix();
       }
 
@@ -3587,11 +3647,11 @@ if (!selectedAtoms.isEmpty()){
     }
     } 
   }
-
+  }
     glPopMatrix();
 }
 
-void CubeGL::dieDiPole(){
+void CubeGL::dieDiPole(V3 org){
   int size=pole.size(),fsz=farben.size();
   V3 vec,p,VZ;
   VZ.x=0;VZ.y=0;VZ.z=1;
@@ -3599,7 +3659,10 @@ void CubeGL::dieDiPole(){
   nonAtomFont.setPointSize(myFont.pointSize()/2);
   double wink,gg;
   glDisable(   GL_CULL_FACE);
-  for (int i=0;  i<size;i++){    	    
+  for (int i=0;  i<size;i++){
+      glPushMatrix();
+      if (Norm(poleOrg.at(i))>500) glTranslated(org.x, org.y, org.z);
+      else glTranslated(poleOrg.at(i).x, poleOrg.at(i).y, poleOrg.at(i).z);
     p=pole.at(i);
     vec=molekul::kreuzX(pole.at(i).x,pole.at(i).y,pole.at(i).z,0.0f,0.0f,1.0f);
     wink=molekul::winkel(pole.at(i),VZ);
@@ -3629,7 +3692,10 @@ void CubeGL::dieDiPole(){
     gluDisk(q2, 0, 0.06, 8, 1);
     glPopMatrix();
     if (drawLa) renderText( pole.at(i).x,pole.at(i).y,pole.at(i).z,QString("Dipole_%1").arg(i),nonAtomFont);
+
+    glPopMatrix();
   }
+
   glEnable(   GL_CULL_FACE);
 }
 
