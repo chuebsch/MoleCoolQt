@@ -49,6 +49,7 @@ CubeGL::CubeGL(QWidget *parent) : QGLWidget(parent) {
    MM[14]=-200.0;
    mil.x=-2.3;
    mil.y=-0.3;
+   noWaitLabel=false;
 }
 
 #ifndef POStO2d
@@ -507,6 +508,7 @@ void CubeGL::changeTColor() {
 }
 
 void CubeGL::initializeGL() {
+  moving->stop();
   glEnable(GL_LINE_SMOOTH);   
   glHint(GL_LINE_SMOOTH_HINT,GL_NICEST);
   const GLfloat  position[] = {100.0f, 100.0f,100.0f,0.0f};
@@ -693,8 +695,8 @@ bool before=  mol.singleColorBonds;
   if (foubas[0]|foubas[1]|foubas[2]|foubas[3]|foubas[4]){
       emit inimibas();
   }//else printf("dountinit\n");
-//  printf("init\n");
-  moving->start(80);
+  if (!noWaitLabel) moving->start(80);
+
 }
 
 void CubeGL::resizeGL(int width, int height) {
@@ -704,7 +706,7 @@ void CubeGL::resizeGL(int width, int height) {
   glLoadIdentity();
   gluPerspective( 29.0, (double)_win_width/_win_height, 5.0, 8000.0 );
 
-  moving->start(80);
+  if (!noWaitLabel) moving->start(80);
 }
 
 inline void __RotateCS( double c, double s, double& X, double& Y ) {
@@ -2965,6 +2967,8 @@ void CubeGL::contextMenuEvent(QContextMenuEvent *event) {
 	menu.addAction(cctpck);
 	menu.addAction(ccmpck);
 	menu.addAction(changeGDAct);
+	QAction *a = menu.addAction("edit xd_part.aux",parent(),SLOT(editPartAux()));
+	a->setData(qMax(expandatom,0));
 	menu.exec(event->globalPos());
       }
       else{expandatom=-1;}
@@ -2983,31 +2987,31 @@ void CubeGL::checkTC(){
 }
 
 void CubeGL::zoom(double speed){
-    moving->start(80);
+    if (!noWaitLabel)moving->start(80);
   glScaled(1.0+speed*0.1,1.0+speed*0.1,1.0+speed*0.1);  
   updateGL();  
 }
 
 void CubeGL::rotY(double speed){
-    moving->start(80);
+    if (!noWaitLabel)moving->start(80);
   glRotateL(-20.0*speed,0.0f,1.0f,0.0f);
   updateGL();  
 }
 
 void CubeGL::moveY(double speed){
-    moving->start(80);
+    if (!noWaitLabel)moving->start(80);
   glTranslateL(0.0,speed,0.0);
   updateGL();  
 }
 
 void CubeGL::moveX(double speed){
-    moving->start(80);
+    if (!noWaitLabel)moving->start(80);
   glTranslateL(speed,0.0,0.0);
   updateGL();  
 }
 
 void CubeGL::rotX(double speed){
-    moving->start(80);
+    if (!noWaitLabel)moving->start(80);
   glRotateL(-20.0*speed,1.0f,0.0f,0.0f);
   updateGL();  
 }
@@ -3052,12 +3056,12 @@ void CubeGL::mouseMoveEvent(QMouseEvent *event) {
     }
   }
   if (event->buttons() & Qt::MidButton){
-      moving->start(80);
+      if (!noWaitLabel)moving->start(80);
     glTranslateL(dx*100.0,-dy*100.0,0);
     updateGL();
   }
   if ((event->buttons() & Qt::LeftButton)) {
-      moving->start(80);
+      if (!noWaitLabel)moving->start(80);
     if (moveLab){
       extern QList<INP> xdinp;
       GLdouble ML[16];
@@ -3086,7 +3090,7 @@ void CubeGL::mouseMoveEvent(QMouseEvent *event) {
     updateGL();
   }
   else if((event->buttons() & Qt::RightButton)){
-      moving->start(80);
+      if (!noWaitLabel)moving->start(80);
     if (invertMouseZoom->checkState()!=Qt::Checked){ 
       glScaled(1.0-dy,1.0-dy,1.0-dy);
       mlsc/=1.0-dy;
@@ -3386,7 +3390,7 @@ void CubeGL::draw() {
      }
      else glCallList(bas+1);
    }
-
+/*
       if (pole.size()>0){
         glPushMatrix();
         glScaled( L, L, L );
@@ -3416,8 +3420,8 @@ void CubeGL::draw() {
         glEnable(GL_LIGHTING);
         glDisable(GL_BLEND);
         glEnable(GL_CULL_FACE);
-        glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
-      }
+        glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);*/
+      //}
    //qDebug()<<wirbas<<glIsList(wirbas+1)<<glIsList(wirbas);
    //if (glIsList(bas+6)) glCallList(bas+6);
   }
@@ -3466,34 +3470,18 @@ if (!selectedAtoms.isEmpty()){
 
     } 
     glEnable(GL_BLEND);
+  }
+  }
     if (rmode==GL_RENDER){
       if (drawAx) glCallList(bas+2);
       if (drawUz) glCallList(bas+3);
-      /*if (foubas[0]|foubas[1]|foubas[2]|foubas[3]|foubas[4]) {
-        glDisable(GL_CULL_FACE);
-        glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
-        glDisable(GL_LIGHTING);
-        glLineWidth(0.5);
-        glEnable(GL_BLEND);
-        if (fofcact->isChecked()) {
-            glCallList(foubas[0]);
-            glCallList(foubas[1]);
-        }
-        if (foact->isChecked()) glCallList(foubas[2]);
-        if (f1f2act->isChecked()){
-            glCallList(foubas[3]);
-            glCallList(foubas[4]);
-        }
-        glEnable(GL_LIGHTING);
-        glDisable(GL_BLEND);
-        glEnable(GL_CULL_FACE);
-        glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
-      }*/
       if ((MIS)&&(moliso->mibas)) { 
 	glDisable(GL_CULL_FACE);
+        if (moving->isActive()) {Pers=1; glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);}
+	else glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
 	if (molisoTransparence) glEnable(GL_BLEND);
 	else glDisable(GL_BLEND);
-	if (zebra){
+	if ((!moving->isActive())&&(zebra)){
 	  GLubyte contours[2049];
 	  for (int i=0;i<512;i++){
 	    contours[4*i]=  ((i%cdens)>cwid)?0xff:0x00;
@@ -3525,6 +3513,7 @@ if (!selectedAtoms.isEmpty()){
 	glDisable(   GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	glDisable(GL_BLEND);
+        glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
 
 
 	if (MILe){
@@ -3609,8 +3598,7 @@ if (!selectedAtoms.isEmpty()){
         glEnable(GL_CULL_FACE);
         glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
       }
-      if ((drawLa))
-      {	
+      if ((!moving->isActive())&&(drawLa)) {	
 	glClear( GL_DEPTH_BUFFER_BIT);
 	glPushMatrix();{
 	  glScaled(L,L,L);
@@ -3646,8 +3634,7 @@ if (!selectedAtoms.isEmpty()){
         glPopMatrix();
     }
     } 
-  }
-  }
+  
     glPopMatrix();
 }
 

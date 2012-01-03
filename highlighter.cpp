@@ -55,7 +55,7 @@
 		  << "\\bSOLVE\\b" << "\\bKEEP\\b" << "\\bWEIGHT\\b"
 		  << "\\bSKIP\\b" << "\\bPRINT\\b" << "\\bDMSDA\\b"
 		  << "\\bFOUR\\b" << "\\bGRID\\b" << "\\bLIMITS\\b"<< "\\bCELLSD\\b"
-		  << "\\bMODEL\\b" << "\\bPROPERTY\\b"<< "^ATOM     ATOM0    AX1 ATOM1    ATOM2   AX2 R/L TP TBL KAP LMX SITESYM  CHEMCON" ;
+		  << "\\bMODEL\\b" << "\\bPROPERTY\\b"<< "^ATOM     ATOM0    AX1 ATOM1    ATOM2   AX2 R/L TP TBL KAP LMX SITESYM  CHEMCON"<<"\\bis_part\\b" ;
   foreach (QString pattern, keywordPatterns) {
     rule.pattern = QRegExp(pattern);
     rule.format = keywordFormat;

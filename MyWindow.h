@@ -101,6 +101,7 @@ public slots:
      void idleMoveStart();
      void idleMoveStop();
      void changeScalePic();
+     void editPartAux();
      void changeADP();
      void zoomIn();
      void zoomOut();
@@ -150,7 +151,7 @@ public slots:
      void changeSuffixofLabel(const QString &fix);
      void addNewScatteringFactor(int oz);
      void updateLabel();
-
+void setRO();
 protected:
      void paintEvent(QPaintEvent *event);
      void moveEvent(QMoveEvent *event);

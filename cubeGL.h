@@ -27,6 +27,7 @@ public:
   QAction *addBond,*killBond,*clearSelection,*centerSelection,*addCoordi,*delCoordi; 
   bool molisoTransparence;
   bool zebra;
+  bool noWaitLabel;
   double mixdim,miydim,mizdim;
   int wirbas,cbas, bas, ibas, iSel, foubas[5];
   int rotze;

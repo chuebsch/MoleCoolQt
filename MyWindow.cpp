@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=316;
+int rev=317;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -218,6 +218,10 @@ MyWindow::MyWindow( QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(pa
   xdMenu->addAction(xdSetupAct); 
   xdMenu->addAction(xdRestoreAct); 
   xdMenu->addAction(xdEditAct); 
+  {
+    QAction *a=xdMenu->addAction("Edit xd_part.aux ",this,SLOT(editPartAux()));
+  a->setData(0);
+  }
   xdMenu->addAction(resinpAct); 
   xdMenu->addAction(xdlsmAct); 
   xdMenu->addAction(xdpropAct); 
@@ -658,7 +662,7 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
   QAction *sma =new QAction(this);
   sma->setShortcut(tr(";"));
   connect(sma,SIGNAL(triggered()),cubeGL,SLOT(showMatrix()));
-*/
+// */
   matrixAct->setShortcut(tr("="));
   matrixAct->setStatusTip("Rotates, scales and moves the molecule in the same position as on the last sceen shot taken.");
   QAction *viewAlong010= new QAction("View along a",this) ;
@@ -2052,9 +2056,127 @@ void MyWindow::resinp(){
   res.copy("xd.inp");
 }
 
+void MyWindow::setRO(){
+  QTextCursor c=editor-> textCursor();
+  int spalte=c.columnNumber();
+  int zeile=c.blockNumber();  
+  QString t=c.block().text();
+  int min = t.lastIndexOf(" is_part ");
+  min=(min>0)?min+9:15;
+  editor->setReadOnly((spalte<min));
+  if ((spalte<min)) {
+    c.movePosition(QTextCursor::Right,QTextCursor::MoveAnchor,fabs(min-spalte));
+    if (c.isNull()) {
+      c=editor-> textCursor();
+       c.movePosition(QTextCursor::Start,QTextCursor::MoveAnchor);
+       c.movePosition(QTextCursor::EndOfLine,QTextCursor::MoveAnchor);
+       c.movePosition(QTextCursor::Down,QTextCursor::MoveAnchor,zeile-1);
+    }
+    editor->setTextCursor(c);
+  }
+  editor->setOverwriteMode(true); 
+}
+
+void MyWindow::editPartAux(){
+  GLdouble MM[16];
+  glGetDoublev(GL_MODELVIEW_MATRIX,MM);
+  int roz=cubeGL->rotze;
+  QAction *action = qobject_cast<QAction *>(sender());
+  int index=0;
+  if (action){
+  index=action->data().toInt();
+  }
+  QFile aux("xd_part.aux");
+  editor = new QTextEdit;
+  connect(editor,SIGNAL(cursorPositionChanged ()), this  ,SLOT(setRO()));
+  search = new QLineEdit;
+  search->setMinimumSize(QSize(150, 0));
+  QHBoxLayout *slt=new QHBoxLayout();
+  QLabel sela("Search:");
+  QToolButton prev;
+  prev.setIcon(QIcon(":/images/moveleft.png"));
+  prev.setText("Previous");
+  prev.setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+  prev.setAutoRaise(true);
+  QToolButton next;
+  next.setIcon(QIcon(":/images/moveright.png"));
+  next.setText("Next");
+  next.setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+  next.setAutoRaise(true);
+  slt->setSpacing(6);
+  slt->setMargin(0);
+  slt->addWidget(&sela);
+  slt->addWidget(search);
+  slt->addWidget(&prev);
+  slt->addWidget(&next);
+  slt->addStretch(10);
+  connect(search, SIGNAL(textChanged(const QString&)),this,SLOT(findText()));
+  connect(&next, SIGNAL(clicked() ), this, SLOT(findNext()));
+  connect(&prev, SIGNAL(clicked() ), this, SLOT(findPrev()));
+  QFont font;
+  font.setFamily("Courier");
+  font.setFixedPitch(true);
+  font.setPointSize(10);  
+  editor->setFont(font);
+  Highlighter *highlighter = new Highlighter(editor->document());
+  if (aux.open(QIODevice::ReadOnly|QIODevice::Text)){
+    editor->setPlainText(aux.readAll());
+    aux.close();
+  }
+  else{
+    QString txt;
+    for (int i=0; i<asymmUnit.size(); i++){
+      txt.append(QString("%1 is_part %2\n").arg(asymmUnit.at(i).atomname).arg(asymmUnit.at(i).part));
+    }
+   editor->setPlainText(txt);   
+  }
+  QTextCursor c=editor-> textCursor();
+  c.movePosition(QTextCursor::Start,QTextCursor::MoveAnchor);
+  c.movePosition(QTextCursor::EndOfLine,QTextCursor::MoveAnchor);
+  c.movePosition(QTextCursor::Down,QTextCursor::MoveAnchor,index);
+  editor->setTextCursor(c);
+
+  QDialog *xdpartauxdlg =new QDialog(this);
+  xdpartauxdlg->setMinimumSize(900,300);  
+  QDialogButtonBox *buttonBox = new QDialogButtonBox(QDialogButtonBox::Save | QDialogButtonBox::Cancel);
+  buttonBox->clearFocus ();
+  buttonBox->setFocusPolicy(Qt::NoFocus);
+  connect(buttonBox, SIGNAL(accepted()), xdpartauxdlg, SLOT(accept()));
+  connect(buttonBox, SIGNAL(rejected()), xdpartauxdlg, SLOT(reject()));  
+  QVBoxLayout sss;
+  sss.addWidget(editor);
+  sss.addLayout(slt);
+  sss.addWidget(buttonBox);
+  xdpartauxdlg->setLayout(&sss);
+  xdpartauxdlg->setWindowTitle("xd_part.aux editor");
+  if(QDialog::Accepted==xdpartauxdlg->exec()){
+    aux.open(QIODevice::WriteOnly|QIODevice::Text);
+    aux.write(editor->toPlainText().toLatin1(),editor->toPlainText().length());
+    aux.close();
+    delete highlighter;
+    delete editor;
+    reloadFiles();
+  }else
+    if (editor->document()->isModified()){
+  if ((QMessageBox::question(this,"Save changes to xd_part.aux?","Save changes to xd_part.aux?",QMessageBox::Save|QMessageBox::Discard)==QMessageBox::Save)){
+    aux.open(QIODevice::WriteOnly);
+    aux.write(editor->toPlainText().toLatin1(),editor->toPlainText().length());
+    aux.close();
+    delete highlighter;
+    delete editor;
+    reloadFiles();
+  }
+  } 
+  
+  glMatrixMode(GL_MODELVIEW);
+  glLoadMatrixd(MM);
+  cubeGL->rotze=roz;
+  cubeGL->updateGL();
+}
+
 void MyWindow::editXDmas(){
   QFile mas("xd.mas");
-  mas.open(QIODevice::ReadOnly);
+  mas.open(QIODevice::ReadOnly|QIODevice::Text);
   editor = new QTextEdit;
   search = new QLineEdit;
   search->setMinimumSize(QSize(150, 0));
@@ -2091,6 +2213,8 @@ void MyWindow::editXDmas(){
   QDialog *xdmasdlg =new QDialog(this);
   xdmasdlg->setMinimumSize(900,300);  
   QDialogButtonBox *buttonBox = new QDialogButtonBox(QDialogButtonBox::Save | QDialogButtonBox::Cancel);
+  buttonBox->clearFocus ();
+  buttonBox->setFocusPolicy(Qt::NoFocus);
   connect(buttonBox, SIGNAL(accepted()), xdmasdlg, SLOT(accept()));
   connect(buttonBox, SIGNAL(rejected()), xdmasdlg, SLOT(reject()));  
   QVBoxLayout sss;
@@ -2100,14 +2224,17 @@ void MyWindow::editXDmas(){
   xdmasdlg->setLayout(&sss);
   xdmasdlg->setWindowTitle("xd.mas editor");
   if(QDialog::Accepted==xdmasdlg->exec()){
-    mas.open(QIODevice::WriteOnly);
+    mas.open(QIODevice::WriteOnly|QIODevice::Text);
     mas.write(editor->toPlainText().toLatin1(),editor->toPlainText().length());
     mas.close();
-  }else{
+    delete editor;
+  }else
+    if (editor->document()->isModified()){
   if ((QMessageBox::question(this,"Save changes to xd.mas?","Save changes to xd.mas?",QMessageBox::Save|QMessageBox::Discard)==QMessageBox::Save)){
-    mas.open(QIODevice::WriteOnly);
+    mas.open(QIODevice::WriteOnly|QIODevice::Text);
     mas.write(editor->toPlainText().toLatin1(),editor->toPlainText().length());
     mas.close();
+    delete editor;
   }
   } 
   delete highlighter;
@@ -2321,6 +2448,7 @@ void MyWindow::saveScene(){
   if (!fileName.isEmpty()){
     cubeGL->myFont.setPointSize(c);
     cubeGL->MLegendFont.setPointSize(g);
+    cubeGL->noWaitLabel=true;
     QPixmap   map = cubeGL->renderPixmap(a,b);
     map.save(fileName);/*
     if (fileName.endsWith(".bmp")) map.save(fileName,"BMP",-1);
@@ -2333,6 +2461,7 @@ void MyWindow::saveScene(){
   cubeGL->MLegendFont.setPointSize(h);
   cubeGL->_win_width=d;
   cubeGL->_win_height=e;
+  cubeGL->noWaitLabel=false;
   cubeGL->updateGL();
 }
 
