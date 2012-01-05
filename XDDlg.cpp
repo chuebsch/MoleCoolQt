@@ -151,6 +151,7 @@ void XDDlg::mousePressEvent(QMouseEvent *event){
 	 if ((durchlauf==2)){
 	   emit message(QString("You clicked on %1. and %2").arg(ce.at(oldindex).Label).arg(ce.at(index).Label));
 	   MyAtom newDummy;
+	   newDummy.sg=0;
            QString prev="DUM-1";
            for (int i=0; i<alle.size();i++) if (alle.at(i).an==-1) prev=alle.at(i).Label;
            prev.remove(0,3);
@@ -161,9 +162,13 @@ void XDDlg::mousePressEvent(QMouseEvent *event){
 	   if (dummyMode==2)newDummy.pos=(Normalize(ce.at(index).pos-ce.at(0).pos)%dpos)+ce.at(0).pos;
 	   newDummy.an=-1;
            duminuse.append(newDummy.Label);
-	   ce.append(newDummy);
-           alle.append(newDummy);
-           allLab.append(newDummy.Label);
+	   int addr=0;
+	   for (int k=0;k<ce.size();k++) if ((ce.at(k).an>-2)&&(!ce.at(k).sg)) addr=k+1;
+	   ce.insert(addr,newDummy);
+	   addr=0;
+	   for (int k=0;k<alle.size();k++) if ((alle.at(k).an>-2)&&(!alle.at(k).sg)) addr=k+1;
+	   alle.insert(addr,newDummy);
+           allLab.insert(addr,newDummy.Label);
 	   emit addatom(newDummy);
 	   this->setCursor(Qt::ArrowCursor);
 	   dummyMode=0;
@@ -641,8 +646,10 @@ CEnvironment xdEditDlg::calcAxis(QString masstr){
   yp.pos=Normalize(at2.pos-at1.pos);  
   zp.Label=QString(axl[3-ic1-ic2]);
   zp.an=-1;
-  zp.pos=Normalize(xp.pos%yp.pos);  
-  yp.pos=Normalize(zp.pos%xp.pos);
+  //zp.pos=Normalize(xp.pos%yp.pos);  
+  zp.pos=Normalize(yp.pos%xp.pos);  
+  //yp.pos=Normalize(zp.pos%xp.pos);
+  yp.pos=Normalize(xp.pos%zp.pos);
   if (parsed.at(6)=="L") zp.pos*=-1;
   QString symmdiag="";
   double tolerance=(tol.value()>0.000001 )?tol.value():0.03;
@@ -897,9 +904,12 @@ void xdEditDlg::updateStatusBar(const QString& s){
   statbar->showMessage(s);
 }
 void xdEditDlg::updateAtoms(const MyAtom& atm){
-  ax1lab->addItem(atm.Label);
-  ax2lab->addItem(atm.Label);
-  alle.append(atm);
+  int addr=0;
+  for (int k=0;k<alle.size();k++) if ((alle.at(k).an>-2)&&(!alle.at(k).sg)) addr=k+1;
+  alle.insert(addr,atm);
+  allLab.insert(addr,atm.Label);
+  ax1lab->insertItem(addr,atm.Label);
+  ax2lab->insertItem(addr,atm.Label);
   if (atm.an==-1)duminuse.append(atm.Label);
 }
 void xdEditDlg::updateAtoms2(const MyAtom& atm){
@@ -976,14 +986,14 @@ void xdEditDlg::updatesLabel2(){
 }
 void xdEditDlg::accept () {
     QMap<int,int> dummap;
-
-  for (int i=0,j=0; i<alle.size();i++,j++)if (alle.at(i).an==-1){
+    for (int i=0,j=0; i<alle.size();i++,j++)if (alle.at(i).an==-1){
+    /*
       if (!duminuse.contains(alle.at(i).Label,Qt::CaseInsensitive)) {
           dummap.remove(i);
           alle.removeAt(i);
 	  printf("removed a dummy\n");
           i--;
-      }
+      }*/
       dummap[j]=i;
   //    printf("--->>%d %d\n",i,j);
   }

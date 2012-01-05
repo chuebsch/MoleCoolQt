@@ -2792,7 +2792,7 @@ void MyWindow::load_fchk(QString fileName){
 			     "Ac","Th","Pa","U","Np","Pu","Am","Cm","Bk","Cf","Es","Fm","Md","No","Lr","Ku","Ha","Rf","Ns","Hs","Mt"};
   QFile fchk(fileName);
   mol.initDir();
-  fchk.open(QIODevice::ReadOnly);
+  fchk.open(QIODevice::ReadOnly|QIODevice::Text);
   QString line;
   QStringList tok;
   INP newAtom;
@@ -2801,8 +2801,10 @@ void MyWindow::load_fchk(QString fileName){
   bool fertig=false;
   line=QString(fchk.readLine(90));
   strncpy(CID,line.toStdString().c_str(),79);
+//  printf("CID %s\n",CID);
   while ((!fchk.atEnd())&&(!fertig)) {
     line=QString(fchk.readLine(90));
+//    printf(" line ||%s||\n",line.toStdString().c_str());
     if (line.contains("Atomic numbers")) {
       atmax=(line.split(" ",QString::SkipEmptyParts).at(4)).toInt();
       for (int i=0; i<atmax;){
@@ -2820,7 +2822,9 @@ void MyWindow::load_fchk(QString fileName){
       line=QString(fchk.readLine(90));
       QStringList zeiger=line.split(QRegExp("[^\\-\\.0-9]+"),QString::SkipEmptyParts);
       V3 dipl=V3(zeiger.at(0).toDouble(),zeiger.at(1).toDouble(),zeiger.at(2).toDouble());
+      V3 org=V3(666.0,666.0,666.0);
       cubeGL->pole.append(dipl);
+      cubeGL->poleOrg.append(org);
       fertig=true;
     }
     if (line.contains("Current cartesian coordinates")) {
