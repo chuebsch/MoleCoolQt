@@ -6,16 +6,28 @@
 void mh(QtMsgType type, const char *msg){
   switch (type){
   case QtDebugMsg:
+    printf("%s\n",msg);fflush(stdout);
+#if defined Q_WS_WIN  ||  defined Q_WS_MAC
     QMessageBox::information(0,msg,msg);
+#endif
     break;
   case QtWarningMsg:
+    printf("%s\n",msg);fflush(stdout);
+#if defined Q_WS_WIN  ||  defined Q_WS_MAC
     QMessageBox::warning(0,"warning",msg);
+#endif
     break;
   case QtCriticalMsg:
+    printf("%s\n",msg);fflush(stdout);
+#if defined Q_WS_WIN  ||  defined Q_WS_MAC
     QMessageBox::critical(0,"critical",msg);
+#endif
     break;
   case QtFatalMsg:
+    printf("%s\n",msg);fflush(stdout);
+#if defined Q_WS_WIN  ||  defined Q_WS_MAC
     QMessageBox::critical(0,"fatal",msg);
+#endif
     abort();
   }
 }

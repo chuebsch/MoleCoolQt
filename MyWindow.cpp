@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=319;
+int rev=323;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -3375,6 +3375,7 @@ void MyWindow::load_xdres(QString fileName) {
 	asymmUnit[i].d1233/= mol.zelle.as * mol.zelle.bs * mol.zelle.cs * mol.zelle.cs;//
       }
    }
+   asymmUnit[i].sg=0;
       i++;
     }
   }
@@ -3391,6 +3392,7 @@ void MyWindow::load_xdres(QString fileName) {
 	   &asymmUnit[j].frac.x,
 	   &asymmUnit[j].frac.y,
 	   &asymmUnit[j].frac.z);
+   asymmUnit[j].sg=0;
   }
   fclose(adp);
  
@@ -5333,13 +5335,25 @@ void MyWindow::showPackDlg(){
 }
 
 void MyWindow::loadFile(QString fileName,double GD){//empty
+  cubeGL->pause=true;
   infoKanal->clear();
   fmcq->killmaps();
   QDir directory(fileName);
+  bool same =false;
+  {
+  QString s1=directory.canonicalPath();
+  QString s2=dirName;
+  printf("alife\n");
+  if (s1.size()>4)  s1.chop(3); 
+  if (s2.size()>4)  s2.chop(3); 
+  qDebug()<<s1<<s2;
+  same=(s1==s2);
+  printf("blife\n");
+  }
   dirName=directory.canonicalPath();
   fileName=dirName;
   cubeGL->afilename=fileName.section("/",-1);
-  cubeGL->rotze=-1;
+  if (!same) cubeGL->rotze=-1;
   if (cubeGL->afilename.contains("."))
     cubeGL->afilename=cubeGL->afilename.section(".",-2,-2);
   infoKanal->setHtml(QString("<strong>File name:</strong><br> %1<hr>").arg(fileName));
@@ -5350,13 +5364,13 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
   xdinp.clear();
   asymmUnit.clear();
   george=false;
-  seReAct->setEnabled(false);
-  seReAct->setVisible(false);
-  xdMenu->setEnabled(false);
+  if (!same) seReAct->setEnabled(false);
+  if (!same) seReAct->setVisible(false);
+  if (!same) xdMenu->setEnabled(false);
   fck=false;
-  togLuft->setVisible(false);
-  togAxen->setEnabled (true );
-  togUnit->setEnabled (true );
+  if (!same) togLuft->setVisible(false);
+  if (!same) togAxen->setEnabled (true );
+  if (!same) togUnit->setEnabled (true );
   QDir::setCurrent ( fileName.left(fileName.lastIndexOf("/") ))  ;
   statusBar()->showMessage(QString(tr("Loading %1").arg(fileName)) );
   if (((fileName.endsWith(".ini",Qt::CaseInsensitive)))||((fileName.endsWith(".dat",Qt::CaseInsensitive)))) return;
@@ -5397,11 +5411,11 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
   if ((fileName.endsWith(".res", Qt::CaseInsensitive))||(fileName.endsWith(".ins", Qt::CaseInsensitive))||(fileName.endsWith(".inp", Qt::CaseInsensitive))) {	
     char test[250];
     FILE *xxx;
-    mol.adp=1;
-    cubeGL->setEllipsoidNoUpdate( true );
-    togElli->setChecked ( true );
-    togElli->setVisible ( true );
-    cubeGL->drawUz=true;
+    if (!same) mol.adp=1;
+    if (!same) cubeGL->setEllipsoidNoUpdate( true );
+    if (!same) togElli->setChecked ( true );
+    if (!same) togElli->setVisible ( true );
+    if (!same) cubeGL->drawUz=true;
     if ((xxx=fopen(fileName.toLocal8Bit().data(),"r"))==NULL) {fprintf(stderr,"Can't open %s!!!\n",fileName.toLocal8Bit().data());exit(2);}      
     egal=fscanf(xxx,"%[^\n\r]\n\r",test);
     fclose(xxx);
@@ -5446,6 +5460,8 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
   }
   settings->endGroup();
   filtered=0;
+  cubeGL->pause=false;
+  cubeGL->updateGL();
 }
 
 void MyWindow::openDipoleFile() {
