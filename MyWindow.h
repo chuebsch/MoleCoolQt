@@ -144,6 +144,7 @@ public slots:
      void textFilterChanged();
      void valFilterChanged();
      void setGD(double gd);
+     void pdbOutput();
      void SDM(QStringList &brauchSymm,int packart=0);
      void renamUpdate(bool vis);
      void changeElemetofLabel(const QString &pse);

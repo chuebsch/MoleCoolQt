@@ -357,6 +357,9 @@ struct INP {
   char     invariomname[80];
   V3 labPos;
   int part;
+  int resiNr;
+  char ami3[5];
+  char shortname[strgl];
   double peakHeight;
   int molindex;
   int sg;

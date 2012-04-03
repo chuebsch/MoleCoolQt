@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=325;
+int rev=326;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -229,6 +229,7 @@ MyWindow::MyWindow( QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(pa
   xdMenu->addSeparator();
   xdMenu->addAction("Find all uniq peaks in Fo-Fc map > iso surface value.",this,SLOT(addMoreQPeaks())) ;
   xdMenu->addAction("Calculate pdf of an antom.",this,SLOT(pdfDlg()));
+  xdMenu->addAction("Experimental PDB export (check xd_part.aux)!",this,SLOT(pdbOutput()));
   xdMenu->addAction(xdEnvAct);
 
   xdMenu->setEnabled(false);
@@ -3506,11 +3507,19 @@ infoKanal->setHtml(QString("%1<font color=green>reading of xd_rho.cps is done.</
 dummax=smx-atmax;
   for (int i=0;i<asymmUnit.size();i++) {
     if ((asymmUnit[i].uf.m22==0.0)&&(asymmUnit[i].uf.m33==0.0)){
+      printf("%-8s \n",asymmUnit[i].atomname);
       asymmUnit[i].u.m11=asymmUnit[i].u.m22=asymmUnit[i].u.m33=asymmUnit[i].uf.m11;
       asymmUnit[i].u.m12=asymmUnit[i].u.m13=asymmUnit[i].u.m23=asymmUnit[i].u.m21=asymmUnit[i].u.m31=asymmUnit[i].u.m32=0.0;}
     else {
-      Uf2Uo(asymmUnit[i].uf,asymmUnit[i].u);
 
+      Uf2Uo(asymmUnit[i].uf,asymmUnit[i].u);
+printf("%-8s %8.5g %8.5g %8.5g %8.5g %8.5g %8.5g\n",asymmUnit[i].atomname,
+		asymmUnit[i].u.m11,
+		asymmUnit[i].u.m22,
+		asymmUnit[i].u.m33,
+		asymmUnit[i].u.m12,
+		asymmUnit[i].u.m13,
+		asymmUnit[i].u.m23);
     }
   }
 
@@ -4082,6 +4091,8 @@ void MyWindow::load_sheldrick(QString fileName){
   INP newAtom;
   newAtom.part=0;
   newAtom.sg=0;
+  strcpy(newAtom.ami3,"");
+  newAtom.resiNr=0;
   george=true;
   QByteArray BAfn=fileName.toLocal8Bit ();
   fn=BAfn.data();
@@ -4210,6 +4221,9 @@ void MyWindow::load_sheldrick(QString fileName){
 	  seReAct->setEnabled(true);
 	  seReAct->setVisible(true);
 	  sprintf(dv,"%s@%d%s",newAtom.atomname,resNr,Ami3);
+	  newAtom.resiNr=resNr;
+	  strcpy(newAtom.shortname,newAtom.atomname);
+	  strncpy(newAtom.ami3,Ami3,3);
 	  strcpy(newAtom.atomname,dv);	
 	}
         newAtom.part=part;
@@ -4427,6 +4441,107 @@ void MyWindow::load_cif(QString fileName) {
   }*/
 }
 
+double MyWindow::ueq(const Matrix m){//1111
+  double erg=0;
+  erg+=m.m11*mol.zelle.as*mol.zelle.a*mol.zelle.a*mol.zelle.as;
+  erg+=m.m12*mol.zelle.as*mol.zelle.a*mol.zelle.b*mol.zelle.bs;
+  erg+=m.m13*mol.zelle.as*mol.zelle.a*mol.zelle.c*mol.zelle.cs;
+  erg+=m.m21*mol.zelle.bs*mol.zelle.b*mol.zelle.a*mol.zelle.as;
+  erg+=m.m22*mol.zelle.bs*mol.zelle.b*mol.zelle.b*mol.zelle.bs;
+  erg+=m.m23*mol.zelle.bs*mol.zelle.b*mol.zelle.c*mol.zelle.cs;
+  erg+=m.m31*mol.zelle.cs*mol.zelle.c*mol.zelle.a*mol.zelle.as;
+  erg+=m.m32*mol.zelle.cs*mol.zelle.c*mol.zelle.b*mol.zelle.bs;
+  erg+=m.m33*mol.zelle.cs*mol.zelle.c*mol.zelle.c*mol.zelle.cs;
+  erg*=1/3.0;
+  return erg;
+}
+
+void MyWindow::pdbOutput(){
+  QString selectedFilter="Protein-Data-Base file (*.pdb)";
+  QString fileName = QFileDialog::getSaveFileName(this,
+  QString("try to export a PDB file"), saveName,"Protein-Data-Base file (*.pdb)",&selectedFilter,QFileDialog::DontUseNativeDialog );
+  if (fileName.isEmpty()) return;
+QFile pdb(fileName);
+pdb.open(QIODevice::WriteOnly|QIODevice::Text);
+pdb.write(QString("CRYST1%1%2%3%4%5%6           \n")
+		.arg(mol.zelle.a,9,'f',3) 
+		.arg(mol.zelle.b,9,'f',3) 
+		.arg(mol.zelle.c,9,'f',3) 
+		.arg(mol.zelle.al,7,'f',2) 
+		.arg(mol.zelle.be,7,'f',2) 
+		.arg(mol.zelle.ga,7,'f',2) 
+		.toLatin1()); 
+
+  double phi; 
+  const double g2r=180.0/M_PI;
+  Matrix u;   /*Cholesky decomposition of theReal space Metric tensor Wird fÃ¼r die Umrechnung von fraktionellen in kartesischen Korrdinaten benÃ¶tigt.*/ 
+  phi=sqrt(1-pow(cos(mol.zelle.al/g2r),2.0)-pow(cos(mol.zelle.be/g2r),2.0)-pow(cos(mol.zelle.ga/g2r),2.0)+2.0*cos(mol.zelle.al/g2r)*cos(mol.zelle.be/g2r)*cos(mol.zelle.ga/g2r));
+  u.m11 = 1.0/mol.zelle.a;
+  u.m21 = 0.0;
+  u.m31 = 0.0;
+  u.m12 = -1.0/(mol.zelle.a * tan(mol.zelle.ga/g2r));
+  u.m22 = 1.0/(mol.zelle.b * sin(mol.zelle.ga/g2r));
+  u.m32 = 0.0;
+  u.m13 = (cos(mol.zelle.al/g2r)*cos(mol.zelle.ga/g2r)-cos(mol.zelle.be/g2r))/(mol.zelle.a*phi*sin(mol.zelle.ga/g2r));
+  u.m23 = (cos(mol.zelle.be/g2r)*cos(mol.zelle.ga/g2r)-cos(mol.zelle.al/g2r))/(mol.zelle.b*phi*sin(mol.zelle.ga/g2r));
+  u.m33 = sin(mol.zelle.ga/g2r)/(mol.zelle.c*phi);
+  pdb.write(QString("SCALE1    %1%2%3         0.00000\n")
+		  .arg(u.m11,10,'f',6)
+		  .arg(u.m12,10,'f',6)
+		  .arg(u.m13,10,'f',6)
+		  .toLatin1());
+  pdb.write(QString("SCALE2    %1%2%3         0.00000\n")
+		  .arg(u.m21,10,'f',6)
+		  .arg(u.m22,10,'f',6)
+		  .arg(u.m23,10,'f',6)
+		  .toLatin1());
+  pdb.write(QString("SCALE3    %1%2%3         0.00000\n")
+		  .arg(u.m31,10,'f',6)
+		  .arg(u.m32,10,'f',6)
+		  .arg(u.m33,10,'f',6)
+		  .toLatin1());
+  for (int i=0; i<asymmUnit.size();i++){
+
+    mol.frac2kart(asymmUnit[i].frac,asymmUnit[i].kart);
+    QString enam=asymmUnit.at(i).shortname;
+    pdb.write(QString("ATOM  %1  %2%3%4 %5%6%7   %8%9%10%11%12           %13\n")
+		    .arg(i+1,5)
+		    .arg(enam,-3)
+		    .arg((asymmUnit.at(i).part)?((asymmUnit.at(i).part>0)?QChar(asymmUnit.at(i).part+'A'):QChar( -asymmUnit.at(i).part+'A')):QChar(' '),1)
+		   .arg(asymmUnit.at(i).ami3,3)
+		   .arg(" ") //chain id
+		   .arg(asymmUnit.at(i).resiNr,4)
+		   .arg(" ")
+		   .arg(asymmUnit.at(i).kart.x,8,'f',3)
+		   .arg(asymmUnit.at(i).kart.y,8,'f',3)
+		   .arg(asymmUnit.at(i).kart.z,8,'f',3)
+		   .arg(asymmUnit.at(i).amul,6,'f',3)
+		   .arg(ueq(asymmUnit.at(i).u)*8*M_PI*M_PI,6,'f',2)
+		   .arg(mol.pse(asymmUnit.at(i).OrdZahl))
+
+		  .toLatin1());
+    pdb.write(QString("ANISOU%1  %2%3%4 %5%6%7 %8%9%10%11%12%13       %14\n")
+		    .arg(i+1,5)//1
+		    .arg(enam,-3)//2
+		    .arg((asymmUnit.at(i).part)?((asymmUnit.at(i).part>0)?QChar(asymmUnit.at(i).part+'A'):QChar( -asymmUnit.at(i).part+'A')):QChar(' '),1)
+		   .arg(asymmUnit.at(i).ami3,3)//4
+		   .arg(" ") //5 chain id
+		   .arg(asymmUnit.at(i).resiNr,4)//6
+		   .arg(" ")//??
+		   .arg(asymmUnit.at(i).u.m11*10000,7,'f',0)//8
+		   .arg(asymmUnit.at(i).u.m22*10000,7,'f',0)//9
+		   .arg(asymmUnit.at(i).u.m33*10000,7,'f',0)//10
+		   .arg(asymmUnit.at(i).u.m12*10000,7,'f',0)//11
+		   .arg(asymmUnit.at(i).u.m13*10000,7,'f',0)//12
+		   .arg(asymmUnit.at(i).u.m23*10000,7,'f',0)//13
+		   .arg(mol.pse(asymmUnit.at(i).OrdZahl))//14
+		  .toLatin1());
+		    
+  
+  } 
+  pdb.close();
+}
+
 int pdbatom(char* line,int *idx,char *nam, char *ami3, char * chid, int *rn, double *x, double *y, double *z, double *b,char *dum){
   char dummy[80];
   int i,j=0;
@@ -4547,6 +4662,7 @@ void MyWindow::load_pdb(QString fileName){
       mol.delBlanks(newAtom.atomname);
       strncpy(dummy,dummy2,2);
       newAtom.OrdZahl=mol.Get_OZ(dummy);
+      if (newAtom.OrdZahl<0) { strncpy(dummy,newAtom.atomname,1);newAtom.OrdZahl=mol.Get_OZ(dummy);}
       mol.kart2frac(newAtom.kart,newAtom.frac);
       asymmUnit.append(newAtom);
    //   printf("%d %-12s %f %f %f\n",atmax,newAtom.atomname,newAtom.kart.x,newAtom.kart.y,newAtom.kart.z);
@@ -5780,6 +5896,7 @@ void MyWindow::paintEvent(QPaintEvent *){
  void MyWindow::moveEvent(QMoveEvent *) {
    if (cubeGL->stereo_mode==1) cubeGL->minus->setChecked((geometry().y()+cubeGL->y())%2);
 }
+
 void MyWindow::updateTime() {
    QDateTime Time = QDateTime::currentDateTime();
    QString text = Time.toString("dd.MM.yyyy hh:mm:ss");
@@ -5865,6 +5982,11 @@ void MyWindow::readXDPartAux(){
     if (asymmUnit[j].OrdZahl<0) continue;   
     QStringList token = lines.at(j).split(" ",QString::SkipEmptyParts);
     asymmUnit[j].part=token.at(2).toInt();
+    if ((token.size()>5)&&(token.at(3)=="resiNr")){
+    asymmUnit[j].resiNr=token.at(4).toInt();
+    strncpy(asymmUnit[j].ami3,token.at(5).toStdString().c_str(),4);
+    strncpy(asymmUnit[j].shortname,token.at(7).toStdString().c_str(),4);
+    }
   }
 }
 
@@ -5917,20 +6039,34 @@ void MyWindow::makeXDPartAux(){
     QString shelxTxt = shx.readAll(); 
     shx.close();
     QStringList lines = shelxTxt.split("\n");
-    int myPart=0;
+    int myPart=0,myResi=0;
+    QString ami3,shortname;
     V3 point;
     for (int i=0; i<lines.size();i++){
       QStringList token = lines.at(i).split(" ",QString::SkipEmptyParts);
       if ((token.size()>1)&&( token.at(0).contains("PART",Qt::CaseInsensitive ))) {
 	myPart=token.at(1).toInt(); 
       }
+      if ((token.size()>1)&&( token.at(0).contains("RESI",Qt::CaseInsensitive ))){
+	if ((token.size()>1)&&(token.at(1).toInt()>0)) {
+	  myResi=token.at(1).toInt();
+	  if (token.size()>2) ami3=token.at(2);
+	}else if ((token.size()>2)&&(token.at(2).toInt()>0)) {
+	myResi=token.at(2).toInt();
+	ami3=token.at(1);
+	}
+      }
       if ((token.size()>5)&&(!befehle.contains(token.at(0)))){
+	shortname = token.at(0);
 	point.x=token.at(2).toDouble();
 	point.y=token.at(3).toDouble();
 	point.z=token.at(4).toDouble();
 	for (int j=0; j<atmax; j++){ 
        if (Distance(point,asymmUnit[j].frac)<TOLERANZ) {
           asymmUnit[j].part=myPart;
+	  strcpy(asymmUnit[j].shortname,shortname.toStdString().c_str());
+	  strcpy(asymmUnit[j].ami3,ami3.toStdString().c_str());
+	  asymmUnit[j].resiNr=myResi;
           break;
        }
 	}
@@ -5940,8 +6076,18 @@ void MyWindow::makeXDPartAux(){
     QFile aux("xd_part.aux");
     QStringList newlines;
     if (aux.open(QIODevice::WriteOnly)){
-      for (int i=0; i<atmax; i++)
+      for (int i=0; i<atmax; i++){
+	if (asymmUnit[i].resiNr!=0)
+	newlines.append(QString("%1 is_part %2 resiNr %3 %4 short_name %5")
+			.arg(asymmUnit[i].atomname)
+			.arg(asymmUnit[i].part)
+			.arg(asymmUnit[i].resiNr)
+			.arg(asymmUnit[i].ami3)
+			.arg(asymmUnit[i].shortname)
+			);
+	else
 	newlines.append(QString("%1 is_part %2").arg(asymmUnit[i].atomname).arg(asymmUnit[i].part));
+      }
       aux.write(newlines.join("\n").toLatin1(),newlines.join("\n").toLatin1().size());
       aux.close();
     }
