@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=326;
+int rev=327;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -4501,7 +4501,7 @@ pdb.write(QString("CRYST1%1%2%3%4%5%6           \n")
 		  .arg(u.m33,10,'f',6)
 		  .toLatin1());
   for (int i=0; i<asymmUnit.size();i++){
-
+    if (asymmUnit[i].OrdZahl<0) continue;
     mol.frac2kart(asymmUnit[i].frac,asymmUnit[i].kart);
     QString enam=asymmUnit.at(i).shortname;
     pdb.write(QString("ATOM  %1  %2%3%4 %5%6%7   %8%9%10%11%12           %13\n")
@@ -5459,12 +5459,12 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
   {
   QString s1=directory.canonicalPath();
   QString s2=dirName;
-  printf("alife\n");
+  //printf("alife\n");
   if (s1.size()>4)  s1.chop(3); 
   if (s2.size()>4)  s2.chop(3); 
-  qDebug()<<s1<<s2;
+  //qDebug()<<s1<<s2;
   same=(s1==s2);
-  printf("blife\n");
+ // printf("blife\n");
   }
   dirName=directory.canonicalPath();
   fileName=dirName;
