@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=328;
+int rev=329;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -260,10 +260,15 @@ MyWindow::MyWindow( QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(pa
   menuBar()->addMenu(stereoMenu);
   menuBar()->addMenu(helpMenu);
 
+  QToolButton *homeMe = new QToolButton(this);
+  homeMe->setIcon(QIcon(":images/home.png"));
+  homeMe->setText("home");
+  homeMe->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+
+  connect(homeMe,SIGNAL(clicked()),cubeGL,SLOT(homeXY()));
 
 
 
-  QAction *aboutAct;
   aboutAct = helpMenu->addAction(QIcon(":/images/icon1.png"),
 					 tr("&About MoleCoolQt"), this, SLOT(about() ),
 					 QKeySequence(tr("Ctrl+~", "Help|About MoleCoolQt")));
@@ -841,7 +846,8 @@ createRenameWgd();
   statusBar()->addPermanentWidget(sLabel);
   
   statusBar()->setWhatsThis("This is the status bar. You can hide it in the View menu by unchecking 'toggle Status bar'.");
-  time = new QLCDNumber;
+  statusBar()->addPermanentWidget(homeMe);
+  /*time = new QLCDNumber;
   time->setFrameStyle(QFrame::Panel | QFrame::Sunken);
   time->setLineWidth(1);
   time->setMinimumSize(200,33); 
@@ -852,7 +858,7 @@ createRenameWgd();
 	   this, SLOT(updateTime()) );
     // Jede Sekunde updateTime() aufrufen
   timer->start(1000);
-  updateTime();
+  updateTime();*/
   
   QAction *a;
   QToolBar *tb= new QToolBar("Atom Selection Tools",this);
@@ -2915,7 +2921,7 @@ void MyWindow::load_MoPro(QString fileName) {
     QFile mpf(fileName);
     QStringList axstr,ato1,ato2,ato3;
     QList<int> resNr;
-    bool habzell=false;
+//    bool habzell=false;
     if (mpf.open(QIODevice::ReadOnly)){
         QStringList tok;
         QStringList all = QString(mpf.readAll()).split("\n",QString::SkipEmptyParts);
@@ -2937,7 +2943,7 @@ void MyWindow::load_MoPro(QString fileName) {
                     mol.zelle.be = tok.at(5).toDouble();
                     mol.zelle.ga = tok.at(6).toDouble();
                     mol.zelle.lambda=tok.at(7).toDouble();
-                    habzell=true;
+                    //habzell=true;
                     setup_zelle();
                 }
                 if ((tok.size()>2 )&&(tok.at(0).toUpper()=="SYMM")){
@@ -3253,9 +3259,10 @@ void MyWindow::load_xdres(QString fileName) {
   if ((adp=fopen(fileName.toLocal8Bit(),"r"))==NULL) {QMessageBox::critical(this,"Read Error!",QString("read error %1!").arg(fileName),QMessageBox::Ok);exit(2);}  
   i=0;
   cubeGL->drawAx=true;
-  while (NULL==strstr(line,"Revision")) {
+  while ((!feof(adp))&&(NULL==strstr(line,"Revision"))) {
     egal=fscanf(adp,"%[^\n\r]\n\r",line);
  }
+  if (NULL!=strstr(line,"Revision"))
   sscanf(line,"! <<< X D PARAMETER FILE >>> $Revision: %lf",&XDVERS); 
   printf("REV:=%g\n",XDVERS);
   rewind(adp);
@@ -3867,16 +3874,17 @@ void MyWindow::makePDFGrid(INP atom, double proba,bool c2,bool c3,bool c4){
   cubeGL->moliso->lineNr=0;
   V3 X=V3(1,0,0);
   V3 ev=V3(1,1,1);
-  Matrix evk=mol.jacobi(U,ev);
+//  Matrix evk=
+	  mol.jacobi(U,ev);
 
   printf("%g %g %g  \n",ev.x,ev.y,ev.z);
   double maxdim=2*sqrt(fmax(ev.x,fmax(ev.y,ev.z)))*6;
 
-  double p10,p90,p50,pt;
+  double pt;//p10,p90,p50,
   double ponent;
-  p50=base*exp(-1.18302962);
-  p10=base*exp(-0.29215368);
-  p90=base*exp(-3.12575004);
+  //p50=base*exp(-1.18302962);
+  //p10=base*exp(-0.29215368);
+  //p90=base*exp(-3.12575004);
   int breite=91;
   double df=maxdim/breite;
   cubeGL->moliso->orig=Vector3(atom.kart.x,atom.kart.y,atom.kart.z);
@@ -5974,6 +5982,7 @@ void MyWindow::readXDPartAux(){
   QFile aux("xd_part.aux");  
   bool b;
   b= aux.open(QIODevice::ReadOnly);
+  if (b){
   QString auxTxt = aux.readAll(); 
   aux.close();
   QStringList lines = auxTxt.split("\n",QString::SkipEmptyParts);
@@ -5987,6 +5996,7 @@ void MyWindow::readXDPartAux(){
     strncpy(asymmUnit[j].ami3,token.at(5).toStdString().c_str(),4);
     strncpy(asymmUnit[j].shortname,token.at(7).toStdString().c_str(),4);
     }
+  }
   }
 }
 

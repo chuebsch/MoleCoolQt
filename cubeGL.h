@@ -2,6 +2,12 @@
 #ifndef CUBEGL_H
 #define CUBEGL_H 1
 #include <QGLWidget>
+#if defined (Q_WS_MAC)
+#include <glu.h>
+#else
+#include <GL/glu.h>
+#endif
+
 #include "invariomDlg.h"
 #include "moliso.h"
 //#include "molekul.h"
@@ -69,6 +75,7 @@ public slots:
   void parallel();
   void crosseye();
   void nostereo();
+  void homeXY();
   void saveMISettings();
   void loadMISettings();
   void noneCull(bool b);

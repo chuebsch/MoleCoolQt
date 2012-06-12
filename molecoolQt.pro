@@ -14,7 +14,9 @@ ICON = molecoolQt.icns
 
 QMAKE_CXXFLAGS += -fopenmp
 LIBS += -lfftw3f -fopenmp
-
+unix {
+LIBS += -lGLU
+}
 # Input
 HEADERS += MyWindow.h cubeGL.h molekul.h invariomDlg.h inames.h  XDDlg.h highlighter.h doxd.h eacDlg.h \
 moliso.h gradDlg.h molisoStartDlg.h fourmcq.h psewidget.h

@@ -53,6 +53,7 @@ public:
      QAction *noElli;
      QAction *createmoliso,*noMoliso;
      QAction *showface,*showLeg,*movLeg, *mildir;
+     QAction *aboutAct;
      QLabel *sLabel;
      QPushButton *savset, *lodset ;
      QAction *back_Grad, *togLabel,*togHBond;

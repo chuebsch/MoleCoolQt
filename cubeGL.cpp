@@ -133,6 +133,13 @@ void CubeGL::togglContours(bool b){
     updateGL();
 }
 
+void CubeGL::homeXY(){
+  glGetDoublev(GL_MODELVIEW_MATRIX,MM);
+  MM[12]=MM[13]=0;
+  glLoadMatrixd(MM);
+  updateGL();
+}
+
 void CubeGL::togglMonoChrom(bool b){
  monochrom=b;
  updateGL();
@@ -977,6 +984,7 @@ void CubeGL::resetENV(){
 
 void CubeGL::rotCenter(){
   rotze=-1;
+  homeXY();
   updateGL();
   rCenter->setVisible(false);
 }
@@ -1000,6 +1008,7 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
       if (index==((GLuint)-1))return;
       rotze=((int)index<xdinp.size())?index:-1;  
       if (rotze>-1) rCenter->setVisible(true);
+      homeXY();
       updateGL();
 
     }
