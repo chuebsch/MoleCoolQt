@@ -7,6 +7,7 @@ TARGET = molecoolQt
 DEPENDPATH += .
 INCLUDEPATH += . 
 QT += opengl
+QT += network
 win32: RC_FILE =molecoolQt.rc
 mac {
 ICON = molecoolQt.icns

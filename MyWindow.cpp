@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=330;
+int rev=331;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -60,7 +60,7 @@ MyWindow::MyWindow( QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(pa
   QMainWindow::setDockOptions(QMainWindow::AnimatedDocks|QMainWindow::AllowTabbedDocks|QMainWindow::ForceTabbedDocks|QMainWindow::VerticalTabs);
   //  DOCK
 
-  printf("{%s}\n", setlocale(LC_ALL,"en_US"));//suse11.3 braucht das
+  printf("{%s}\n", setlocale(LC_ALL,"C"));//suse11.3 braucht das
   filtered=0;
   speedSldr = new QSlider (Qt::Horizontal);
   speedSldr->setMaximum(128);
@@ -310,13 +310,14 @@ MyWindow::MyWindow( QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(pa
   QAction *labelColor      = new QAction(tr("Change label color"), this);
   QAction *labelFont       = new QAction(tr("Change label font"), this);  
   back_Grad       = new QAction(tr("Toggle background gradient"), this);
+  donTGrow       = new QAction(tr("Do not Auto-Grow on loading"), this);
   QAction *scalePicAct     = new QAction(tr("Change screen shot scale factor"), this);
   QAction *changeProbAct   = new QAction(tr("Change ADP probability"),this);
   changeProbAct->setData(0);
   QAction *matrixAct       = new QAction(tr("Apply old matrix"),this);
   QAction *invExpAct       = new QAction(tr("Export 'Invariome.in'"),this);
   QAction *invEdiAct       = new QAction(tr("Edit invariomnames"),this);
-  QAction *invLoadAct      = new QAction(tr("Load invariom data base"),this);
+  QAction *invLoadAct      = new QAction(tr("Load a local invariom data base"),this);
   filterAct                = new QAction(tr("Launch a filter dialog"),this);
   unfilterAct              = new QAction(tr("Unfilter"),this);
   ydlStartAct =              new QAction(tr("Start rotation"),this);
@@ -389,6 +390,8 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
   back_Grad->setCheckable ( true );
   back_Grad->setChecked ( true );    
   back_Grad->setShortcut(Qt::Key_F4);
+  donTGrow->setCheckable ( true );
+  donTGrow->setChecked ( false );  
   cubeGL->back_grad=true;
   QMenu *packMenu=new QMenu("Pack the moleule");
   QAction *dntpck=packMenu->addAction("Only asymmetric unit");
@@ -720,6 +723,8 @@ createRenameWgd();
 	   cubeGL, SLOT(setAtomsClickable(bool)));
   connect( back_Grad, SIGNAL(toggled (bool) ),
 	   cubeGL, SLOT(togglBGG(bool ) ));
+  connect( donTGrow, SIGNAL(toggled (bool) ),
+	   cubeGL, SLOT(togglGrow(bool ) ));
   connect( mveLeftAct, SIGNAL(triggered()),
 	   this, SLOT(moveL()));
   connect( mveRightAct, SIGNAL(triggered () ),
@@ -819,6 +824,7 @@ createRenameWgd();
   viewMenu->addAction(viewAlong001);
   dialogMenu->addAction(backColor);        
   dialogMenu->addAction(back_Grad);
+  dialogMenu->addAction(donTGrow);
   dialogMenu->addAction(labelColor);
   dialogMenu->addAction(labelFont);
   dialogMenu->addAction(scalePicAct);
@@ -830,9 +836,11 @@ createRenameWgd();
   dialogMenu->addSeparator();
   dialogMenu->addAction("Save current toggel states",cubeGL,SLOT(saveMISettings()));
   dialogMenu->addAction("Load toggle states",cubeGL,SLOT(loadMISettings()));
+  cubeGL->Istda=invariomMenu->addAction("No data base loded yet.");
   invariomMenu->addAction(invExpAct);
   invariomMenu->addAction(invEdiAct);
   invariomMenu->addAction(invLoadAct);
+  invariomMenu->addAction("Load latest Invariom-Data-Base from internet",this , SLOT(howOldIsTheLatesDataBase()));
     
   (void*) statusBar ();
   sLabel = new QLabel;
@@ -1311,6 +1319,7 @@ createRenameWgd();
     }
 
   }
+  net = new QNetworkAccessManager(this);
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3191,6 +3200,42 @@ dummys.append(newAtom);
     growSymm(6);
 }
 
+void MyWindow::howOldIsTheLatesDataBase(){
+   connect(net, SIGNAL(finished(QNetworkReply*)), this, SLOT(replyFinished(QNetworkReply*)));
+   reply = net->get(QNetworkRequest(QUrl("http://ewald.ac.chemie.uni-goettingen.de/___mole_cool_qt__/latestDABA.php")));
+}
+
+void MyWindow::replyFinished(QNetworkReply* antwort){
+  QString a=antwort->readAll();
+  QDateTime t=  QDateTime::fromString (a,Qt::ISODate);
+  int d=t.daysTo(QDateTime::currentDateTime ());
+  //QMessageBox::information(this,"DA DA DIE DABA DIE IS DA!",QString("Die neuste Datenbank ist %1 alt.").arg(d)); 
+  antwort->close();
+  antwort->deleteLater();
+  disconnect(net,SIGNAL(finished(QNetworkReply*)),0,0);
+  if ((d>1)&&(d<365)) {
+    connect(net, SIGNAL(finished(QNetworkReply*)), this, SLOT(replyFinished2(QNetworkReply*)));
+    reply = net->get(QNetworkRequest(QUrl("http://ewald.ac.chemie.uni-goettingen.de/___mole_cool_qt__/loadDABA.php")));
+  }
+}
+
+void MyWindow::replyFinished2(QNetworkReply* antwort){
+  QString a=antwort->readAll();
+  //
+  QString Pfad = settings->fileName();
+  Pfad=Pfad.section('/',0,-2);
+  Pfad.append("DABA.txt");
+  QFile base(Pfad);
+  if (base.open(QIODevice::WriteOnly | QIODevice::Text)){
+    base.write(a.toLatin1());
+    base.close();
+  } 
+  antwort->close();
+  antwort->deleteLater();
+  cubeGL->loadDataBase(Pfad);
+  disconnect(net,SIGNAL(finished(QNetworkReply*)),0,0);
+}
+//$filename="/user/birger/NEUE_Datenbank/ToolZ/DABA.txt";
 void MyWindow::load_xdres(QString fileName) {
   INP newAtom;
   newAtom.part=0;
@@ -3514,23 +3559,23 @@ infoKanal->setHtml(QString("%1<font color=green>reading of xd_rho.cps is done.</
 dummax=smx-atmax;
   for (int i=0;i<asymmUnit.size();i++) {
     if ((asymmUnit[i].uf.m22==0.0)&&(asymmUnit[i].uf.m33==0.0)){
-      printf("%-8s \n",asymmUnit[i].atomname);
+      //printf("%-8s \n",asymmUnit[i].atomname);
       asymmUnit[i].u.m11=asymmUnit[i].u.m22=asymmUnit[i].u.m33=asymmUnit[i].uf.m11;
       asymmUnit[i].u.m12=asymmUnit[i].u.m13=asymmUnit[i].u.m23=asymmUnit[i].u.m21=asymmUnit[i].u.m31=asymmUnit[i].u.m32=0.0;}
     else {
 
       Uf2Uo(asymmUnit[i].uf,asymmUnit[i].u);
-printf("%-8s %8.5g %8.5g %8.5g %8.5g %8.5g %8.5g\n",asymmUnit[i].atomname,
+/*printf("%-8s %8.5g %8.5g %8.5g %8.5g %8.5g %8.5g\n",asymmUnit[i].atomname,
 		asymmUnit[i].u.m11,
 		asymmUnit[i].u.m22,
 		asymmUnit[i].u.m33,
 		asymmUnit[i].u.m12,
 		asymmUnit[i].u.m13,
-		asymmUnit[i].u.m23);
+		asymmUnit[i].u.m23);// */
     }
   }
 
-  growSymm(6);
+  growSymm(donTGrow->isChecked()?0:6);
 /*  for (int i=0;i<asymmUnit.size();i++) {
       printf("%-8s %12.5f %12.5f %12.5f  pdf(0)=%18.9g %18.9g\n",xdinp[i].atomname,
 		      xdinp[i].kart.x,
@@ -3877,7 +3922,7 @@ void MyWindow::makePDFGrid(INP atom, double proba,bool c2,bool c3,bool c4){
 //  Matrix evk=
 	  mol.jacobi(U,ev);
 
-  printf("%g %g %g  \n",ev.x,ev.y,ev.z);
+  //printf("%g %g %g  \n",ev.x,ev.y,ev.z);
   double maxdim=2*sqrt(fmax(ev.x,fmax(ev.y,ev.z)))*6;
 
   double pt;//p10,p90,p50,
@@ -4418,7 +4463,7 @@ void MyWindow::load_cif(QString fileName) {
     }
     if (i<lines.size()) cifcard(lines.at(i).trimmed());
   }
-  printf("atoms = %d \n",asymmUnit.size());
+//  printf("atoms = %d \n",asymmUnit.size());
   for (int i=0;i<asymmUnit.size();i++) {
     asymmUnit[i].lflag=1;
     if (asymmUnit[i].OrdZahl==-4) asymmUnit[i].OrdZahl=mol.Get_OZ(QString(asymmUnit[i].atomname));

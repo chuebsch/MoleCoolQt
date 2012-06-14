@@ -24,6 +24,7 @@ public:
   double L;
   bool pause;
   int stereo_mode;
+  QAction *Istda;
   QTimer *moving;
   QAction *changeGDAct;
   QCheckBox *invertMouseZoom,*minus;
@@ -117,6 +118,7 @@ public slots:
   void toggXDSetup(bool on);
   void togglReSe(bool on);
   void togglBGG(bool on);
+  void togglGrow(bool on);
   void togglMOAI(bool on);
   void homeLabels();
   void showMatrix();
@@ -133,6 +135,7 @@ public slots:
   QString translateSymm2MP(QString idbs);
   void editInv(const QUrl & link );
   void loadDataBase();
+  void loadDataBase(QString filename);
   void exportMoProFiles();
   void exportXDFiles();
   void updateBondActions();
@@ -166,7 +169,7 @@ private:
   int labToMove;
   void draw();
   void dieDiPole(V3 org);
-  bool atomsClickable;
+  bool atomsClickable,growIt;
   double getHDist(int index);
   GLuint selectBuf[MAXSELECT];
   GLfloat feedBuf[3000];

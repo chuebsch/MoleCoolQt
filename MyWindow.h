@@ -2,6 +2,7 @@
 #define MyWindow_H 1
 
 #include <QtGui>
+#include <QtNetwork>
 #include "cubeGL.h"
 #include "moliso.h"
 #include "fourmcq.h"
@@ -56,7 +57,7 @@ public:
      QAction *aboutAct;
      QLabel *sLabel;
      QPushButton *savset, *lodset ;
-     QAction *back_Grad, *togLabel,*togHBond;
+     QAction *back_Grad, *togLabel,*togHBond,*donTGrow;
      QCheckBox *mclmox;
      QLCDNumber *time;
      QToolBar *toolSettings;
@@ -99,6 +100,9 @@ public slots:
      void saveScene();
      void printScene();
      void pdfDlg();
+     void howOldIsTheLatesDataBase();
+     void replyFinished(QNetworkReply* antwort);
+     void replyFinished2(QNetworkReply* antwort);
      void idleMoveStart();
      void idleMoveStop();
      void changeScalePic();
@@ -173,6 +177,9 @@ protected:
 //
      QSignalMapper *signalMapper;
      QMenu *xdMenu;
+     QNetworkAccessManager *net;
+     QNetworkReply *reply;
+
      FourMCQ *fmcq;
      void makeXDPartAux();
      void readXDPartAux();

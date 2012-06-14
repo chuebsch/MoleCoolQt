@@ -12,6 +12,7 @@ CubeGL::CubeGL(QWidget *parent) : QGLWidget(parent) {
    setFormat(QGLFormat(QGL::DoubleBuffer | QGL::DepthBuffer) );
    atomsClickable=true;
    faceCull=0;
+   growIt=false;
    pause = monochrom = false;
    altemitte=V3(0,0,0);
    reSe=false;
@@ -896,6 +897,91 @@ void CubeGL::paintGL() {
 void CubeGL::loadDataBase(){
   QString fileName = QFileDialog::getOpenFileName(this,QString(tr("Open invariom data base.")), "DABA.txt","All files (*)" ,&selectedFilter,QFileDialog::DontUseNativeDialog );
   if (!fileName.isEmpty()){
+    
+    
+    QDateTime zeit=QFileInfo(fileName).lastModified(); 
+    Istda->setText(QString("Data base loaded was modified %1 days ago").arg(zeit.daysTo(QDateTime::currentDateTime ())));
+    QFile daba(fileName);
+    daba.open(QIODevice::ReadOnly);
+
+    DABA entry;
+
+    QString line;
+    int lineCntr=-1;
+    while (!daba.atEnd()){
+      line = QString(daba.readLine(150));
+      if (line.contains(QRegExp("^R-|S-|=-|[3-8]{1,3}-|[A-Z]{1,1}[a-z]{0,1}[123#@]{1,1}"))) {
+        if ((!line.startsWith("KS"))&&(!line.startsWith("!"))) {
+          lineCntr=0;
+          line.remove(QRegExp("[ \n\r]"));
+          dataBase.append(line);
+          }
+      }
+      if ((lineCntr>-1)&&(lineCntr<7)){
+      line.remove(QRegExp("[\n\r]"));
+        QStringList tok=line.split(" ",QString::SkipEmptyParts);
+        switch(lineCntr){
+        case 1: if (tok.size()>9) {
+             entry.m0=tok.at(0).toDouble();
+             entry.m1=tok.at(1).toDouble();
+             entry.d1p=tok.at(2).toDouble();
+             entry.d1m=tok.at(3).toDouble();
+             entry.d0=tok.at(4).toDouble();
+             entry.q0=tok.at(5).toDouble();
+             entry.q1p=tok.at(6).toDouble();
+             entry.q1m=tok.at(7).toDouble();
+             entry.q2p=tok.at(8).toDouble();
+             entry.q2m=tok.at(9).toDouble();
+
+              } break;
+        case 2: if (tok.size()>9) {
+             entry.o0=tok.at(0).toDouble();
+             entry.o1p=tok.at(1).toDouble();
+             entry.o1m=tok.at(2).toDouble();
+             entry.o2p=tok.at(3).toDouble();
+             entry.o2m=tok.at(4).toDouble();
+             entry.o3p=tok.at(5).toDouble();
+             entry.o3m=tok.at(6).toDouble();
+             entry.h0=tok.at(7).toDouble();
+             entry.h1p=tok.at(8).toDouble();
+             entry.h1m=tok.at(9).toDouble();
+
+              } break;
+        case 3: if (tok.size()>5) {
+             entry.h2p=tok.at(0).toDouble();
+             entry.h2m=tok.at(1).toDouble();
+             entry.h3p=tok.at(2).toDouble();
+             entry.h3m=tok.at(3).toDouble();
+             entry.h4p=tok.at(4).toDouble();
+             entry.h4m=tok.at(5).toDouble();
+
+              } break;
+        case 4: entry.Symmetry=tok.at(1).trimmed(); break;
+        case 5: entry.CoordinateSystem=line; break;
+        case 6: line.remove("Kappa=");
+		line.remove(";");
+                tok = line.split("=",QString::SkipEmptyParts);
+                entry.k1=tok.at(0).toDouble();
+                entry.k2=tok.at(1).toDouble();
+                entry.k3=tok.at(2).toDouble();
+                entry.k4=tok.at(3).toDouble();
+                entry.k5=tok.at(4).toDouble();
+                entry.k6=tok.at(5).toDouble();
+                entries.append(entry);
+             break;
+        }
+        lineCntr++;
+      }
+
+    }
+
+  }
+}
+
+void CubeGL::loadDataBase(QString fileName){
+  if (!fileName.isEmpty()){
+    QDateTime zeit=QFileInfo(fileName).lastModified(); 
+    Istda->setText(QString("Data base loaded was modified %1 days ago").arg(zeit.daysTo(QDateTime::currentDateTime ())));
     QFile daba(fileName);
     daba.open(QIODevice::ReadOnly);
     DABA entry;
@@ -3122,6 +3208,10 @@ void CubeGL::toggleMolisoLegendDirection(){
   }
   horizont=!horizont;
   updateGL();
+}
+
+void CubeGL::togglGrow(bool on){
+  growIt=on;
 }
 
 void CubeGL::setMatrix(){
