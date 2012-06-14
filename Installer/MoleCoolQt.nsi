@@ -84,6 +84,7 @@ Section "MoleCoolQt" SecMoleCoolQt
   File ..\release\molecoolQt.exe
   File ..\release\QtCore4.dll
   File ..\release\QtGui4.dll
+  File ..\release\QtNetwork4.dll
   File ..\release\mingwm10.dll 
   File ..\release\libstdc++-6.dll
   File ..\release\libfftw3f-3.dll
@@ -138,7 +139,8 @@ Section "Uninstall"
   ;ADD YOUR OWN FILES HERE...
   Delete "$INSTDIR\molecoolQt.exe"
   Delete "$INSTDIR\QtCore4.dll"  
-  Delete "$INSTDIR\QtGui4.dll"
+  Delete "$INSTDIR\QtGui4.dll"  
+  Delete "$INSTDIR\QtNetwork4.dll"
   Delete "$INSTDIR\mingwm10.dll"	  
   Delete "$INSTDIR\libgcc_s_dw2-1.dll"
   Delete "$INSTDIR\libstdc++-6.dll"
