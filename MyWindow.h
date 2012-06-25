@@ -144,6 +144,7 @@ public slots:
      void filterHydrogens(bool b);
      void filterNonAtoms(bool b);
      void filterThisAtom();
+     void filterGroup(int index);
      void filterThisFragment();
      void filterOtherFragments();
      void textFilterChanged();
@@ -168,7 +169,8 @@ protected:
      void makePDFGrid(INP atom,double proba=50.0,bool c2=true ,bool c3=true,bool c4=true);
     QSlider *legendSize,*strikesSldr,*swidthSldr;
     QCheckBox *zebraBox,*mt;
-    QComboBox *mapSchnitt;
+    QComboBox *mapSchnitt, *chargeGroups;
+    QMap<int,QStringList> ladungsgruppen;
     QDoubleSpinBox *maprad,*fomaps,*difmaps,*f12maps,*weak,*mapprec,*lineTrans,*lineWidth;
     QDialog *md;
     QRadioButton *cullNone,*cullBack,*cullFront;

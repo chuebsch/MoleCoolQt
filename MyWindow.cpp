@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=332;
+int rev=334;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -1107,6 +1107,10 @@ createRenameWgd();
   md->hide();
   }
   /////////////
+  chargeGroups =  new QComboBox(this);
+  connect(chargeGroups,SIGNAL(currentIndexChanged ( int )), this, SLOT(filterGroup(int)));
+  toolView->addWidget(chargeGroups);
+  chargeGroups->hide();
   toolView->setWhatsThis("This is the view tool bar. You can move it to any window border if you want."
                          " By clicking right on the menu or tool bar region, you can toggel the toolbars.");
   settings = new QSettings( QSettings::IniFormat, QSettings::UserScope ,"Christian_B._Huebschle","MoleCoolQt" );
@@ -1320,6 +1324,11 @@ createRenameWgd();
 
   }
   net = new QNetworkAccessManager(this);
+  QString Pfad = settings->fileName();
+  Pfad=Pfad.section('/',0,-2);
+  Pfad.append("DABA.txt");
+  if (QFileInfo(Pfad).exists()) cubeGL->loadDataBase(Pfad);
+
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3236,6 +3245,7 @@ void MyWindow::replyFinished2(QNetworkReply* antwort){
   disconnect(net,SIGNAL(finished(QNetworkReply*)),0,0);
 }
 //$filename="/user/birger/NEUE_Datenbank/ToolZ/DABA.txt";
+//
 void MyWindow::load_xdres(QString fileName) {
   INP newAtom;
   newAtom.part=0;
@@ -3292,6 +3302,29 @@ void MyWindow::load_xdres(QString fileName) {
     }
   }
   sfacBox->setFixedSize((atypen.size()+1)*52,70);
+  rewind(mas);
+  chargeGroups->clear();
+  chargeGroups->addItem("Charge Group 1 (all)",0);
+  chargeGroups->hide();
+  while (!feof(mas)) {
+    egal=fscanf(mas,"%[^\n\r]\n\r",line);
+    char ll[122],*tok;
+    sscanf(line,"%[^!]",ll);  
+    if (
+    (strstr(ll,"GROUP")!=NULL)&&(line[0]=='G')&&(line[5]>47)&&(line[5]<59)){
+      int gnr=0;
+      sscanf(ll,"GROUP%d ",&gnr);
+      chargeGroups->show();
+      if (chargeGroups->findData(gnr)==-1) chargeGroups->addItem(QString("Charge Group %1").arg(gnr),gnr);
+      for (tok=strtok(ll, " "); tok; tok=strtok(NULL, " ")) {
+	if (strstr(tok,"GROUP")==NULL)
+//	  printf("%d->%s<-\n",gnr,tok);
+	ladungsgruppen[gnr].append(tok);
+      }
+      //printf("==>%s<== %c %d %d \n",gns,ll[5],(line[5]>47),(line[5]<59));
+    }
+    
+  }
   fclose(mas);
   }
   FILE *adp;
@@ -5188,6 +5221,36 @@ void MyWindow::filterXD(){
   cubeGL->updateGL();
 }
 
+void MyWindow::filterGroup(int index){
+  if (!index) {
+    unFilter();
+  return;
+  }
+  unfilterAct->setVisible(true);
+  if (!filtered){
+    oxd.clear();
+    oxd = xdinp;
+  }
+  else xdinp = oxd;
+int idx=chargeGroups->itemData(index).toInt();
+  QList<INP> fltrXdinp;
+  for (int i=0;i<xdinp.size();i++){
+    if (ladungsgruppen[idx].contains(xdinp[i].atomname)) {
+      fltrXdinp.append(xdinp[i]);
+//      printf("%d %d %s\n",index,i,xdinp[i].atomname);
+    }
+  }
+  xdinp.clear();
+  xdinp=fltrXdinp;
+  mol.bonds_made=0;
+  mol.knopf_made=0;
+  initLists( fltrXdinp);
+  filtered=1;
+  update();
+  cubeGL->updateGL();
+
+}
+
 void MyWindow::filterHydrogens(bool b){
   if (b) {
     unFilter();
@@ -5269,15 +5332,17 @@ void MyWindow::filterThisFragment(){
     if (!filtered){
       oxd=xdinp;
     }
-    double laen,SUCHRAD;
+    //double laen,SUCHRAD;
     QList<INP> mussweg;
     QList<int> mwi;
+    int fragment=xdinp[cubeGL->expandatom].molindex;
+    printf("Filter Wochen\n");
     mussweg.append(xdinp[cubeGL->expandatom]);
     mwi.append(cubeGL->expandatom);
     for (int j=0; j<mussweg.size();j++){
       for (int i=0;i<xdinp.size();i++){
 	if (mwi.contains(i)) continue;
-	laen=fl( 
+/*	laen=fl( 
 			xdinp[i].frac.x-mussweg[j].frac.x, 
 			xdinp[i].frac.y-mussweg[j].frac.y, 
 			xdinp[i].frac.z-mussweg[j].frac.z);
@@ -5285,8 +5350,11 @@ void MyWindow::filterThisFragment(){
 				mol.Kovalenz_Radien[xdinp[i].OrdZahl]+ 
 				mol.Kovalenz_Radien[mussweg[j].OrdZahl]) -
 			(0.08*fabs((double)mol.ElNeg[xdinp[i].OrdZahl] -mol.ElNeg[mussweg[j].OrdZahl])))*0.012;
-	if ((laen>0.2)&&(laen<SUCHRAD)){
-	  mussweg.append(xdinp[i]);
+	if ((laen>0.2)&&(laen<SUCHRAD))*/
+	if (fragment==xdinp[i].molindex)
+	{
+
+	 // mussweg.append(xdinp[i]);
 	  mwi.append(i);
 	}
       }
@@ -6207,8 +6275,24 @@ void MyWindow::SDM(QStringList &brauchSymm,int packart){
       &&(asymmUnit[sdmItem.a1].part>-1)&&(asymmUnit[sdmItem.a2].part>-1))
 	dddd=(mol.Kovalenz_Radien[asymmUnit[sdmItem.a1].OrdZahl]+ mol.Kovalenz_Radien[asymmUnit[sdmItem.a2].OrdZahl])*0.012;
       else dddd=0;
+      if ((asymmUnit[sdmItem.a1].part!=0)&&(asymmUnit[sdmItem.a2].part!=0)&&(asymmUnit[sdmItem.a1].part!=asymmUnit[sdmItem.a2].part))
+	dddd=0;
+      if ((dddd>sdmItem.d)&(asymmUnit[sdmItem.a1].OrdZahl==0)&&(asymmUnit[sdmItem.a2].OrdZahl==0)) {
+/*	printf("%s==%s %d %d %g (%g)\n",
+			asymmUnit[sdmItem.a1].atomname, 
+			asymmUnit[sdmItem.a2].atomname ,
+			asymmUnit[sdmItem.a1].part, 
+			asymmUnit[sdmItem.a2].part,sdmItem.d,dddd);// */
+	dddd=0;
+      }
+
       if (sdmItem.d<dddd){
 	sdmItem.covalent=true;
+/*	if  (sdmItem.sn) printf("%s==%s %d %d %g (%g) \n",
+			asymmUnit[sdmItem.a1].atomname, 
+			asymmUnit[sdmItem.a2].atomname ,
+			asymmUnit[sdmItem.a1].part, 
+			asymmUnit[sdmItem.a2].part,sdmItem.d,dddd);// */
       }else sdmItem.covalent=false;
       sdm.append(sdmItem);
     } 
@@ -6249,7 +6333,8 @@ void MyWindow::SDM(QStringList &brauchSymm,int packart){
 	if ((n==0)&&(V3(0,0,0)==floorD)) continue;
 	dk=fl(dp.x,dp.y,dp.z);
 	dddd=(sdm.at(k).d+0.02);
-	if ( (dk>0.01)&&(dddd>=dk)) {
+	if ((dk>0.01)&&(dddd>=dk)) {
+//	  printf("n=%d dk%g %g %s %s \n",n,dk,dddd, asymmUnit[sdm.at(k).a1].atomname,asymmUnit[sdm.at(k).a2].atomname);
 	  bs=QString("%1_%2%3%4:%5,").arg(n+1).arg(5-(int)floorD.x).arg(5-(int)floorD.y).arg(5-(int)floorD.z).arg(asymmUnit[sdm.at(k).a1].molindex);
 	  if  (!brauchSymm.contains(bs)) {
 	    brauchSymm.append(bs);
@@ -6301,6 +6386,7 @@ void MyWindow::growSymm(int packart,int packatom){
   }
   if (!george) makeXDPartAux();
   xdinp=asymmUnit;
+//  if (!packart) for (int i=0; i<xdinp.size(); i++) printf("%-9s -->%d<-- %d %d \n",xdinp.at(i).atomname,xdinp.at(i).molindex-asymmUnit.at(i).molindex,xdinp.at(i).molindex,asymmUnit.at(i).molindex);
   INP newAtom;  
   newAtom.sg=1;
   infoKanalNews("Used Symmetry:");
@@ -6334,8 +6420,8 @@ void MyWindow::growSymm(int packart,int packatom){
 	  if ((asymmUnit[i].molindex==symmgroup)&&(asymmUnit[i].OrdZahl>-1)) newAtom.frac=mol.zelle.symmops[s]*asymmUnit[i].frac+mol.zelle.trans.at(s)+V3(h,k,l);
 	  sprintf(newAtom.atomname,"%s_%d",asymmUnit[i].atomname,j+1);
 	  newAtom.sg=1+j;
-	  newAtom.OrdZahl=asymmUnit[i].OrdZahl;	  
-	  newAtom.molindex=asymmUnit[i].molindex;
+	  newAtom.OrdZahl = asymmUnit[i].OrdZahl;	  
+	  newAtom.molindex = asymmUnit[i].molindex;
 	  if ((asymmUnit[i].u.m12==0.0)&&(asymmUnit[i].u.m23==0.0)&&(asymmUnit[i].u.m13==0.0)){
 	    newAtom.u.m11=newAtom.u.m22=newAtom.u.m33=asymmUnit[i].uf.m11;
 	    newAtom.u.m12=newAtom.u.m13=newAtom.u.m23=newAtom.u.m21=newAtom.u.m31=newAtom.u.m32=0.0;}

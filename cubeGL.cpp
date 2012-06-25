@@ -1079,6 +1079,7 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
   double nahda=200.0,da=0;
   int nahdai=-1;
   extern QList<INP> xdinp;
+  //for (int i=0; i<xdinp.size(); i++) printf("%-9s -->%d<--\n",xdinp.at(i).atomname,xdinp.at(i).molindex);
   for (int j=0; j<xdinp.size();j++){
     da=(((xdinp.at(j).screenX-event->x())*( xdinp.at(j).screenX-event->x()))+ 
 		    ((xdinp.at(j).screenY-event->y())*( xdinp.at(j).screenY-event->y())));
@@ -1189,7 +1190,7 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 
 
 	  }else {
-	    emit bigmessage(QString("Geometry:<table><tr><td><b>%1</b> clicked.</td><td align=\"left\"></td></tr><tr><td><b>%2--%3</b></td><td align=\"left\">%4 &Aring;</td></tr><tr><td><b>%5--%6--%7</b></td><td align=\"left\">%8&deg;</td></tr><tr><td><b>%9--%10--%11--%12 </b></td><td align=\"left\">%13&deg;</td></tr><tr><td>PART</td><td align=\"left\">%14</td></tr><table>")
+	    emit bigmessage(QString("Geometry:<table><tr><td><b>%1</b> clicked.</td><td align=\"left\"></td></tr><tr><td><b>%2--%3</b></td><td align=\"left\">%4 &Aring;</td></tr><tr><td><b>%5--%6--%7</b></td><td align=\"left\">%8&deg;</td></tr><tr><td><b>%9--%10--%11--%12 </b></td><td align=\"left\">%13&deg;</td></tr><tr><td>PART</td><td align=\"left\">%15</td></tr> <tr><td>Fragment</td><td align=\"left\">%14</td></tr><table>")
 			    .arg((xdinp[index].atomname))                         //1
 			    .arg((xdinp[index].atomname))			        //2
 			    .arg((xdinp[p].atomname))						//3
@@ -1203,6 +1204,7 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 			    .arg((xdinp[p].atomname))			                        //11
 			    .arg((xdinp[index].atomname))			        //12
 			    .arg(dw,0,'f',3)
+			    .arg(xdinp[index].molindex)
 			    .arg(xdinp[index].part));
 	  }
 	  ppp=pp;
