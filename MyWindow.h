@@ -63,7 +63,7 @@ public:
      QToolBar *toolSettings;
      QToolBar *toolFile;
      QToolBar *toolMove;
-     QToolBar *toolView;
+     QToolBar *toolView, *searchBar;
      QSettings *settings;
      QTimer *idl;
      QAction *ydlStartAct;
@@ -92,6 +92,10 @@ public slots:
      void resinp();
      void xdprop();
      void xdlsm();
+     void hideSearchAtomButton(bool b){
+     searchAtomButton->setVisible(!b);
+     }
+     void findAtoms();
      void editAtomColor();
      void openFile();
      void openDipoleFile();
@@ -196,6 +200,8 @@ protected:
      QTreeView * proxyView;
      QLineEdit *fromEdit,*toEdit,*regExpEdit;
      QDoubleValidator *qv;
+     QLineEdit *searchAtomEdit;
+     QAction *searchAtomButton, *searchAtomCancel;
      QDialog *sfdlg;
      QDialog *packdlg;
      int maxResi,filtered;

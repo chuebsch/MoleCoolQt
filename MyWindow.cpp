@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=336;
+int rev=337;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -1109,8 +1109,25 @@ createRenameWgd();
   /////////////
   chargeGroups =  new QComboBox(this);
   connect(chargeGroups,SIGNAL(currentIndexChanged ( int )), this, SLOT(filterGroup(int)));
+  chargeGroups->addItem("Charge Group 1 (all)",0);
   toolView->addWidget(chargeGroups);
-  chargeGroups->hide();
+  
+  searchBar = addToolBar(tr("Search"));
+  searchBar->setIconSize(QSize(23,23));
+  searchBar->setMovable(true);
+  searchAtomEdit = new QLineEdit(this);
+  searchAtomEdit->setMaxLength(20);
+  searchAtomCancel = searchBar->addAction(QIcon(":/images/cancel.png"),"hide Search", searchBar , SLOT(hide())); 
+
+  searchBar->addWidget(searchAtomEdit);
+  searchBar->addAction(QIcon(":/images/search.png"),"search",this,SLOT(findAtoms()));
+  connect(searchAtomEdit,SIGNAL(returnPressed ()),this,SLOT(findAtoms())); 
+  searchAtomButton = toolView->addAction(QIcon(":/images/search.png"),"Search",searchBar,SLOT(show()));
+
+  searchBar->hide(); 
+  connect(searchBar,SIGNAL(visibilityChanged(bool )),this,SLOT(hideSearchAtomButton(bool )));
+  chargeGroups->setVisible(false);
+  chargeGroups->setEnabled(false);
   toolView->setWhatsThis("This is the view tool bar. You can move it to any window border if you want."
                          " By clicking right on the menu or tool bar region, you can toggel the toolbars.");
   settings = new QSettings( QSettings::IniFormat, QSettings::UserScope ,"Christian_B._Huebschle","MoleCoolQt" );
@@ -1691,6 +1708,17 @@ void MyWindow::renamUpdate(bool vis){
 //    printf("sollte\n");
   }//else {     printf("sollte nicht\n");   }
 
+}
+
+void MyWindow::findAtoms(){
+  cubeGL->disSelection();
+  QString find = searchAtomEdit->text();
+  for (int i=0; i<xdinp.size();i++){
+    if (find == QString(xdinp.at(i).atomname)) cubeGL->selectedAtoms.append(xdinp.at(i));
+  }  
+  cubeGL->centerSelection->setChecked ( true);
+  cubeGL->updateBondActions();
+  cubeGL->updateGL();
 }
 
 void MyWindow::genMoliso() {
@@ -3305,7 +3333,8 @@ void MyWindow::load_xdres(QString fileName) {
   rewind(mas);
   chargeGroups->clear();
   chargeGroups->addItem("Charge Group 1 (all)",0);
-  chargeGroups->hide();
+  chargeGroups->setVisible(false);
+  chargeGroups->setEnabled(false);
   while (!feof(mas)) {
     egal=fscanf(mas,"%[^\n\r]\n\r",line);
     char ll[122],*tok;
@@ -3314,7 +3343,9 @@ void MyWindow::load_xdres(QString fileName) {
     (strstr(ll,"GROUP")!=NULL)&&(line[0]=='G')&&(line[5]>47)&&(line[5]<59)){
       int gnr=0;
       sscanf(ll,"GROUP%d ",&gnr);
-      chargeGroups->show();
+      chargeGroups->setVisible(true);
+      chargeGroups->setMaxVisibleItems(20);
+      chargeGroups->setEnabled(true);
       if (chargeGroups->findData(gnr)==-1) chargeGroups->addItem(QString("Charge Group %1").arg(gnr),gnr);
       for (tok=strtok(ll, " "); tok; tok=strtok(NULL, " ")) {
 	if (strstr(tok,"GROUP")==NULL)
@@ -3594,7 +3625,8 @@ dummax=smx-atmax;
     if ((asymmUnit[i].uf.m22==0.0)&&(asymmUnit[i].uf.m33==0.0)){
       //printf("%-8s \n",asymmUnit[i].atomname);
       asymmUnit[i].u.m11=asymmUnit[i].u.m22=asymmUnit[i].u.m33=asymmUnit[i].uf.m11;
-      asymmUnit[i].u.m12=asymmUnit[i].u.m13=asymmUnit[i].u.m23=asymmUnit[i].u.m21=asymmUnit[i].u.m31=asymmUnit[i].u.m32=0.0;}
+      asymmUnit[i].u.m12=asymmUnit[i].u.m13=asymmUnit[i].u.m23=asymmUnit[i].u.m21=asymmUnit[i].u.m31=asymmUnit[i].u.m32=0.0;
+    }
     else {
 
       Uf2Uo(asymmUnit[i].uf,asymmUnit[i].u);
@@ -5674,6 +5706,12 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
       load_MoPro(fileName);
   }
   updateStatusBar();
+  QStringList aSymmList;
+  for (int i=0;i<asymmUnit.size();i++) {
+    aSymmList.append(asymmUnit.at(i).atomname);
+  }
+  QCompleter *cc = new QCompleter(aSymmList,this);
+  searchAtomEdit->setCompleter(cc);
   statusBar()->showMessage(tr("File succesfully loaded.") );
   // Zuletzt geffnete File setzen
   settings->beginGroup("Version 0.1");
