@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=339;
+int rev=340;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -1293,6 +1293,7 @@ createRenameWgd();
   connect(cubeGL,SIGNAL(bigmessage(const QString&)),this,SLOT(infoKanalNews(const QString&)));
   connect(fmcq,SIGNAL(bigmessage(const QString&)),this,SLOT(infoKanalNews(const QString&)));
   setWindowTitle(QString("MoleCoolQt-Revision %1 ").arg(rev));
+  fastrun=false;
   int argc=QCoreApplication::arguments().size();
   if (argc>1){
     cubeGL->updateGL();
@@ -1314,6 +1315,12 @@ createRenameWgd();
       if (QCoreApplication::arguments().at(i).contains("-GrowDist")) {
 	i++;	
 	if (i<=argc) gd=QCoreApplication::arguments().at(i).toDouble(); else gd=-1;
+      }
+      if (QCoreApplication::arguments().at(i).contains("-f")){
+//	**33##
+	fmcq->doMaps->setChecked(false); 
+	donTGrow->setChecked(true);
+	fastrun=true;
       }
       if (QCoreApplication::arguments().at(i).contains("-pdf")){
       i++;
@@ -3367,7 +3374,7 @@ void MyWindow::load_xdres(QString fileName) {
   mol.initDir();
   if ((adp=fopen(fileName.toLocal8Bit(),"r"))==NULL) {QMessageBox::critical(this,"Read Error!",QString("read error %1!").arg(fileName),QMessageBox::Ok);exit(2);}  
   i=0;
-  cubeGL->drawAx=true;
+  if (!fastrun) cubeGL->drawAx=true;
   while ((!feof(adp))&&(NULL==strstr(line,"Revision"))) {
     egal=fscanf(adp,"%[^\n\r]\n\r",line);
  }
@@ -6803,7 +6810,7 @@ void MyWindow::growSymm(int packart,int packatom){
     mol.nListe=0;
   }
 
-  if (!fck) mol.findChains(xdinp);
+  if ((!fck)&&(!fastrun)) mol.findChains(xdinp);
   if (mol.nListe>2) {
     mol.vL=mol.smoothPoints(mol.vL,mol.nListe);
     mol.vL=mol.smoothPoints(mol.vL,mol.nListe);

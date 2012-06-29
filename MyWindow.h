@@ -233,6 +233,7 @@ protected:
      QLabel *nextNameL;
      QString labelPSE,labelSuffix,nextLabel;
      int labelIndex;
+     bool fastrun;
      QGroupBox *sfacBox;
      QSignalMapper *dsm;
      QRadioButton *pserbt[110];
