@@ -3569,7 +3569,32 @@ infoKanal->setHtml(QString("%1<font color=green>reading of xd_fft.out is done.</
   smx+=ffix;
   if (fft) fclose(fft);
   }
+  {//xd_bubble.spf
+    QString spfName=masName;
+    spfName.chop(6);
+    spfName.append("xd_bubble.spf");
+    QFile spff(spfName);
+    spff.open(QIODevice::ReadOnly|QIODevice::Text);
+    QStringList spfs=QString(spff.readAll()).split('\n');
+    for (int i=0; i<spfs.size(); i++){
+      if (spfs.at(i).startsWith("Or")){
+	QStringList ss=spfs.at(i).split(QRegExp("\\s+"));
+	if (ss.size()>3){
+	  newAtom.kart.x = ss.at(1).toDouble();
+	  newAtom.kart.y = ss.at(2).toDouble();
+	  newAtom.kart.z = ss.at(3).toDouble();
+	  strcpy(newAtom.atomname,ss.at(0).toLatin1());
+	  newAtom.OrdZahl=-2;
+	  mol.kart2frac(newAtom.kart,newAtom.frac);
+	  asymmUnit.append(newAtom);
+	}
+      }
 
+    }
+
+
+  
+  }
   {//xd_rho.cps   
     QString cpsName=masName;
     cpsName.chop(6);

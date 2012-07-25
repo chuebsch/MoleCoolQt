@@ -1084,6 +1084,7 @@ void molekul::atoms(QList<INP> xdinp,const int proba){//ADP Schwingungsellipsoid
 	if (xdinp[j].atomname[0]=='H') glColor3f(0.5,0.0,0.0);
 	if (xdinp[j].atomname[0]=='P') glColor3f(0.0,0.0,0.6);
 	if (xdinp[j].atomname[0]=='C') glColor3f(0.0,0.3,0.1);
+	if (xdinp[j].atomname[0]=='O') glColor3f(0.0,0.3,0.1);
 	if (xdinp[j].atomname[0]=='Q') {
 	 Farbverlauf(xdinp[j].peakHeight,pmin,pmax);
 	 }
