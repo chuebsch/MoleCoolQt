@@ -1,0 +1,10 @@
+      [Desktop Entry]
+      Name=MoleCoolQt
+      Comment=MoleCoolQt - a molecule viewer for charge-density research
+      GenericName=MoleCoolQt
+      Exec=molecoolqt
+      Icon=molecoolqt
+      Terminal=false
+      Categories=Qt;Science;Chemistry;Physics;Education
+      Type=Application
+

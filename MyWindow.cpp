@@ -11,7 +11,11 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
+<<<<<<< .mine
+int rev=344;
+=======
 int rev=343;
+>>>>>>> .r343
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;

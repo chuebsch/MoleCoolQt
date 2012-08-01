@@ -3,7 +3,7 @@
 ######################################################################
 
 TEMPLATE = app
-TARGET = molecoolQt
+TARGET = molecoolqt
 DEPENDPATH += .
 INCLUDEPATH += . 
 QT += opengl
@@ -12,6 +12,14 @@ win32: RC_FILE =molecoolQt.rc
 mac {
 ICON = molecoolQt.icns
 }
+target.path = /usr/bin
+INSTALLS += target
+icon.path = /usr/share/pixmaps
+icon.files = molecoolqt.png
+INSTALLS += icon
+desktop.path = /usr/share/applications
+desktop.files = molecoolqt.desktop
+INSTALLS += desktop
 
 QMAKE_CXXFLAGS += -fopenmp
 LIBS += -lfftw3f -fopenmp
