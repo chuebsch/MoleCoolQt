@@ -4,6 +4,7 @@
 #include <QFile>
 #include <QVector>
 #include <QtOpenGL>
+#include <QtGui>
 #include <math.h>
 
 struct Vector3 {
@@ -99,7 +100,10 @@ struct Node {
   unsigned char flag; 
   inline operator unsigned char (){return flag;}
 };
-class MolIso{
+class MolIso:public QWidget{
+Q_OBJECT
+signals:
+  void bigmessage(const QString &);
  private:
   bool cubeiso,cubemap;
   int atomanzahl;

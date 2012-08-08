@@ -131,7 +131,7 @@ void MolIso::loadMI(QString fname){
     balken->setMinimum(0);
     balken->setMaximum(lines[0].toInt()*7);
     balken->show();
-    double dm=0,ds=0,sigma=0,dmp=0,dmm=0,dsp=0,dsm=0,sigmap=0,sigmam=0,api;
+    double dm=0,ds=0,sigma=0,dmp=0,dmm=0,dsp=0,dsm=0,sigmap=0,sigmam=0,api;//,potsigplus=0,potsigminus=0;
     int np=0,nm=0;
     for (int i = 1; i <= lines[0].toInt();i++){
       QStringList tok = lines[i].split(' ',QString::SkipEmptyParts);
@@ -164,31 +164,47 @@ void MolIso::loadMI(QString fname){
 	orte.append(v);
       }
     }
-    ds/=fmax(np+nm,1);;
-    dm/=fmax(np+nm,1);;
-    dmp/=fmax(np,1);
-    dsp/=fmax(np,1);
-    dmm/=fmax(nm,1);
-    dsm/=fmax(nm,1);
+    ds/=fmax(np+nm,1.0);;
+    dm/=fmax(np+nm,1.0);;
+    dmp/=fmax(np,1.0);
+    dsp/=fmax(np,1.0);
+    dmm/=fmax(nm,1.0);
+    dsm/=fmax(nm,1.0);
 
     sigma=(ds-(dm*dm));
     sigmap=(dsp-(dmp*dmp));
     sigmam=(dsm-(dmm*dmm));
     api=0;
     for (int i=0; i< orte.size(); i++){
-       api+=fabs(orte.at(i).color-dmm);    
+//        if (orte.at(i).color>0) potsigplus+=pow(orte.at(i).color-dm,2);
+//        else potsigminus+=pow(orte.at(i).color-dm,2);
+       api+=fabs(orte.at(i).color-dm);
     }
-    api/=np+nm;
-    printf("\nAvarage of positive surface values VS+= %f\nAvarage of negative surface values VS-= %f\nsigma square + = %f\nsigma square - = %f\n%f %f n+ %d n- %d\n%g  \n"
-		    ,dmp
-		    ,dmm
-		    ,sigmap
-		    ,sigmam
-		    ,sigmam+sigmap
-		    ,sigma
-		    ,np,nm
-		    ,api);
-
+    //potsigminus/=fmax(nm,1);
+    //potsigplus/=fmax(np,1);
+    api/=fmax(np+nm,1);
+    emit bigmessage(QString(
+                        "Avarage of positive surface values VS+= <b>%1</b><br>"
+                        "Avarage of negative surface values VS-= <b>%2</b><br>"
+                        "Avarage deviation from the avarage surface value &Pi; = <b>%10</b><br>"
+                        "&sigma;<sup>2</sup><sub>+</sub> = <b>%3</b><br>"
+                        "&sigma;<sup>2</sup><sub>-</sub> = <b>%4</b><br>"
+                        "&sigma;<sup>2</sup><sub>tot</sub> = <b>%5</b><br>"
+                        "&sigma; = <b>%6</b><br>n+ = <b>%7</b><br>n- = <b>%9</b><br>"
+                        "&nu; = <b>%11</b><br> Please see: <br>"
+                        "Politzer, P., Murray, J. S., Peralta-Inga, Z.,<br>"
+                        "<em>Int. J. Quantum. Chem.</em> <b>85</b> (2001), 676-684.<br>for details.")
+                    .arg(dmp,0,'f',3)
+            .arg(dmm,0,'f',3)
+            .arg(sigmap,0,'f',4)
+            .arg(sigmam,0,'f',4)
+            .arg(sigmam+sigmap,0,'f',4)
+            .arg(sigma,0,'f',4)
+            .arg(np)
+            .arg(nm)
+            .arg(api,0,'f',3)
+                    .arg(sigmap*sigmam/((sigmam+sigmap)*(sigmam+sigmap))));
+//    printf("\nAvarage of positive surface values VS+= %f\nAvarage of negative surface values VS-= %f\nsigma square + = %f\nsigma square - = %f\n%f %f n+ %d n- %d\n%g  \n"
     /*potnu=potsigplus*potsigminus/(potsigtot*potsigtot);
       printf("\nAvarage of positive surface values VS+= %f %s\n Avarage of negative surface values VS-= %f %s\n Avarage deviation from the avarage surface value PI= %f %s\n sigma square + = %f (%s)^2\n sigma square - = %f (%s)^2\n sigma square total = %f (%s)^2\n nu = %f \n\n",
       avpotplus,lul,avpotminus,lul,avdevPI,lul,potsigplus,lul,potsigminus,lul,potsigtot,lul,potnu);*/

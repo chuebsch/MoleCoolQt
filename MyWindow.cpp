@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=346;
+int rev=347;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -1745,6 +1745,7 @@ void MyWindow::genMoliso() {
     cubeGL->moliso=NULL;
   }
   cubeGL->moliso = new MolIso();
+  connect(cubeGL->moliso,SIGNAL(bigmessage(const QString &)),this,SLOT(infoKanalNews(const QString&)));
   cubeGL->moliso->L=cubeGL->L;
   cubeGL->moliso->orig=Vector3(0.0,0.0,0.0);
   QString isof,mapf,lfaceFile,sfaceFile,adpName;
@@ -1764,8 +1765,8 @@ void MyWindow::genMoliso() {
     return;
   }
   GradDlg *grdlg = new GradDlg(cubeGL->moliso );
-  dock->hide();
-  dock2->hide();
+  //dock->hide();
+  //dock2->hide();
  // cubeGL->setVisible(false);
   if (grdlg->exec()!=QDialog::Accepted){
       cubeGL->setVisible ( true );
@@ -1938,8 +1939,8 @@ void MyWindow::genMoliso() {
   mildir->setChecked ( true  );
   mildir->setVisible(true);
   setCursor(Qt::ArrowCursor);
-  dock->hide();
-  dock2->hide();
+  //dock->hide();
+  //dock2->hide();
   cubeGL->setVisible ( true );
   cubeGL->updateGL();
   QMainWindow::tabifyDockWidget (dock2,dock3);
@@ -3268,7 +3269,7 @@ void MyWindow::replyFinished2(QNetworkReply* antwort){
   //
   QString Pfad = settings->fileName();
   Pfad=Pfad.section('/',0,-2);
-  Pfad.append("DABA.txt");
+  Pfad.append("/DABA.txt");
   QFile base(Pfad);
   if (base.open(QIODevice::WriteOnly | QIODevice::Text)){
     base.write(a.toLatin1());
