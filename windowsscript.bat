@@ -1,5 +1,8 @@
-set QTDIR=C:\QtSdk\desktop\Qt\4.7.4
-set PATH=C:\\QtSdk\desktop\Qt\4.7.4\mingw\bin
+REM set QTDIR=C:\QtSdk\desktop\Qt\4.7.4
+REM set PATH=C:\QtSdk\desktop\Qt\4.7.4\mingw\bin
+set QTDIR=C:\QtSdk\desktop\Qt\4.8.0
+set PATH=C:\\QtSdk\desktop\Qt\4.8.0\mingw\bin
+
 set PATH=%PATH%;C:\mingw\bin
 set PATH=%PATH%;%SystemRoot%\System32
 set QMAKESPEC=win32-g++
