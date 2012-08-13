@@ -184,16 +184,16 @@ void MolIso::loadMI(QString fname){
     //potsigplus/=fmax(np,1);
     api/=fmax(np+nm,1);
     emit bigmessage(QString(
-                        "Avarage of positive surface values VS+= <b>%1</b><br>"
-                        "Avarage of negative surface values VS-= <b>%2</b><br>"
+                        "Avarage of positive surface values V<sub>S</sub><sup>+</sup><sub>av.</sub> = <b>%1</b><br>"
+                        "Avarage of negative surface values V<sub>S</sub><sup>-</sup><sub>av.</sub> = <b>%2</b><br>"
                         "Avarage deviation from the avarage surface value &Pi; = <b>%10</b><br>"
-                        "&sigma;<sup>2</sup><sub>+</sub> = <b>%3</b><br>"
-                        "&sigma;<sup>2</sup><sub>-</sub> = <b>%4</b><br>"
-                        "&sigma;<sup>2</sup><sub>tot</sub> = <b>%5</b><br>"
-                        "&sigma; = <b>%6</b><br>n+ = <b>%7</b><br>n- = <b>%9</b><br>"
-                        "&nu; = <b>%11</b><br> Please see: <br>"
+                        "&sigma;<sup>2</sup><sub>+</sub> = &sum; (V<sub>S</sub><sup>+</sup> - V<sub>S</sub><sup>+</sup><sub>av.</sub>)<sup>2</sup> = <b>%3</b><br>"
+                        "&sigma;<sup>2</sup><sub>-</sub> = &sum; (V<sub>S</sub><sup>-</sup> - V<sub>S</sub><sup>-</sup><sub>av.</sub>)<sup>2</sup> = <b>%4</b><br>"
+                        "&sigma;<sup>2</sup><sub>tot</sub> = &sigma;<sup>2</sup><sub>+</sub> + &sigma;<sup>2</sup><sub>-</sub> = <b>%5</b><br>"
+                        "&sigma;<sup>2</sup> = &sum; (V<sub>S</sub> - V<sub>Sav.</sub>)<sup>2</sup> = <b>%6</b><br>n+ = <b>%7</b><br>n- = <b>%9</b><br>"
+                        "&nu; = (&sigma;<sup>2</sup><sub>+</sub>&sdot;&sigma;<sup>2</sup><sub>-</sub>)/(&sigma;<sup>2</sup><sub>tot</sub>)<sup>2</sup> = <b>%11</b><br>Please see: <br>"
                         "Politzer, P., Murray, J. S., Peralta-Inga, Z.,<br>"
-                        "<em>Int. J. Quantum. Chem.</em> <b>85</b> (2001), 676-684.<br>for details.")
+                        "<em>Int. J. Quantum. Chem.</em> <b>85</b> (2001), 676-684.<br>for details about these numbers.")
                     .arg(dmp,0,'f',3)
             .arg(dmm,0,'f',3)
             .arg(sigmap,0,'f',4)
