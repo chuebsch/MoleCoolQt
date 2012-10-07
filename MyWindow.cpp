@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=349;
+int rev=350;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -4608,6 +4608,7 @@ double MyWindow::ueq(const Matrix m){//1111
 }
 
 void MyWindow::pdbOutput(){
+  QMap<double,INP> xdpdb;
   QString selectedFilter="Protein-Data-Base file (*.pdb)";
   QString fileName = QFileDialog::getSaveFileName(this,
   QString("try to export a PDB file"), saveName,"Protein-Data-Base file (*.pdb)",&selectedFilter,QFileDialog::DontUseNativeDialog );
@@ -4651,44 +4652,54 @@ pdb.write(QString("CRYST1%1%2%3%4%5%6           \n")
 		  .arg(u.m32,10,'f',6)
 		  .arg(u.m33,10,'f',6)
 		  .toLatin1());
+  QMap<int,QString> parts;
+  int x=10;
   for (int i=0; i<asymmUnit.size();i++){
-    if (asymmUnit[i].OrdZahl<0) continue;
-    mol.frac2kart(asymmUnit[i].frac,asymmUnit[i].kart);
-    QString enam=asymmUnit.at(i).shortname;
-    pdb.write(QString("ATOM  %1  %2%3%4 %5%6%7   %8%9%10%11%12           %13\n")
+      xdpdb.insertMulti(asymmUnit.at(i).resiNr*asymmUnit.size()*10+i/10.0,asymmUnit.at(i));
+      if (asymmUnit.at(i).part){
+          if (!parts.contains(asymmUnit.at(i).part))
+          parts.insertMulti(asymmUnit.at(i).part,QString::number(x++,36).toUpper());
+      if (x>35) qDebug()<<"to many different parts!";
+      }
+  }
+  QList<INP> AsymmUnit=xdpdb.values();
+      for (int i=0; i<AsymmUnit.size();i++){
+    if (AsymmUnit[i].OrdZahl<0) continue;
+    mol.frac2kart(AsymmUnit[i].frac,AsymmUnit[i].kart);
+    QString enam=AsymmUnit.at(i).shortname;
+    enam.truncate(4);
+    pdb.write(QString("ATOM  %1 %2%3%4 %5%6%7   %8%9%10%11%12           %13\n")
 		    .arg(i+1,5)
-		    .arg(enam,-3)
-		    .arg((asymmUnit.at(i).part)?((asymmUnit.at(i).part>0)?QChar(asymmUnit.at(i).part+'A'):QChar( -asymmUnit.at(i).part+'A')):QChar(' '),1)
-		   .arg(asymmUnit.at(i).ami3,3)
+            .arg(enam,-4)
+            .arg((AsymmUnit.at(i).part)?parts.value(AsymmUnit.at(i).part):QChar(' '),1)
+           .arg(AsymmUnit.at(i).ami3,3)
 		   .arg(" ") //chain id
-		   .arg(asymmUnit.at(i).resiNr,4)
+           .arg(AsymmUnit.at(i).resiNr,4)
 		   .arg(" ")
-		   .arg(asymmUnit.at(i).kart.x,8,'f',3)
-		   .arg(asymmUnit.at(i).kart.y,8,'f',3)
-		   .arg(asymmUnit.at(i).kart.z,8,'f',3)
-		   .arg(asymmUnit.at(i).amul,6,'f',3)
-		   .arg(ueq(asymmUnit.at(i).u)*8*M_PI*M_PI,6,'f',2)
-		   .arg(mol.pse(asymmUnit.at(i).OrdZahl))
-
+           .arg(AsymmUnit.at(i).kart.x,8,'f',3)
+           .arg(AsymmUnit.at(i).kart.y,8,'f',3)
+           .arg(AsymmUnit.at(i).kart.z,8,'f',3)
+           .arg(AsymmUnit.at(i).amul,6,'f',3)
+           .arg(ueq(AsymmUnit.at(i).u)*8*M_PI*M_PI,6,'f',2)
+           .arg(mol.pse(AsymmUnit.at(i).OrdZahl))
 		  .toLatin1());
-    pdb.write(QString("ANISOU%1  %2%3%4 %5%6%7 %8%9%10%11%12%13       %14\n")
+    if (AsymmUnit.at(i).jtf>1)
+    pdb.write(QString("ANISOU%1 %2%3%4 %5%6%7 %8%9%10%11%12%13       %14\n")
 		    .arg(i+1,5)//1
-		    .arg(enam,-3)//2
-		    .arg((asymmUnit.at(i).part)?((asymmUnit.at(i).part>0)?QChar(asymmUnit.at(i).part+'A'):QChar( -asymmUnit.at(i).part+'A')):QChar(' '),1)
-		   .arg(asymmUnit.at(i).ami3,3)//4
+            .arg(enam,-4)//2
+            .arg((AsymmUnit.at(i).part)?parts.value(AsymmUnit.at(i).part):QChar(' '),1)
+           .arg(AsymmUnit.at(i).ami3,3)//4
 		   .arg(" ") //5 chain id
-		   .arg(asymmUnit.at(i).resiNr,4)//6
+           .arg(AsymmUnit.at(i).resiNr,4)//6
 		   .arg(" ")//??
-		   .arg(asymmUnit.at(i).u.m11*10000,7,'f',0)//8
-		   .arg(asymmUnit.at(i).u.m22*10000,7,'f',0)//9
-		   .arg(asymmUnit.at(i).u.m33*10000,7,'f',0)//10
-		   .arg(asymmUnit.at(i).u.m12*10000,7,'f',0)//11
-		   .arg(asymmUnit.at(i).u.m13*10000,7,'f',0)//12
-		   .arg(asymmUnit.at(i).u.m23*10000,7,'f',0)//13
-		   .arg(mol.pse(asymmUnit.at(i).OrdZahl))//14
-		  .toLatin1());
-		    
-  
+           .arg(AsymmUnit.at(i).u.m11*10000,7,'f',0)//8
+           .arg(AsymmUnit.at(i).u.m22*10000,7,'f',0)//9
+           .arg(AsymmUnit.at(i).u.m33*10000,7,'f',0)//10
+           .arg(AsymmUnit.at(i).u.m12*10000,7,'f',0)//11
+           .arg(AsymmUnit.at(i).u.m13*10000,7,'f',0)//12
+           .arg(AsymmUnit.at(i).u.m23*10000,7,'f',0)//13
+           .arg(mol.pse(AsymmUnit.at(i).OrdZahl))//14
+          .toLatin1());
   } 
   pdb.close();
 }
