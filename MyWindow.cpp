@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=353;
+int rev=354;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -4260,12 +4260,14 @@ void MyWindow::makePDFGrids(double proba,bool c2,bool c3,bool c4){
   QMainWindow::tabifyDockWidget (dock2,dock);
 }  
 
-void MyWindow::addfaze(const QString afac,const QString fac,const QString nfac){
-  QFile ONE(afac),TWO(fac),OUT(nfac);
+void MyWindow::addfaze(const QString afac,const QString fac,const QString nface){
+  QFile ONE(afac);
+  QFile TWO(fac);
+  QFile of(nface);
 
   ONE.open(QIODevice::ReadOnly|QIODevice::Text);
   TWO.open(QIODevice::ReadOnly|QIODevice::Text);
-  OUT.open(QIODevice::WriteOnly|QIODevice::Text);
+  of.open(QIODevice::WriteOnly|QIODevice::Text);
   QStringList one=QString(ONE.readAll()).split('\n');
   QStringList two=QString(TWO.readAll()).split('\n');
   ONE.close();
@@ -4273,28 +4275,28 @@ void MyWindow::addfaze(const QString afac,const QString fac,const QString nfac){
   int offset1=one.at(0).toInt();
   int offset2=two.at(0).toInt();
    //qDebug()<<offset1<<offset2<<one.size()<<two.size()<<offset1+offset2<<one.size()+two.size();
-  OUT.write(QString("%1\n").arg(offset1+offset2).toLatin1());
+  of.write(QString("%1\n").arg(offset1+offset2).toLatin1());
   for (int i=1;i<=offset1;i++){
-    OUT.write(QString("%1\n").arg(one.at(i)).toLatin1());
+    of.write(QString("%1\n").arg(one.at(i)).toLatin1());
   }
 //  qDebug()<<"OK1";
   for (int i=1;i<=offset2;i++){
-    OUT.write(QString("%1\n").arg(two.at(i)).toLatin1());
+    of.write(QString("%1\n").arg(two.at(i)).toLatin1());
   }
  // qDebug()<<"OK2";
   for (int i=offset1+1;i<one.size();i++){
-    OUT.write(QString("%1\n").arg(one.at(i)).toLatin1());
+    of.write(QString("%1\n").arg(one.at(i)).toLatin1());
   }
  // qDebug()<<"OK3";
   for (int i=offset2+1;i<two.size();i++){
     QStringList numbers = two.at(i).split(' ',QString::SkipEmptyParts);
   //  QList<int> numbers = two.at(i).split(' ',QString::SkipEmptyParts);
     for (int k=0; k<numbers.size(); k++) {
-      OUT.write(QString("%1 ").arg(numbers.at(k).toInt()+offset1).toLatin1());
+      of.write(QString("%1 ").arg(numbers.at(k).toInt()+offset1).toLatin1());
     }
-    OUT.write("\n");
+    of.write("\n");
   }
-  OUT.close();
+  of.close();
   //qDebug()<<"OK4";
 }
 
