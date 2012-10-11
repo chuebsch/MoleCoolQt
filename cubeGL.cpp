@@ -7,7 +7,7 @@
 #include "XDDlg.h"  
 #include "inames.h"
 V3 mil;
-
+const double vangle=27.01;
 CubeGL::CubeGL(QWidget *parent) : QGLWidget(parent) {
    setFormat(QGLFormat(QGL::DoubleBuffer | QGL::DepthBuffer) );
    atomsClickable=true;
@@ -712,7 +712,7 @@ void CubeGL::resizeGL(int width, int height) {
   glGetIntegerv(GL_VIEWPORT, vp);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  gluPerspective( 29.0, (double)_win_width/_win_height, 5.0, 8000.0 );
+  gluPerspective( vangle, (double)_win_width/_win_height, 5.0, 8000.0 );
 
   if (!noWaitLabel) moving->start(80);
 }
@@ -776,7 +776,7 @@ void CubeGL::paintGL() {
     glGetIntegerv(GL_VIEWPORT, vp);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective( 29.0, (double)_win_width/_win_height, 5.0, 8000.0 );
+    gluPerspective( vangle, (double)_win_width/_win_height, 5.0, 8000.0 );
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     draw();
@@ -845,7 +845,7 @@ void CubeGL::paintGL() {
     glGetIntegerv(GL_VIEWPORT, vp);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective( 29.0, (double)_win_width/_win_height, 5.0, 8000.0 );
+    gluPerspective( vangle, (double)_win_width/_win_height, 5.0, 8000.0 );
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     bool warLabel = drawLa;
@@ -872,7 +872,7 @@ void CubeGL::paintGL() {
       glViewport(0, 0, _win_width/2, _win_height);        
       glMatrixMode(GL_PROJECTION);
       glLoadIdentity();
-      gluPerspective( 29.0, (double)(_win_width/2.0)/_win_height, 5.0, 8000.0 );
+      gluPerspective( vangle, (double)(_win_width/2.0)/_win_height, 5.0, 8000.0 );
       glMatrixMode(GL_MODELVIEW);
       glPushMatrix();
       glRotateL(1.5*minussign,0,1,0);
@@ -884,7 +884,7 @@ void CubeGL::paintGL() {
       glViewport( _win_width / 2 , 0,_win_width / 2,_win_height );        
       glMatrixMode(GL_PROJECTION);
       glLoadIdentity();
-      gluPerspective( 29.0, (double)(_win_width/2.0)/_win_height, 5.0, 8000.0 );
+      gluPerspective( vangle, (double)(_win_width/2.0)/_win_height, 5.0, 8000.0 );
       glMatrixMode(GL_MODELVIEW);
       glPushMatrix();
       glRotateL(-1.5*minussign,0,1,0);

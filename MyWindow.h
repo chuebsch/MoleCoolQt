@@ -104,6 +104,7 @@ public slots:
      void saveScene();
      void printScene();
      void pdfDlg();
+     void pdfDlg2();
      void howOldIsTheLatesDataBase();
      void replyFinished(QNetworkReply* antwort);
      void replyFinished2(QNetworkReply* antwort);
@@ -171,6 +172,8 @@ protected:
      double pdf2(INP atom, V3 pos);
      double ueq(const Matrix m);
      void makePDFGrid(INP atom,double proba=50.0,bool c2=true ,bool c3=true,bool c4=true);
+     void makePDFGrids(double proba=50.0,bool c2=true ,bool c3=true,bool c4=true);
+     void addfaze(const QString afac,const QString fac,const QString nfac);
     QSlider *legendSize,*strikesSldr,*swidthSldr;
     QCheckBox *zebraBox,*mt;
     QComboBox *mapSchnitt, *chargeGroups;

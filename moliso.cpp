@@ -112,7 +112,7 @@ void MolIso::legende(){
   glEndList();
 }
 
-void MolIso::loadMI(QString fname){
+void MolIso::loadMI(QString fname, bool om){
   extern QProgressBar *balken;
 
   QFile sf(fname);
@@ -138,23 +138,28 @@ void MolIso::loadMI(QString fname){
       if (tok.size()==8){
 
 	balken->setValue(i);
+	
 	v.vertex.x = tok.at(1).toFloat();
 	v.vertex.y = tok.at(2).toFloat();
 	v.vertex.z = tok.at(3).toFloat();
+	if (om) {
+	  v.vertex.y += (float) orig.y;
+	  v.vertex.x += (float) orig.x;
+	  v.vertex.z += (float) orig.z;
+	}
 	//
-
 	v.normal.x = tok.at(4).toFloat();
 	v.normal.y = tok.at(5).toFloat();
 	v.normal.z = tok.at(6).toFloat();
-	dm+=v.color = tok.at(7).toFloat();
-	ds+=v.color*v.color;
+	dm += v.color = tok.at(7).toFloat();
+	ds += v.color*v.color;
 	if (v.color>0){
-	  dmp+=v.color;
-	  dsp+=(v.color* v.color);
+	  dmp += v.color;
+	  dsp += (v.color* v.color);
 	  np++;
 	}else{
-	  dmm+=v.color;
-	  dsm+= v.color* v.color;
+	  dmm += v.color;
+	  dsm += v.color* v.color;
 	  nm++;
 	}
 
@@ -649,6 +654,7 @@ void MolIso::CalcVertex( int ix, int iy, int iz ) {
 }
 
 void MolIso::CalcVertexes( void ) {
+//  printf("ooo %g %g %g\n",orig.x,orig.y,orig.z);
     for( int ix=0; ix<breite; ix++ ){
         for( int iy=0; iy<hoehe; iy++ ){
             for( int iz=0; iz<tiefe; iz++ ){

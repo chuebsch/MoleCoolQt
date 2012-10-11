@@ -228,8 +228,9 @@ MyWindow::MyWindow( QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(pa
   xdMenu->addAction(tidyCPSAct); 
   xdMenu->addSeparator();
   xdMenu->addAction("Find all uniq peaks in Fo-Fc map > iso surface value.",this,SLOT(addMoreQPeaks())) ;
-  xdMenu->addAction("Calculate pdf of an antom.",this,SLOT(pdfDlg()));
-  xdMenu->addAction("Experimental PDB export (check xd_part.aux)!",this,SLOT(pdbOutput()));
+  xdMenu->addAction("Calculate pdf of an atom.",this,SLOT(pdfDlg()));
+  xdMenu->addAction("Calculate pdf of all atoms.",this,SLOT(pdfDlg2()));
+  xdMenu->addAction("PDB export (check xd_part.aux)!",this,SLOT(pdbOutput()));
   xdMenu->addAction(xdEnvAct);
 
   xdMenu->setEnabled(false);
@@ -1923,9 +1924,10 @@ void MyWindow::genMoliso() {
   cubeGL->moliso->mibas=glGenLists(6);
   statusBar()->showMessage(tr("loading surfaces...") );
   //qDebug()<<cubeGL->moliso->mibas<<cubeGL->foubas[0];
-//  printf("L= %g   %g %g %g\n",cubeGL->moliso->L, cubeGL->moliso->orig.x, cubeGL->moliso->orig.y, cubeGL->moliso->orig.z);
-  cubeGL->moliso->loadMI(lfaceFile);
-
+  if ((lfaceFile!=sfaceFile)&&!lfaceFile.isEmpty()&&(!lfaceFile.contains('!'))) {
+     cubeGL->moliso->loadMI(lfaceFile,true);
+  }
+  else cubeGL->moliso->loadMI(lfaceFile,false);
   updateStatusBar();
   statusBar()->showMessage(tr("surfaces loaded") );
   cubeGL->MIS=true;
@@ -3885,6 +3887,417 @@ void MyWindow::pdfDlg(){
   delete dlg;
 }
 
+void MyWindow::pdfDlg2(){
+
+  QDialog *dlg=new QDialog(this);
+  dlg->setWindowTitle("Probability Density Function");
+  QDoubleSpinBox *proba=new QDoubleSpinBox(this);
+  proba->setMinimum(1);
+  proba->setMaximum(99);
+  proba->setDecimals(0);
+  proba->setValue(50);
+  QDialogButtonBox *buttonBox = new QDialogButtonBox( QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+  connect(buttonBox, SIGNAL(accepted()), dlg, SLOT(accept()));
+  connect(buttonBox, SIGNAL(rejected()), dlg, SLOT(reject()));  
+  QCheckBox *sec =new QCheckBox("Second order");
+  sec->setChecked(true);
+  QCheckBox *third =new QCheckBox("Third order");
+  third->setChecked(true); 
+  QCheckBox *fourth =new QCheckBox("Fourth order");
+  fourth->setChecked(true);
+  QLabel *l = new QLabel("Probability in %");
+  QGridLayout *la= new QGridLayout();
+  la->addWidget(l,2,1);
+  la->addWidget(proba,2,2,1,2);
+  la->addWidget(sec,3,1);
+  la->addWidget(third,3,2);
+  la->addWidget(fourth,3,3);
+  la->addWidget(buttonBox,4,1,1,3);
+  dlg->setLayout(la);
+  if(dlg->exec()==QDialog::Accepted){
+    makePDFGrids(proba->value(),sec->isChecked(),third->isChecked(),fourth->isChecked());
+  }
+
+  delete dlg;
+}
+void MyWindow::makePDFGrids(double proba,bool c2,bool c3,bool c4){
+  QString afac("testpdf2.face");
+  QString fac("testpdf1.face");
+  QString nfac("testpdf3.face");
+  int breite=91;
+  int z=0;
+  if (QFile::exists(fac)) QFile::remove(fac);
+  if (QFile::exists(nfac)) QFile::remove(nfac);
+  if (QFile::exists(afac)) QFile::remove(afac);
+  if (cubeGL->moliso){
+    glDeleteLists(cubeGL->moliso->mibas,6);
+    if (cubeGL->moliso){
+      delete cubeGL->moliso;
+      cubeGL->moliso=NULL;
+    }
+    delete dock3;
+    dock->show();
+    dock2->show();
+    createmoliso->setVisible(true);
+    noMoliso->setVisible(false);
+  }
+  cubeGL->moliso = new MolIso();
+  cubeGL->moliso->L=cubeGL->L;
+  cubeGL->moliso->lineNr=0;
+  QProgressDialog progress(QString("Calculating PDF"),QString(),0,breite*breite*breite*asymmUnit.size());
+  for (int ix=0; ix<asymmUnit.size(); ix++){
+    if (asymmUnit.at(ix).OrdZahl<0)continue;
+    if (asymmUnit.at(ix).jtf<2)continue;
+  int ppp=(int)(proba);
+  double piso=0;
+  double p=0;
+  Matrix U=asymmUnit.at(ix).u;//kartesian U
+  Matrix UI=inverse(U);
+  double DI=determinant(UI);
+  double base=sqrt(DI)/sqrt((8*M_PI*M_PI*M_PI));
+  switch (ppp){
+	  case 1 :   piso=-0.5*(0.3389*0.3389);break;
+	  case 2 :   piso=-0.5*(0.4299*0.4299);break;
+	  case 3 :   piso=-0.5*(0.4951*0.4951);break;
+	  case 4 :   piso=-0.5*(0.5479*0.5479);break;
+	  case 5 :   piso=-0.5*(0.5932*0.5932);break;
+	  case 6 :   piso=-0.5*(0.6334*0.6334);break;
+	  case 7 :   piso=-0.5*(0.6699*0.6699);break;
+	  case 8 :   piso=-0.5*(0.7035*0.7035);break;
+	  case 9 :   piso=-0.5*(0.7349*0.7349);break;
+	  case 10:   piso=-0.5*(0.7644*0.7644);break;
+	  case 11:   piso=-0.5*(0.7924*0.7924);break;
+	  case 12:   piso=-0.5*(0.8192*0.8192);break;
+	  case 13:   piso=-0.5*(0.8447*0.8447);break;
+	  case 14:   piso=-0.5*(0.8694*0.8694);break;
+	  case 15:   piso=-0.5*(0.8932*0.8932);break;
+	  case 16:   piso=-0.5*(0.9162*0.9162);break;
+	  case 17:   piso=-0.5*(0.9386*0.9386);break;
+	  case 18:   piso=-0.5*(0.9605*0.9605);break;
+	  case 19:   piso=-0.5*(0.9818*0.9818);break;
+	  case 20:   piso=-0.5*(1.0026*1.0026);break;
+	  case 21:   piso=-0.5*(1.0230*1.0230);break;
+	  case 22:   piso=-0.5*(1.0430*1.0430);break;
+	  case 23:   piso=-0.5*(1.0627*1.0627);break;
+	  case 24:   piso=-0.5*(1.0821*1.0821);break;
+	  case 25:   piso=-0.5*(1.1012*1.1012);break;
+	  case 26:   piso=-0.5*(1.1200*1.1200);break;
+	  case 27:   piso=-0.5*(1.1386*1.1386);break;
+	  case 28:   piso=-0.5*(1.1570*1.1570);break;
+	  case 29:   piso=-0.5*(1.1751*1.1751);break;
+	  case 30:   piso=-0.5*(1.1932*1.1932);break;
+	  case 31:   piso=-0.5*(1.2110*1.2110);break;
+	  case 32:   piso=-0.5*(1.2288*1.2288);break;
+	  case 33:   piso=-0.5*(1.2464*1.2464);break;
+	  case 34:   piso=-0.5*(1.2638*1.2638);break;
+	  case 35:   piso=-0.5*(1.2812*1.2812);break;
+	  case 36:   piso=-0.5*(1.2985*1.2985);break;
+	  case 37:   piso=-0.5*(1.3158*1.3158);break;
+	  case 38:   piso=-0.5*(1.3330*1.3330);break;
+	  case 39:   piso=-0.5*(1.3501*1.3501);break;
+	  case 40:   piso=-0.5*(1.3672*1.3672);break;
+	  case 41:   piso=-0.5*(1.3842*1.3842);break;
+	  case 42:   piso=-0.5*(1.4013*1.4013);break;
+	  case 43:   piso=-0.5*(1.4183*1.4183);break;
+	  case 44:   piso=-0.5*(1.4354*1.4354);break;
+	  case 45:   piso=-0.5*(1.4524*1.4524);break;
+	  case 46:   piso=-0.5*(1.4695*1.4695);break;
+	  case 47:   piso=-0.5*(1.4866*1.4866);break;
+	  case 48:   piso=-0.5*(1.5037*1.5037);break;
+	  case 49:   piso=-0.5*(1.5209*1.5209);break;
+	  case 50:   piso=-0.5*(1.5382*1.5382);break;
+	  case 51:   piso=-0.5*(1.5555*1.5555);break;
+	  case 52:   piso=-0.5*(1.5729*1.5729);break;
+	  case 53:   piso=-0.5*(1.5904*1.5904);break;
+	  case 54:   piso=-0.5*(1.6080*1.6080);break;
+	  case 55:   piso=-0.5*(1.6257*1.6257);break;
+	  case 56:   piso=-0.5*(1.6436*1.6436);break;
+	  case 57:   piso=-0.5*(1.6616*1.6616);break;
+	  case 58:   piso=-0.5*(1.6797*1.6797);break;
+	  case 59:   piso=-0.5*(1.6980*1.6980);break;
+	  case 60:   piso=-0.5*(1.7164*1.7164);break;
+	  case 61:   piso=-0.5*(1.7351*1.7351);break;
+	  case 62:   piso=-0.5*(1.7540*1.7540);break;
+	  case 63:   piso=-0.5*(1.7730*1.7730);break;
+	  case 64:   piso=-0.5*(1.7924*1.7924);break;
+	  case 65:   piso=-0.5*(1.8119*1.8119);break;
+	  case 66:   piso=-0.5*(1.8318*1.8318);break;
+	  case 67:   piso=-0.5*(1.8519*1.8519);break;
+	  case 68:   piso=-0.5*(1.8724*1.8724);break;
+	  case 69:   piso=-0.5*(1.8932*1.8932);break;
+	  case 70:   piso=-0.5*(1.9144*1.9144);break;
+	  case 71:   piso=-0.5*(1.9360*1.9360);break;
+	  case 72:   piso=-0.5*(1.9580*1.9580);break;
+	  case 73:   piso=-0.5*(1.9804*1.9804);break;
+	  case 74:   piso=-0.5*(2.0034*2.0034);break;
+	  case 75:   piso=-0.5*(2.0269*2.0269);break;
+	  case 76:   piso=-0.5*(2.0510*2.0510);break;
+	  case 77:   piso=-0.5*(2.0757*2.0757);break;
+	  case 78:   piso=-0.5*(2.1012*2.1012);break;
+	  case 79:   piso=-0.5*(2.1274*2.1274);break;
+	  case 80:   piso=-0.5*(2.1544*2.1544);break;
+	  case 81:   piso=-0.5*(2.1824*2.1824);break;
+	  case 82:   piso=-0.5*(2.2114*2.2114);break;
+	  case 83:   piso=-0.5*(2.2416*2.2416);break;
+	  case 84:   piso=-0.5*(2.2730*2.2730);break;
+	  case 85:   piso=-0.5*(2.3059*2.3059);break;
+	  case 86:   piso=-0.5*(2.3404*2.3404);break;
+	  case 87:   piso=-0.5*(2.3767*2.3767);break;
+	  case 88:   piso=-0.5*(2.4153*2.4153);break;
+	  case 89:   piso=-0.5*(2.4563*2.4563);break;
+	  case 90:   piso=-0.5*(2.5003*2.5003);break;
+	  case 91:   piso=-0.5*(2.5478*2.5478);break;
+	  case 92:   piso=-0.5*(2.5997*2.5997);break;
+	  case 93:   piso=-0.5*(2.6571*2.6571);break;
+	  case 94:   piso=-0.5*(2.7216*2.7216);break;
+	  case 95:   piso=-0.5*(2.7955*2.7955);break;
+	  case 96:   piso=-0.5*(2.8829*2.8829);break;
+	  case 97:   piso=-0.5*(2.9912*2.9912);break;
+	  case 98:   piso=-0.5*(3.1365*3.1365);break;
+	  case 99:   piso=-0.5*(3.3682*3.3682);break;
+  }
+  piso=base*exp(piso);
+  printf("Piso= %g %s %d %g\n",piso,xdinp.at(ix).atomname,ppp,proba);
+
+  if (QFile::exists(fac)) {
+ //   qDebug()<<afac<<fac;
+    if (QFile::exists(afac)) QFile::remove(afac);
+    QFile::copy(fac,afac);
+  }
+  tensmul(asymmUnit[ix]);
+
+  V3 X=V3(1,0,0);
+  V3 ev=V3(1,1,1);
+//  Matrix evk=
+	  mol.jacobi(U,ev);
+
+  //printf("%g %g %g  \n",ev.x,ev.y,ev.z);
+  double maxdim=2*sqrt(fmax(ev.x,fmax(ev.y,ev.z)))*6;
+
+  double pt;//p10,p90,p50,
+  double ponent;
+  //p50=base*exp(-1.18302962);
+  //p10=base*exp(-0.29215368);
+  //p90=base*exp(-3.12575004);
+  double df=maxdim/breite;
+  cubeGL->moliso->orig=Vector3(xdinp.at(ix).kart.x,xdinp.at(ix).kart.y,xdinp.at(ix).kart.z);
+/*  printf("%g %g %g   %g %g %g  %s\n",cubeGL->moliso->orig.x, cubeGL->moliso->orig.y, cubeGL->moliso->orig.z,
+		  xdinp.at(ix).kart.x,xdinp.at(ix).kart.y,xdinp.at(ix).kart.z,
+		  xdinp.at(ix).atomname);// */
+  cubeGL->moliso->x_dim=Vector3(df,0,0);
+  cubeGL->moliso->y_dim=Vector3(0,df,0);
+  cubeGL->moliso->z_dim=Vector3(0,0,df);
+  cubeGL->moliso->breite=cubeGL->moliso->hoehe=cubeGL->moliso->tiefe=breite;
+  cubeGL->moliso->data.clear();
+  cubeGL->moliso->mdata.clear();
+//  double cfact=6/(M_PI*M_PI*M_PI*8);
+//  tensmul(atom,roma);
+  
+/*  printf(
+		  "u111 %14.7g u222 %14.7g u333 %14.7g \n"
+		  "u112 %14.7g u122 %14.7g u113 %14.7g \n"
+		  "u133 %14.7g u223 %14.7g u233 %14.7g \n"
+	          "u123 %14.7g \n",
+		  atom.c111,atom.c222,atom.c333,
+		  atom.c112,atom.c122,atom.c113,
+		  atom.c133,atom.c223,atom.c233,
+		  atom.c123);
+  printf(
+		  "c111 %14.7g c222 %14.7g c333 %14.7g \n"
+		  "c112 %14.7g c122 %14.7g c113 %14.7g \n"
+		  "c133 %14.7g c223 %14.7g c233 %14.7g \n"
+	          "c123 %14.7g \n",
+		  atom.c111*mol.zelle.as*mol.zelle.as*mol.zelle.as,
+		  atom.c222*mol.zelle.bs*mol.zelle.bs*mol.zelle.bs,
+		  atom.c333*mol.zelle.cs*mol.zelle.cs*mol.zelle.cs,
+		  atom.c112*mol.zelle.as*mol.zelle.as*mol.zelle.bs,
+		  atom.c122*mol.zelle.as*mol.zelle.bs*mol.zelle.bs,
+		  atom.c113*mol.zelle.as*mol.zelle.as*mol.zelle.cs,
+		  atom.c133*mol.zelle.as*mol.zelle.cs*mol.zelle.cs,
+		  atom.c223*mol.zelle.bs*mol.zelle.bs*mol.zelle.cs,
+		  atom.c233*mol.zelle.bs*mol.zelle.cs*mol.zelle.cs,
+		  atom.c123*mol.zelle.as*mol.zelle.bs*mol.zelle.cs);
+// */
+  double third=0,fourth=0,tmax=0,tmin=0;
+  V3 t=V3(((breite-1)/-2.0)*df,((breite-1)/-2.0)*df,((breite-1)/-2.0)*df);
+//  QString txt;
+  for (int k=0; k<breite; k++)
+      for (int j=0; j<breite; j++)
+          for (int i=0; i<breite; i++){
+      X=V3(i*df,j*df,k*df)+t;
+      ponent=((X*UI)*X)/-2.0;
+      V3 w=(X*UI);
+
+      p=base*exp(ponent);
+      if ((c3)&&(asymmUnit.at(ix).jtf>2)) third= p*hermite3(w,UI,
+                      asymmUnit.at(ix).c111,asymmUnit.at(ix).c222,asymmUnit.at(ix).c333,
+                      asymmUnit.at(ix).c112,asymmUnit.at(ix).c122,asymmUnit.at(ix).c113,
+                      asymmUnit.at(ix).c133,asymmUnit.at(ix).c223,asymmUnit.at(ix).c233,
+                      asymmUnit.at(ix).c123);
+      if ((c4)&&(asymmUnit.at(ix).jtf==4)) fourth= p*hermite4(w,UI,
+		       asymmUnit.at(ix).d1111,asymmUnit.at(ix).d2222,asymmUnit.at(ix).d3333,
+		       asymmUnit.at(ix).d1112,asymmUnit.at(ix).d1113,asymmUnit.at(ix).d1122,
+		       asymmUnit.at(ix).d1123,asymmUnit.at(ix).d1133,asymmUnit.at(ix).d1222,
+                       asymmUnit.at(ix).d1223,asymmUnit.at(ix).d1233,asymmUnit.at(ix).d1333,
+		       asymmUnit.at(ix).d2223,asymmUnit.at(ix).d2233,asymmUnit.at(ix).d2333);
+      tmin=fmin(tmin,third);
+      tmax=fmax(tmax,third);
+      pt=p*((c2?1:0) + third/6.0 + fourth/24.0);
+      cubeGL->moliso->data.append(pt);
+//      txt.append(QString("%1").arg(pt,13,'E',5));
+      z++;
+  //    if (!(z%6))txt.append("\n");
+      if (!(z%(breite*breite*breite/100))) progress.setValue(z);
+  //    if (!(z%(breite*breite*breite/100))) {printf(">");fflush(stdout);}
+  }
+  progress.setValue(z);
+  cubeGL->moliso->iso_level=(c2)?piso:0.01;
+  cubeGL->moliso->createSurface(fac,(c2)?proba:0.01);
+  if ((QFile::exists(afac))&&(QFile::exists(fac))){
+//    qDebug() << afac  << fac << nfac<< "addface!";
+    addfaze(afac,fac,nfac);
+//    QMessageBox::information(this,afac,nfac);
+    QFile::remove(fac);
+    QFile::copy(nfac,fac);
+  }
+  }
+
+  cubeGL->pause=true;
+  if (cubeGL->moliso->mibas) glDeleteLists(cubeGL->moliso->mibas,6);
+  cubeGL->moliso->mibas=glGenLists(6);
+  statusBar()->showMessage(tr("loading surfaces...") );
+  //qDebug()<<cubeGL->moliso->mibas<<cubeGL->foubas[0];
+  //printf("L= %g   %g %g %g %s\n",cubeGL->moliso->L, cubeGL->moliso->orig.x, cubeGL->moliso->orig.y, cubeGL->moliso->orig.z,fac.toStdString().c_str());
+  cubeGL->moliso->loadMI(fac,false);
+  updateStatusBar();
+  statusBar()->showMessage(tr("surfaces loaded") );
+  cubeGL->MIS=true;
+  cubeGL->MILe=true;
+  showface->setChecked ( true );
+  showface->setVisible(true);
+  showLeg->setChecked ( true );
+  showLeg->setVisible(true);
+  movLeg->setChecked ( false );
+  movLeg->setVisible(true);
+  mildir->setChecked ( true  );
+  mildir->setVisible(true);
+  setCursor(Qt::ArrowCursor);
+  dock->hide();
+  dock2->hide();
+  cubeGL->setVisible ( true );
+  createmoliso->setVisible(false);
+  noMoliso->setVisible(true);  
+  cubeGL->pause=false;
+  cubeGL->updateGL();
+  dock3 = new QDockWidget("Moliso control area",this);
+  dock3->setAllowedAreas(Qt::AllDockWidgetAreas);
+  QGroupBox *zebraZwinger= new QGroupBox();
+  QVBoxLayout *zla= new QVBoxLayout();
+  mt = new QCheckBox("transparence");
+  mt->setChecked(true);
+  mt->setShortcut(tr("T"));
+  cubeGL->togglMolisoTransparence(true);
+  zla->addWidget(mt);
+  legendSize = new QSlider(Qt::Horizontal);
+  legendSize->setValue(30);
+  legendSize->setMaximum(100);
+  cullNone = new QRadioButton("No culling");
+  cullBack = new QRadioButton("Back face culling");
+  cullFront = new QRadioButton("Front face culling");
+  cullNone->setChecked(true);
+  cubeGL->noneCull(true);
+  connect(cullNone,SIGNAL(toggled(bool)),cubeGL,SLOT(noneCull(bool)));
+  connect(cullBack,SIGNAL(toggled(bool)),cubeGL,SLOT(backCull(bool)));
+  connect(cullFront,SIGNAL(toggled(bool)),cubeGL,SLOT(frontCull(bool)));
+  zla->addWidget(cullNone);
+  zla->addWidget(cullBack);
+  zla->addWidget(cullFront);
+  QToolBar *tb = new QToolBar("Moliso toolbar",zebraZwinger);
+  tb->setOrientation(Qt::Vertical);
+  tb->setIconSize(QSize(16,16));
+  tb->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+  tb->addAction(showface);
+  tb->addAction(showLeg);
+  tb->addAction(movLeg);
+  tb->addAction(mildir);
+  zla->addWidget(tb);
+  mclmox =new QCheckBox("Monochrome legend text");
+  mclmox->setChecked(false);
+  connect(mclmox,SIGNAL(toggled(bool)),cubeGL,SLOT(togglMonoChrom(bool)));
+
+  zla->addWidget(mclmox);
+  zla->addWidget(new QLabel("Scale legend"));
+  zla->addWidget(legendSize);
+  QPushButton *savset = new QPushButton("Save current settings");
+  connect(savset,SIGNAL(pressed()),cubeGL,SLOT(saveMISettings()));
+  QPushButton *lodset = new QPushButton("Load settings");
+  connect(lodset,SIGNAL(pressed()),cubeGL,SLOT(loadMISettings()));
+  mlf = new QFontComboBox();
+  mlf->setCurrentFont(cubeGL->MLegendFont);
+  connect(mlf,SIGNAL(currentFontChanged(QFont)),cubeGL,SLOT(setMLFont(QFont)));
+  fos = new QSpinBox();
+  fos->setMinimum(4);
+  fos->setMaximum(272);
+  fos->setValue(cubeGL->MLegendFont.pointSize());
+  connect(fos,SIGNAL(valueChanged(int)),cubeGL,SLOT(setMLFontSize(int)));
+  zla->addWidget(mlf);
+  zla->addWidget(fos);
+  zla->addWidget(savset);
+  zla->addWidget(lodset);
+  zla->addStretch(999);
+  connect(cubeGL,SIGNAL(mconf()),this,SLOT(syncMconf()));
+  cubeGL->togglContours(false);
+  cubeGL->scaleLegend(30);
+  cubeGL->setContourCnt(496);
+  cubeGL->setContourWidth(1);
+  connect(mt,SIGNAL(toggled(bool)),cubeGL,SLOT(togglMolisoTransparence(bool)));
+  connect(legendSize,SIGNAL(valueChanged(int)),cubeGL,SLOT(scaleLegend(int)));
+  zebraZwinger->setLayout(zla);
+  dock3->setWidget(zebraZwinger);
+  dock3->setFeatures(QDockWidget::DockWidgetMovable|QDockWidget::DockWidgetClosable);
+  addDockWidget(Qt::LeftDockWidgetArea, dock3);
+  QMainWindow::tabifyDockWidget (dock2,dock3);
+  QMainWindow::tabifyDockWidget (dock2,dock);
+}  
+
+void MyWindow::addfaze(const QString afac,const QString fac,const QString nfac){
+  QFile ONE(afac),TWO(fac),OUT(nfac);
+
+  ONE.open(QIODevice::ReadOnly|QIODevice::Text);
+  TWO.open(QIODevice::ReadOnly|QIODevice::Text);
+  OUT.open(QIODevice::WriteOnly|QIODevice::Text);
+  QStringList one=QString(ONE.readAll()).split('\n');
+  QStringList two=QString(TWO.readAll()).split('\n');
+  ONE.close();
+  TWO.close();
+  int offset1=one.at(0).toInt();
+  int offset2=two.at(0).toInt();
+   //qDebug()<<offset1<<offset2<<one.size()<<two.size()<<offset1+offset2<<one.size()+two.size();
+  OUT.write(QString("%1\n").arg(offset1+offset2).toLatin1());
+  for (int i=1;i<=offset1;i++){
+    OUT.write(QString("%1\n").arg(one.at(i)).toLatin1());
+  }
+//  qDebug()<<"OK1";
+  for (int i=1;i<=offset2;i++){
+    OUT.write(QString("%1\n").arg(two.at(i)).toLatin1());
+  }
+ // qDebug()<<"OK2";
+  for (int i=offset1+1;i<one.size();i++){
+    OUT.write(QString("%1\n").arg(one.at(i)).toLatin1());
+  }
+ // qDebug()<<"OK3";
+  for (int i=offset2+1;i<two.size();i++){
+    QStringList numbers = two.at(i).split(' ',QString::SkipEmptyParts);
+  //  QList<int> numbers = two.at(i).split(' ',QString::SkipEmptyParts);
+    for (int k=0; k<numbers.size(); k++) {
+      OUT.write(QString("%1 ").arg(numbers.at(k).toInt()+offset1).toLatin1());
+    }
+    OUT.write("\n");
+  }
+  OUT.close();
+  //qDebug()<<"OK4";
+}
+
 void MyWindow::makePDFGrid(INP atom, double proba,bool c2,bool c3,bool c4){
   int ppp=(int)(proba);
   double piso=0;
@@ -4108,8 +4521,8 @@ void MyWindow::makePDFGrid(INP atom, double proba,bool c2,bool c3,bool c4){
   cubeGL->moliso->mibas=glGenLists(6);
   statusBar()->showMessage(tr("loading surfaces...") );
   //qDebug()<<cubeGL->moliso->mibas<<cubeGL->foubas[0];
-//  printf("L= %g   %g %g %g\n",cubeGL->moliso->L, cubeGL->moliso->orig.x, cubeGL->moliso->orig.y, cubeGL->moliso->orig.z);
-  cubeGL->moliso->loadMI(fac);
+//  printf("L= %g   %g %g %g %s\n",cubeGL->moliso->L, cubeGL->moliso->orig.x, cubeGL->moliso->orig.y, cubeGL->moliso->orig.z,fac.toStdString().c_str());
+  cubeGL->moliso->loadMI(fac,false);
   updateStatusBar();
   statusBar()->showMessage(tr("surfaces loaded") );
   cubeGL->MIS=true;
@@ -4925,7 +5338,7 @@ void MyWindow::load_gaus(QString fileName){
   FILE *adp;
   char line[182]="start",dvv[50],*dvvv;
   double B[250],A[250],D[250],dd,emcp,sp,cp;
-  V3 h1,h2,h3;
+  V3 h1=V3(0,0,0),h2=V3(0,0,0),h3=V3(0,0,0);
   int b[250],a[250],d[250];
   int i=0,charge,spin,k=0,cartesian=0,ai=0,bi=0,di=0;
   char bname[250][50],aname[250][50],dname[250][50];
