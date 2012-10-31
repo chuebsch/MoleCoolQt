@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=355;
+int rev=356;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -6601,11 +6601,14 @@ void MyWindow::readXDPartAux(){
     if (asymmUnit[j].OrdZahl<0) continue;   
     QStringList token = lines.at(j).split(" ",QString::SkipEmptyParts);
     asymmUnit[j].part=token.at(2).toInt();
-    if ((token.size()>5)&&(token.at(3)=="resiNr")){
+    if ((token.size()>7)&&(token.at(3)=="resiNr")){
+      if (token.at(4).contains(QRegExp("[^0-9]+") )) qDebug() <<token.at(4) << "must be numeric!"<<lines.at(j);
     asymmUnit[j].resiNr=token.at(4).toInt();
+
     strncpy(asymmUnit[j].ami3,token.at(5).toStdString().c_str(),4);
     strncpy(asymmUnit[j].shortname,token.at(7).toStdString().c_str(),4);
     }
+    else if (token.size()>3) qDebug()<< "Read error in line "<<j<<lines.at(j);
   }
   }
 }
@@ -6629,12 +6632,13 @@ void MyWindow::toggleTubes(bool b){
 }
 
 void MyWindow::makeXDPartAux(){
+  qDebug()<<"MyWindow::makeXDPartAux";
   if (QFile::exists("xd_part.aux")){
     readXDPartAux();
     return;
   }
   if ((!asymmUnit.isEmpty())&&(atmax)){
-    const double TOLERANZ = 0.001;
+    const double TOLERANZ = 0.0005;
     QStringList befehle;
     befehle  <<"ACTA" << "AFIX" << "MPLA" << "ANIS" << "BASF" << "BIND" << "BLOC" << "BOND" << "BUMP" << "CELL" << "CGLS" << "CHIV" << "CONF" << "CONN" << "DAMP" << "DANG" <<
 			 "DEFS" << "DELU" << "DFIX" << "DISP" << "EADP" << "EGEN" << "END" <<  "EQIV" << "ESEL" << "EXTI" << "EXYZ" << "FEND" << "FLAT" << "FMAP" << "FRAG" << "FREE" << 
@@ -6649,6 +6653,13 @@ void MyWindow::makeXDPartAux(){
     QString line;
     QFile shx;
     int ifi=0;
+	for (int j=0; j<atmax; j++){ 
+          asymmUnit[j].part=0;
+	  strcpy(asymmUnit[j].shortname,"OOPS");
+	  strcpy(asymmUnit[j].ami3,"NO");
+	  asymmUnit[j].resiNr=666;
+          break;
+       }
     shelxf=work.entryList(filter,QDir::Files,QDir::Time); 
     do {
       if (!(ifi<shelxf.size())) return;
