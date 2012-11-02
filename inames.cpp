@@ -341,7 +341,13 @@ QString inames::invName(MyAtom core,Connection &cl, CEnvironment &sel ,int rung)
 	if ((ringCode.contains(*cl.at(i).ato2))&&(core.pos==cl.at(i).ato1->pos)&&(!(ringID[*cl.at(i).ato2]&ringID[core]))&&(core.Symbol=="O")) {
 	  OSollDoppel=i;
 	}
-    if ((hand.contains("#"))||(!hand.contains("@")&&(2==cl.at(i).order))||((!hand.contains("@"))&&(core.Symbol=="H"))||((core.an!=14)&&((cl.at(i).ato1->an==14)||(cl.at(i).ato2->an==14)))||((core.an!=15)&&((cl.at(i).ato1->an==15)||(cl.at(i).ato2->an==15)))){ //meso
+    if (
+		    (hand.contains("#"))||
+		    (!hand.contains("@")&&(2==cl.at(i).order))||
+		    ((!hand.contains("@"))&&(core.Symbol=="H"))||
+		    ((core.an<12)&&((cl.at(i).ato1->an>11)||(cl.at(i).ato2->an>11)))||
+		    (((cl.at(i).ato1->an>11)&&(cl.at(i).ato2->an>11))))
+    { //meso
       hand+="[";    
       fingers.clear();
       for (int j=0; j<cl.size();j++){//2.for
