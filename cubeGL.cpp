@@ -12,6 +12,10 @@ CubeGL::CubeGL(QWidget *parent) : QGLWidget(parent) {
    setFormat(QGLFormat(QGL::DoubleBuffer | QGL::DepthBuffer) );
    atomsClickable=true;
    faceCull=0;
+   chicken= new QAction("Permanent wireframe mode",this);
+   chicken->setCheckable(true);
+   chicken->setChecked(false);
+   connect(chicken,SIGNAL(toggled(bool)),this,SLOT(updateGL()));
    growIt=false;
    pause = monochrom = false;
    altemitte=V3(0,0,0);
@@ -3277,7 +3281,7 @@ void CubeGL::showMatrix(){
   stereo_mode%=4;
   updateGL();
 #ifdef Q_WS_MAC
-  qDebug()<<QCoreApplication::libraryPaths () <<QImageWriter::supportedImageFormats ();
+ // qDebug()<<QCoreApplication::libraryPaths () <<QImageWriter::supportedImageFormats ();
 #endif   
 #ifdef _WIN32
 #else
@@ -3578,7 +3582,7 @@ if (!selectedAtoms.isEmpty()){
       if (drawUz) glCallList(bas+3);
       if ((MIS)&&(moliso->mibas)) { 
 	glDisable(GL_CULL_FACE);
-        if (moving->isActive()) {Pers=1; glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);}
+        if (moving->isActive()||chicken->isChecked()) {Pers=1; glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);}
 	else glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
 	if (molisoTransparence) glEnable(GL_BLEND);
 	else glDisable(GL_BLEND);
@@ -3699,7 +3703,7 @@ if (!selectedAtoms.isEmpty()){
         glEnable(GL_CULL_FACE);
         glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
       }
-      if ((!moving->isActive())&&(drawLa)) {	
+      if (((!moving->isActive())||(!chicken->isChecked()))&&(drawLa)) {
 	glClear( GL_DEPTH_BUFFER_BIT);
 	glPushMatrix();{
 	  glScaled(L,L,L);

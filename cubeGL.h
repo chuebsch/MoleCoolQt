@@ -24,7 +24,7 @@ public:
   double L;
   bool pause;
   int stereo_mode;
-  QAction *Istda;
+  QAction *Istda,*chicken;
   QTimer *moving;
   QAction *changeGDAct;
   QCheckBox *invertMouseZoom,*minus;

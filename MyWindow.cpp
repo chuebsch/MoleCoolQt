@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=358;
+int rev=360;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -668,9 +668,9 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
   togHBond->setIcon(QIcon(":/images/hbrs.png"));
   togHBond->setWhatsThis("<img src=\":/images/hbrs.png\"><p>Click here to toggle the visualization of <b>hydrogen bonds</b>."
 			" If this is checked hydrogen bonds are visualized as stipled yellow sticks.");
-/*
-  QAction *sma =new QAction(this);
-  sma->setShortcut(tr(";"));
+
+  QAction *sma =new QAction("show mat",this);
+  sma->setShortcut(tr("§"));
   connect(sma,SIGNAL(triggered()),cubeGL,SLOT(showMatrix()));
 // */
   matrixAct->setShortcut(tr("="));
@@ -804,6 +804,7 @@ createRenameWgd();
   workMenu->addAction(viewAlong010);
   workMenu->addAction(viewAlong100);
   workMenu->addAction(viewAlong001);
+  workMenu->addAction(sma);
   workMenu->setTearOffEnabled(true);
   viewMenu->addAction(atomClickAct);
   viewMenu->addAction(togAtom);
@@ -837,6 +838,7 @@ createRenameWgd();
   dialogMenu->addSeparator();
   dialogMenu->addAction("Save current toggel states",cubeGL,SLOT(saveMISettings()));
   dialogMenu->addAction("Load toggle states",cubeGL,SLOT(loadMISettings()));
+  dialogMenu->addAction(cubeGL->chicken);
   cubeGL->Istda=invariomMenu->addAction("No data base loded yet.");
   invariomMenu->addAction(invExpAct);
   invariomMenu->addAction(invEdiAct);
@@ -6632,7 +6634,7 @@ void MyWindow::toggleTubes(bool b){
 }
 
 void MyWindow::makeXDPartAux(){
-  qDebug()<<"MyWindow::makeXDPartAux";
+  //qDebug()<<"MyWindow::makeXDPartAux";
   if (QFile::exists("xd_part.aux")){
     readXDPartAux();
     return;
