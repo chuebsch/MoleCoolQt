@@ -225,6 +225,7 @@ protected:
      void cifcard(const QString v);
      void load_cif(QString fileName);
      void load_gaus(QString fileName);
+     void load_xyz(QString fileName);
      void load_fchk(QString fileName);
      void setup_zelle();
      QAction *togAxen,*togUnit,*togLuft;

@@ -397,6 +397,7 @@ void  CubeGL::toggInvEdit(bool on){
 						    -mol.ElNeg[ce.at(j).an])/100.0)));
 	    gg=sqrt( Distance(ce.at(i).pos,ce.at(j).pos));
 	    if (gg<soll_abst*1.2) {
+              printf("O%g %s %s",gg,ce.at(i).Label.toStdString().c_str(),ce.at(j).Label.toStdString().c_str());
 	      bond.ato1=&ce.at(i);
 	      bond.ato2=&ce.at(j);
 	      bond.length=gg;
@@ -1294,6 +1295,7 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 							  -mol.ElNeg[ce.at(j).an])/100.0)));
 		  gg=sqrt( Distance(ce.at(i).pos,ce.at(j).pos));
 		  if (gg<(soll_abst*1.2)) {
+              printf("X%g %s %s\n",gg,ce.at(i).Label.toStdString().c_str(),ce.at(j).Label.toStdString().c_str());
 		    bond.ato1=&ce.at(i);
 		    bond.ato2=&ce.at(j);
 		    bond.length=gg;
@@ -1488,6 +1490,7 @@ void CubeGL::editInv(const QUrl & link ){
 						  -mol.ElNeg[ce.at(j).an])/100.0)));
 	  gg=sqrt( Distance(ce.at(i).pos,ce.at(j).pos));
 	  if (gg<(soll_abst*1.2)) {
+              printf("Y%g %s %s\n",gg,ce.at(i).Label.toStdString().c_str(),ce.at(j).Label.toStdString().c_str());
 	    bond.ato1=&ce.at(i);
 	    bond.ato2=&ce.at(j);
 	    bond.length=gg;
@@ -1650,6 +1653,7 @@ void CubeGL::invariomExport(){
 						    -mol.ElNeg[ce.at(j).an])/100.0)));
 	    gg=sqrt( Distance(ce.at(i).pos,ce.at(j).pos));
 	    if (gg<soll_abst*1.2) {
+              printf("Z%g %s %s %g \n",gg,ce.at(i).Label.toStdString().c_str(),ce.at(j).Label.toStdString().c_str(),soll_abst);
 	      bond.ato1=&ce.at(i);
 	      bond.ato2=&ce.at(j);
 	      bond.length=gg;

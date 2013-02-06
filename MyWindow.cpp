@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=361;
+int rev=362;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -1313,6 +1313,7 @@ createRenameWgd();
       (QCoreApplication::arguments().at(i).contains(".ins")) ||
       (QCoreApplication::arguments().at(i).contains(".par")) ||
       (QCoreApplication::arguments().at(i).contains(".com")) ||
+      (QCoreApplication::arguments().at(i).contains(".xyz")) ||
       (QCoreApplication::arguments().at(i).contains(".fchk",Qt::CaseInsensitive)) ||
       (QCoreApplication::arguments().at(i).contains(".cif")) ) fnam= QCoreApplication::arguments().at(i);
       if (QCoreApplication::arguments().at(i).contains("-GrowDist")) {
@@ -1882,7 +1883,7 @@ void MyWindow::genMoliso() {
 
   if ((adpName.isEmpty())||(adpName.contains('!'))){
     togElli->setVisible ( false );
-  toggleElli(false);
+    toggleElli(false);
     cubeGL->setEllipsoidNoUpdate(false);
     cubeGL->drawUz=false;
     george=false;
@@ -1895,20 +1896,20 @@ void MyWindow::genMoliso() {
     togLuft->setVisible(false);
     togAxen->setEnabled (true );
     togUnit->setEnabled (true );
-  packAct->setVisible(false);
-  mol.zelle.a=1.0;
-  mol.zelle.b=1.0;
-  mol.zelle.c=1.0;
-  mol.zelle.al=90.0;
-  mol.zelle.be=90.0;
-  mol.zelle.ga=90.0;
-  xdinp=asymmUnit;
-  cubeGL->resetENV();
-  initLists(xdinp);
+    packAct->setVisible(false);
+    mol.zelle.a=1.0;
+    mol.zelle.b=1.0;
+    mol.zelle.c=1.0;
+    mol.zelle.al=90.0;
+    mol.zelle.be=90.0;
+    mol.zelle.ga=90.0;
+    xdinp=asymmUnit;
+    cubeGL->resetENV();
+    initLists(xdinp);
   }
   else {
     statusBar()->showMessage(tr("loading sructure coordinates...") );
-  updateStatusBar();
+    updateStatusBar();
     setCursor(Qt::BusyCursor);
     loadFile(adpName);
     cubeGL->moliso->L=cubeGL->L;
@@ -4639,16 +4640,19 @@ double getNum(double v,double fv[20],double uiso){
 }
 int part=0;
 int isacommand(char command[8]){
-  const char bfl[83][5]={"ACTA", "AFIX", "MPLA", "ANIS", "BASF", "BIND", "BLOC", "BOND", "BUMP", "CELL", "CGLS", "CHIV", "CONF", "CONN", "DAMP", "DANG", //0-15
-			 "DEFS", "DELU", "DFIX", "DISP", "EADP", "EGEN", "END",  "EQIV", "ESEL", "EXTI", "EXYZ", "FEND", "FLAT", "FMAP", "FRAG", "FREE", //16-31
-			 "FVAR", "GRID", "HFIX", "HKLF", "HOPE", "HTAB", "INIT", "ISOR", "LAST", "LATT", "LAUE", "LIST", "L.S.", "MERG", "MOLE", "MORE", //32-47
-			 "MOVE", "NCSY", "OMIT", "PART", "PATT", "PHAN", "PHAS", "PLAN", "PSEE", "REM",  "RESI", "RTAB", "SADI", "SAME", "SFAC", "SHEL", //48-63
-			 "SIMU", "SIZE", "SPEC", "SPIN", "STIR", "SUMP", "SWAT", "SYMM", "TEMP", "TEXP", "TIME", "TITL", "TREF", "TWIN", "UNIT", "VECT", //64-79
-			 "WPDB", "WGHT", "ZERR"};//80-82
+  const char bfl[105][5]={
+    "ACTA", "AFIX", "MPLA", "ANIS", "BASF", "BIND", "BLOC", "BOND", "BUMP", "CELL", "CGLS", "CHIV", "CONF", "CONN", "DAMP", "DANG", //0-15
+    "DEFS", "DELU", "DFIX", "DISP", "EADP", "EGEN", "END",  "EQIV", "ESEL", "EXTI", "EXYZ", "FEND", "FLAT", "FMAP", "FRAG", "FREE", //16-31
+    "FVAR", "GRID", "HFIX", "HKLF", "HOPE", "HTAB", "INIT", "ISOR", "LAST", "LATT", "LAUE", "LIST", "L.S.", "MERG", "MOLE", "MORE", //32-47
+    "MOVE", "NCSY", "OMIT", "PART", "PATT", "PHAN", "PHAS", "PLAN", "PSEE", "REM",  "RESI", "RTAB", "SADI", "SAME", "SFAC", "SHEL", //48-63
+    "SIMU", "SIZE", "SPEC", "SPIN", "STIR", "SUMP", "SWAT", "SYMM", "TEMP", "TEXP", "TIME", "TITL", "TREF", "TWIN", "UNIT", "VECT", //64-79
+    "WPDB", "WGHT", "ZERR", "XNPD", "REST", "CHAN", "RIGU", "FLAP", "RNUM", "SOCC", "PRIG", "WIGL", "RANG", "TANG", "ADDA", "STAG",
+    "ATOM", "HETA", "SCAL", "ABIN", "ANSC", "ANSR", "NOTR", "NEUT", "TWST"
+  };
   int i=0;
   for (size_t j=0; j<strlen(command); j++) command[j] = toupper( command[j] );
-  while ((i<83)&&(strcmp(command,bfl[i]))) i++;
-  if (i==83) i=-1;
+  while ((i<105)&&(strcmp(command,bfl[i]))) i++;
+  if (i==105) i=-1;
   return i+1;
 }
 
@@ -5323,6 +5327,43 @@ void MyWindow::load_pdb(QString fileName){
   growSymm(0);
 }
 
+void MyWindow::load_xyz(QString fileName){
+  cubeGL->setVisible ( false);
+
+  INP newAtom;
+  newAtom.part=0;
+  newAtom.resiNr=0;
+  mol.initDir();
+  mol.adp=0;  
+  QFile xyz(fileName);
+  xyz.open(QIODevice::ReadOnly|QIODevice::Text);
+  QStringList lines = QString( xyz.readAll()).split('\n');
+  xyz.close();
+  for (int i = 0 ;  i < lines.size(); i++){
+    QStringList tok = lines.at(i).split(QRegExp("\\s+"));
+    if (tok.size() == 4){
+        strcpy(newAtom.atomname,tok.at(0).toStdString().c_str());
+       newAtom.kart.x=tok.at(1).toDouble();
+       newAtom.kart.y=tok.at(2).toDouble();
+       newAtom.kart.z =tok.at(3).toDouble();
+       newAtom.OrdZahl=mol.Get_OZ(newAtom.atomname);
+       asymmUnit.append(newAtom);
+    }
+    else {newAtom.part++;newAtom.resiNr++;}
+  }
+  xdinp=asymmUnit;
+  double dim=dimension(xdinp);
+  if ((Norm(atom1Pos)==0)&&(Norm(atom2Pos)==0)) cubeGL->L=100.0/dim;
+  if (mol.nListe>2) {
+    free(mol.vL);
+    mol.vL=NULL;
+    mol.nListe=0;
+  }
+  cubeGL->resetENV();
+  initLists(xdinp);
+  cubeGL->setVisible ( true );
+}
+
 void MyWindow::load_gaus(QString fileName){
 
   cubeGL->setVisible ( false );
@@ -5549,6 +5590,7 @@ void MyWindow::openFile() {
 		  "Gaussian COM-Files (*.com);;"
 		  "Gaussian FChk-Files (*.fchk);;"
 		  "CIF-Files (*.cif);;"
+                  "XYZ-Files (*.xyz);;"
 		  "Protein Data Base file (*.pdb *.ent);;",&selectedFilter,QFileDialog::DontUseNativeDialog ); 
   if (!fileName.isEmpty()) {
     loadFile(fileName);
@@ -6124,6 +6166,14 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
   }
   if ((fileName.endsWith(".com",Qt::CaseInsensitive))) {
     load_gaus(fileName);
+    cubeGL->drawAx=false;
+    cubeGL->drawUz=false;
+    mol.adp=0;
+    togAxen->setEnabled (false );
+    togUnit->setEnabled (false );
+  }
+  if ((fileName.endsWith(".xyz",Qt::CaseInsensitive))) {
+    load_xyz(fileName);
     cubeGL->drawAx=false;
     cubeGL->drawUz=false;
     mol.adp=0;
