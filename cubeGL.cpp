@@ -915,8 +915,8 @@ void CubeGL::loadDataBase(){
     int lineCntr=-1;
     while (!daba.atEnd()){
       line = QString(daba.readLine(150));
-      if (line.contains(QRegExp("^R-|S-|=-|[3-8]{1,3}-|[A-Z]{1,1}[a-z]{0,1}[123#@]{1,1}"))) {
-        if ((!line.startsWith("KS"))&&(!line.startsWith("!"))) {
+      if (line.contains(QRegExp("^R-|S-|=-|[3-8]{1,3}-|[A-Z]{1,1}[a-z]{0,1}[123#@]{0,1}"))) {
+        if ((!line.startsWith("KS"))&&(!line.startsWith("!"))&&(!line.contains(QRegExp("[;:]")))) {
           lineCntr=0;
           line.remove(QRegExp("[ \n\r]"));
           dataBase.append(line);
@@ -995,8 +995,8 @@ void CubeGL::loadDataBase(QString fileName){
     int lineCntr=-1;
     while (!daba.atEnd()){
       line = QString(daba.readLine(150));
-      if (line.contains(QRegExp("^R-|S-|=-|[3-8]{1,3}-|[A-Z]{1,1}[a-z]{0,1}[123#@]{1,1}"))) {
-        if ((!line.startsWith("KS"))&&(!line.startsWith("!"))) {
+      if (line.contains(QRegExp("^R-|S-|=-|[3-8]{1,3}-|[A-Z]{1,1}[a-z]{0,1}[123#@]{0,1}"))) {
+        if ((!line.startsWith("KS"))&&(!line.startsWith("!"))&&(!line.contains(QRegExp("[;:]")))) {
           lineCntr=0;
           line.remove(QRegExp("[ \n\r]"));
           dataBase.append(line);
@@ -1653,7 +1653,7 @@ void CubeGL::invariomExport(){
 						    -mol.ElNeg[ce.at(j).an])/100.0)));
 	    gg=sqrt( Distance(ce.at(i).pos,ce.at(j).pos));
 	    if (gg<soll_abst*1.2) {
-              printf("Z%g %s %s %g \n",gg,ce.at(i).Label.toStdString().c_str(),ce.at(j).Label.toStdString().c_str(),soll_abst);
+//              printf("Z%g %s %s %g \n",gg,ce.at(i).Label.toStdString().c_str(),ce.at(j).Label.toStdString().c_str(),soll_abst);
 	      bond.ato1=&ce.at(i);
 	      bond.ato2=&ce.at(j);
 	      bond.length=gg;
@@ -2450,7 +2450,19 @@ void CubeGL::inv2XDaxes(int index, int maxat){
 	asymmUnit[index].icor2= (axtok.at(2)=="X")? 1 : ((axtok.at(2)=="Y")? 2 : 3);
       return;
       }
-      if ((axcopy.contains("DUM"))) {printf("daran liegts: %s %s %s \n",axcopy.toStdString().c_str(),invariomsComplete.at(index).toStdString().c_str(),entries.at(j).Symmetry.toStdString().c_str());exit(0);}
+      if ((axcopy.contains("DUM"))) {
+        printf("daran liegts: %s %s %s \n",
+            axcopy.toStdString().c_str(),
+            invariomsComplete.at(index).toStdString().c_str(),
+            entries.at(j).Symmetry.toStdString().c_str());
+      asymmUnit[index].nax=(index==0)?1:0;
+      asymmUnit[index].nay1=index;
+      asymmUnit[index].nay2=(index==2)?1:2;
+      asymmUnit[index].icor1=  1 ;
+      asymmUnit[index].icor2=  2 ;
+      return;
+//        exit(0);
+      }
       for (int k=1; k< knoepfe.at(index).size();k++){//direkte Nachbarn finden
 	if ((ind1==-1)&&(knoepfe.at(index).at(k).an==at1)) {ind1=knoepfe.at(index).at(k).index;continue;}
 	if ((knoepfe.at(index).at(k).an==at2)&&(knoepfe.at(index).at(k).index<(maxat))) {ind2=knoepfe.at(index).at(k).index;continue;}
@@ -2687,7 +2699,7 @@ void CubeGL::exportXDFiles(){
     for (int i=0;i<asymmUnit.size();i++){
       if (asymmUnit.at(i).OrdZahl<0) continue;
       inv2XDaxes(i,exportLabels.size()-exportDummys.size());
-      if (hama.contains(PSE_Symbol[asymmUnit.at(i).OrdZahl])) continue;
+      if (hama.contains(QString("!%1!").arg(PSE_Symbol[asymmUnit.at(i).OrdZahl]))) continue;
       hama+=QString("!%1!").arg(PSE_Symbol[asymmUnit.at(i).OrdZahl]);
       ntabl++;
       itable[asymmUnit.at(i).OrdZahl]=ntabl;
@@ -2859,8 +2871,8 @@ void CubeGL::exportXDFiles(){
 //      C    CHFW CHFW CSZD    2  -2   0   0  -2   0   0   0   0   0   0   0   0   0   0   0   0   0  0.0033  0.0016  0.665
 
       for (int i=1; i<=ntabl; i++){
-	mas.write(QString("%1    CHFW CHFW CSZD  %2 %3 %4 %5 %6 %7 %8 %9 %10 %11 %12 %13 %14 %15 %16 %17 %18 %19 %20 %21 %22\n")
-			.arg(XDBANK[itable.key(i)].pse)
+	mas.write(QString("%1   CHFW CHFW CSZD  %2 %3 %4 %5 %6 %7 %8 %9 %10 %11 %12 %13 %14 %15 %16 %17 %18 %19 %20 %21 %22\n")
+			.arg(XDBANK[itable.key(i)].pse,-2)
 			.arg(XDBANK[itable.key(i)].s1,3)
 			.arg(XDBANK[itable.key(i)].s2,3)
 			.arg(XDBANK[itable.key(i)].s3,3)

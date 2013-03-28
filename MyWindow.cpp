@@ -3263,7 +3263,8 @@ void MyWindow::replyFinished(QNetworkReply* antwort){
   antwort->close();
   antwort->deleteLater();
   disconnect(net,SIGNAL(finished(QNetworkReply*)),0,0);
-  if ((d>1)&&(d<365)) {
+  printf("days %d\n",d);
+  if ((d>0)&&(d<3650)) {
     connect(net, SIGNAL(finished(QNetworkReply*)), this, SLOT(replyFinished2(QNetworkReply*)));
     reply = net->get(QNetworkRequest(QUrl("http://ewald.ac.chemie.uni-goettingen.de/___mole_cool_qt__/loadDABA.php")));
   }
@@ -3418,8 +3419,8 @@ void MyWindow::load_xdres(QString fileName) {
 	     &asymmUnit[i].amul);
       asymmUnit[i].lflag =(0>asymmUnit[i].nax)?-1:1;
       asymmUnit[i].nax =(0>asymmUnit[i].nax)?-asymmUnit[i].nax :asymmUnit[i].nax ;
-      strcpy(dv,asymmUnit[i].atomname);
-      strtok(dv,"(1234567890+- ");
+//      strcpy(dv,asymmUnit[i].atomname);
+//      strtok(dv,"(1234567890+- ");
       asymmUnit[i].OrdZahl=mol.Get_OZ(atypen.at(asymmUnit[i].atomtype-1));
       egal=fscanf(adp,"%lf%lf%lf%lf%lf%lf\n\r",&asymmUnit[i].uf.m11,&asymmUnit[i].uf.m22,&asymmUnit[i].uf.m33,
 		      &asymmUnit[i].uf.m21,//21 == 12
@@ -5330,6 +5331,7 @@ void MyWindow::load_pdb(QString fileName){
 void MyWindow::load_xyz(QString fileName){
   cubeGL->setVisible ( false);
 
+  mol.adp=0;
   INP newAtom;
   newAtom.part=0;
   newAtom.resiNr=0;
@@ -5337,7 +5339,9 @@ void MyWindow::load_xyz(QString fileName){
   mol.adp=0;  
   QFile xyz(fileName);
   xyz.open(QIODevice::ReadOnly|QIODevice::Text);
-  QStringList lines = QString( xyz.readAll()).split('\n');
+  QString all= QString( xyz.readAll());
+  all.remove(QRegExp("[\\[\\],]+"));
+  QStringList lines = all.split('\n');
   xyz.close();
   for (int i = 0 ;  i < lines.size(); i++){
     QStringList tok = lines.at(i).split(QRegExp("\\s+"));
@@ -5348,6 +5352,24 @@ void MyWindow::load_xyz(QString fileName){
        newAtom.kart.z =tok.at(3).toDouble();
        newAtom.OrdZahl=mol.Get_OZ(newAtom.atomname);
        asymmUnit.append(newAtom);
+    }
+    else if (tok.size() == 10){
+       strcpy(newAtom.atomname,tok.at(0).toStdString().c_str());
+       newAtom.kart.x=tok.at(1).toDouble();
+       newAtom.kart.y=tok.at(2).toDouble();
+       newAtom.kart.z=tok.at(3).toDouble();
+       //m11, m21, m31, m12, m22, m32, m13, m23, m33
+      
+       mol.adp=1;
+       newAtom.u.m11=tok.at(4).toDouble();
+       newAtom.u.m22=tok.at(5).toDouble();
+       newAtom.u.m33=tok.at(6).toDouble();
+       newAtom.u.m12=newAtom.u.m21=tok.at(7).toDouble();
+       newAtom.u.m13=newAtom.u.m31=tok.at(8).toDouble();
+       newAtom.u.m23=newAtom.u.m32=tok.at(9).toDouble();
+       newAtom.OrdZahl=mol.Get_OZ(tok.at(0).section(QRegExp("[^A-Za-z]+"),0,0));
+       asymmUnit.append(newAtom);
+
     }
     else {newAtom.part++;newAtom.resiNr++;}
   }
@@ -6131,6 +6153,8 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
   infoKanal->setHtml(QString("<strong>File name:</strong><br> %1<hr>").arg(fileName));
   if (GD<0) GD=2.3;
   mol.gd=GD;
+  
+  cubeGL->changeGDAct->setText(tr("Search radius is %1 Ang.  Change it").arg(mol.gd));
   atmax=0;
   smx=0;
   xdinp.clear();
@@ -6176,7 +6200,6 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
     load_xyz(fileName);
     cubeGL->drawAx=false;
     cubeGL->drawUz=false;
-    mol.adp=0;
     togAxen->setEnabled (false );
     togUnit->setEnabled (false );
   }
