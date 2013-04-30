@@ -729,8 +729,8 @@ void molekul::initDir(){
 
 }//Init Dir
 int molekul::Get_OZ(const QString S1){
-
 QString s=S1.section(QRegExp("[^A-Za-z]"),0,0);
+if (s=="Cv") return 5;
 static QStringList PSE;
 PSE<<"H"<<"He"<<"Li"<<"Be"<<"B"<<"C"<<"N"<<"O"<<"F"<<"Ne"<<"Na"<<"Mg"<<"Al"<<"Si"<<"P"<<"S"<<"Cl"<<"Ar"<<
 			     "K"<<"Ca"<<"Sc"<<"Ti"<<"V"<<"Cr"<<"Mn"<<"Fe"<<"Co"<<"Ni"<<"Cu"<<"Zn"<<"Ga"<<"Ge"<<"As"<<"Se"<<"Br"<<"Kr"<<

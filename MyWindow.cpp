@@ -11,11 +11,12 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=362;
+int rev=364;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
 molekul mol;
+int hatlokale=0;
 int pdfOnAtom=-1;
 const double g2r=180.0/M_PI;
 double fl(double x,double y,double z){
@@ -3381,7 +3382,10 @@ void MyWindow::load_xdres(QString fileName) {
   mol.initDir();
   if ((adp=fopen(fileName.toLocal8Bit(),"r"))==NULL) {QMessageBox::critical(this,"Read Error!",QString("read error %1!").arg(fileName),QMessageBox::Ok);exit(2);}  
   i=0;
-  if (!fastrun) cubeGL->drawAx=true;
+  if (!fastrun) {
+    cubeGL->drawAx=true;
+    hatlokale=1;
+  }
   while ((!feof(adp))&&(NULL==strstr(line,"Revision"))) {
     egal=fscanf(adp,"%[^\n\r]\n\r",line);
  }
@@ -4675,7 +4679,7 @@ void MyWindow::load_sheldrick(QString fileName){
   dn[dlen]='\0';
   maxResi=0;
   mol.initDir();
-  FILE *adp; 
+  FILE *adp,*aadp=NULL,*incf=NULL; 
   part=0;
   char line[85],line2[85],llin[166],dv[50],dvv[50],command[8],ext[85],Ami3[5];
   int acnt=0,sorte=0,gitter=0,bfl,sftr[85],resNr=-1;
@@ -4686,12 +4690,29 @@ void MyWindow::load_sheldrick(QString fileName){
   mol.zelle.symmops.clear();
   mol.zelle.trans.clear();
   V3 nl(0,0,0);
+  sf=0;
   mol.zelle.trans.append(nl);
   mol.zelle.symmops.append(Matrix(1,0,0, 0,1,0, 0,0,1));
   if ((adp=fopen(fn,"r"))==NULL) {qDebug("Can't open %s!!!\n",fn);exit(2);}
   while (!feof(adp)) { 
     egals=fgets(line,83,adp);
     command[0]='\0';
+    if (line[0]=='+'){
+      char incpfad[80];
+      sscanf(line,"+%s",incpfad);
+      QString ipf=QString("%1/%2").arg(dn).arg(incpfad);
+      if (QFileInfo(ipf).exists()){
+         incf=fopen(ipf.toLocal8Bit().data(),"r");
+         if (incf!=NULL) {
+         aadp=adp;
+         adp=incf;
+         egals=fgets(line,83,adp);
+//         qDebug()<<"included"<<ipf;
+         }
+      }
+
+    }
+
     sscanf(line,"%[a-zA-Z.] %[^\n]",command,ext); 
     bfl=isacommand(command);
     if (bfl) {
@@ -4704,16 +4725,25 @@ void MyWindow::load_sheldrick(QString fileName){
       }
       if (bfl==63) {
 	//SFAC 
-	sf=0;
+	if (strchr(line,'=')) {
+	  char *idx=strchr(line,'='); 
+          //printf("------ZN> %ld %c\n",idx-line,line[idx-line]);
+	  line[idx-line]=' ';
+          egals=fgets(line2,82,adp);
+	} 
+	else line2[0]='\0';
+	sprintf(llin,"%s%s",line,line2);
 	char tch[83],*tok;
 	strcpy(tch,ext);
 	for (tok=strtok(tch, " \n\t\r"); tok; tok=strtok(NULL, " \n\t\r")) {      
 	  if (strlen(tok)>1) tok[1]=tolower(tok[1]); 
-	  printf("[%s]",tok);
-	  sftr[sf]=mol.Get_OZ(tok);
-	  sf++;
+	//  printf("[%s]%d",tok,sf);
+          if (isalpha(tok[0])){
+            sftr[sf]=mol.Get_OZ(tok);
+            sf++;
+          }
 	}
-	printf("\n");
+	//printf("\n");
       }
       if (bfl==33){ 
 	int fvi=0; 
@@ -4742,8 +4772,9 @@ void MyWindow::load_sheldrick(QString fileName){
       newAtom.lflag=1;
       if (0<sscanf(line,"%s %d",dvv,&sorte)){
 	if (strchr(line,'=')) {
-	  line[79]=' ' ;
-	  line[78]=' ' ;
+	  char *idx=strchr(line,'='); 
+          //printf("------ZN> %ld %c\n",idx-line,line[idx-line]);
+	  line[idx-line]=' ';
           egals=fgets(line2,82,adp);
 	} 
 	else line2[0]='\0';
@@ -4783,6 +4814,7 @@ void MyWindow::load_sheldrick(QString fileName){
 	    mol.pmin=(mol.pmin>newAtom.peakHeight)?newAtom.peakHeight:mol.pmin;
 	    mol.pmax=(mol.pmax<newAtom.peakHeight)?newAtom.peakHeight:mol.pmax;
 	  }
+          //printf("[%s] {%s}\n",line,newAtom.atomname);
 
 	  newAtom.uf.m11=getNum(newAtom.uf.m11,fvar,Uiso);
 	  newAtom.uf.m33=newAtom.uf.m22=
@@ -4806,6 +4838,12 @@ void MyWindow::load_sheldrick(QString fileName){
 	asymmUnit.append(newAtom);
 	acnt++;
       }
+    }
+    if ((feof(adp))&&(aadp)) {
+      fclose(adp);
+      adp=aadp; 
+      aadp=NULL;
+      incf=NULL;
     }
   }
   for (int k=0; k<asymmUnit.size();k++){
@@ -4868,7 +4906,6 @@ if (cif_celler==63) {setup_zelle();cif_celler=0;}
 }
 }
 
-int hatlokale=0;
 QList<int> anisIndex;
 void cifloop(const QString tag,const QString value,int loopat){
   static int ola=-1;
@@ -6130,6 +6167,7 @@ void MyWindow::showPackDlg(){
 
 void MyWindow::loadFile(QString fileName,double GD){//empty
   cubeGL->pause=true;
+  hatlokale=0;
   infoKanal->clear();
   fmcq->killmaps();
   QDir directory(fileName);
@@ -6235,6 +6273,7 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
       togElli->setVisible ( true );
       cubeGL->drawUz=true;
       cubeGL->drawAx=true;
+      hatlokale=1;
       togAxen->setEnabled (true );
       togAxen->setChecked ( cubeGL->drawAx );
       load_MoPro(fileName);
@@ -6427,7 +6466,7 @@ void MyWindow::initLists(QList<INP> xd){
 
   mol.adp=adpstate;
 
-  if (cubeGL->drawAx) {
+  if (hatlokale) {
 
     statusBar()->showMessage(tr("Draw local coordinate systems.") );	
     togAxen->setVisible(true);
