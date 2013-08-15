@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=367;
+int rev=368;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -2290,6 +2290,7 @@ void MyWindow::editXDmas(){
   sss.addWidget(buttonBox);
   xdmasdlg->setLayout(&sss);
   xdmasdlg->setWindowTitle("xd.mas editor");
+  search->setFocus();
   if(QDialog::Accepted==xdmasdlg->exec()){
     mas.open(QIODevice::WriteOnly|QIODevice::Text);
     mas.write(editor->toPlainText().toLatin1(),editor->toPlainText().length());
