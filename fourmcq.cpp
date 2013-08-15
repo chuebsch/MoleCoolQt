@@ -183,6 +183,8 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu){
   }
   sorthkl(nr,lr);
   int n=-1;
+//  FILE *unmerg=fopen("unmerged.xd-mcq.hkl","wt");
+//  FILE *merg=fopen("merged.xd-mcq.hkl","wt");
   {int i=0;
     while(i<nr){
       double t=0.;
@@ -193,32 +195,44 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu){
       double z2=0.;
       double y2=0.;
       double p=0.;
+
       int m;
       int k=i;
       while ((i<nr)&&(lr[i].ih==lr[k].ih)&&(lr[i].ik==lr[k].ik)&&(lr[i].il==lr[k].il)) {
+/*      fprintf(unmerg,"%4d%4d%4d fo: %12.5f sfo: %10.5f phase: %10.6f a1: %12g b1: %12g f2c %12.5f f2cphase: %10.6f #%d\n",lr[i].ih,lr[i].ik,lr[i].il,
+          lr[i].d1,
+          lr[i].d2,
+          lr[i].d3,
+          lr[i].d4,
+          lr[i].d5,
+          lr[i].d6,
+          lr[i].d7,
+          
+          i);// */
 	t=t+1.;
 	u+=lr[i].d1;
-	v+=1./(lr[i].d2*lr[i].d2);
+	//v+=1./(lr[i].d2*lr[i].d2);
+	v+=(lr[i].d2);
 	y=lr[i].d5;
-	z+=lr[i].d4;
+	z=lr[i].d4;
 	y2=lr[i].d7;
-	z2=+lr[i].d6;
+	z2=lr[i].d6;
 	p=lr[i].d3;
 	i++;
       }
       m=n+1;
       lr[m].d1=fmax(0.,u/t);
-      lr[m].d2=sqrt(1./v);
+      lr[m].d2=v/(t*sqrt(t));
       lr[m].d5=y;
-      lr[m].d4=z/t;
+      lr[m].d4=z;
       lr[m].d7=y2;
-      lr[m].d6=z2/t;
+      lr[m].d6=z2;
       lr[m].d3=p;
       n=m;
       lr[n].ih=lr[k].ih;
       lr[n].ik=lr[k].ik;
       lr[n].il=lr[k].il;
- /*   printf("%4d%4d%4d fo: %12.5f sfo: %10.5f phase: %10.6f a1: %12g b1: %12g f2c %12.5f f2cphase: %10.6f \n",
+    /*fprintf(merg,"%4d%4d%4d fo: %12.5f sfo: %10.5f phase: %10.6f a1: %12g b1: %12g f2c %12.5f f2cphase: %10.6f #%d\n",
 		    lr[n].ih,
 		    lr[n].ik,
 		    lr[n].il,
@@ -228,12 +242,13 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu){
 		    lr[n].d4,
 		    lr[n].d5,
 		    lr[n].d6,
-		    lr[n].d7); // */
+		    lr[n].d7,n); // */
     }
   }
   n++;
   nr=n;
-  
+//  fclose(unmerg);
+//  fclose(merg);
   printf("%d after merging\n",nr);
   {
     float DX;

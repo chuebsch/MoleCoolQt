@@ -359,6 +359,8 @@ void MolIso::DrawPlys(){
 
 void MolIso::readXDGridHeader(QString fname){
   QFile gh(fname);
+
+  printf("%s\n",fname.toStdString().c_str());
   gh.open(QIODevice::ReadOnly);
   QString all =gh.readAll();
   QStringList lines = all.split(QRegExp("[\n\r]+"));
