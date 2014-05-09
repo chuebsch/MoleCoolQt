@@ -7,11 +7,11 @@
 #include "XDDlg.h"  
 #include "inames.h"
 V3 mil;
-const double vangle=27.01;
 CubeGL::CubeGL(QWidget *parent) : QGLWidget(parent) {
    setFormat(QGLFormat(QGL::DoubleBuffer | QGL::DepthBuffer) );
    atomsClickable=true;
    faceCull=0;
+   vangle=29.0;
    chicken= new QAction("Permanent wireframe mode",this);
    chicken->setCheckable(true);
    chicken->setChecked(false);
@@ -58,7 +58,7 @@ CubeGL::CubeGL(QWidget *parent) : QGLWidget(parent) {
    MM[14]=-200.0;
    mil.x=-2.3;
    mil.y=-0.3;
-   noWaitLabel=false;
+   noWaitLabel=true;
 }
 
 #ifndef POStO2d
@@ -146,6 +146,15 @@ void CubeGL::setContourWidth(int width){
 void CubeGL::togglContours(bool b){
     zebra=b;
     updateGL();
+}
+
+void CubeGL::setViewAngle(double ang){
+    if ((ang>0.001)&&(ang<160.0)){
+      //printf("View angle = %g degrees. %10.8f %f\n",ang,ang/vangle,vangle);
+      glScaled(ang/vangle,ang/vangle,ang/vangle);
+      vangle=ang;
+      homeXY();
+    }
 }
 
 void CubeGL::homeXY(){
@@ -3345,6 +3354,8 @@ void CubeGL::showMatrix(){
 }
 
 void CubeGL::along001(){
+  double va=vangle;
+  setViewAngle(29.0);
   MM[0]=1.0;
   MM[1]=0.0;
   MM[2]=0.0;
@@ -3356,10 +3367,12 @@ void CubeGL::along001(){
   MM[10]=-1.0;
   glMatrixMode(GL_MODELVIEW);
   glLoadMatrixd(MM);
-  updateGL();
+  setViewAngle(va);
 }
 
 void CubeGL::along010(){
+    double va=vangle;
+    setViewAngle(29.0);
   MM[0]=0.0;
   MM[1]=0.0;
   MM[2]=-1.0;
@@ -3370,11 +3383,12 @@ void CubeGL::along010(){
   MM[9]=1.0;
   MM[10]=0.0;
   glLoadMatrixd(MM);
-  updateGL();
-
+  setViewAngle(va);
 }
 
 void CubeGL::along100(){
+    double va=vangle;
+    setViewAngle(29.0);
   MM[0]=0.0;
   MM[1]=-1.0;
   MM[2]=0.0;
@@ -3385,7 +3399,7 @@ void CubeGL::along100(){
   MM[9]=0.0;
   MM[10]=0.0;
   glLoadMatrixd(MM);
-  updateGL();
+  setViewAngle(va);
 }
 
 void CubeGL::draw() {
@@ -3858,6 +3872,7 @@ void CubeGL::disSelection(){
   updateBondActions();
   updateGL();
 }
+
 
 void CubeGL::connectSelection(){
   if (selectedAtoms.size()!=2) return;

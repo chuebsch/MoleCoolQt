@@ -189,9 +189,9 @@ void MolIso::loadMI(QString fname, bool om){
     //potsigplus/=fmax(np,1);
     api/=fmax(np+nm,1);
     emit bigmessage(QString(
-                        "Avarage of positive surface values V<sub>S</sub><sup>+</sup><sub>av.</sub> = <b>%1</b><br>"
-                        "Avarage of negative surface values V<sub>S</sub><sup>-</sup><sub>av.</sub> = <b>%2</b><br>"
-                        "Avarage deviation from the avarage surface value &Pi; = <b>%10</b><br>"
+                        "Average of positive surface values V<sub>S</sub><sup>+</sup><sub>av.</sub> = <b>%1</b><br>"
+                        "Average of negative surface values V<sub>S</sub><sup>-</sup><sub>av.</sub> = <b>%2</b><br>"
+                        "Average deviation from the average surface value &Pi; = <b>%10</b><br>"
                         "&sigma;<sup>2</sup><sub>+</sub> = &sum; (V<sub>S</sub><sup>+</sup> - V<sub>S</sub><sup>+</sup><sub>av.</sub>)<sup>2</sup> = <b>%3</b><br>"
                         "&sigma;<sup>2</sup><sub>-</sub> = &sum; (V<sub>S</sub><sup>-</sup> - V<sub>S</sub><sup>-</sup><sub>av.</sub>)<sup>2</sup> = <b>%4</b><br>"
                         "&sigma;<sup>2</sup><sub>tot</sub> = &sigma;<sup>2</sup><sub>+</sub> + &sigma;<sup>2</sup><sub>-</sub> = <b>%5</b><br>"
@@ -209,9 +209,9 @@ void MolIso::loadMI(QString fname, bool om){
             .arg(nm)
             .arg(api,0,'f',3)
                     .arg(sigmap*sigmam/((sigmam+sigmap)*(sigmam+sigmap))));
-//    printf("\nAvarage of positive surface values VS+= %f\nAvarage of negative surface values VS-= %f\nsigma square + = %f\nsigma square - = %f\n%f %f n+ %d n- %d\n%g  \n"
+//    printf("\nAverage of positive surface values VS+= %f\nAverage of negative surface values VS-= %f\nsigma square + = %f\nsigma square - = %f\n%f %f n+ %d n- %d\n%g  \n"
     /*potnu=potsigplus*potsigminus/(potsigtot*potsigtot);
-      printf("\nAvarage of positive surface values VS+= %f %s\n Avarage of negative surface values VS-= %f %s\n Avarage deviation from the avarage surface value PI= %f %s\n sigma square + = %f (%s)^2\n sigma square - = %f (%s)^2\n sigma square total = %f (%s)^2\n nu = %f \n\n",
+      printf("\nAverage of positive surface values VS+= %f %s\n Average of negative surface values VS-= %f %s\n Average deviation from the average surface value PI= %f %s\n sigma square + = %f (%s)^2\n sigma square - = %f (%s)^2\n sigma square total = %f (%s)^2\n nu = %f \n\n",
       avpotplus,lul,avpotminus,lul,avdevPI,lul,potsigplus,lul,potsigminus,lul,potsigtot,lul,potnu);*/
 
     max+=max*0.00001+0.00001;
@@ -357,7 +357,29 @@ void MolIso::DrawPlys(){
   }		
 }	
 
+void MolIso::readJanaHeader(QString fname){
+    QFile jh(fname);
+    //FILE *f;
+    jh.open(QIODevice::ReadOnly);
+    struct T{
+    int nx[6],nxny,nmap;
+    float xymin[12];
+    float dx[6];
+    int iorien[6],mapa,nsubs;
+    bool sat;
+    };
+    T t;
+    jh.read((char*)&t,sizeof(T));
+    qDebug()<<t.nx[0]<<t.nx[1]<<t.nx[2]<<t.nxny;
+    jh.close();
+    exit(0);
+}
+
 void MolIso::readXDGridHeader(QString fname){
+    if (fname.endsWith(".m81",Qt::CaseInsensitive)) {
+        readJanaHeader(fname);
+        return;
+    }
   QFile gh(fname);
 
   printf("%s\n",fname.toStdString().c_str());

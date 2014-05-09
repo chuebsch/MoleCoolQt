@@ -1419,7 +1419,7 @@ void MyWindow::controlMap(){
       fouName=dirName;
       fouName.chop(3);
       fouName.append("fou");
-      qDebug()<<fouName;
+      //qDebug()<<fouName;
       if (fmcq->loadFouAndPerform(fouName.toStdString().c_str()),false){
         infoKanalNews(QString("<font color=red>Could not load %1!</font><br>").arg(fouName));
         fmcq->deleteLists();
@@ -6557,7 +6557,7 @@ void MyWindow::initLists(QList<INP> xd){
   int adpstate=mol.adp;
   int mx=xd.size();
   statusBar()->showMessage(tr("Draw Atoms.") );	
-qDebug()<<"0";
+//qDebug()<<"0";
 
   for (int j=0;j<mx;j++)               
     xd[j].labPos=xd[j].kart;
@@ -6566,7 +6566,7 @@ qDebug()<<"0";
   cubeGL->bas=glGenLists(10);
 
 
-qDebug()<<"1";
+//qDebug()<<"1";
   glNewList(cubeGL->bas, GL_COMPILE );{                          //ATOME
     glPushMatrix();{
       glScaled( cubeGL->L, cubeGL->L, cubeGL->L );
@@ -6575,7 +6575,7 @@ qDebug()<<"1";
     }glPopMatrix();    
   }glEndList();
 
-qDebug()<<"2";
+//qDebug()<<"2";
 
 
   glNewList(cubeGL->bas+8, GL_COMPILE );{       //bonds in single color
@@ -6587,7 +6587,7 @@ qDebug()<<"2";
     }glPopMatrix();    
   }glEndList();
 
-qDebug()<<"3";
+//qDebug()<<"3";
 
   glNewList(cubeGL->bas+7, GL_COMPILE );{                          //ATOME
     glPushMatrix();{
@@ -6597,7 +6597,7 @@ qDebug()<<"3";
     }glPopMatrix();    
   }glEndList();
 
-qDebug()<<"4";
+//qDebug()<<"4";
 
   glNewList(cubeGL->bas+4, GL_COMPILE );{                          //ATOME
     glPushMatrix();{
@@ -6607,7 +6607,7 @@ qDebug()<<"4";
     }glPopMatrix();    
   }glEndList();
 
-qDebug()<<"5";
+//qDebug()<<"5";
   glNewList(cubeGL->bas+9, GL_COMPILE );{       //Atome fuer tube syle
     glPushMatrix();{
       glScaled( cubeGL->L, cubeGL->L, cubeGL->L );
@@ -6618,7 +6618,7 @@ qDebug()<<"5";
   }glEndList();
   mol.tubifiedAtoms=false;
 
-qDebug()<<"6";
+//qDebug()<<"6";
 
   glNewList(cubeGL->bas+1, GL_COMPILE );{                          //BONDS
     glPushMatrix();{
@@ -6630,12 +6630,12 @@ qDebug()<<"6";
   }glEndList();
 
 
-qDebug()<<"7";
+//qDebug()<<"7";
   mol.adp=adpstate;
 
   if (hatlokale) {
 
-qDebug()<<"1xyz";
+//qDebug()<<"1xyz";
     statusBar()->showMessage(tr("Draw local coordinate systems.") );	
     togAxen->setVisible(true);
     glNewList(cubeGL->bas+2, GL_COMPILE );{                          //Axen

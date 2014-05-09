@@ -85,6 +85,7 @@ public slots:
   void scaleLegend(int size);
   void setContourCnt(int cnt);
   void setContourWidth(int width);
+  void setViewAngle(double ang);
   void togglContours(bool b);
   void togglMolisoTransparence(bool b);  
   void setMLFont(QFont fo);
@@ -165,6 +166,8 @@ protected:
 
 private:  
   int imFokus;
+
+  double vangle;
   QString selectedFilter;
   double mlsc;
   int labToMove;

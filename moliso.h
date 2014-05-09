@@ -156,7 +156,8 @@ signals:
   MolIso();
   ~MolIso();
   void loadMI(QString fname,bool om=false);
-  void readXDGridHeader(QString fname);  
+  void readXDGridHeader(QString fname);
+  void readJanaHeader(QString fname);
   void createSurface(QString isoFileName, QString mapFileName, QString &storeFaceName);
   void createSurface(QString &storeFaceName, double proba);
   void legende();

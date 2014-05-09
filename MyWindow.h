@@ -81,6 +81,7 @@ public slots:
      void genMoliso();
      void destroyMoliso();
      void toggleTubes(bool b);
+     //void toggleOrtho(bool b);
      void changeBondStrength();
      void syncBondActs();
      void syncAtomActs();
@@ -204,7 +205,7 @@ protected:
      QLineEdit *fromEdit,*toEdit,*regExpEdit;
      QDoubleValidator *qv;
      QLineEdit *searchAtomEdit;
-     QAction *searchAtomButton, *searchAtomCancel;
+     QAction *searchAtomButton, *searchAtomCancel,*orthoAct;
      QDialog *sfdlg;
      QDialog *packdlg;
      int maxResi,filtered;
@@ -221,8 +222,9 @@ protected:
      void load_pdb(QString fileName);
      void load_sheldrick(QString fileName);
      void load_xdres(QString fileName);
-     void load_Jana(QString fileName);
      void load_MoPro(QString fileName);
+     //void load_Jana(QString fileName);
+     void load_Jana(QString filename);
      void cifcard(const QString v);
      void load_cif(QString fileName);
      void load_gaus(QString fileName);
