@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=369;
+int rev=370;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -840,6 +840,7 @@ createRenameWgd();
   dialogMenu->addAction("Save current toggel states",cubeGL,SLOT(saveMISettings()));
   dialogMenu->addAction("Load toggle states",cubeGL,SLOT(loadMISettings()));
   dialogMenu->addAction(cubeGL->chicken);
+  dialogMenu->addAction(cubeGL->quickRot);
   cubeGL->Istda=invariomMenu->addAction("No data base loded yet.");
   invariomMenu->addAction(invExpAct);
   invariomMenu->addAction(invEdiAct);
@@ -1311,6 +1312,7 @@ createRenameWgd();
       (QCoreApplication::arguments().at(i).contains(".mas")) ||
       (QCoreApplication::arguments().at(i).contains(".inp")) ||
       (QCoreApplication::arguments().at(i).contains(QRegExp(".\\d\\d$"))) ||
+      (QCoreApplication::arguments().at(i).contains(QRegExp(".m\\d\\d$"))) ||
       (QCoreApplication::arguments().at(i).contains(".ins")) ||
       (QCoreApplication::arguments().at(i).contains(".par")) ||
       (QCoreApplication::arguments().at(i).contains(".com")) ||
@@ -1404,13 +1406,25 @@ void MyWindow::controlMap(){
     fmcq->rw = weak->value();
 
     QString fouName;
-    fouName=dirName;
-    fouName.chop(3);
-    fouName.append("fou");
-    if (fmcq->loadFouAndPerform(fouName.toStdString().c_str()),false){
-      infoKanalNews(QString("<font color=red>Could not load %1!</font><br>").arg(fouName));
-      fmcq->deleteLists();
+    if (dirName.contains(QRegExp("m\\d\\d$"))){
+      fouName=dirName;
+      fouName.chop(3);
+      fouName.append("m80");
+      if (fmcq->loadm80AndPerform(fouName.toStdString().c_str()),false){
+        infoKanalNews(QString("<font color=red>Could not load %1!</font><br>").arg(fouName));
+        fmcq->deleteLists();
 
+      }
+    }else{
+      fouName=dirName;
+      fouName.chop(3);
+      fouName.append("fou");
+      qDebug()<<fouName;
+      if (fmcq->loadFouAndPerform(fouName.toStdString().c_str()),false){
+        infoKanalNews(QString("<font color=red>Could not load %1!</font><br>").arg(fouName));
+        fmcq->deleteLists();
+
+      }
     }
   }    
 
@@ -3252,9 +3266,132 @@ dummys.append(newAtom);
     growSymm(6);
 }
 
+void MyWindow::load_Jana(QString fileName){
+  mol.zelle.symmops.clear();
+  mol.zelle.trans.clear();
+  QString fileBase,m40n,m50n,m80n;
+  fileBase=fileName;
+  
+  if  (fileBase.contains(QRegExp(".m\\d\\d$"))) fileBase.chop(4);
+  m40n=fileBase+(".m40");
+  m50n=fileBase+(".m50");
+  m80n=fileBase+(".m80");
+  QFile m50(m50n);
+  if (!m50.open(QIODevice::ReadOnly|QIODevice::Text)  ) {qDebug()<< "can't open "<<m50n; return;}
+  QStringList tok;
+  QStringList all = QString(m50.readAll()).split("\n",QString::SkipEmptyParts);
+  m50.close();
+  //printf("m50 read\n");
+  char gitt='P'; 
+  QStringList atypen;
+  for (int li=0; li<all.size();li++){
+    tok.clear();
+    tok=all.at(li).split(" ",QString::SkipEmptyParts);
+    if (tok.size()){
+      if ((tok.size()>6)&&(tok.at(0).toUpper()=="CELL")) {
+        mol.zelle.a  = tok.at(1).toDouble();
+        mol.zelle.b  = tok.at(2).toDouble();
+        mol.zelle.c  = tok.at(3).toDouble();
+        mol.zelle.al = tok.at(4).toDouble();
+        mol.zelle.be = tok.at(5).toDouble();
+        mol.zelle.ga = tok.at(6).toDouble();
+//        qDebug()<<mol.zelle.a<<mol.zelle.b<<mol.zelle.c<<mol.zelle.al<<mol.zelle.be<<mol.zelle.ga;
+        //        mol.zelle.lambda=tok.at(7).toDouble();
+        //habzell=true;
+        setup_zelle();
+      }
+      if ((tok.size()>1 )&&(tok.at(0).toUpper()=="LATTICE")){
+        gitt=tok.at(1).toUpper()[0].toLatin1();
+       // qDebug()<<"gitter "<<gitt;
+      }
+      if ((tok.size()>1 )&&(tok.at(0).toUpper()=="ATOM")){
+        atypen.append(tok.at(1));
+      //  qDebug()<<"ATOMS"<<tok;
+      }
+      if ((tok.size()>2 )&&(tok.at(0).toUpper()=="SYMMETRY")){
+        QString s=all.at(li).toUpper();
+        s.remove("SYMMETRY");
+        s=s.trimmed();
+        s.replace(' ',',');
+        mol.decodeSymmCard(s);
+ //       qDebug()<<s;
+      }
+      if (tok.at(0).toUpper()=="END") break;   
+    }
+  }
+  all.clear();
+  //qDebug()<<atypen;
+  QFile m40(m40n);
+  if (!m40.open(QIODevice::ReadOnly|QIODevice::Text)) {qDebug()<< "can't open "<<m40n; return;}
+  all = QString(m40.readAll()).split("\n",QString::SkipEmptyParts);
+  m40.close();
+  //printf("m40 read\n");
+  int na=0,iread;
+  INP newAtom;
+  newAtom.part=0;
+  newAtom.sg=0;
+  someThingToRestore();
+  george=true;
+  for (int li=0; li<all.size();li++){
+    tok.clear();
+    tok=all.at(li).split(" ",QString::SkipEmptyParts);
+    if (tok.size()){
+      if (li==0) na = tok.at(0).toInt();
+      if ((li)&&(!na)) return;
+      if ((asymmUnit.size()<na)&&(all.at(li).contains(QRegExp("^[A-z]+")))){
+        //C1        1  1     1.000000 0.199051 0.122184 0.071881    
+        //123456789012345678901234567890123456789012345678901234567890
+        //000000000111111111122222222223333333333444444444455555555556
+        //
+        newAtom.lmax=-1;
+        if ((all.at(li).length()>16)&&(all.at(li)[16]!=' ')) 
+        iread=sscanf(all.at(li).toStdString().c_str(),"%8s%3d%3d%3d %9lf%9lf%9lf%9lf",newAtom.atomname,&newAtom.atomtype,&newAtom.jtf, &newAtom.lmax, &newAtom.amul, &newAtom.frac.x, &newAtom.frac.y, &newAtom.frac.z);
+        else iread=sscanf(all.at(li).toStdString().c_str(),"%8s%3d%3d    %9lf%9lf%9lf%9lf",newAtom.atomname,&newAtom.atomtype,&newAtom.jtf,  &newAtom.amul, &newAtom.frac.x, &newAtom.frac.y, &newAtom.frac.z);
+//        qDebug()<<all.at(li)<<all.at(li)[16];
+//        printf("'11111111222333444 555555555666666666777777777888888888'\n");
+        printf("%3d%3d%3d %-10s %4d %12.6f%12.6f%12.6f%12.6f\n",iread,newAtom.jtf,newAtom.lmax,newAtom.atomname,newAtom.atomtype,newAtom.frac.x,newAtom.frac.y,newAtom.frac.z,newAtom.amul);
+        if (newAtom.jtf>0) {
+          li++;
+          sscanf(all.at(li).toStdString().c_str(),"%9lf%9lf%9lf%9lf%9lf%9lf",
+              &newAtom.uf.m11,
+              &newAtom.uf.m22,
+              &newAtom.uf.m33,
+              &newAtom.uf.m12,
+              &newAtom.uf.m13,
+              &newAtom.uf.m23);
+            
+        }
+          
+        newAtom.OrdZahl=mol.Get_OZ(atypen.at(newAtom.atomtype-1));
+        if (newAtom.amul==0) newAtom.OrdZahl=-1;
+        asymmUnit.append(newAtom);
+      }
+    }
+  }
+
+
+  mol.applyLatticeCentro(gitt,false);
+  for (int i=0;i<asymmUnit.size();i++) { 
+//    mol.frac2kart(asymmUnit[i].frac,asymmUnit[i].kart);
+//    printf("%-10s %4d %12.6f%12.6f%12.6f\n",asymmUnit[i].atomname,asymmUnit[i].OrdZahl,asymmUnit[i].kart.x,asymmUnit[i].kart.y,asymmUnit[i].kart.z);
+    if ((asymmUnit[i].uf.m22==0.0)&&(asymmUnit[i].uf.m33==0.0)){
+      asymmUnit[i].u.m11=asymmUnit[i].u.m22=asymmUnit[i].u.m33=asymmUnit[i].uf.m11;
+      asymmUnit[i].u.m12=asymmUnit[i].u.m13=asymmUnit[i].u.m23=asymmUnit[i].u.m21=asymmUnit[i].u.m31=asymmUnit[i].u.m32=0.0;}
+    else Uf2Uo(asymmUnit[i].uf,asymmUnit[i].u);
+//    printf("%12.6f%12.6f%12.6f%12.6f%12.6f%12.6f\n",asymmUnit[i].u.m11,asymmUnit[i].u.m22,asymmUnit[i].u.m33, asymmUnit[i].u.m12, asymmUnit[i].u.m13,asymmUnit[i].u.m23);
+  }
+  growSymm(6);
+  if (!fmcq->loadm80AndPerform(m80n.toStdString().c_str())) {
+    if (fmcq->doMaps->isChecked()) infoKanalNews(QString("<font color=red>Could not load %1!</font><br>").arg(m80n));
+    fmcq->deleteLists();
+    fmcq->doMaps->hide();
+  }
+  fmcq->doMaps->show();
+}
+
 void MyWindow::howOldIsTheLatesDataBase(){
-   connect(net, SIGNAL(finished(QNetworkReply*)), this, SLOT(replyFinished(QNetworkReply*)));
-   reply = net->get(QNetworkRequest(QUrl("http://ewald.ac.chemie.uni-goettingen.de/___mole_cool_qt__/latestDABA.php")));
+  connect(net, SIGNAL(finished(QNetworkReply*)), this, SLOT(replyFinished(QNetworkReply*)));
+  reply = net->get(QNetworkRequest(QUrl("http://ewald.ac.chemie.uni-goettingen.de/___mole_cool_qt__/latestDABA.php")));
 }
 
 void MyWindow::replyFinished(QNetworkReply* antwort){
@@ -3313,23 +3450,23 @@ void MyWindow::load_xdres(QString fileName) {
   mol.zelle.symmops.append(Matrix(1,0,0, 0,1,0, 0,0,1));
   QStringList atypen;
   {//MAS//
-  FILE *mas;
-  char line[220];
-  strcpy(line,"");
+    FILE *mas;
+    char line[220];
+    strcpy(line,"");
 
-  if (NULL==(mas=fopen(masName.toLocal8Bit(),"r"))) {QMessageBox::critical(this,"Read Error!",QString("read error %1!").arg(masName),QMessageBox::Ok);exit(1);}
-  while (line[0]!='C') {egal=fscanf(mas,"%[^\n\r]\n\r",line);if (line[0]=='T') sscanf(line,"TITLE %s",CID);}
-  sscanf(line,"CELL %lf%lf%lf%lf%lf%lf",&mol.zelle.a,&mol.zelle.b,&mol.zelle.c,&mol.zelle.al,&mol.zelle.be,&mol.zelle.ga);
-  while (line[0]!='W') {egal=fscanf(mas,"%[^\n\r]\n\r",line);}
-  sscanf(line,"WAVE %lf",&mol.zelle.lambda);
-  setup_zelle();
-  while ((!feof(mas))&&(strstr(line,"SYMM")==NULL)) {egal=fscanf(mas,"%[^\n\r]\n\r",line);}
-  while (strstr(line,"SYMM")!=NULL){  
-     if (!mol.decodeSymmCard(line)){qDebug()<<line<<"Sorry, but I can't understand this SymmCard";exit(-1);}
-    egal=fscanf(mas,"%[^\n\r]\n\r",line);
-  }
-  for (int i=1; i<107; i++)  pserbt[i]->hide();
-  rewind(mas);
+    if (NULL==(mas=fopen(masName.toLocal8Bit(),"r"))) {QMessageBox::critical(this,"Read Error!",QString("read error %1!").arg(masName),QMessageBox::Ok);exit(1);}
+    while (line[0]!='C') {egal=fscanf(mas,"%[^\n\r]\n\r",line);if (line[0]=='T') sscanf(line,"TITLE %s",CID);}
+    sscanf(line,"CELL %lf%lf%lf%lf%lf%lf",&mol.zelle.a,&mol.zelle.b,&mol.zelle.c,&mol.zelle.al,&mol.zelle.be,&mol.zelle.ga);
+    while (line[0]!='W') {egal=fscanf(mas,"%[^\n\r]\n\r",line);}
+    sscanf(line,"WAVE %lf",&mol.zelle.lambda);
+    setup_zelle();
+    while ((!feof(mas))&&(strstr(line,"SYMM")==NULL)) {egal=fscanf(mas,"%[^\n\r]\n\r",line);}
+    while (strstr(line,"SYMM")!=NULL){  
+      if (!mol.decodeSymmCard(line)){qDebug()<<line<<"Sorry, but I can't understand this SymmCard";exit(-1);}
+      egal=fscanf(mas,"%[^\n\r]\n\r",line);
+    }
+    for (int i=1; i<107; i++)  pserbt[i]->hide();
+    rewind(mas);
   char Centr,gitt;
   while (strstr(line,"LATT")==NULL) {egal=fscanf(mas,"%[^\n\r]\n\r",line);}
   sscanf(line,"LATT %c %c",&Centr,&gitt) ;
@@ -4929,14 +5066,15 @@ void cifloop(const QString tag,const QString value,int loopat){
       ola=loopat;
       return;}
   if (tag=="_atom_site_aniso_label") {
+    if (v=="?") return;
       if (asymmUnit[anisIndex.at(loopat)].atomname!=v) qDebug()<<"Serious Problem!"<<asymmUnit[loopat].atomname<<v;
       ola=loopat; return;}
-  if (tag=="_atom_site_aniso_U_11") {mol.adp=1;v.remove(QRegExp("\\(\\d+\\)"));asymmUnit[anisIndex.at(loopat)].uf.m11=v.toDouble();return;}
-  if (tag=="_atom_site_aniso_U_22") {mol.adp=1;v.remove(QRegExp("\\(\\d+\\)"));asymmUnit[anisIndex.at(loopat)].uf.m22=v.toDouble();return;}
-  if (tag=="_atom_site_aniso_U_33") {mol.adp=1;v.remove(QRegExp("\\(\\d+\\)"));asymmUnit[anisIndex.at(loopat)].uf.m33=v.toDouble();return;}
-  if (tag=="_atom_site_aniso_U_12") {mol.adp=1;v.remove(QRegExp("\\(\\d+\\)"));asymmUnit[anisIndex.at(loopat)].uf.m21=asymmUnit[anisIndex.at(loopat)].uf.m12=v.toDouble();return;}
-  if (tag=="_atom_site_aniso_U_13") {mol.adp=1;v.remove(QRegExp("\\(\\d+\\)"));asymmUnit[anisIndex.at(loopat)].uf.m31=asymmUnit[anisIndex.at(loopat)].uf.m13=v.toDouble();return;}
-  if (tag=="_atom_site_aniso_U_23") {mol.adp=1;v.remove(QRegExp("\\(\\d+\\)"));asymmUnit[anisIndex.at(loopat)].uf.m32=asymmUnit[anisIndex.at(loopat)].uf.m23=v.toDouble();return;}
+  if (tag=="_atom_site_aniso_U_11") {if (v=="?") return;mol.adp=1;v.remove(QRegExp("\\(\\d+\\)"));asymmUnit[anisIndex.at(loopat)].uf.m11=v.toDouble();return;}
+  if (tag=="_atom_site_aniso_U_22") {if (v=="?") return;mol.adp=1;v.remove(QRegExp("\\(\\d+\\)"));asymmUnit[anisIndex.at(loopat)].uf.m22=v.toDouble();return;}
+  if (tag=="_atom_site_aniso_U_33") {if (v=="?") return;mol.adp=1;v.remove(QRegExp("\\(\\d+\\)"));asymmUnit[anisIndex.at(loopat)].uf.m33=v.toDouble();return;}
+  if (tag=="_atom_site_aniso_U_12") {if (v=="?") return;mol.adp=1;v.remove(QRegExp("\\(\\d+\\)"));asymmUnit[anisIndex.at(loopat)].uf.m21=asymmUnit[anisIndex.at(loopat)].uf.m12=v.toDouble();return;}
+  if (tag=="_atom_site_aniso_U_13") {if (v=="?") return;mol.adp=1;v.remove(QRegExp("\\(\\d+\\)"));asymmUnit[anisIndex.at(loopat)].uf.m31=asymmUnit[anisIndex.at(loopat)].uf.m13=v.toDouble();return;}
+  if (tag=="_atom_site_aniso_U_23") {if (v=="?") return;mol.adp=1;v.remove(QRegExp("\\(\\d+\\)"));asymmUnit[anisIndex.at(loopat)].uf.m32=asymmUnit[anisIndex.at(loopat)].uf.m23=v.toDouble();return;}
   if (tag=="_atom_site_U_iso_or_equiv") {if (ola!=loopat) asymmUnit.append(newAtom); v.remove(QRegExp("\\(\\d+\\)")); asymmUnit[loopat].uf.m11=v.toDouble(); ola=loopat; return;}
   if (tag=="_atom_local_axes_atom_label"){hatlokale=1;if (asymmUnit[loopat].atomname!=v) qDebug()<<"Serious Problem!"; ola=loopat; return;}
   if (tag=="_atom_local_axes_atom0"){for (int w=0; w<asymmUnit.size();w++) if (v==asymmUnit.at(w).atomname) asymmUnit[loopat].nax=w+1; return;}
@@ -5384,36 +5522,38 @@ void MyWindow::load_xyz(QString fileName){
   for (int i = 0 ;  i < lines.size(); i++){
     QStringList tok = lines.at(i).split(QRegExp("\\s+"));
     if (tok.size() == 4){
-        strcpy(newAtom.atomname,tok.at(0).toStdString().c_str());
-       newAtom.kart.x=tok.at(1).toDouble();
-       newAtom.kart.y=tok.at(2).toDouble();
-       newAtom.kart.z =tok.at(3).toDouble();
-       newAtom.OrdZahl=mol.Get_OZ(newAtom.atomname);
-       asymmUnit.append(newAtom);
-    }
-    else if (tok.size() == 10){
-       strcpy(newAtom.atomname,tok.at(0).toStdString().c_str());
-       newAtom.kart.x=tok.at(1).toDouble();
-       newAtom.kart.y=tok.at(2).toDouble();
-       newAtom.kart.z=tok.at(3).toDouble();
-       //m11, m21, m31, m12, m22, m32, m13, m23, m33
-      
-       mol.adp=1;
-       newAtom.u.m11=tok.at(4).toDouble();
-       newAtom.u.m22=tok.at(5).toDouble();
-       newAtom.u.m33=tok.at(6).toDouble();
-       newAtom.u.m12=newAtom.u.m21=tok.at(7).toDouble();
-       newAtom.u.m13=newAtom.u.m31=tok.at(8).toDouble();
-       newAtom.u.m23=newAtom.u.m32=tok.at(9).toDouble();
-       newAtom.OrdZahl=mol.Get_OZ(tok.at(0).section(QRegExp("[^A-Za-z]+"),0,0));
-       asymmUnit.append(newAtom);
-
-    }
-    else {newAtom.part++;newAtom.resiNr++;}
+//  qDebug()<<tok<<asymmUnit.size()<<newAtom.OrdZahl;
+      strcpy(newAtom.atomname,tok.at(0).toStdString().c_str());
+     newAtom.kart.x=tok.at(1).toDouble();
+     newAtom.kart.y=tok.at(2).toDouble();
+     newAtom.kart.z =tok.at(3).toDouble();
+     newAtom.OrdZahl=mol.Get_OZ(tok.at(0));
+     asymmUnit.append(newAtom);
   }
-  xdinp=asymmUnit;
-  double dim=dimension(xdinp);
-  if ((Norm(atom1Pos)==0)&&(Norm(atom2Pos)==0)) cubeGL->L=100.0/dim;
+  else if (tok.size() == 10){
+     strcpy(newAtom.atomname,tok.at(0).toStdString().c_str());
+     newAtom.kart.x=tok.at(1).toDouble();
+     newAtom.kart.y=tok.at(2).toDouble();
+     newAtom.kart.z=tok.at(3).toDouble();
+     //m11, m21, m31, m12, m22, m32, m13, m23, m33
+    
+     mol.adp=1;
+     newAtom.u.m11=tok.at(4).toDouble();
+     newAtom.u.m22=tok.at(5).toDouble();
+     newAtom.u.m33=tok.at(6).toDouble();
+     newAtom.u.m12=newAtom.u.m21=tok.at(7).toDouble();
+     newAtom.u.m13=newAtom.u.m31=tok.at(8).toDouble();
+     newAtom.u.m23=newAtom.u.m32=tok.at(9).toDouble();
+     newAtom.OrdZahl=mol.Get_OZ(tok.at(0).section(QRegExp("[^A-Za-z]+"),0,0));
+     asymmUnit.append(newAtom);
+
+  }
+  else {newAtom.part++;newAtom.resiNr++;}
+}
+//for (int i = 0 ;  i <asymmUnit.size();i++) qDebug()<<asymmUnit.at(i).atomname<< asymmUnit.at(i).OrdZahl<< asymmUnit.at(i).part<<  asymmUnit.at(i).resiNr;
+xdinp=asymmUnit;
+double dim=dimension(xdinp);
+if ((Norm(atom1Pos)==0)&&(Norm(atom2Pos)==0)) cubeGL->L=100.0/dim;
   if (mol.nListe>2) {
     free(mol.vL);
     mol.vL=NULL;
@@ -5650,6 +5790,7 @@ void MyWindow::openFile() {
 		  "Gaussian COM-Files (*.com);;"
 		  "Gaussian FChk-Files (*.fchk);;"
 		  "CIF-Files (*.cif);;"
+                  "Jana-Files (*.m*);;"
                   "XYZ-Files (*.xyz);;"
 		  "Protein Data Base file (*.pdb *.ent);;",&selectedFilter,QFileDialog::DontUseNativeDialog ); 
   if (!fileName.isEmpty()) {
@@ -6242,6 +6383,35 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
     togAxen->setEnabled (false );
     togUnit->setEnabled (false );
   }
+  if (fileName.contains(QRegExp(".m\\d\\d$",Qt::CaseInsensitive))){
+    cubeGL->drawAx=false;
+    cubeGL->drawUz=true;
+    load_Jana(fileName);
+    if (asymmUnit.size()<1) {
+      cubeGL->pause=false;
+      atmax=0;
+      smx=0;
+      xdinp.clear();
+      asymmUnit.clear();
+      george=false;
+      
+      infoKanal->setHtml(QString("<strong>File name:</strong><br> %1<hr><strong>No atoms found in structure.</strong>").arg(fileName));
+      return;
+    }
+    togUnit->setEnabled (true );
+    togAxen->setChecked ( cubeGL->drawAx );
+  }
+  else if ((fileName.endsWith(".par"))||(fileName.contains(QRegExp(".\\d\\d$")))){
+      cubeGL->setEllipsoidNoUpdate( true );
+      togElli->setChecked ( true );
+      togElli->setVisible ( true );
+      cubeGL->drawUz=true;
+      cubeGL->drawAx=true;
+      hatlokale=1;
+      togAxen->setEnabled (true );
+      togAxen->setChecked ( cubeGL->drawAx );
+      load_MoPro(fileName);
+  }
   if ((fileName.endsWith(".cif",Qt::CaseInsensitive))) {
     george=true;
     cubeGL->drawAx=false;
@@ -6267,17 +6437,6 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
     else    
       load_xdres(fileName);    
     togAxen->setChecked ( cubeGL->drawAx );
-  }
-  if ((fileName.endsWith(".par"))||(fileName.contains(QRegExp(".\\d\\d$")))){
-      cubeGL->setEllipsoidNoUpdate( true );
-      togElli->setChecked ( true );
-      togElli->setVisible ( true );
-      cubeGL->drawUz=true;
-      cubeGL->drawAx=true;
-      hatlokale=1;
-      togAxen->setEnabled (true );
-      togAxen->setChecked ( cubeGL->drawAx );
-      load_MoPro(fileName);
   }
   updateStatusBar();
   QStringList aSymmList;
@@ -6398,7 +6557,7 @@ void MyWindow::initLists(QList<INP> xd){
   int adpstate=mol.adp;
   int mx=xd.size();
   statusBar()->showMessage(tr("Draw Atoms.") );	
-
+qDebug()<<"0";
 
   for (int j=0;j<mx;j++)               
     xd[j].labPos=xd[j].kart;
@@ -6407,6 +6566,7 @@ void MyWindow::initLists(QList<INP> xd){
   cubeGL->bas=glGenLists(10);
 
 
+qDebug()<<"1";
   glNewList(cubeGL->bas, GL_COMPILE );{                          //ATOME
     glPushMatrix();{
       glScaled( cubeGL->L, cubeGL->L, cubeGL->L );
@@ -6415,6 +6575,7 @@ void MyWindow::initLists(QList<INP> xd){
     }glPopMatrix();    
   }glEndList();
 
+qDebug()<<"2";
 
 
   glNewList(cubeGL->bas+8, GL_COMPILE );{       //bonds in single color
@@ -6426,6 +6587,7 @@ void MyWindow::initLists(QList<INP> xd){
     }glPopMatrix();    
   }glEndList();
 
+qDebug()<<"3";
 
   glNewList(cubeGL->bas+7, GL_COMPILE );{                          //ATOME
     glPushMatrix();{
@@ -6435,6 +6597,7 @@ void MyWindow::initLists(QList<INP> xd){
     }glPopMatrix();    
   }glEndList();
 
+qDebug()<<"4";
 
   glNewList(cubeGL->bas+4, GL_COMPILE );{                          //ATOME
     glPushMatrix();{
@@ -6444,6 +6607,7 @@ void MyWindow::initLists(QList<INP> xd){
     }glPopMatrix();    
   }glEndList();
 
+qDebug()<<"5";
   glNewList(cubeGL->bas+9, GL_COMPILE );{       //Atome fuer tube syle
     glPushMatrix();{
       glScaled( cubeGL->L, cubeGL->L, cubeGL->L );
@@ -6454,6 +6618,7 @@ void MyWindow::initLists(QList<INP> xd){
   }glEndList();
   mol.tubifiedAtoms=false;
 
+qDebug()<<"6";
 
   glNewList(cubeGL->bas+1, GL_COMPILE );{                          //BONDS
     glPushMatrix();{
@@ -6465,10 +6630,12 @@ void MyWindow::initLists(QList<INP> xd){
   }glEndList();
 
 
+qDebug()<<"7";
   mol.adp=adpstate;
 
   if (hatlokale) {
 
+qDebug()<<"1xyz";
     statusBar()->showMessage(tr("Draw local coordinate systems.") );	
     togAxen->setVisible(true);
     glNewList(cubeGL->bas+2, GL_COMPILE );{                          //Axen

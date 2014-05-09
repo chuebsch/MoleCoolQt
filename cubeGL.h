@@ -24,7 +24,7 @@ public:
   double L;
   bool pause;
   int stereo_mode;
-  QAction *Istda,*chicken;
+  QAction *Istda,*chicken,*quickRot;
   QTimer *moving;
   QAction *changeGDAct;
   QCheckBox *invertMouseZoom,*minus;
@@ -120,6 +120,7 @@ public slots:
   void togglBGG(bool on);
   void togglGrow(bool on);
   void togglMOAI(bool on);
+  void toggleNoWaitLabel(bool b);
   void homeLabels();
   void showMatrix();
   void setMatrix();

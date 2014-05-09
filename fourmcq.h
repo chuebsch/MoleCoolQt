@@ -55,6 +55,7 @@ Q_OBJECT
           FourMCQ(molekul *mole_, CubeGL *chgl_,QToolBar *toolView, double resol=2.0, double wght=1.0);
 	  ~FourMCQ();
           bool loadFouAndPerform(const char filename[],bool neu=true);
+          bool loadm80AndPerform(const char filename[],bool neu=true);
           double lintrans,linwidth;
           float sigma[3];
           float iso[3];
@@ -76,7 +77,7 @@ Q_OBJECT
   void bigmessage(const QString &);
 
   private:
-	  double C[15],D[9],sy[12][192],wave;
+	  double C[15],D[9],sy[12][192],wave,sintl,cral,crbe,crga;
 	  inline int Intersect( double& vm, double& vp ){ return vm*vp <= 0.0 && (vm<0.0 || vp<0.0); }
 	  V3  delDA[27];
 	  fftwf_plan  fwd_plan;
@@ -98,6 +99,7 @@ Q_OBJECT
 char titl[80];/*fcmax=0,f000=0,resmax=99999.0,*/
 void trimm(char s[]);
 void decodeSymm(QString symmCard);
+void decodeSymm2(QString symmCard);
 void deletes(char *s, int count);
 int readMas(const char *filename);
 void sorthkl(int nr, rec64 r[]);

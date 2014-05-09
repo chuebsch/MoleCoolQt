@@ -16,6 +16,10 @@ CubeGL::CubeGL(QWidget *parent) : QGLWidget(parent) {
    chicken->setCheckable(true);
    chicken->setChecked(false);
    connect(chicken,SIGNAL(toggled(bool)),this,SLOT(updateGL()));
+   quickRot= new QAction("No change in view while rotation",this );
+   quickRot->setCheckable(true);
+   quickRot->setChecked(false);
+   connect(quickRot,SIGNAL(toggled(bool)),this,SLOT(toggleNoWaitLabel(bool)));
    growIt=false;
    pause = monochrom = false;
    altemitte=V3(0,0,0);
@@ -97,6 +101,12 @@ static inline bool  posTo2D(V3 obj,
 
 }
 #endif 
+
+void CubeGL::toggleNoWaitLabel(bool b){
+  noWaitLabel=b;
+  updateGL();
+}
+
 void CubeGL::noneCull(bool b){
   if (b) faceCull=0;
   updateGL();
@@ -3379,6 +3389,7 @@ void CubeGL::along100(){
 }
 
 void CubeGL::draw() {
+//  printf("%s\n",(pause)?"paused":"drawing");
     if (pause) return;
   if (depthCueing) glEnable(GL_FOG);
   else glDisable(GL_FOG);
