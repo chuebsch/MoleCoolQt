@@ -88,7 +88,7 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
   int dimension=0,skip;
   int i,ok=0;
   short int ih0, ik0, il0, im, in,io, is;
-  float fo0,fc0,fc1,f20;
+  float fo0,fc0,fc1,f20,fsig;
   ns=0;
   sy[0][ns]=1.0;
   sy[1][ns]=0.0;
@@ -203,6 +203,7 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
   nr=0;
   do {
     skip = 0;
+    fsig = 0.1;
     if (dimension > 3) {
       switch (dimension) {
         case 4:
@@ -228,8 +229,8 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
           break;
       }
     } else {
-      i = sscanf (line, "%hd %hd %hd %*d %f %*f %*f %f %f", &ih0, &ik0, &il0,
-          &fo0, &fc0, &f20);
+      i = sscanf (line, "%hd %hd %hd %*d %f %*f %*f %f %f %*f %*f %*f %*f %*f %*f %f", &ih0, &ik0, &il0,
+          &fo0, &fc0, &f20, &fsig);
     }
     if (i < dimension + 3)
       break;
@@ -247,15 +248,22 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
     lr[nr].ik=ik0;
     lr[nr].il=il0;
     lr[nr].d1=fo0;
-    lr[nr].d2=fc1;//abs fc
+    lr[nr].d2=fsig;
+    lr[nr].d4=fc1;//abs fc
     lr[nr].d3=f20;//fc phase
-    lr[nr].d4=lr[nr].d5=lr[nr].d6=lr[nr].d7=0;//not there afaik
+    lr[nr].d5=lr[nr].d6=lr[nr].d7=0;//not there afaik
     //printf("%4d%4d%4d %9f %9f %9f #%d\n",lr[nr].ih,lr[nr].ik,lr[nr].il,lr[nr].d1,lr[nr].d2,lr[nr].d3,nr);
     nr++;
     fgets (line, 199, mapin);
   }while (i > 0 && !feof (mapin));
   fclose(mapin);
   printf("%d Reflections read from %s.\n",nr,filename);
+  for (int i=0;i<ns;i++){
+  printf("SYMM: %d\n%9.6f %9.6f %9.6f %5.2f\n%9.6f %9.6f %9.6f %5.2f\n%9.6f %9.6f %9.6f %5.2f\n",i+1,
+      sy[0][i], sy[1][i], sy[2][i], sy[9][i],
+      sy[3][i], sy[4][i], sy[5][i], sy[10][i],
+      sy[6][i], sy[7][i], sy[8][i], sy[11][i]);
+  }
   for (int i=0;i<nr;i++){
     double u=lr[i].ih,v=lr[i].ik,w=lr[i].il;
     int mh=lr[i].ih,mk=lr[i].ik,ml=lr[i].il;
@@ -293,8 +301,10 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
   }
   sorthkl(nr,lr);
   int n=-1;
-  //  FILE *unmerg=fopen("unmerged.xd-mcq.hkl","wt");
-  //  FILE *merg=fopen("merged.xd-mcq.hkl","wt");
+  // /*
+  FILE *unmerg=fopen("unmerged.xd-mcq.hkl","wt");
+  FILE *merg=fopen("merged.xd-mcq.hkl","wt");
+  //  */
   {int i=0;
     while(i<nr){
       double t=0.;
@@ -309,7 +319,8 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
       int m;
       int k=i;
       while ((i<nr)&&(lr[i].ih==lr[k].ih)&&(lr[i].ik==lr[k].ik)&&(lr[i].il==lr[k].il)) {
-        /*      fprintf(unmerg,"%4d%4d%4d fo: %12.5f sfo: %10.5f phase: %10.6f a1: %12g b1: %12g f2c %12.5f f2cphase: %10.6f #%d\n",lr[i].ih,lr[i].ik,lr[i].il,
+        // /*
+              fprintf(unmerg,"%4d%4d%4d fo: %12.5f sfo: %10.5f phase: %10.6f a1: %12g b1: %12g f2c %12.5f f2cphase: %10.6f #%d\n",lr[i].ih,lr[i].ik,lr[i].il,
                 lr[i].d1,
                 lr[i].d2,
                 lr[i].d3,
@@ -318,7 +329,8 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
                 lr[i].d6,
                 lr[i].d7,
 
-                i);// */
+                i);
+              // */
         t=t+1.;
         u+=lr[i].d1;
         //v+=1./(lr[i].d2*lr[i].d2);
@@ -334,7 +346,8 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
       lr[n].ih=lr[k].ih;
       lr[n].ik=lr[k].ik;
       lr[n].il=lr[k].il;
-      /*fprintf(merg,"%4d%4d%4d fo: %12.5f sfo: %10.5f phase: %10.6f a1: %12g b1: %12g f2c %12.5f f2cphase: %10.6f #%d\n",
+      // /*
+      fprintf(merg,"%4d%4d%4d fo: %12.5f sfo: %10.5f phase: %10.6f a1: %12g b1: %12g f2c %12.5f f2cphase: %10.6f #%d\n",
         lr[n].ih,
         lr[n].ik,
         lr[n].il,
@@ -344,9 +357,14 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
         lr[n].d4,
         lr[n].d5,
         lr[n].d6,
-        lr[n].d7,n); // */
+        lr[n].d7,n); 
+      // */
     }
   }
+  // /*
+  fclose(merg);
+  fclose(unmerg);
+  // */
   n++;
   nr=n;
   {
@@ -405,11 +423,12 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
         //sintl=(lr[i].ih*lr[i].ih*D[6]*D[6] + lr[i].ik*lr[i].ik*D[7]*D[7] + lr[i].il*lr[i].il*D[8]*D[8] + 2*lr[i].ih*lr[i].il*D[6]*D[8]*crbe+ 2*lr[i].ik*lr[i].il*D[7]*D[8]*cral+ 2*lr[i].ih*lr[i].ik*D[6]*D[7]*crga)*-M_PI;//this is -4*pi*(sin(theta) / lambda)^2
         //       if (abs(lr[i].ih)+abs(lr[i].ik)+abs(lr[i].il)<7) printf("%4d%4d%4d %g %g %g\n",lr[i].ih,lr[i].ik,lr[i].il ,sintl,sqrt(sintl),1.0/sintl);
         sintl=1.0;
-        if(typ==0) ss=(lr[i].d1-lr[i].d2)/(C[14]*(s+t));
+        if(typ==0) ss=(lr[i].d1-lr[i].d4)/(C[14]*(s+t));
+        //if(typ==0) ss=(lr[i].d1-lr[i].d2)/(C[14]);
         //if(typ==0) {ss=(lr[i].d1)/(C[14]*(s+t));ss*=ss;}
         //	if(typ==0) ss=(fmod1)/(C[14]*(s+t)*sintl);
         else if (typ==1) ss=(lr[i].d1)/(C[14]*(s+t)*sintl);
-        if(lr[i].d2>1.E-6) ss=ss/(1.+rw*pow(lr[i].d2/lr[i].d2,4));
+        if(lr[i].d2>1.E-6) ss=ss/(1.+rw*pow(lr[i].d2/lr[i].d4,4));
         for (int n=0; n<ns;n++){ 
           int j,k,l,m;
           j=(int) (u*sy[0][n]+ v*sy[3][n] + w*sy[6][n]);
@@ -454,6 +473,7 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
       fprintf(stderr,"Finished! sigma %g %g %g %d\n",t,DS,DM,n5);
     }//1
   }//2
+  sigma[2]=9*sigma[0];
   extern QList<INP> xdinp;      
   urs=V3(0,0,0);int gt=0;
   for (int i=0; i<xdinp.size();i++) {

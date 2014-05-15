@@ -2367,3 +2367,26 @@ bool molekul::applyLatticeCentro(const QChar latt,const bool centro){
   }
   return true;
 }
+void molekul::setup_zelle(){  
+  const double g2r=180.0/M_PI;
+  zelle.phi=  sqrt(1-(cos(zelle.al/g2r)*cos(zelle.al/g2r))-
+		  (cos(zelle.be/g2r)*cos(zelle.be/g2r))-(cos(zelle.ga/g2r)*cos(zelle.ga/g2r))
+		  +2*cos(zelle.al/g2r)*cos(zelle.be/g2r)*cos(zelle.ga/g2r));
+  zelle.V = zelle.a*zelle.b*zelle.c*zelle.phi;
+  zelle.as=zelle.c*zelle.b*sin(zelle.al/g2r)/zelle.V;
+  zelle.bs=zelle.c*zelle.a*sin(zelle.be/g2r)/zelle.V;
+  zelle.cs=zelle.a*zelle.b*sin(zelle.ga/g2r)/zelle.V;
+  const double tau=zelle.c*((cos(zelle.al/g2r)-cos(zelle.be/g2r)*cos(zelle.ga/g2r))/sin(zelle.ga/g2r));
+  zelle.o1.m11=zelle.o[0][0] =zelle.as*zelle.a;
+  zelle.o1.m12=zelle.o[0][1] = 0.0;
+  zelle.o1.m13=zelle.o[0][2] = 0.0;
+  zelle.o1.m21=zelle.o[1][0] = zelle.bs*zelle.b*cos(zelle.ga/g2r);
+  zelle.o1.m22=zelle.o[1][1] = zelle.bs*zelle.b*sin(zelle.ga/g2r);
+  zelle.o1.m23=zelle.o[1][2] = 0.0;
+  zelle.o1.m31=zelle.o[2][0] = zelle.cs*zelle.c* cos(zelle.be/g2r);
+  zelle.o1.m32=zelle.o[2][1] = zelle.cs*tau;
+  zelle.o1.m33=zelle.o[2][2] = zelle.cs*zelle.c* zelle.phi / sin(zelle.ga /g2r);
+}
+void molekul::Uf2Uo(const Matrix x, Matrix & y) {
+ y=(zelle.o1*x)*transponse(zelle.o1);
+}

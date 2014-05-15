@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=372;
+int rev=373;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -1750,6 +1750,7 @@ void MyWindow::findAtoms(){
 void MyWindow::genMoliso() {
   atmax=0;
   smx=0;
+  int fileType=0;
   xdinp.clear();
   asymmUnit.clear();
   cubeGL->pause=true;
@@ -1884,8 +1885,9 @@ void MyWindow::genMoliso() {
   dock3->setWidget(zebraZwinger);
   dock3->setFeatures(QDockWidget::DockWidgetMovable|QDockWidget::DockWidgetClosable);
   addDockWidget(Qt::LeftDockWidgetArea, dock3);
-  cubeGL->moliso->readXDGridHeader(isof);
+  cubeGL->moliso->readXDGridHeader(isof,fileType);
   mol.adp=0;
+  if (fileType==81) mol.adp=1;
   cubeGL->L = 100.0/dimension(asymmUnit);
   cubeGL->moliso->L=cubeGL->L;
   if (smx>7){
@@ -1934,7 +1936,7 @@ void MyWindow::genMoliso() {
     if (sfaceFile.contains('!'))sfaceFile.clear();
     setCursor(Qt::BusyCursor);
     statusBar()->showMessage(tr("calculating surfaces") );
-    cubeGL->moliso->createSurface(isof,mapf,sfaceFile);
+    cubeGL->moliso->createSurface(isof,mapf,sfaceFile,fileType);
     statusBar()->showMessage(tr("surfaces calculatied" ) );
     lfaceFile=sfaceFile;
   }
@@ -6384,6 +6386,10 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
     togUnit->setEnabled (false );
   }
   if (fileName.contains(QRegExp(".m\\d\\d$",Qt::CaseInsensitive))){
+    cubeGL->setEllipsoidNoUpdate( true );
+    togElli->setChecked ( true );
+    togElli->setVisible ( true );
+    mol.adp=1;
     cubeGL->drawAx=false;
     cubeGL->drawUz=true;
     load_Jana(fileName);

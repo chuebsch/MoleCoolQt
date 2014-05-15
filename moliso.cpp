@@ -358,28 +358,186 @@ void MolIso::DrawPlys(){
 }	
 
 void MolIso::readJanaHeader(QString fname){
-    QFile jh(fname);
-    //FILE *f;
-    jh.open(QIODevice::ReadOnly);
-    struct T{
+  QFile jh(fname);
+  QStringList atypen;
+  bool habenatome=false;
+  //FILE *f;
+  jh.open(QIODevice::ReadOnly);
+  struct T{
     int nx[6],nxny,nmap;
     float xymin[12];
     float dx[6];
     int iorien[6],mapa,nsubs;
     bool sat;
-    };
-    T t;
-    jh.read((char*)&t,sizeof(T));
-    qDebug()<<t.nx[0]<<t.nx[1]<<t.nx[2]<<t.nxny;
-    jh.close();
-    exit(0);
+  };
+  T t;
+  jh.read((char*)&t,sizeof(T));
+  //qDebug()<<t.nx[0]<<t.nx[1]<<t.nx[2]<<t.nxny;
+  jh.close();
+  breite=t.nx[0];
+  hoehe=t.nx[1];
+  tiefe=t.nx[2];
+  bh =t.nxny;
+  QString M50Name=fname;
+  M50Name=M50Name.replace(QRegExp(".m81$"),".m50");
+  QFile m50(M50Name);
+  //molekul molj;
+  extern molekul mol;
+  if (!m50.open(QIODevice::ReadOnly|QIODevice::Text)){
+    bool ok,ok2;
+    QString celltext;
+    do {
+      ok2=false;
+      celltext = QInputDialog::getText (this,
+          "Please enter cell parameters (a b c alpha beta gamma) (Angstroem degrees)",
+          "Please enter cell parameters (a b c alpha beta gamma) (Angstroem degrees)", 
+          QLineEdit::Normal,"",&ok);
+      if (!celltext.isEmpty()){
+        QStringList tok=celltext.split(" ",QString::SkipEmptyParts);
+        if (tok.size()<6 )continue;
+        mol.zelle.a=  tok.at(0).toDouble(&ok2);if (!ok2) continue;  
+        mol.zelle.b=  tok.at(1).toDouble(&ok2);if (!ok2) continue;  
+        mol.zelle.c=  tok.at(2).toDouble(&ok2);if (!ok2) continue;  
+        mol.zelle.al= tok.at(3).toDouble(&ok2);if (!ok2) continue;  
+        mol.zelle.be= tok.at(4).toDouble(&ok2);if (!ok2) continue;  
+        mol.zelle.ga= tok.at(5).toDouble(&ok2);if (!ok2) continue; 
+        mol.setup_zelle(); 
+      } 
+    }while (!ok||celltext.isEmpty());
+  }else {
+    QString all50 = m50.readAll();
+    QStringList lines50 = all50.split(QRegExp("[\n\r]+"));
+    bool hascell=false;
+    bool ok=false,ok2=false;
+    for (int i=0; i<lines50.size(); i++){
+      if ((!hascell)&&(lines50.at(i).startsWith("cell"))) {
+        QStringList tok=lines50.at(i).split(" ",QString::SkipEmptyParts);
+        mol.zelle.a=  tok.at(1).toDouble(&ok2);ok=ok2;
+        mol.zelle.b=  tok.at(2).toDouble(&ok2);ok&=ok2;
+        mol.zelle.c=  tok.at(3).toDouble(&ok2);ok&=ok2;
+        mol.zelle.al= tok.at(4).toDouble(&ok2);ok&=ok2;
+        mol.zelle.be= tok.at(5).toDouble(&ok2);ok&=ok2;
+        mol.zelle.ga= tok.at(6).toDouble(&ok2);ok&=ok2;
+        mol.setup_zelle(); 
+        hascell=true;
+      }else if (lines50.at(i).startsWith("atom")) {
+        QStringList tok=lines50.at(i).split(" ",QString::SkipEmptyParts);
+        atypen.append(tok.at(1));
+        habenatome=true;
+      }
+
+    }
+    if (!ok) {
+      QString celltext;
+      do {
+        ok2=false;
+        celltext = QInputDialog::getText (this,
+            "Please enter cell parameters (a b c alpha beta gamma) (Angstroem degrees)",
+            "Please enter cell parameters (a b c alpha beta gamma) (Angstroem degrees)", 
+            QLineEdit::Normal,"",&ok);
+        if (!celltext.isEmpty()){
+          QStringList tok=celltext.split(" ",QString::SkipEmptyParts);
+          if (tok.size()<6 )continue;
+          mol.zelle.a=  tok.at(0).toDouble(&ok2);if (!ok2) continue;  
+          mol.zelle.b=  tok.at(1).toDouble(&ok2);if (!ok2) continue;  
+          mol.zelle.c=  tok.at(2).toDouble(&ok2);if (!ok2) continue;  
+          mol.zelle.al= tok.at(3).toDouble(&ok2);if (!ok2) continue;  
+          mol.zelle.be= tok.at(4).toDouble(&ok2);if (!ok2) continue;  
+          mol.zelle.ga= tok.at(5).toDouble(&ok2);if (!ok2) continue; 
+          mol.setup_zelle(); 
+        } 
+      }while (!ok||celltext.isEmpty());
+    }
+  }
+  V3 xd,yd,zd,xdk,ydk,zdk;
+  xd=V3(t.dx[0],0,0);
+  yd=V3(0,t.dx[1],0);
+  zd=V3(0,0,t.dx[2]);
+  mol.frac2kart(xd,xdk);
+  mol.frac2kart(yd,ydk);
+  mol.frac2kart(zd,zdk);
+  x_dim=Vector3(xdk.x,xdk.y,xdk.z);
+  y_dim=Vector3(ydk.x,ydk.y,ydk.z);
+  z_dim=Vector3(zdk.x,zdk.y,zdk.z);
+  printf("%9.6f %9.6f %9.6f\n",x_dim.x,x_dim.y,x_dim.z);
+  printf("%9.6f %9.6f %9.6f\n",y_dim.x,y_dim.y,y_dim.z);
+  printf("%9.6f %9.6f %9.6f\n\n",z_dim.x,z_dim.y,z_dim.z);
+  printf("%9.6f %9.6f %9.6f\n",x_dim.x*breite,x_dim.y*breite,x_dim.z*breite);
+  printf("%9.6f %9.6f %9.6f\n",y_dim.x*hoehe,y_dim.y*hoehe,y_dim.z*hoehe);
+  printf("%9.6f %9.6f %9.6f %9.6f %9.6f %9.6f %9.6f\n", mol.zelle.a ,mol.zelle.b , mol.zelle.c, mol.zelle.al, mol.zelle.be, mol.zelle.ga, mol.zelle.V);
+  printf("%9.6f %9.6f %9.6f\n",z_dim.x*tiefe,z_dim.y*tiefe,z_dim.z*tiefe);
+  QString M40Name=fname;
+  if (habenatome){
+    M40Name=M40Name.replace(QRegExp(".m81$"),".m40");
+    QFile m40(M40Name);
+    if (m40.open(QIODevice::ReadOnly|QIODevice::Text)){
+      QString all40 = m40.readAll();
+      QStringList lines40 = all40.split(QRegExp("[\n\r]+"));
+      QStringList tok;
+      extern int atmax;
+      extern QList<INP> asymmUnit;
+      INP newAtom;
+      newAtom.part=0;
+      extern int smx;
+      smx=0;
+      int iread=0;
+      for (int li=0; li<lines40.size();li++){
+        tok.clear();
+        tok=lines40.at(li).split(" ",QString::SkipEmptyParts);
+        if (tok.size()){
+          if (li==0) smx=atmax = tok.at(0).toInt();
+          if ((li)&&(!smx)) return;
+          if ((asymmUnit.size()<smx)&&(lines40.at(li).contains(QRegExp("^[A-z]+")))){
+            //C1        1  1     1.000000 0.199051 0.122184 0.071881    
+            //123456789012345678901234567890123456789012345678901234567890
+            //000000000111111111122222222223333333333444444444455555555556
+            //
+            newAtom.lmax=-1;
+            if ((lines40.at(li).length()>16)&&(lines40.at(li)[16]!=' ')) 
+              iread=sscanf(lines40.at(li).toStdString().c_str(),"%8s%3d%3d%3d %9lf%9lf%9lf%9lf",newAtom.atomname,&newAtom.atomtype,&newAtom.jtf, &newAtom.lmax, &newAtom.amul, &newAtom.frac.x, &newAtom.frac.y, &newAtom.frac.z);
+            else iread=sscanf(lines40.at(li).toStdString().c_str(),"%8s%3d%3d    %9lf%9lf%9lf%9lf",newAtom.atomname,&newAtom.atomtype,&newAtom.jtf,  &newAtom.amul, &newAtom.frac.x, &newAtom.frac.y, &newAtom.frac.z);
+            //        qDebug()<<all.at(li)<<all.at(li)[16];
+            //        printf("'11111111222333444 555555555666666666777777777888888888'\n");
+            printf("%3d%3d%3d %-10s %4d %12.6f%12.6f%12.6f%12.6f\n",iread,newAtom.jtf,newAtom.lmax,newAtom.atomname,newAtom.atomtype,newAtom.frac.x,newAtom.frac.y,newAtom.frac.z,newAtom.amul);
+            if (newAtom.jtf>0) {
+              li++;
+              sscanf(lines40.at(li).toStdString().c_str(),"%9lf%9lf%9lf%9lf%9lf%9lf",
+                  &newAtom.uf.m11,
+                  &newAtom.uf.m22,
+                  &newAtom.uf.m33,
+                  &newAtom.uf.m12,
+                  &newAtom.uf.m13,
+                  &newAtom.uf.m23);
+
+            }
+
+            newAtom.OrdZahl = mol.Get_OZ(atypen.at(newAtom.atomtype-1));
+            if (newAtom.amul==0) newAtom.OrdZahl = -1;
+            asymmUnit.append(newAtom);
+          }
+        }
+      }
+      for (int i=0;i<asymmUnit.size();i++) { 
+        mol.frac2kart(asymmUnit[i].frac,asymmUnit[i].kart);
+        //    printf("%-10s %4d %12.6f%12.6f%12.6f\n",asymmUnit[i].atomname,asymmUnit[i].OrdZahl,asymmUnit[i].kart.x,asymmUnit[i].kart.y,asymmUnit[i].kart.z);
+        if ((asymmUnit[i].uf.m22==0.0)&&(asymmUnit[i].uf.m33==0.0)){
+          asymmUnit[i].u.m11=asymmUnit[i].u.m22=asymmUnit[i].u.m33=asymmUnit[i].uf.m11;
+          asymmUnit[i].u.m12=asymmUnit[i].u.m13=asymmUnit[i].u.m23=asymmUnit[i].u.m21=asymmUnit[i].u.m31=asymmUnit[i].u.m32=0.0;}
+        else mol.Uf2Uo(asymmUnit[i].uf,asymmUnit[i].u);
+        //    printf("%12.6f%12.6f%12.6f%12.6f%12.6f%12.6f\n",asymmUnit[i].u.m11,asymmUnit[i].u.m22,asymmUnit[i].u.m33, asymmUnit[i].u.m12, asymmUnit[i].u.m13,asymmUnit[i].u.m23);
+      }
+    }
+  }
+  // exit(0);
 }
 
-void MolIso::readXDGridHeader(QString fname){
-    if (fname.endsWith(".m81",Qt::CaseInsensitive)) {
-        readJanaHeader(fname);
-        return;
-    }
+void MolIso::readXDGridHeader(QString fname,int &fileType){
+  if (fname.endsWith(".m81",Qt::CaseInsensitive)) {
+    readJanaHeader(fname);
+    GHName=fname;
+    fileType=81;
+    return;
+  }
   QFile gh(fname);
 
   printf("%s\n",fname.toStdString().c_str());
@@ -387,6 +545,7 @@ void MolIso::readXDGridHeader(QString fname){
   QString all =gh.readAll();
   QStringList lines = all.split(QRegExp("[\n\r]+"));
   if ((lines.size())&&(lines.at(0).contains("3DGRDFIL "))) {
+    fileType=0;
     extern molekul mol;
     extern int atmax;
     extern QList<INP> asymmUnit;
@@ -410,82 +569,83 @@ void MolIso::readXDGridHeader(QString fname){
       atomanzahl=smx=atmax=lines[i].toInt();
       i++;
       for (int j=0 ; j<atmax; j++){
-	tok = lines[i+j].split(' ',QString::SkipEmptyParts);
-	strncpy(newAtom.atomname,tok.at(0).toLatin1(),38);
-	newAtom.kart.x=tok.at(1).toDouble();
-	newAtom.kart.y=tok.at(2).toDouble();
-	newAtom.kart.z=tok.at(3).toDouble();
-	if (tok.contains("ATOM")){
-	  char *dv=NULL,dm[80];
-	dv=strcpy(dm,newAtom.atomname);
-	if (dv[0]=='X') dv+=3;
-	strtok(dv,"(1234567890+- ");
-	newAtom.OrdZahl=mol.Get_OZ(dv);
-	} else	
-	  newAtom.OrdZahl=-1;
-	asymmUnit.append(newAtom);
+        tok = lines[i+j].split(' ',QString::SkipEmptyParts);
+        strncpy(newAtom.atomname,tok.at(0).toLatin1(),38);
+        newAtom.kart.x=tok.at(1).toDouble();
+        newAtom.kart.y=tok.at(2).toDouble();
+        newAtom.kart.z=tok.at(3).toDouble();
+        if (tok.contains("ATOM")){
+          char *dv=NULL,dm[80];
+          dv=strcpy(dm,newAtom.atomname);
+          if (dv[0]=='X') dv+=3;
+          strtok(dv,"(1234567890+- ");
+          newAtom.OrdZahl=mol.Get_OZ(dv);
+        } else	
+          newAtom.OrdZahl=-1;
+        asymmUnit.append(newAtom);
       }
     }
 
-  if (!smx) {
-    smx=8;    
-    for (int iz=0; iz <2;iz++)
-      for (int iy=0; iy <2;iy++)
-	for (int ix=0; ix <2;ix++) {
-        Vector3 ppp =  ((ix*breite)*x_dim);
-        ppp += ((iy*hoehe)*y_dim);
-        ppp += ((iz*tiefe)*z_dim);
-        newAtom.kart=V3(ppp.x,ppp.y,ppp.z);
-	newAtom.OrdZahl=-1;
-	strcpy(newAtom.atomname,"x");
-	asymmUnit.append(newAtom);
-	}
-  }
+    if (!smx) {
+      smx=8;    
+      for (int iz=0; iz <2;iz++)
+        for (int iy=0; iy <2;iy++)
+          for (int ix=0; ix <2;ix++) {
+            Vector3 ppp =  ((ix*breite)*x_dim);
+            ppp += ((iy*hoehe)*y_dim);
+            ppp += ((iz*tiefe)*z_dim);
+            newAtom.kart=V3(ppp.x,ppp.y,ppp.z);
+            newAtom.OrdZahl=-1;
+            strcpy(newAtom.atomname,"x");
+            asymmUnit.append(newAtom);
+          }
+    }
   }else{//may be this is a cube file?
     printf("cubefile?\n");
+    fileType=125;
     double a,b,c;
     double bohr=0.5291775108;
     if (lines.size()>6) {
       QStringList tok;
       tok=lines.at(2).split(QRegExp("\\s+"),QString::SkipEmptyParts);
       if (tok.size()==4){	
-	extern int atmax;
-	extern QList<INP> asymmUnit;
-	INP newAtom;
-	extern int smx;
-	char PSE_Symbol[109][3] = {"H","He","Li","Be","B","C","N","O","F","Ne","Na","Mg","Al","Si","P","S","Cl","Ar",
-				   "K","Ca","Sc","Ti","V","Cr","Mn","Fe","Co","Ni","Cu","Zn","Ga","Ge","As","Se","Br","Kr",
-				   "Rb","Sr","Y","Zr","Nb","Mo","Tc","Ru","Rh","Pd","Ag","Cd","In","Sn","Sb","Te","J","Xe",
-				   "Cs","Ba", "La","Ce","Pr","Nd","Pm","Sm","Eu","Gd","Tb","Dy","Ho","Er","Tm","Yb","Lu",
-				   "Hf","Ta","W","Re","Os","Ir","Pt","Au","Hg","Tl","Pb","Bi","Po","At","Rn","Fr","Ra",
-				   "Ac","Th","Pa","U","Np","Pu","Am","Cm","Bk","Cf","Es","Fm","Md","No","Lr","Ku","Ha","Rf","Ns","Hs","Mt"};
-	atomanzahl=smx=atmax=tok.at(0).toInt();
-	a=tok.at(1).toDouble();
-	b=tok.at(2).toDouble();
-	c=tok.at(3).toDouble();
-	tok=lines.at(3).split(QRegExp("\\s+"),QString::SkipEmptyParts);	
+        extern int atmax;
+        extern QList<INP> asymmUnit;
+        INP newAtom;
+        extern int smx;
+        char PSE_Symbol[109][3] = {"H","He","Li","Be","B","C","N","O","F","Ne","Na","Mg","Al","Si","P","S","Cl","Ar",
+          "K","Ca","Sc","Ti","V","Cr","Mn","Fe","Co","Ni","Cu","Zn","Ga","Ge","As","Se","Br","Kr",
+          "Rb","Sr","Y","Zr","Nb","Mo","Tc","Ru","Rh","Pd","Ag","Cd","In","Sn","Sb","Te","J","Xe",
+          "Cs","Ba", "La","Ce","Pr","Nd","Pm","Sm","Eu","Gd","Tb","Dy","Ho","Er","Tm","Yb","Lu",
+          "Hf","Ta","W","Re","Os","Ir","Pt","Au","Hg","Tl","Pb","Bi","Po","At","Rn","Fr","Ra",
+          "Ac","Th","Pa","U","Np","Pu","Am","Cm","Bk","Cf","Es","Fm","Md","No","Lr","Ku","Ha","Rf","Ns","Hs","Mt"};
+        atomanzahl=smx=atmax=tok.at(0).toInt();
+        a=tok.at(1).toDouble();
+        b=tok.at(2).toDouble();
+        c=tok.at(3).toDouble();
+        tok=lines.at(3).split(QRegExp("\\s+"),QString::SkipEmptyParts);	
         breite= tok.at(0).toInt();
         x_dim = Vector3(tok.at(1).toFloat(),tok.at(2).toFloat(),tok.at(3).toFloat());
-	tok=lines.at(4).split(QRegExp("\\s+"),QString::SkipEmptyParts);	
-	hoehe=  tok.at(0).toInt();
+        tok=lines.at(4).split(QRegExp("\\s+"),QString::SkipEmptyParts);	
+        hoehe=  tok.at(0).toInt();
 
         y_dim = Vector3(tok.at(1).toFloat(),tok.at(2).toFloat(),tok.at(3).toFloat());
-	tok=lines.at(5).split(QRegExp("\\s+"),QString::SkipEmptyParts);	
+        tok=lines.at(5).split(QRegExp("\\s+"),QString::SkipEmptyParts);	
         tiefe=  tok.at(0).toInt();
         z_dim = Vector3(tok.at(1).toFloat(),tok.at(2).toFloat(),tok.at(3).toFloat());
         x_dim *= bohr;
         y_dim *= bohr;
         z_dim *= bohr;
         bh = hoehe*breite;
-	for (int i=0;i<atmax;i++){
-	  tok=lines.at(6+i).split(QRegExp("\\s+"),QString::SkipEmptyParts);
-	  newAtom.OrdZahl=tok.at(0).toInt()-1;
-	  strcpy(newAtom.atomname,QString("%1%2").arg(PSE_Symbol[newAtom.OrdZahl]).arg(i+1).toLatin1());
-	  newAtom.kart.x=(tok.at(2).toDouble()-a)*bohr;
-	  newAtom.kart.y=(tok.at(3).toDouble()-b)*bohr;
-	  newAtom.kart.z=(tok.at(4).toDouble()-c)*bohr;
-	  asymmUnit.append(newAtom);
-	}
+        for (int i=0;i<atmax;i++){
+          tok=lines.at(6+i).split(QRegExp("\\s+"),QString::SkipEmptyParts);
+          newAtom.OrdZahl=tok.at(0).toInt()-1;
+          strcpy(newAtom.atomname,QString("%1%2").arg(PSE_Symbol[newAtom.OrdZahl]).arg(i+1).toLatin1());
+          newAtom.kart.x=(tok.at(2).toDouble()-a)*bohr;
+          newAtom.kart.y=(tok.at(3).toDouble()-b)*bohr;
+          newAtom.kart.z=(tok.at(4).toDouble()-c)*bohr;
+          asymmUnit.append(newAtom);
+        }
       }
     }
   }
@@ -493,7 +653,7 @@ void MolIso::readXDGridHeader(QString fname){
   gh.close();
 }
 void MolIso::makeFaces(int nn, Node poly[] ){
-//   /* 
+  //   /* 
   int n=0;
   int ly[13];
   for (int j=0;j<nn;j++)//zu nahe beieinander liegende verts ignorieren
@@ -501,11 +661,11 @@ void MolIso::makeFaces(int nn, Node poly[] ){
       ly[n++]=poly[j].index;
     else{
       orte[poly[j].index].vertex=
-              orte[poly[(j+1)%nn].index].vertex=
-              (orte.at(poly[j].index).vertex+orte.at(poly[(j+1)%nn].index).vertex)*0.5f;
+        orte[poly[(j+1)%nn].index].vertex=
+        (orte.at(poly[j].index).vertex+orte.at(poly[(j+1)%nn].index).vertex)*0.5f;
       orte[poly[j].index].color=
-              orte[poly[(j+1)%nn].index].color=
-              (orte.at(poly[j].index).color+orte.at(poly[(j+1)%nn].index).color)*0.5f;
+        orte[poly[(j+1)%nn].index].color=
+        (orte.at(poly[j].index).color+orte.at(poly[(j+1)%nn].index).color)*0.5f;
       ly[n++]=poly[(j+1)%nn].index;
       j++;
     }
@@ -534,99 +694,99 @@ void MolIso::makeFaces(int nn, Node poly[] ){
     }
   }//else* /
   pgns.append(neupoly);
-//  */
+  //  */
 }
 void MolIso::simpelGrad(void){
   GLfloat hier;
   for (int i=1; i<breite-1;i++){
     for (int j=1; j<hoehe-1;j++){
       for (int k=1; k<tiefe-1;k++){
-	hier=data[(i  )+(j  )*breite+(k  )*bh];
-	grad[i+j*breite+k*bh].x=(
-			-1*(data[(i-1)+(j-1)*breite+(k-1)*bh]-hier)+//0  
-			(data[(i+1)+(j-1)*breite+(k-1)*bh]-hier)+//2
-			-1*(data[(i-1)+(j  )*breite+(k-1)*bh]-hier)+//3
-			(data[(i+1)+(j  )*breite+(k-1)*bh]-hier)+//5  
-			-1*(data[(i-1)+(j+1)*breite+(k-1)*bh]-hier)+//6  
-			(data[(i+1)+(j+1)*breite+(k-1)*bh]-hier)+//8  
-			-1*(data[(i-1)+(j-1)*breite+(k-1)*bh]-hier)+//9 
-			(data[(i+1)+(j-1)*breite+(k  )*bh]-hier)+//11 
-			-1*(data[(i-1)+(j  )*breite+(k  )*bh]-hier)+//12 	    					
-			(data[(i+1)+(j  )*breite+(k  )*bh]-hier)+//14 
-			-1*(data[(i-1)+(j+1)*breite+(k  )*bh]-hier)+//15
-			(data[(i+1)+(j+1)*breite+(k  )*bh]-hier)+//17
-			-1*(data[(i-1)+(j-1)*breite+(k+1)*bh]-hier)+//18 
-			(data[(i+1)+(j-1)*breite+(k+1)*bh]-hier)+//20 
-			-1*(data[(i-1)+(j  )*breite+(k+1)*bh]-hier)+//21
-			(data[(i+1)+(j  )*breite+(k+1)*bh]-hier)+//23 
-			-1*(data[(i-1)+(j+1)*breite+(k+1)*bh]-hier)+//24 
-			(data[(i+1)+(j+1)*breite+(k+1)*bh]-hier))/26.0;//26 
+        hier=data[(i  )+(j  )*breite+(k  )*bh];
+        grad[i+j*breite+k*bh].x=(
+            -1*(data[(i-1)+(j-1)*breite+(k-1)*bh]-hier)+//0  
+            (data[(i+1)+(j-1)*breite+(k-1)*bh]-hier)+//2
+            -1*(data[(i-1)+(j  )*breite+(k-1)*bh]-hier)+//3
+            (data[(i+1)+(j  )*breite+(k-1)*bh]-hier)+//5  
+            -1*(data[(i-1)+(j+1)*breite+(k-1)*bh]-hier)+//6  
+            (data[(i+1)+(j+1)*breite+(k-1)*bh]-hier)+//8  
+            -1*(data[(i-1)+(j-1)*breite+(k-1)*bh]-hier)+//9 
+            (data[(i+1)+(j-1)*breite+(k  )*bh]-hier)+//11 
+            -1*(data[(i-1)+(j  )*breite+(k  )*bh]-hier)+//12 	    					
+            (data[(i+1)+(j  )*breite+(k  )*bh]-hier)+//14 
+            -1*(data[(i-1)+(j+1)*breite+(k  )*bh]-hier)+//15
+            (data[(i+1)+(j+1)*breite+(k  )*bh]-hier)+//17
+            -1*(data[(i-1)+(j-1)*breite+(k+1)*bh]-hier)+//18 
+            (data[(i+1)+(j-1)*breite+(k+1)*bh]-hier)+//20 
+            -1*(data[(i-1)+(j  )*breite+(k+1)*bh]-hier)+//21
+            (data[(i+1)+(j  )*breite+(k+1)*bh]-hier)+//23 
+            -1*(data[(i-1)+(j+1)*breite+(k+1)*bh]-hier)+//24 
+            (data[(i+1)+(j+1)*breite+(k+1)*bh]-hier))/26.0;//26 
 
-	grad[i+j*breite+k*bh].y=(
-			-1*(data[(i-1)+(j-1)*breite+(k-1)*bh]-hier)+//0
-			-1*(data[(i  )+(j-1)*breite+(k-1)*bh]-hier)+//1
-			-1*(data[(i+1)+(j-1)*breite+(k-1)*bh]-hier)+//2  
-			(data[(i-1)+(j+1)*breite+(k-1)*bh]-hier)+//6  
-			(data[(i  )+(j+1)*breite+(k-1)*bh]-hier)+//7  
-			(data[(i+1)+(j+1)*breite+(k-1)*bh]-hier)+//8  
-			-1*(data[(i-1)+(j-1)*breite+(k-1)*bh]-hier)+//9  
-			-1*(data[(i  )+(j-1)*breite+(k  )*bh]-hier)+//10 
-			-1*(data[(i+1)+(j-1)*breite+(k  )*bh]-hier)+//11
-			(data[(i-1)+(j+1)*breite+(k  )*bh]-hier)+//15 
-			(data[(i  )+(j+1)*breite+(k  )*bh]-hier)+//16 
-			(data[(i+1)+(j+1)*breite+(k  )*bh]-hier)+//17
-			-1*(data[(i-1)+(j-1)*breite+(k+1)*bh]-hier)+//18 
-			-1*(data[(i  )+(j-1)*breite+(k+1)*bh]-hier)+//19 
-			-1*(data[(i+1)+(j-1)*breite+(k+1)*bh]-hier)+//20 
-			(data[(i-1)+(j+1)*breite+(k+1)*bh]-hier)+//24 
-			(data[(i  )+(j+1)*breite+(k+1)*bh]-hier)+//25 
-			(data[(i+1)+(j+1)*breite+(k+1)*bh]-hier))/26.0;//26 
+        grad[i+j*breite+k*bh].y=(
+            -1*(data[(i-1)+(j-1)*breite+(k-1)*bh]-hier)+//0
+            -1*(data[(i  )+(j-1)*breite+(k-1)*bh]-hier)+//1
+            -1*(data[(i+1)+(j-1)*breite+(k-1)*bh]-hier)+//2  
+            (data[(i-1)+(j+1)*breite+(k-1)*bh]-hier)+//6  
+            (data[(i  )+(j+1)*breite+(k-1)*bh]-hier)+//7  
+            (data[(i+1)+(j+1)*breite+(k-1)*bh]-hier)+//8  
+            -1*(data[(i-1)+(j-1)*breite+(k-1)*bh]-hier)+//9  
+            -1*(data[(i  )+(j-1)*breite+(k  )*bh]-hier)+//10 
+            -1*(data[(i+1)+(j-1)*breite+(k  )*bh]-hier)+//11
+            (data[(i-1)+(j+1)*breite+(k  )*bh]-hier)+//15 
+            (data[(i  )+(j+1)*breite+(k  )*bh]-hier)+//16 
+            (data[(i+1)+(j+1)*breite+(k  )*bh]-hier)+//17
+            -1*(data[(i-1)+(j-1)*breite+(k+1)*bh]-hier)+//18 
+            -1*(data[(i  )+(j-1)*breite+(k+1)*bh]-hier)+//19 
+            -1*(data[(i+1)+(j-1)*breite+(k+1)*bh]-hier)+//20 
+            (data[(i-1)+(j+1)*breite+(k+1)*bh]-hier)+//24 
+            (data[(i  )+(j+1)*breite+(k+1)*bh]-hier)+//25 
+            (data[(i+1)+(j+1)*breite+(k+1)*bh]-hier))/26.0;//26 
 
-	grad[i+j*breite+k*bh].z=(
-			-1*(data[(i-1)+(j-1)*breite+(k-1)*bh]-hier)+//0
-			-1*(data[(i  )+(j-1)*breite+(k-1)*bh]-hier)+//1
-			-1*(data[(i+1)+(j-1)*breite+(k-1)*bh]-hier)+//2
-			-1*(data[(i-1)+(j  )*breite+(k-1)*bh]-hier)+//3  
-			-1*(data[(i  )+(j  )*breite+(k-1)*bh]-hier)+//4
-			-1*(data[(i+1)+(j  )*breite+(k-1)*bh]-hier)+//5  
-			-1*(data[(i-1)+(j+1)*breite+(k-1)*bh]-hier)+//6  
-			-1*(data[(i  )+(j+1)*breite+(k-1)*bh]-hier)+//7  
-			-1*(data[(i+1)+(j+1)*breite+(k-1)*bh]-hier)+//8
-			(data[(i-1)+(j-1)*breite+(k+1)*bh]-hier)+//18 
-			(data[(i  )+(j-1)*breite+(k+1)*bh]-hier)+//19 
-			(data[(i+1)+(j-1)*breite+(k+1)*bh]-hier)+//20 
-			(data[(i-1)+(j  )*breite+(k+1)*bh]-hier)+//21 
-			(data[(i  )+(j  )*breite+(k+1)*bh]-hier)+//22
-			(data[(i+1)+(j  )*breite+(k+1)*bh]-hier)+//23 
-			(data[(i-1)+(j+1)*breite+(k+1)*bh]-hier)+//24 
-			(data[(i  )+(j+1)*breite+(k+1)*bh]-hier)+//25 
-			(data[(i+1)+(j+1)*breite+(k+1)*bh]-hier))/26.0;//26 
-	if (i==1) {
-	  grad[0+j*breite+k*bh].x= grad[i+j*breite+k*bh].x;
-	  grad[0+j*breite+k*bh].y= grad[i+j*breite+k*bh].y;
-	  grad[0+j*breite+k*bh].z= grad[i+j*breite+k*bh].z;
-	}if (j==1) {
-	  grad[i+0*breite+k*bh].x= grad[i+j*breite+k*bh].x;
-	  grad[i+0*breite+k*bh].y= grad[i+j*breite+k*bh].y;
-	  grad[i+0*breite+k*bh].z= grad[i+j*breite+k*bh].z;
-	}if (k==1) {
-	  grad[i+j*breite+0*bh].x= grad[i+j*breite+k*bh].x;
-	  grad[i+j*breite+0*bh].y= grad[i+j*breite+k*bh].y;
-	  grad[i+j*breite+0*bh].z= grad[i+j*breite+k*bh].z;
-	}
-	if (i==breite-2) {
-	  grad[breite-1+j*breite+k*bh].x= grad[i+j*breite+k*bh].x;
-	  grad[breite-1+j*breite+k*bh].y= grad[i+j*breite+k*bh].y;
-	  grad[breite-1+j*breite+k*bh].z= grad[i+j*breite+k*bh].z;
-	}if (j==hoehe-2) {
-	  grad[i+(hoehe-1)*breite+k*bh].x= grad[i+j*breite+k*bh].x;
-	  grad[i+(hoehe-1)*breite+k*bh].y= grad[i+j*breite+k*bh].y;
-	  grad[i+(hoehe-1)*breite+k*bh].z= grad[i+j*breite+k*bh].z;
-	}if (k==tiefe-2) {
-	  grad[i+j*breite+(tiefe-1)*bh].x= grad[i+j*breite+k*bh].x;
-	  grad[i+j*breite+(tiefe-1)*bh].y= grad[i+j*breite+k*bh].y;
-	  grad[i+j*breite+(tiefe-1)*bh].z= grad[i+j*breite+k*bh].z;
-	}
+        grad[i+j*breite+k*bh].z=(
+            -1*(data[(i-1)+(j-1)*breite+(k-1)*bh]-hier)+//0
+            -1*(data[(i  )+(j-1)*breite+(k-1)*bh]-hier)+//1
+            -1*(data[(i+1)+(j-1)*breite+(k-1)*bh]-hier)+//2
+            -1*(data[(i-1)+(j  )*breite+(k-1)*bh]-hier)+//3  
+            -1*(data[(i  )+(j  )*breite+(k-1)*bh]-hier)+//4
+            -1*(data[(i+1)+(j  )*breite+(k-1)*bh]-hier)+//5  
+            -1*(data[(i-1)+(j+1)*breite+(k-1)*bh]-hier)+//6  
+            -1*(data[(i  )+(j+1)*breite+(k-1)*bh]-hier)+//7  
+            -1*(data[(i+1)+(j+1)*breite+(k-1)*bh]-hier)+//8
+            (data[(i-1)+(j-1)*breite+(k+1)*bh]-hier)+//18 
+            (data[(i  )+(j-1)*breite+(k+1)*bh]-hier)+//19 
+            (data[(i+1)+(j-1)*breite+(k+1)*bh]-hier)+//20 
+            (data[(i-1)+(j  )*breite+(k+1)*bh]-hier)+//21 
+            (data[(i  )+(j  )*breite+(k+1)*bh]-hier)+//22
+            (data[(i+1)+(j  )*breite+(k+1)*bh]-hier)+//23 
+            (data[(i-1)+(j+1)*breite+(k+1)*bh]-hier)+//24 
+            (data[(i  )+(j+1)*breite+(k+1)*bh]-hier)+//25 
+            (data[(i+1)+(j+1)*breite+(k+1)*bh]-hier))/26.0;//26 
+        if (i==1) {
+          grad[0+j*breite+k*bh].x= grad[i+j*breite+k*bh].x;
+          grad[0+j*breite+k*bh].y= grad[i+j*breite+k*bh].y;
+          grad[0+j*breite+k*bh].z= grad[i+j*breite+k*bh].z;
+        }if (j==1) {
+          grad[i+0*breite+k*bh].x= grad[i+j*breite+k*bh].x;
+          grad[i+0*breite+k*bh].y= grad[i+j*breite+k*bh].y;
+          grad[i+0*breite+k*bh].z= grad[i+j*breite+k*bh].z;
+        }if (k==1) {
+          grad[i+j*breite+0*bh].x= grad[i+j*breite+k*bh].x;
+          grad[i+j*breite+0*bh].y= grad[i+j*breite+k*bh].y;
+          grad[i+j*breite+0*bh].z= grad[i+j*breite+k*bh].z;
+        }
+        if (i==breite-2) {
+          grad[breite-1+j*breite+k*bh].x= grad[i+j*breite+k*bh].x;
+          grad[breite-1+j*breite+k*bh].y= grad[i+j*breite+k*bh].y;
+          grad[breite-1+j*breite+k*bh].z= grad[i+j*breite+k*bh].z;
+        }if (j==hoehe-2) {
+          grad[i+(hoehe-1)*breite+k*bh].x= grad[i+j*breite+k*bh].x;
+          grad[i+(hoehe-1)*breite+k*bh].y= grad[i+j*breite+k*bh].y;
+          grad[i+(hoehe-1)*breite+k*bh].z= grad[i+j*breite+k*bh].z;
+        }if (k==tiefe-2) {
+          grad[i+j*breite+(tiefe-1)*bh].x= grad[i+j*breite+k*bh].x;
+          grad[i+j*breite+(tiefe-1)*bh].y= grad[i+j*breite+k*bh].y;
+          grad[i+j*breite+(tiefe-1)*bh].z= grad[i+j*breite+k*bh].z;
+        }
       }
     }
   }
@@ -678,11 +838,11 @@ void MolIso::CalcVertex( int ix, int iy, int iz ) {
 }
 
 void MolIso::CalcVertexes( void ) {
-//  printf("ooo %g %g %g\n",orig.x,orig.y,orig.z);
-    for( int ix=0; ix<breite; ix++ ){
-        for( int iy=0; iy<hoehe; iy++ ){
-            for( int iz=0; iz<tiefe; iz++ ){
-                CalcVertex(ix,iy,iz);
+  //  printf("ooo %g %g %g\n",orig.x,orig.y,orig.z);
+  for( int ix=0; ix<breite; ix++ ){
+    for( int iy=0; iy<hoehe; iy++ ){
+      for( int iz=0; iz<tiefe; iz++ ){
+        CalcVertex(ix,iy,iz);
       }
     }
   }
@@ -690,9 +850,9 @@ void MolIso::CalcVertexes( void ) {
 int MolIso::IndexSelected( Node& node0, Node& node1, Node& node2, Node& node3 ) {
   if( node1 && node2 && node3 ){
     GLfloat d1 = Distance( orte.at(node0.index).vertex, orte.at(node1.index).vertex ) + 
-	    Distance( orte.at(node3.index).vertex, orte.at(node2.index).vertex );
+      Distance( orte.at(node3.index).vertex, orte.at(node2.index).vertex );
     GLfloat d2 = Distance( orte.at(node0.index).vertex, orte.at(node2.index).vertex ) + 
-	    Distance( orte.at(node3.index).vertex, orte.at(node1.index).vertex );
+      Distance( orte.at(node3.index).vertex, orte.at(node1.index).vertex );
     if( d1 > d2 ) return 2; else return 1;
   }else{
     if(      node1 )   return 1;
@@ -705,9 +865,9 @@ int MolIso::IndexSelected( Node& node0, Node& node1, Node& node2, Node& node3 ) 
 Vector3& MolIso::VectorSelected( Node& node0, Node& node1, Node& node2, Node& node3 ) {
   if( node1 && node2 && node3 ){
     GLfloat d1 = Distance( orte.at(node0.index).vertex, orte.at(node1.index).vertex ) + 
-	    Distance( orte.at(node3.index).vertex, orte.at(node2.index).vertex );
+      Distance( orte.at(node3.index).vertex, orte.at(node2.index).vertex );
     GLfloat d2 = Distance( orte.at(node0.index).vertex, orte.at(node2.index).vertex ) + 
-	    Distance( orte.at(node3.index).vertex, orte.at(node1.index).vertex );
+      Distance( orte.at(node3.index).vertex, orte.at(node1.index).vertex );
     if( d1 > d2 ) return orte[node2.index].vertex; else return orte[node1.index].vertex;
   }else{
     if(      node1 )   return orte[node1.index].vertex;
@@ -724,26 +884,26 @@ GLfloat MolIso::CalcNormalX( int ix, int iy, int iz ) {
     tang[0] = orte[nodex[ix+iy*breite+iz*bh].index].vertex;
   }else{
     tang[0] = VectorSelected(nodex[ix+iy*breite+iz*bh],nodey[ix+iy*breite+iz*bh],
-		    nodey[1+ix+iy*breite+iz*bh],nodex[ix+(iy+1)*breite+iz*bh]);
+        nodey[1+ix+iy*breite+iz*bh],nodex[ix+(iy+1)*breite+iz*bh]);
   }
   if(( iy == 0 )||(ix == breite-1)){
     tang[1] = orte[nodex[ix+iy*breite+iz*bh].index].vertex;
   }else{
     tang[1] = VectorSelected(nodex[ix+iy*breite+iz*bh],nodey[ix+(iy-1)*breite+iz*bh],
-		    nodey[(ix+1)+(iy-1)*breite+(iz)*bh],nodex[ix+(iy-1)*breite+(iz)*bh]) ;
+        nodey[(ix+1)+(iy-1)*breite+(iz)*bh],nodex[ix+(iy-1)*breite+(iz)*bh]) ;
   }
   if(( iz == tiefe-1 )||(ix == breite-1)){
     tang[2] = orte[nodex[ix+iy*breite+iz*bh].index].vertex;
   }else{
     tang[2] = VectorSelected(nodex[ix+iy*breite+iz*bh],nodez[ix+iy*breite+iz*bh],
-		    nodez[(1+ix)+(iy)*breite+iz*bh],nodex[ix+iy*breite+(iz+1)*bh]) ;
+        nodez[(1+ix)+(iy)*breite+iz*bh],nodex[ix+iy*breite+(iz+1)*bh]) ;
   }
 
   if(( iz == 0 )||(ix == breite-1)){
     tang[3] = orte[nodex[ix+iy*breite+iz*bh].index].vertex;
   }else{
     tang[3] = VectorSelected(nodex[ix+iy*breite+iz*bh],nodez[ix+(iy)*breite+(iz-1)*bh],
-		    nodez[(ix+1)+(iy)*breite+(iz-1)*bh],nodex[ix+(iy)*breite+(iz-1)*bh]) ;
+        nodez[(ix+1)+(iy)*breite+(iz-1)*bh],nodex[ix+(iy)*breite+(iz-1)*bh]) ;
   }
   return (((tang[0] - tang[1])%(tang[2] - tang[3])) * grad[ix+iy*breite+iz*bh]);
 }
@@ -755,28 +915,28 @@ GLfloat MolIso::CalcNormalY( int ix, int iy, int iz ) {
     tang[0] = orte[nodey[ix+iy*breite+iz*bh].index].vertex;
   }else{
     tang[0] =  VectorSelected(nodey[ix+iy*breite+iz*bh],nodex[ix+iy*breite+iz*bh],
-		    nodex[ix+(iy+1)*breite+iz*bh],nodey[1+ix+iy*breite+iz*bh]);
+        nodex[ix+(iy+1)*breite+iz*bh],nodey[1+ix+iy*breite+iz*bh]);
   }
 
   if(( ix == 0 )||(iy == hoehe-1)){
     tang[1] = orte[nodey[ix+iy*breite+iz*bh].index].vertex;
   }else{
     tang[1] =  VectorSelected(nodey[ix+iy*breite+iz*bh],nodex[(ix-1)+(iy)*breite+(iz)*bh],
-		    nodex[(ix-1)+(iy+1)*breite+(iz)*bh],nodey[(ix-1)+(iy)*breite+(iz)*bh]) ;
+        nodex[(ix-1)+(iy+1)*breite+(iz)*bh],nodey[(ix-1)+(iy)*breite+(iz)*bh]) ;
   }
 
   if(( iz == tiefe-1 )||(iy == hoehe-1)){
     tang[2] = orte[nodey[ix+iy*breite+iz*bh].index].vertex;
   }else{
     tang[2] =  VectorSelected(nodey[ix+iy*breite+iz*bh],nodez[ix+iy*breite+iz*bh],
-		    nodez[ix+(iy+1)*breite+iz*bh],nodey[ix+iy*breite+(iz+1)*bh]) ;
+        nodez[ix+(iy+1)*breite+iz*bh],nodey[ix+iy*breite+(iz+1)*bh]) ;
   }
 
   if(( iz == 0 )||(iy == hoehe-1)){
     tang[3] = orte[nodey[ix+iy*breite+iz*bh].index].vertex;
   }else{
     tang[3] =  VectorSelected(nodey[ix+iy*breite+iz*bh],nodez[(ix)+(iy)*breite+(iz-1)*bh],
-		    nodez[(ix)+(iy+1)*breite+(iz-1)*bh],nodey[(ix)+(iy)*breite+(iz-1)*bh]) ;
+        nodez[(ix)+(iy+1)*breite+(iz-1)*bh],nodey[(ix)+(iy)*breite+(iz-1)*bh]) ;
   }
 
   return (((tang[2] - tang[3])%(tang[0] - tang[1]))*grad[ix+iy*breite+iz*bh]);
@@ -789,28 +949,28 @@ GLfloat MolIso::CalcNormalZ( int ix, int iy, int iz ) {
     tang[0] = orte[nodez[ix+iy*breite+iz*bh].index].vertex;
   }else{
     tang[0] =  VectorSelected(nodez[ix+iy*breite+iz*bh],nodex[ix+iy*breite+iz*bh],
-		    nodex[ix+iy*breite+(iz+1)*bh],nodez[1+ix+iy*breite+iz*bh]) ;
+        nodex[ix+iy*breite+(iz+1)*bh],nodez[1+ix+iy*breite+iz*bh]) ;
   }
 
   if(( ix == 0 )||(iz == tiefe-1)){
     tang[1] = orte[nodez[ix+iy*breite+iz*bh].index].vertex;
   }else{
     tang[1] =  VectorSelected(nodez[ix+iy*breite+iz*bh],nodex[(ix-1)+(iy)*breite+(iz)*bh],
-		    nodex[(ix-1)+(iy)*breite+(iz+1)*bh],nodez[(ix-1)+(iy)*breite+(iz)*bh]) ;
+        nodex[(ix-1)+(iy)*breite+(iz+1)*bh],nodez[(ix-1)+(iy)*breite+(iz)*bh]) ;
   }
 
   if(( iy == hoehe-1 )||(iz == tiefe-1)){
     tang[2] = orte[nodez[ix+iy*breite+iz*bh].index].vertex;
   }else{
     tang[2] =  VectorSelected(nodez[ix+iy*breite+iz*bh],nodey[ix+iy*breite+iz*bh],
-		    nodey[ix+iy*breite+(iz+1)*bh],nodez[ix+(iy+1)*breite+iz*bh]) ;
+        nodey[ix+iy*breite+(iz+1)*bh],nodez[ix+(iy+1)*breite+iz*bh]) ;
   }
 
   if(( iy == 0 )||(iz == tiefe-1)){
     tang[3] = orte[nodez[ix+iy*breite+iz*bh].index].vertex;
   }else{
     tang[3] =  VectorSelected(nodez[ix+iy*breite+iz*bh],nodey[(ix)+(iy-1)*breite+(iz)*bh],
-		    nodey[(ix)+(iy-1)*breite+(iz+1)*bh],nodez[(ix)+(iy-1)*breite+(iz)*bh]) ;
+        nodey[(ix)+(iy-1)*breite+(iz+1)*bh],nodez[(ix)+(iy-1)*breite+(iz)*bh]) ;
   }
 
   return (((tang[0] - tang[1])%(tang[2] - tang[3]))*grad[ix+iy*breite+iz*bh]);
@@ -819,22 +979,22 @@ void MolIso::CalcNormals( void ) {
   for( int ix=0; ix<breite; ix++ ){
     for( int iy=0; iy<hoehe; iy++ ){
       for( int iz=0; iz<tiefe; iz++ ){
-	if( nodex[ix+iy*breite+iz*bh] ){
-	  orte[nodex[ix+iy*breite+iz*bh].index].direct = (CalcNormalX(ix,iy,iz)>0)?1:-1;
-	}
-	if( nodey[ix+iy*breite+iz*bh] ){
-	  orte[nodey[ix+iy*breite+iz*bh].index].direct = (CalcNormalY(ix,iy,iz)>0)?1:-1;
-	}
-	if( nodez[ix+iy*breite+iz*bh] ){
-	  orte[nodez[ix+iy*breite+iz*bh].index].direct = (CalcNormalZ(ix,iy,iz)>0)?1:-1;
-	}
+        if( nodex[ix+iy*breite+iz*bh] ){
+          orte[nodex[ix+iy*breite+iz*bh].index].direct = (CalcNormalX(ix,iy,iz)>0)?1:-1;
+        }
+        if( nodey[ix+iy*breite+iz*bh] ){
+          orte[nodey[ix+iy*breite+iz*bh].index].direct = (CalcNormalY(ix,iy,iz)>0)?1:-1;
+        }
+        if( nodez[ix+iy*breite+iz*bh] ){
+          orte[nodez[ix+iy*breite+iz*bh].index].direct = (CalcNormalZ(ix,iy,iz)>0)?1:-1;
+        }
       }
     }
   }
 }
 void MolIso::MakeElement( int ix, int iy, int iz ,int s1, int s2) {//das ist der Teil des japanischen Programms den ich nicht verstehe.
   //Hauptsache fuktioniert.
-//    /*
+  //    /*
   static int conn[12][2][4] = {           //char->int wegen warning g++ >3.0
     {{ 0, 1, 7, 6}, { 0, 2, 8, 3}},  //  0
     {{ 1, 2, 5, 4}, { 1, 0, 6, 7}},  //  1
@@ -865,16 +1025,16 @@ void MolIso::MakeElement( int ix, int iy, int iz ,int s1, int s2) {//das ist der
   node[10] = nodey[(ix+1)+iy*s1+(iz+1)*s2];// 101y
   node[11] = nodez[(ix+1)+(iy+1)*s1+iz*s2];// 110z
   if (((char)node[0]+node[1]+node[2]+node[3]+node[4]+node[5]
-                          +node[6]+node[7]+node[8]+node[9]+node[10]+node[11])==0) return;
+        +node[6]+node[7]+node[8]+node[9]+node[10]+node[11])==0) return;
   for( int is=0; is<12; is++ ) {
     if( !node[is] ) continue;
 
-    int n=0, i=is, m=0,ai=i;
+    int n=0, i=is, m=0;//,ai=i;
     do {
       polygon[n++]= node[i];
       int sol = IndexSelected(node[conn[i][m][0]],node[conn[i][m][1]],
-                      node[conn[i][m][2]],node[conn[i][m][3]]);
-      ai=i;
+          node[conn[i][m][2]],node[conn[i][m][3]]);
+   //   ai=i;
       i = conn[i][m][sol];
 
       if( sol == 2 ) m ^= 1;
@@ -884,16 +1044,16 @@ void MolIso::MakeElement( int ix, int iy, int iz ,int s1, int s2) {//das ist der
       makeFaces( n, polygon );
     }
   }
-//  */
+  //  */
 }
 
-void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &storeFaceName){
+void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &storeFaceName,int fileType){
   if (storeFaceName.isEmpty()){
-  QTemporaryFile *tf = new  QTemporaryFile();
-  tf->open();
-  storeFaceName=tf->fileName();
-  tf->close();
-  delete tf;
+    QTemporaryFile *tf = new  QTemporaryFile();
+    tf->open();
+    storeFaceName=tf->fileName();
+    tf->close();
+    delete tf;
   }
   if ((mapFileName.contains('!'))||(mapFileName.isEmpty()))mapFileName=isoFileName;
   QFile *tf = new QFile(storeFaceName);
@@ -906,21 +1066,23 @@ void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &st
   balken->setValue(1);
   QFile isoF(isoFileName);
   QFile mapF(mapFileName);
-  isoF.open(QIODevice::ReadOnly);
-  if (isoFileName.contains("grd")) {
-  while (!QString(isoF.readLine()).contains("Values")) {;}
-  int p=0,pmax=breite*hoehe*tiefe,altb=0,b=0;
-  while (!isoF.atEnd () && (p<pmax)) {
-    QStringList numbers = QString(isoF.readLine()).split(" ",QString::SkipEmptyParts);
-    for (int i=0; i<numbers.size();i++) data.append(numbers.at(i).toDouble());
-    p+=numbers.size();
-    b=37*p/pmax;
-    if (b!=altb){
-      balken->setValue(b);
-      altb=b;
+  if (fileType==0){//if (isoFileName.contains("grd")) {
+    isoF.open(QIODevice::ReadOnly);
+    while (!QString(isoF.readLine()).contains("Values")) {;}
+    int p=0,pmax=breite*hoehe*tiefe,altb=0,b=0;
+    while (!isoF.atEnd () && (p<pmax)) {
+      QStringList numbers = QString(isoF.readLine()).split(" ",QString::SkipEmptyParts);
+      for (int i=0; i<numbers.size();i++) data.append(numbers.at(i).toDouble());
+      p+=numbers.size();
+      b=37*p/pmax;
+      if (b!=altb){
+        balken->setValue(b);
+        altb=b;
+      }
     }
-  }
-  }else {// ein cube file hoffentlich
+    isoF.close(); 
+  }else if (fileType==125){// ein cube file hoffentlich
+    isoF.open(QIODevice::ReadOnly);
     for (int i=0; i<(atomanzahl+6);i++) isoF.readLine();
     int pmax=breite*hoehe*tiefe,altb=0,b=0;
     int p=pmax-1;
@@ -930,56 +1092,83 @@ void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &st
       for (int i=0; i<numbers.size();i++) {rewerte[p--]=(numbers.at(i).toDouble());}
       b=38-37*p/pmax;
       if (b!=altb){
-	balken->setValue(b);
-	altb=b;
+        balken->setValue(b);
+        altb=b;
       }
     }
     for (int i=(tiefe)-1;i>=0;i--)
       for (int j=(hoehe) -1;j>=0;j--)
-	for (int k=(breite) -1;k>=0;k--)
-	  data.append(rewerte[i+j*(tiefe)+k*(tiefe)*(hoehe)]);// */
-   cubeiso=true;
-  }
+        for (int k=(breite) -1;k>=0;k--)
+          data.append(rewerte[i+j*(tiefe)+k*(tiefe)*(hoehe)]);// */
+    cubeiso=true;
   isoF.close(); 
+  }else if(fileType==81){
+  
+    isoF.open(QIODevice::ReadOnly);
+    float *floatdat=(float*)malloc(bh*sizeof(float));
+    isoF.read((char*) floatdat,sizeof(float)*bh);//skip first record 
+    for (int i=0;i<tiefe;i++){
+    isoF.read((char*) floatdat,sizeof(float)*bh);
+  //  printf("%f %f %f\n",floatdat[0],floatdat[1],floatdat[2]);
+      for (int j=0;j<bh;j++)
+          data.append(floatdat[j]);// */
+    }
+    cubeiso=true;
+    isoF.close(); 
+  }
   if (mapFileName==isoFileName) {
     mdata=data;
   }else {
-  mapF.open(QIODevice::ReadOnly);
-  if (mapFileName.contains("grd")) {
-    while (!QString(mapF.readLine()).contains("Values")) {;}
-    int p=0,pmax=breite*hoehe*tiefe,altb=0,b=0;
-    while (!mapF.atEnd () && (p<pmax)) {
-      QStringList numbers = QString(mapF.readLine()).split(" ",QString::SkipEmptyParts);
-      for (int i=0; i<numbers.size();i++) mdata.append(numbers.at(i).toDouble());
-      p+=numbers.size();
-      b=38+37*p/pmax;
-      if (b!=altb){
-	balken->setValue(b);
-	altb=b;
+    if (fileType==0){//if (mapFileName.contains("grd")) {
+    mapF.open(QIODevice::ReadOnly);
+      while (!QString(mapF.readLine()).contains("Values")) {;}
+      int p=0,pmax=breite*hoehe*tiefe,altb=0,b=0;
+      while (!mapF.atEnd () && (p<pmax)) {
+        QStringList numbers = QString(mapF.readLine()).split(" ",QString::SkipEmptyParts);
+        for (int i=0; i<numbers.size();i++) mdata.append(numbers.at(i).toDouble());
+        p+=numbers.size();
+        b=38+37*p/pmax;
+        if (b!=altb){
+          balken->setValue(b);
+          altb=b;
+        }
       }
-    }
-  }else {// ein cube file hoffentlich
-    for (int i=0; i<(atomanzahl+6);i++) mapF.readLine();
-    int pmax=breite*hoehe*tiefe,altb=0,b=0;
-    int p=pmax-1;
-    QVector<double> rewerte(pmax);
-    while (!mapF.atEnd () && (p>=0)) {
-      QStringList numbers = QString(mapF.readLine()).split(" ",QString::SkipEmptyParts);
-      for (int i=0; i<numbers.size();i++) {rewerte[p--]=(numbers.at(i).toDouble());}
-      b=76-37*p/pmax;
-      if (b!=altb){
-	balken->setValue(b);
-	altb=b;
+    mapF.close();                                                                              
+    }else if (fileType==125){//{ // ein cube file hoffentlich
+    mapF.open(QIODevice::ReadOnly);
+      for (int i=0; i<(atomanzahl+6);i++) mapF.readLine();
+      int pmax=breite*hoehe*tiefe,altb=0,b=0;
+      int p=pmax-1;
+      QVector<double> rewerte(pmax);
+      while (!mapF.atEnd () && (p>=0)) {
+        QStringList numbers = QString(mapF.readLine()).split(" ",QString::SkipEmptyParts);
+        for (int i=0; i<numbers.size();i++) {rewerte[p--]=(numbers.at(i).toDouble());}
+        b=76-37*p/pmax;
+        if (b!=altb){
+          balken->setValue(b);
+          altb=b;
+        }
       }
+      for (int i=(tiefe)-1;i>=0;i--)
+        for (int j=(hoehe) -1;j>=0;j--)
+          for (int k=(breite) -1;k>=0;k--)
+            mdata.append(rewerte[i+j*(tiefe)+k*(tiefe)*(hoehe)]);// */
+      cubemap=true;
+      mapF.close();                                                                              
+    }else if (fileType==81){
+//      qDebug()<< "Des han I no`it g`schrieba!";
+    mapF.open(QIODevice::ReadOnly);
+    float *floatdat=(float*)malloc(bh*sizeof(float));
+    mapF.read((char*) floatdat,sizeof(float)*bh);//skip first record 
+    for (int i=0;i<tiefe;i++){
+    mapF.read((char*) floatdat,sizeof(float)*bh);
+  //  printf("%f %f %f\n",floatdat[0],floatdat[1],floatdat[2]);
+      for (int j=0;j<bh;j++)
+          mdata.append(floatdat[j]);// */
     }
-    for (int i=(tiefe)-1;i>=0;i--)
-      for (int j=(hoehe) -1;j>=0;j--)
-	for (int k=(breite) -1;k>=0;k--)
-	  mdata.append(rewerte[i+j*(tiefe)+k*(tiefe)*(hoehe)]);// */
-    cubemap=true;
-  }
-
-  mapF.close();                                                                              
+    cubeiso=true;
+    mapF.close(); 
+    }
   }
   if (data.size()!=mdata.size()) {
     qDebug()<<"Map-Grid and Iso-Grid must have the same size!";
@@ -1014,30 +1203,30 @@ void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &st
     tf->write(QString("%1\n").arg(orte.size()).toLatin1());
     for (int i=0;i<orte.size();i++)
       tf->write(QString("%1  %2 %3 %4   %5 %6 %7  %8\n")
-		      .arg(i,-6)
-		      .arg(orte.at(i).vertex.x,9,'f',6)
-		      .arg(orte.at(i).vertex.y,9,'f',6)
-		      .arg(orte.at(i).vertex.z,9,'f',6)
-		      .arg(orte.at(i).normal.x,9,'f',6)
-		      .arg(orte.at(i).normal.y,9,'f',6)
-		      .arg(orte.at(i).normal.z,9,'f',6)
-		      .arg(orte.at(i).color,12,'f',7).toLatin1());
+          .arg(i,-6)
+          .arg(orte.at(i).vertex.x,9,'f',6)
+          .arg(orte.at(i).vertex.y,9,'f',6)
+          .arg(orte.at(i).vertex.z,9,'f',6)
+          .arg(orte.at(i).normal.x,9,'f',6)
+          .arg(orte.at(i).normal.y,9,'f',6)
+          .arg(orte.at(i).normal.z,9,'f',6)
+          .arg(orte.at(i).color,12,'f',7).toLatin1());
     for( int ix=0; ix<breite-1; ix++ )
       for( int iy=0; iy<hoehe-1; iy++ )
-	for( int iz=0; iz<tiefe-1; iz++ )
-	  MakeElement(ix,iy,iz,breite,bh);
+        for( int iz=0; iz<tiefe-1; iz++ )
+          MakeElement(ix,iy,iz,breite,bh);
 
     PXsort();
     balken->setValue(90+(10/isoValues.size())*(k+1));
     QString Line="";
     for (int i=0; i<pgns.size();i++) {
       for (int j=0; j<pgns.at(i).n;j++){
-	Line.append(QString("%1 ").arg(pgns.at(i).ii[j],6));
+        Line.append(QString("%1 ").arg(pgns.at(i).ii[j],6));
       }
       if (pgns.at(i).n>0) {
-	Line.append("\n");
-	tf->write(Line.toLatin1());
-	Line.clear();
+        Line.append("\n");
+        tf->write(Line.toLatin1());
+        Line.clear();
       }
     }
     tf->close();
@@ -1107,82 +1296,82 @@ void MolIso::createSurface(QString &storeFaceName, double proba){
   }
   simpelGrad();
   if (proba<1) {  
-  CalcVertexes();
-  CalcNormals();
-  for( int ix=0; ix<breite-1; ix++ )
-    for( int iy=0; iy<hoehe-1; iy++ )
-      for( int iz=0; iz<tiefe-1; iz++ )
-	MakeElement(ix,iy,iz,breite,bh);
-  iso_level*=-1.0;
-  CalcVertexes();
-  CalcNormals();
-  tf->open(QIODevice::WriteOnly|QIODevice::Text);
+    CalcVertexes();
+    CalcNormals();
+    for( int ix=0; ix<breite-1; ix++ )
+      for( int iy=0; iy<hoehe-1; iy++ )
+        for( int iz=0; iz<tiefe-1; iz++ )
+          MakeElement(ix,iy,iz,breite,bh);
+    iso_level*=-1.0;
+    CalcVertexes();
+    CalcNormals();
+    tf->open(QIODevice::WriteOnly|QIODevice::Text);
 
-  tf->write(QString("%1\n").arg(orte.size()).toLatin1());
-  for (int i=0;i<orte.size();i++){
-    tf->write(QString("%1  %2 %3 %4   %5 %6 %7  %8\n")
-		    .arg(lineNr,-6)
-		    .arg(orte.at(i).vertex.x,9,'f',6)
-		    .arg(orte.at(i).vertex.y,9,'f',6)
-		    .arg(orte.at(i).vertex.z,9,'f',6)
-		    .arg(orte.at(i).normal.x,9,'f',6)
-		    .arg(orte.at(i).normal.y,9,'f',6)
-		    .arg(orte.at(i).normal.z,9,'f',6)
-		    .arg(orte.at(i).color,12,'f',7).toLatin1());
-    lineNr++;
-  }
-  for( int ix=0; ix<breite-1; ix++ )
-    for( int iy=0; iy<hoehe-1; iy++ )
-      for( int iz=0; iz<tiefe-1; iz++ )
-	MakeElement(ix,iy,iz,breite,bh);
-  PXsort();
-  QString Line="";
-  for (int i=0; i<pgns.size();i++) {
-    for (int j=0; j<pgns.at(i).n;j++){
-      Line.append(QString("%1 ").arg(pgns.at(i).ii[j],6));
+    tf->write(QString("%1\n").arg(orte.size()).toLatin1());
+    for (int i=0;i<orte.size();i++){
+      tf->write(QString("%1  %2 %3 %4   %5 %6 %7  %8\n")
+          .arg(lineNr,-6)
+          .arg(orte.at(i).vertex.x,9,'f',6)
+          .arg(orte.at(i).vertex.y,9,'f',6)
+          .arg(orte.at(i).vertex.z,9,'f',6)
+          .arg(orte.at(i).normal.x,9,'f',6)
+          .arg(orte.at(i).normal.y,9,'f',6)
+          .arg(orte.at(i).normal.z,9,'f',6)
+          .arg(orte.at(i).color,12,'f',7).toLatin1());
+      lineNr++;
     }
-    if (pgns.at(i).n>0) {
-      Line.append("\n");
-      tf->write(Line.toLatin1());
-      Line.clear();
+    for( int ix=0; ix<breite-1; ix++ )
+      for( int iy=0; iy<hoehe-1; iy++ )
+        for( int iz=0; iz<tiefe-1; iz++ )
+          MakeElement(ix,iy,iz,breite,bh);
+    PXsort();
+    QString Line="";
+    for (int i=0; i<pgns.size();i++) {
+      for (int j=0; j<pgns.at(i).n;j++){
+        Line.append(QString("%1 ").arg(pgns.at(i).ii[j],6));
+      }
+      if (pgns.at(i).n>0) {
+        Line.append("\n");
+        tf->write(Line.toLatin1());
+        Line.clear();
+      }
     }
-  }
-  tf->close();
+    tf->close();
   }else{
-  CalcVertexes();
-  CalcNormals();
-  tf->open(QIODevice::WriteOnly|QIODevice::Text);
+    CalcVertexes();
+    CalcNormals();
+    tf->open(QIODevice::WriteOnly|QIODevice::Text);
 
-  tf->write(QString("%1\n").arg(orte.size()).toLatin1());
-  for (int i=0;i<orte.size();i++){
-    tf->write(QString("%1  %2 %3 %4   %5 %6 %7  %8\n")
-		    .arg(lineNr,-6)
-		    .arg(orte.at(i).vertex.x,9,'f',6)
-		    .arg(orte.at(i).vertex.y,9,'f',6)
-		    .arg(orte.at(i).vertex.z,9,'f',6)
-		    .arg(orte.at(i).normal.x,9,'f',6)
-		    .arg(orte.at(i).normal.y,9,'f',6)
-		    .arg(orte.at(i).normal.z,9,'f',6)
-		    .arg(proba,12,'f',7).toLatin1());
-    lineNr++;
-  }
-  for( int ix=0; ix<breite-1; ix++ )
-    for( int iy=0; iy<hoehe-1; iy++ )
-      for( int iz=0; iz<tiefe-1; iz++ )
-	MakeElement(ix,iy,iz,breite,bh);
-  PXsort();
-  QString Line="";
-  for (int i=0; i<pgns.size();i++) {
-    for (int j=0; j<pgns.at(i).n;j++){
-      Line.append(QString("%1 ").arg(pgns.at(i).ii[j],6));
+    tf->write(QString("%1\n").arg(orte.size()).toLatin1());
+    for (int i=0;i<orte.size();i++){
+      tf->write(QString("%1  %2 %3 %4   %5 %6 %7  %8\n")
+          .arg(lineNr,-6)
+          .arg(orte.at(i).vertex.x,9,'f',6)
+          .arg(orte.at(i).vertex.y,9,'f',6)
+          .arg(orte.at(i).vertex.z,9,'f',6)
+          .arg(orte.at(i).normal.x,9,'f',6)
+          .arg(orte.at(i).normal.y,9,'f',6)
+          .arg(orte.at(i).normal.z,9,'f',6)
+          .arg(proba,12,'f',7).toLatin1());
+      lineNr++;
     }
-    if (pgns.at(i).n>0) {
-      Line.append("\n");
-      tf->write(Line.toLatin1());
-      Line.clear();
+    for( int ix=0; ix<breite-1; ix++ )
+      for( int iy=0; iy<hoehe-1; iy++ )
+        for( int iz=0; iz<tiefe-1; iz++ )
+          MakeElement(ix,iy,iz,breite,bh);
+    PXsort();
+    QString Line="";
+    for (int i=0; i<pgns.size();i++) {
+      for (int j=0; j<pgns.at(i).n;j++){
+        Line.append(QString("%1 ").arg(pgns.at(i).ii[j],6));
+      }
+      if (pgns.at(i).n>0) {
+        Line.append("\n");
+        tf->write(Line.toLatin1());
+        Line.clear();
+      }
     }
-  }
-  tf->close();
+    tf->close();
   }
   free(grad);
   free(nodex);
@@ -1212,14 +1401,14 @@ void MolIso::Farbverlauf (GLfloat wrt){
   return;
 }
 QColor MolIso::qtFarbe(int index){
-    if ((index <0)||(index>6)) return QColor("gray");
-static QColor c;
-c.setRgbF(farbe[index][0],farbe[index][1],farbe[index][2],farbe[index][3]);
-return c;
+  if ((index <0)||(index>6)) return QColor("gray");
+  static QColor c;
+  c.setRgbF(farbe[index][0],farbe[index][1],farbe[index][2],farbe[index][3]);
+  return c;
 }
 MolIso::~MolIso(){
-if (mdata.size()) mdata.clear();
-if (data.size())  data.clear();
-if (orte.size()) orte.clear();
-if (pgns.size()) pgns.clear();
+  if (mdata.size()) mdata.clear();
+  if (data.size())  data.clear();
+  if (orte.size()) orte.clear();
+  if (pgns.size()) pgns.clear();
 }
