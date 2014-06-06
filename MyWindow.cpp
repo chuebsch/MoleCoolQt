@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=375;
+int rev=376;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -3285,11 +3285,22 @@ void MyWindow::load_Jana(QString fileName){
   m50.close();
   //printf("m50 read\n");
   char gitt='P'; 
+  int curentPhase=1,phcnt=0;
   QStringList atypen;
   for (int li=0; li<all.size();li++){
     tok.clear();
     tok=all.at(li).split(" ",QString::SkipEmptyParts);
     if (tok.size()){
+      if ((tok.size()>1)&&(tok.at(0).toUpper()=="PHASE")) {
+        phcnt++;
+        if (curentPhase != phcnt) break;
+        strcpy(CID,tok.at(1).toStdString().c_str());
+      }
+      if ((tok.size()>1)&&(tok.at(0).toUpper()=="TITLE")) {
+        QString cid=all.at(li);
+        cid.remove("title",Qt::CaseInsensitive); 
+        strcpy(CID,cid.toStdString().c_str());
+      }
       if ((tok.size()>6)&&(tok.at(0).toUpper()=="CELL")) {
         mol.zelle.a  = tok.at(1).toDouble();
         mol.zelle.b  = tok.at(2).toDouble();
@@ -3297,14 +3308,14 @@ void MyWindow::load_Jana(QString fileName){
         mol.zelle.al = tok.at(4).toDouble();
         mol.zelle.be = tok.at(5).toDouble();
         mol.zelle.ga = tok.at(6).toDouble();
-//        qDebug()<<mol.zelle.a<<mol.zelle.b<<mol.zelle.c<<mol.zelle.al<<mol.zelle.be<<mol.zelle.ga;
+        //qDebug()<<mol.zelle.a<<mol.zelle.b<<mol.zelle.c<<mol.zelle.al<<mol.zelle.be<<mol.zelle.ga;
         //        mol.zelle.lambda=tok.at(7).toDouble();
         //habzell=true;
         setup_zelle();
       }
       if ((tok.size()>1 )&&(tok.at(0).toUpper()=="LATTICE")){
         gitt=tok.at(1).toUpper()[0].toLatin1();
-       // qDebug()<<"gitter "<<gitt;
+      //  qDebug()<<"gitter "<<gitt;
       }
       if ((tok.size()>1 )&&(tok.at(0).toUpper()=="ATOM")){
         atypen.append(tok.at(1));
@@ -3316,7 +3327,7 @@ void MyWindow::load_Jana(QString fileName){
         s=s.trimmed();
         s.replace(' ',',');
         mol.decodeSymmCard(s);
- //       qDebug()<<s;
+        //qDebug()<<s;
       }
       if (tok.at(0).toUpper()=="END") break;   
     }

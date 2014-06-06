@@ -52,7 +52,7 @@ class FourMCQ:public QObject{
 Q_OBJECT
   public:
           float *datfo,*datfo_fc,*datf1_f2;
-          FourMCQ(molekul *mole_, CubeGL *chgl_,QToolBar *toolView, double resol=2.0, double wght=1.0);
+          FourMCQ(molekul *mole_, CubeGL *chgl_,QToolBar *toolView, double resol=2.5, double wght=1.0);
 	  ~FourMCQ();
           bool loadFouAndPerform(const char filename[],bool neu=true);
           bool loadm80AndPerform(const char filename[],bool neu=true);
@@ -63,6 +63,7 @@ Q_OBJECT
           V3 urs;
 	  QCheckBox *doMaps;
           double rr,rw;
+          int curentPhase; //structure phase id when multiple phases are refined
 	  int maptrunc;
           molekul *mole;
 	  double map_radius;

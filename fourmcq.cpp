@@ -11,6 +11,7 @@ FourMCQ::FourMCQ(molekul *mole_, CubeGL *chgl_,QToolBar *toolView, double resol,
   chgl->foubas[2]=0;
   chgl->foubas[3]=0;
   chgl->foubas[4]=0;
+  curentPhase=1;
   datfo_fc=datf1_f2=datfo=NULL;
   nodex=nodey=nodez=NULL;
   urs=V3(0,0,0);
@@ -87,7 +88,7 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
   FILE *mapin;
   int dimension=0,skip;
   int i,ok=0;
-  short int ih0, ik0, il0, im, in,io, is;
+  short int ih0, ik0, il0, im, in,io, is, iphid;//iphid stucture-phase-id
   float fo0,fc0,fc1,f20,fsig;
   ns=0;
   sy[0][ns]=1.0;
@@ -105,6 +106,7 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
   sy[9][ns]=0.0;
   sy[10][ns]=0.0;
   sy[11][ns]=0.0;
+  int phcnt=0;
   char m50name[1024];
   strcpy(m50name,filename);
   i=strlen(m50name);
@@ -119,6 +121,10 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
       sscanf(line,"title %[^!\r\n]",titl);
       trimm(titl);
     }
+      if (!strncmp(line,"phase",5)) {
+        phcnt++;
+        if (curentPhase!=phcnt) ok=1;
+      }
     if (!strncmp(line,"cell ",5)) {
       sscanf(line,"cell %lf %lf %lf %lf %lf %lf",&C[0],&C[1],&C[2],&C[3],&C[4],&C[5]);
 
@@ -208,30 +214,31 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
       switch (dimension) {
         case 4:
           im = 0;
-          i = sscanf (line, "%hd %hd %hd %hd %*d %f %*f %*f %f %f", &ih0, &ik0,
-              &il0, &im, &fo0, &fc0, &f20);
+          i = sscanf (line, "%hd %hd %hd %hd %d %f %f %*f %f %f", &ih0, &ik0,
+              &il0, &im, &iphid, &fo0, &fc0, &f20);
           if (im != 0)
             skip = 1;
           break;
         case 5:
           im = in = 0;
-          i = sscanf (line, "%hd %hd %hd %hd %hd %*d %f %*f %*f %f %f", &ih0,
-              &ik0, &il0, &im, &in, &fo0, &fc0, &f20);
+          i = sscanf (line, "%hd %hd %hd %hd %hd %d %f %*f %*f %f %f", &ih0,
+              &ik0, &il0, &im, &in, &iphid, &fo0, &fc0, &f20);
           if (im != 0 || in != 0)
             skip = 1;
           break;
         case 6:
           im = in = io = 0;
-          i = sscanf (line, "%hd %hd %hd %hd %hd %hd %*d %f %*f %*f %f %f",
-              &ih0, &ik0, &il0, &im, &in, &io, &fo0, &fc0, &f20);
+          i = sscanf (line, "%hd %hd %hd %hd %hd %hd %d %f %*f %*f %f %f",
+              &ih0, &ik0, &il0, &im, &in, &io, &iphid, &fo0, &fc0, &f20);
           if (im != 0 || in != 0 || io != 0)
             skip = 1;
           break;
       }
     } else {
-      i = sscanf (line, "%hd %hd %hd %*d %f %*f %*f %f %f %*f %*f %*f %*f %*f %*f %f", &ih0, &ik0, &il0,
+      i = sscanf (line, "%hd %hd %hd %d %f %*f %*f %f %f %*f %*f %*f %*f %*f %*f %f", &ih0, &ik0, &il0, &iphid, 
           &fo0, &fc0, &f20, &fsig);
     }
+    if (iphid!=curentPhase) skip=1;
     if (i < dimension + 3)
       break;
 
@@ -259,10 +266,10 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
   fclose(mapin);
   printf("%d Reflections read from %s.\n",nr,filename);
   for (int i=0;i<ns;i++){
-  printf("SYMM: %d\n%9.6f %9.6f %9.6f %5.2f\n%9.6f %9.6f %9.6f %5.2f\n%9.6f %9.6f %9.6f %5.2f\n",i+1,
+  /*printf("SYMM: %d\n%9.6f %9.6f %9.6f %5.2f\n%9.6f %9.6f %9.6f %5.2f\n%9.6f %9.6f %9.6f %5.2f\n",i+1,
       sy[0][i], sy[1][i], sy[2][i], sy[9][i],
       sy[3][i], sy[4][i], sy[5][i], sy[10][i],
-      sy[6][i], sy[7][i], sy[8][i], sy[11][i]);
+      sy[6][i], sy[7][i], sy[8][i], sy[11][i]);// */
   }
   for (int i=0;i<nr;i++){
     double u=lr[i].ih,v=lr[i].ik,w=lr[i].il;
@@ -302,8 +309,8 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
   sorthkl(nr,lr);
   int n=-1;
   // /*
-  FILE *unmerg=fopen("unmerged.xd-mcq.hkl","wt");
-  FILE *merg=fopen("merged.xd-mcq.hkl","wt");
+  //FILE *unmerg=fopen("unmerged.xd-mcq.hkl","wt");
+  //FILE *merg=fopen("merged.xd-mcq.hkl","wt");
   //  */
   {int i=0;
     while(i<nr){
@@ -319,7 +326,7 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
       int m;
       int k=i;
       while ((i<nr)&&(lr[i].ih==lr[k].ih)&&(lr[i].ik==lr[k].ik)&&(lr[i].il==lr[k].il)) {
-        // /*
+         /*
               fprintf(unmerg,"%4d%4d%4d fo: %12.5f sfo: %10.5f phase: %10.6f a1: %12g b1: %12g f2c %12.5f f2cphase: %10.6f #%d\n",lr[i].ih,lr[i].ik,lr[i].il,
                 lr[i].d1,
                 lr[i].d2,
@@ -346,7 +353,7 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
       lr[n].ih=lr[k].ih;
       lr[n].ik=lr[k].ik;
       lr[n].il=lr[k].il;
-      // /*
+       /*
       fprintf(merg,"%4d%4d%4d fo: %12.5f sfo: %10.5f phase: %10.6f a1: %12g b1: %12g f2c %12.5f f2cphase: %10.6f #%d\n",
         lr[n].ih,
         lr[n].ik,
@@ -362,8 +369,8 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
     }
   }
   // /*
-  fclose(merg);
-  fclose(unmerg);
+  //fclose(merg);
+  //fclose(unmerg);
   // */
   n++;
   nr=n;
