@@ -214,28 +214,27 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
       switch (dimension) {
         case 4:
           im = 0;
-          i = sscanf (line, "%hd %hd %hd %hd %d %f %f %*f %f %f", &ih0, &ik0,
-              &il0, &im, &iphid, &fo0, &fc0, &f20);
+          i = sscanf (line, "%hd %hd %hd %hd %hd %f %*f %*f %f %f", &ih0, &ik0, &il0, &im, &iphid, &fo0, &fc0, &f20);
           if (im != 0)
             skip = 1;
           break;
         case 5:
           im = in = 0;
-          i = sscanf (line, "%hd %hd %hd %hd %hd %d %f %*f %*f %f %f", &ih0,
+          i = sscanf (line, "%hd %hd %hd %hd %hd %hd %f %*f %*f %f %f", &ih0,
               &ik0, &il0, &im, &in, &iphid, &fo0, &fc0, &f20);
           if (im != 0 || in != 0)
             skip = 1;
           break;
         case 6:
           im = in = io = 0;
-          i = sscanf (line, "%hd %hd %hd %hd %hd %hd %d %f %*f %*f %f %f",
+          i = sscanf (line, "%hd %hd %hd %hd %hd %hd %hd %f %*f %*f %f %f",
               &ih0, &ik0, &il0, &im, &in, &io, &iphid, &fo0, &fc0, &f20);
           if (im != 0 || in != 0 || io != 0)
             skip = 1;
           break;
       }
     } else {
-      i = sscanf (line, "%hd %hd %hd %d %f %*f %*f %f %f %*f %*f %*f %*f %*f %*f %f", &ih0, &ik0, &il0, &iphid, 
+      i = sscanf (line, "%hd %hd %hd %hd %f %*f %*f %f %f %*f %*f %*f %*f %*f %*f %f", &ih0, &ik0, &il0, &iphid, 
           &fo0, &fc0, &f20, &fsig);
     }
     if (iphid!=curentPhase) skip=1;
@@ -952,6 +951,14 @@ void FourMCQ::decodeSymm2(QString symmCard){
   QString sc=symmCard.toUpper().remove("SYMMETRY").trimmed();
   sc.remove("'");
   sc.replace(" ",",");
+  if (!sc.contains("Y")){
+    sc.replace("X1","X"); 
+    sc.replace("X2","Y"); 
+    sc.replace("X3","Z"); 
+    sc.replace("X4","R"); 
+    sc.replace("X5","S"); 
+    sc.replace("X6","T"); 
+  }
   QStringList axe=sc.split(",");
   QStringList bruch;
   for (int i=0; i<3; i++){

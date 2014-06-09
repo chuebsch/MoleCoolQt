@@ -2107,7 +2107,7 @@ bool molekul::decodeSymmCard(const QString symmCard){
 
   QStringList axe=sc.split(",");
   QStringList bruch;
-  if (axe.size()!=3) return false;
+  if (axe.size()<3) return false;
   double sx[3],sy[3],sz[3],t[3];
   for (int i=0; i<3; i++){
     sx[i]=0;sy[i]=0;sz[i]=0;t[i]=0;
@@ -2127,6 +2127,8 @@ bool molekul::decodeSymmCard(const QString symmCard){
   Matrix sm = Matrix(sx[0],sy[0],sz[0],	  sx[1],sy[1],sz[1],  sx[2],sy[2],sz[2]);
   zelle.symmops.append(sm);
   zelle.trans.append(V3(t[0],t[1],t[2]));
+//printf("%g %g %g %g\n%g %g %g %g\n%g %g %g %g\n", sx[0],sy[0],sz[0],t[0],sx[1],sy[1],sz[1],t[1],  sx[2],sy[2],sz[2],t[2]);
+
 
   return true;
 }

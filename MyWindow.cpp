@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=378;
+int rev=379;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -3321,11 +3321,23 @@ void MyWindow::load_Jana(QString fileName){
         atypen.append(tok.at(1));
       //  qDebug()<<"ATOMS"<<tok;
       }
+      if ((tok.size()>1 )&&(tok.at(0).toUpper()=="NDIM")){
+          mol.dimensions=tok.at(1).toInt();
+      }
       if ((tok.size()>2 )&&(tok.at(0).toUpper()=="SYMMETRY")){
         QString s=all.at(li).toUpper();
         s.remove("SYMMETRY");
         s=s.trimmed();
         s.replace(' ',',');
+        if (!s.contains("Y")){
+		s.replace("X1","X"); 
+		s.replace("X2","Y"); 
+		s.replace("X3","Z"); 
+		s.replace("X4","R"); 
+		s.replace("X5","S"); 
+		s.replace("X6","T"); 
+        //qDebug()<<s;
+        }
         mol.decodeSymmCard(s);
         //qDebug()<<s;
       }

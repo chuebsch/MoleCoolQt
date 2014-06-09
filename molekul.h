@@ -419,6 +419,7 @@ class molekul {
   int dummax;
   int bonds_made;
   int knopf_made;
+  int dimensions;
   double gd;
   double HAMax;
   double HAWink;
