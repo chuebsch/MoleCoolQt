@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=381;
+int rev=382;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -3381,6 +3381,8 @@ void MyWindow::load_Jana(QString fileName){
   newAtom.sg=0;
   someThingToRestore();
   george=true;
+  QMap<int,QString> axstr;
+  QMap<int,QString> atox;
   int skip=0;
   for (int li=0; li<all.size();li++){
     tok.clear();
@@ -3427,6 +3429,12 @@ void MyWindow::load_Jana(QString fileName){
         if (newAtom.amul==0) newAtom.OrdZahl=-1;
         asymmUnit.append(newAtom);
       }
+      }
+      if ((asymmUnit.size()<na)&&(all.at(li).contains(QRegExp("^ [A-z]+")))&&(tok.size()>1)){
+          axstr[asymmUnit.size()-1]=tok.at(tok.size()-2);
+          for (int xi=0; xi<tok.size()-2;xi++){
+              atox[asymmUnit.size()-1*6+xi]=tok.at(xi);
+          }
       }
     }
   }
