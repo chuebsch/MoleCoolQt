@@ -125,6 +125,7 @@ public slots:
      void rotUp();
      void rotDown();
      void openMapControl();
+     void currentPhaseChanged(int p);
      void doMapsNow(bool b);
      void controlMap();
      void wasistdas();
@@ -244,7 +245,7 @@ protected:
      QGroupBox *sfacBox;
      QSignalMapper *dsm;
      QRadioButton *pserbt[110];
-     QSpinBox *indexSpin;
+     QSpinBox *indexSpin,*phaseSpin;
      QComboBox *sufixBox;
 };
 

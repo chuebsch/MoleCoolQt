@@ -110,6 +110,7 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
   char m50name[1024];
   strcpy(m50name,filename);
   i=strlen(m50name);
+//  printf("Current Phase %d\n",curentPhase);
   m50name[i-2]='5';
   if ((mapin = fopen (m50name, "rt")) == NULL){
     fprintf (stderr, "Cannot open (JANA m50) file %s\n", m50name);
@@ -117,15 +118,17 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
   }
   do{
     fgets(line,120,mapin);
+  //  printf(line);
     if (!strncmp(line,"title",5)) {
       sscanf(line,"title %[^!\r\n]",titl);
       trimm(titl);
     }
-      if (!strncmp(line,"phase",5)) {
-        phcnt++;
-        if (curentPhase!=phcnt) ok=1;
-      }
-    if (!strncmp(line,"cell ",5)) {
+    if (!strncmp(line,"phase",5)) {
+      phcnt++;
+//      printf("%s phase=>%d %d\n",line,phcnt,ok);
+      if (curentPhase!=phcnt) continue;
+    }
+    if (((!phcnt)||((phcnt)&&(curentPhase==phcnt)))&&(!strncmp(line,"cell ",5))) {
       sscanf(line,"cell %lf %lf %lf %lf %lf %lf",&C[0],&C[1],&C[2],&C[3],&C[4],&C[5]);
 
       for (i=0;i<3;i++){
@@ -150,32 +153,32 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
       cral=(D[4]*D[5]-D[3])/(D[1]*D[2]); 
       crbe=(D[5]*D[3]-D[4])/(D[2]*D[0]);
       crga=(D[3]*D[4]-D[5])/(D[0]*D[1]);
-       /*     printf("\nC:\n1:%g 2:%g 3:%g\n  4:%g 5:%g 6:%g\n  7:%g 8:%g 9:%g\n  10:%g 11:%g 12:%g   %g\n",
-              C[0],C[1],C[2],C[3],C[4],C[5],C[6],C[7],C[8],C[9],C[10],C[11],C[14] 
-              );
-              printf("\nD:\n1:%g 2:%g 3:%g\n  4:%g 5:%g 6:%g\n  7:%g 8:%g 9:%g\n ", 
-              D[0],D[1],D[2],D[3],D[4],D[5],D[6],D[7],D[8] 
-              );// */
+      /*printf("\nC:\n1:%g 2:%g 3:%g\n  4:%g 5:%g 6:%g\n  7:%g 8:%g 9:%g\n  10:%g 11:%g 12:%g   %g\n",
+          C[0],C[1],C[2],C[3],C[4],C[5],C[6],C[7],C[8],C[9],C[10],C[11],C[14] 
+          );
+      printf("\nD:\n1:%g 2:%g 3:%g\n  4:%g 5:%g 6:%g\n  7:%g 8:%g 9:%g\n ", 
+          D[0],D[1],D[2],D[3],D[4],D[5],D[6],D[7],D[8] 
+          );// */
     }
-//    if (!strncmp(line,"WAVE",4)){
-//      sscanf(line,"WAVE %lf",&wave);
-//      /* printf("wavelength = %g\n",wave);*/
-//    }
-    if (!strncmp(line,"lattice ",8)){
+    //    if (!strncmp(line,"WAVE",4)){
+    //      sscanf(line,"WAVE %lf",&wave);
+    //      /* printf("wavelength = %g\n",wave);*/
+    //    }
+    if (((!phcnt)||((phcnt)&&(curentPhase==phcnt)))&&(!strncmp(line,"lattice ",8))){
       sscanf(line,"lattice %1c",&git);
       //nc=(cen=='C')?1:0;
       nc=0;
-     //       printf("Structure is %scentrosymmetric and %c.\n",(nc)?"":"non-",git);
+      //       printf("Structure is %scentrosymmetric and %c.\n",(nc)?"":"non-",git);
     }
-    if (!strncmp(line,"symmetry ",9)){
+    if (((!phcnt)||((phcnt)&&(curentPhase==phcnt)))&&(!strncmp(line,"symmetry ",9))){
       decodeSymm2(line);
-      /*printf("%4.0f%4.0f%4.0f %4f\n%4.0f%4.0f%4.0f %4f\n%4.0f%4.0f%4.0f %4f\n",
-      sy[0][ns], sy[3][ns],sy[6][ns],sy[9][ns],
-      sy[1][ns], sy[4][ns],sy[7][ns],sy[10][ns],
-      sy[2][ns], sy[5][ns],sy[8][ns],sy[11][ns]);// */
+ /*     printf("%4.0f%4.0f%4.0f %4f\n%4.0f%4.0f%4.0f %4f\n%4.0f%4.0f%4.0f %4f\n",
+          sy[0][ns], sy[3][ns],sy[6][ns],sy[9][ns],
+          sy[1][ns], sy[4][ns],sy[7][ns],sy[10][ns],
+          sy[2][ns], sy[5][ns],sy[8][ns],sy[11][ns]);// */
       ns++;
     }
-    if (!strncmp(line,"unitsnumb",9)) ok=1;  
+    if (((!phcnt)||((phcnt)&&(curentPhase==phcnt)))&&(!strncmp(line,"unitsnumb",9))) {ok=1;  }
   }while ((!ok)&&(!feof(mapin)));
     
   fclose(mapin);
@@ -924,6 +927,17 @@ void FourMCQ::decodeSymm(QString symmCard){
   QString sc=symmCard.toUpper().remove("SYMM").trimmed();
   sc.remove("'");
   sc.remove(" ");
+  sy[0][ns]=0.0;
+  sy[1][ns]=0.0;
+  sy[2][ns]=0.0;
+
+  sy[3][ns]=0.0;
+  sy[4][ns]=0.0;
+  sy[5][ns]=0.0;
+
+  sy[6][ns]=0.0;
+  sy[7][ns]=0.0;
+  sy[8][ns]=0.0;
   QStringList axe=sc.split(",");
   QStringList bruch;
   for (int i=0; i<3; i++){
@@ -951,6 +965,17 @@ void FourMCQ::decodeSymm2(QString symmCard){
   QString sc=symmCard.toUpper().remove("SYMMETRY").trimmed();
   sc.remove("'");
   sc.replace(" ",",");
+  sy[0][ns]=0.0;
+  sy[1][ns]=0.0;
+  sy[2][ns]=0.0;
+
+  sy[3][ns]=0.0;
+  sy[4][ns]=0.0;
+  sy[5][ns]=0.0;
+
+  sy[6][ns]=0.0;
+  sy[7][ns]=0.0;
+  sy[8][ns]=0.0;
   if (!sc.contains("Y")){
     sc.replace("X1","X"); 
     sc.replace("X2","Y"); 
