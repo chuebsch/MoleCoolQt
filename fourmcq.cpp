@@ -432,7 +432,8 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
         //sintl=(lr[i].ih*lr[i].ih*D[6]*D[6] + lr[i].ik*lr[i].ik*D[7]*D[7] + lr[i].il*lr[i].il*D[8]*D[8] + 2*lr[i].ih*lr[i].il*D[6]*D[8]*crbe+ 2*lr[i].ik*lr[i].il*D[7]*D[8]*cral+ 2*lr[i].ih*lr[i].ik*D[6]*D[7]*crga)*-M_PI;//this is -4*pi*(sin(theta) / lambda)^2
         //       if (abs(lr[i].ih)+abs(lr[i].ik)+abs(lr[i].il)<7) printf("%4d%4d%4d %g %g %g\n",lr[i].ih,lr[i].ik,lr[i].il ,sintl,sqrt(sintl),1.0/sintl);
         sintl=1.0;
-        if(typ==0) ss=(lr[i].d1-lr[i].d4)/(C[14]*(s+t));
+        if (sintl<0.00000001)sintl=0.000000001;
+        if(typ==0) ss=(lr[i].d1-lr[i].d4)/(C[14]*(s+t)*sintl);
         //if(typ==0) ss=(lr[i].d1-lr[i].d2)/(C[14]);
         //if(typ==0) {ss=(lr[i].d1)/(C[14]*(s+t));ss*=ss;}
         //	if(typ==0) ss=(fmod1)/(C[14]*(s+t)*sintl);
@@ -464,7 +465,7 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
           B[m][1]=-q;
         }
       }
-      fprintf(stderr,"Starting Fourier %d %d %d!\n",n1,n2,n3);
+      fprintf(stderr,"Starting Fourier x%d %d %d!\n",n1,n2,n3);
       fwd_plan = fftwf_plan_dft_3d(n3,n2,n1,B,B,FFTW_FORWARD,FFTW_ESTIMATE);
       fftwf_execute(fwd_plan);
       fftwf_destroy_plan(fwd_plan);

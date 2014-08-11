@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=382;
+int rev=383;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -3306,6 +3306,7 @@ void MyWindow::load_Jana(QString fileName){
   char gitt='P'; 
   int phcnt=0;
   QStringList atypen;
+  QList<V3>lavec;
   for (int li=0; li<all.size();li++){
     tok.clear();
     tok=all.at(li).split(" ",QString::SkipEmptyParts);
@@ -3335,6 +3336,13 @@ void MyWindow::load_Jana(QString fileName){
       if (((!phcnt)||((phcnt)&&(curentPhase==phcnt)))&&(tok.size()>1 )&&(tok.at(0).toUpper()=="LATTICE")){
         gitt=tok.at(1).toUpper()[0].toLatin1();
 //        qDebug()<<"gitter "<<gitt;
+      }
+      if (((!phcnt)||((phcnt)&&(curentPhase==phcnt)))&&(tok.size()>1 )&&(tok.at(0).toUpper()=="LATTVEC")){
+       V3 v=V3(0,0,0);
+        v.x  = tok.at(1).toDouble();
+        v.y  = tok.at(2).toDouble();
+        v.z  = tok.at(3).toDouble();
+        lavec.append(v);
       }
       if (((!phcnt)||((phcnt)&&(curentPhase==phcnt)))&&(tok.size()>1 )&&(tok.at(0).toUpper()=="ATOM")){
         atypen.append(tok.at(1));
@@ -3439,8 +3447,23 @@ void MyWindow::load_Jana(QString fileName){
     }
   }
 
+  if (lavec.isEmpty()){
+    mol.applyLatticeCentro(gitt,false);
+  }else{
+    int z=mol.zelle.symuncent=mol.zelle.symmops.size();
+    for (int i=0; i<z;i++){
+      for (int j=0;j<lavec.size();j++){
+        if (fabs(Norm(lavec.at(j)))<0.01) continue;
+        V3 tt = mol.zelle.trans.at(i)+lavec.at(j);
+        tt.x=(tt.x>1)?tt.x-1:tt.x;
+        tt.y=(tt.y>1)?tt.y-1:tt.y;
+        tt.z=(tt.z>1)?tt.z-1:tt.z;
+        mol.zelle.symmops.append(mol.zelle.symmops.at(i));
+        mol.zelle.trans.append(tt);
+      }
+    }
+  }
 
-  mol.applyLatticeCentro(gitt,false);
   for (int i=0;i<asymmUnit.size();i++) { 
 //    mol.frac2kart(asymmUnit[i].frac,asymmUnit[i].kart);
 //    printf("%-10s %4d %12.6f%12.6f%12.6f\n",asymmUnit[i].atomname,asymmUnit[i].OrdZahl,asymmUnit[i].kart.x,asymmUnit[i].kart.y,asymmUnit[i].kart.z);
