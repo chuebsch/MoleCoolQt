@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=383;
+int rev=385;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -306,7 +306,7 @@ MyWindow::MyWindow( QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(pa
   QAction *homeLabAct      = new QAction(tr("Home lapel positions"),this);
   QAction *editAtomAct     = new QAction(tr("Edit atom parameters"),this);
   togUnit                  = new QAction(tr("Toggle unit cell"), this);
-  togLuft                  = new QAction(tr("Toggle helices"), this);
+//  togLuft                  = new QAction(tr("Toggle helices"), this);
   togElli                  = new QAction(tr("Toggle ADP's"), this);
   togHBond        = new QAction(tr("Toggle hydrogen bonds"), this);
   QAction *backColor       = new QAction(tr("Change background color"), this);
@@ -576,7 +576,7 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
 			);
 
 
-
+/*
   togLuft->setShortcut(tr("#"));
   togLuft->setCheckable ( true );
   togLuft->setChecked ( true );
@@ -587,7 +587,7 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
 		     "<b><font color=red>r</font><font color=orange>a</font><font color=yellow>i</font><font color=green>n</font><font color=cyan>b</font>"
 			"<font color=blue>o</font><font color=violet>w</font></b> from "
 			"<b><font color=red>red</font></b> to <b><font color=violet>violet</font></b>" );
-
+*/
   togElli->setShortcut(tr("E"));
   togElli->setCheckable ( true );
   togElli->setChecked ( true );
@@ -750,8 +750,8 @@ createRenameWgd();
 	   cubeGL, SLOT(setAxes(bool)));
   connect( togUnit, SIGNAL(toggled (bool) ),
 	   cubeGL, SLOT(setUnitCell(bool) ));
-  connect( togLuft, SIGNAL(toggled(bool) ),
-	   cubeGL, SLOT(setHelices(bool) ));
+  //connect( togLuft, SIGNAL(toggled(bool) ),
+    //   cubeGL, SLOT(setHelices(bool) ));
   connect( togElli, SIGNAL(toggled(bool)),
 	   cubeGL, SLOT(setEllipsoid(bool)));
   connect( togElli, SIGNAL(toggled(bool)),
@@ -817,7 +817,7 @@ createRenameWgd();
   viewMenu->addAction(togElli);
 
   viewMenu->addAction(togHBond);
-  viewMenu->addAction(togLuft); 
+//  viewMenu->addAction(togLuft);
   viewMenu->addAction(depthCueingAct);
   viewMenu->addSeparator();
   viewMenu->addAction(dock->toggleViewAction());
@@ -1010,7 +1010,7 @@ createRenameWgd();
   toolView->addAction(togLabel);
   toolView->addAction(togAxen);
   toolView->addAction(togUnit);
-  toolView->addAction(togLuft);     
+ // toolView->addAction(togLuft);
   toolView->addAction(togHBond);
   toolView->addAction(showface);
   toolView->addAction(showLeg);
@@ -1146,66 +1146,59 @@ createRenameWgd();
   chargeGroups->setEnabled(false);
   toolView->setWhatsThis("This is the view tool bar. You can move it to any window border if you want."
                          " By clicking right on the menu or tool bar region, you can toggel the toolbars.");
-  settings = new QSettings( QSettings::IniFormat, QSettings::UserScope ,"Christian_B._Huebschle","MoleCoolQt" );
-  settings->beginGroup("Version 0.1");
-  dirName = settings->value("lastFile").toString();
+  mol.loadSettings();
+  mol.einstellung = new QSettings( QSettings::IniFormat, QSettings::UserScope ,"Christian_B._Huebschle","MoleCoolQt" );
+  mol.einstellung->beginGroup("Version 0.1");
+  dirName = mol.einstellung->value("lastFile").toString();
 
-  QStringList files = settings->value("recentFileList").toStringList();  
+  QStringList files = mol.einstellung->value("recentFileList").toStringList();
   foreach (QWidget *widget, QApplication::topLevelWidgets()) {
     MyWindow *mainWin = qobject_cast<MyWindow *>(widget);
     if (mainWin)
       mainWin->updateRecentFileActions();
   }
-
   QSize size =
-    settings->value("size", sizeHint()).toSize();
+    mol.einstellung->value("size", sizeHint()).toSize();
   QPoint pos =
-    settings->value("position").toPoint();
-  
-  mol.tubifiedAtoms=settings->value("tubes").toBool();
+    mol.einstellung->value("position").toPoint();
   tubiAct->setChecked(mol.tubifiedAtoms);
-  mol.singleColorBonds=settings->value("singleColorBonds").toBool();   
-  singleColorAct->setChecked(mol.singleColorBonds);
-  cubeGL->tCR= (float) settings->value("text_color_red"  ).toDouble();
-  cubeGL->tCG= (float) settings->value("text_color_green").toDouble();
-  cubeGL->tCB= (float) settings->value("text_color_blue" ).toDouble();
-  cubeGL->tCA= (float) settings->value("text_color_alpha").toDouble();
-  cubeGL->bgCR=(float) settings->value("background_color_red"  ).toDouble();
-  cubeGL->bgCG=(float) settings->value("background_color_green").toDouble();
-  cubeGL->bgCB=(float) settings->value("background_color_blue" ).toDouble();
-  cubeGL->bgCA=(float) settings->value("background_color_alpha").toDouble();
+  singleColorAct->setChecked(mol.bondColorStyle);
+
+  cubeGL->tCR= (float) mol.einstellung->value("text_color_red"  ).toDouble();
+  cubeGL->tCG= (float) mol.einstellung->value("text_color_green").toDouble();
+  cubeGL->tCB= (float) mol.einstellung->value("text_color_blue" ).toDouble();
+  cubeGL->tCA= (float) mol.einstellung->value("text_color_alpha").toDouble();
+  cubeGL->bgCR=(float) mol.einstellung->value("background_color_red"  ).toDouble();
+  cubeGL->bgCG=(float) mol.einstellung->value("background_color_green").toDouble();
+  cubeGL->bgCB=(float) mol.einstellung->value("background_color_blue" ).toDouble();
+  cubeGL->bgCA=(float) mol.einstellung->value("background_color_alpha").toDouble();
   cubeGL->checkTC();
 
-  cubeGL-> MM[0]= (float)  settings->value("Matrix00").toDouble();
-  cubeGL-> MM[1]= (float)  settings->value("Matrix01").toDouble();
-  cubeGL-> MM[2]= (float)  settings->value("Matrix02").toDouble();
-  cubeGL-> MM[3]= (float)  settings->value("Matrix03").toDouble();
-  cubeGL-> MM[4]= (float)  settings->value("Matrix04").toDouble();
-  cubeGL-> MM[5]= (float)  settings->value("Matrix05").toDouble();
-  cubeGL-> MM[6]= (float)  settings->value("Matrix06").toDouble();
-  cubeGL-> MM[7]= (float)  settings->value("Matrix07").toDouble();
-  cubeGL-> MM[8]= (float)  settings->value("Matrix08").toDouble();
-  cubeGL-> MM[9]= (float)  settings->value("Matrix09").toDouble();
-  cubeGL->MM[10]= (float)  settings->value("Matrix10").toDouble();
-  cubeGL->MM[11]= (float)  settings->value("Matrix11").toDouble();
-  cubeGL->MM[12]= (float)  settings->value("Matrix12").toDouble();
-  cubeGL->MM[13]= (float)  settings->value("Matrix13").toDouble();
-  cubeGL->MM[14]= (float)  settings->value("Matrix14").toDouble();
-  cubeGL->MM[15]= (float)  settings->value("Matrix15").toDouble();
+  cubeGL-> MM[0]= (float)  mol.einstellung->value("Matrix00").toDouble();
+  cubeGL-> MM[1]= (float)  mol.einstellung->value("Matrix01").toDouble();
+  cubeGL-> MM[2]= (float)  mol.einstellung->value("Matrix02").toDouble();
+  cubeGL-> MM[3]= (float)  mol.einstellung->value("Matrix03").toDouble();
+  cubeGL-> MM[4]= (float)  mol.einstellung->value("Matrix04").toDouble();
+  cubeGL-> MM[5]= (float)  mol.einstellung->value("Matrix05").toDouble();
+  cubeGL-> MM[6]= (float)  mol.einstellung->value("Matrix06").toDouble();
+  cubeGL-> MM[7]= (float)  mol.einstellung->value("Matrix07").toDouble();
+  cubeGL-> MM[8]= (float)  mol.einstellung->value("Matrix08").toDouble();
+  cubeGL-> MM[9]= (float)  mol.einstellung->value("Matrix09").toDouble();
+  cubeGL->MM[10]= (float)  mol.einstellung->value("Matrix10").toDouble();
+  cubeGL->MM[11]= (float)  mol.einstellung->value("Matrix11").toDouble();
+  cubeGL->MM[12]= (float)  mol.einstellung->value("Matrix12").toDouble();
+  cubeGL->MM[13]= (float)  mol.einstellung->value("Matrix13").toDouble();
+  cubeGL->MM[14]= (float)  mol.einstellung->value("Matrix14").toDouble();
+  cubeGL->MM[15]= (float)  mol.einstellung->value("Matrix15").toDouble();
   QVariant variant;
-  if (settings->contains("bondColor")){
-  variant = settings->value("bondColor");
-  mol.bondColor=variant.value<QColor>();
-  }else{mol.bondColor=QColor("silver");} 
-  if ((settings->value("bondStrength").toDouble())>0.001) mol.bondStrength=settings->value("bondStrength").toDouble();
-  if (settings->contains("LabelFont")){
-    variant=settings->value("LabelFont");
+  if (mol.einstellung->contains("LabelFont")){
+    variant=mol.einstellung->value("LabelFont");
     cubeGL->myFont=variant.value<QFont>();}
   else{
     cubeGL->myFont=QFont("Arial",24, -1, false);
   }
-  if (settings->contains("MolisoLegendFont")){
-    variant=settings->value("MolisoLegendFont");
+  if (mol.einstellung->contains("MolisoLegendFont")){
+    variant=mol.einstellung->value("MolisoLegendFont");
     cubeGL->MLegendFont=variant.value<QFont>();}
   else{
     cubeGL->MLegendFont=QFont("Arial",14, -1, false);
@@ -1244,39 +1237,17 @@ createRenameWgd();
    cubeGL->MM[14]=-200.0;
    cubeGL->MM[15]=1.0;
   }
-
-   int acsize = settings->beginReadArray("AtomColors");   
-   for (int i = 0; i < acsize; ++i) {
-     settings->setArrayIndex(i);
-     mol.Acol[i-1][0] = (GLfloat)settings->value("red"   ).toDouble();
-     mol.Acol[i-1][1] = (GLfloat)settings->value("green" ).toDouble();
-     mol.Acol[i-1][2] = (GLfloat)settings->value("blue"  ).toDouble();
-     mol.Acol[i-1][3] = (GLfloat)settings->value("alpha" ).toDouble();
-   }
-   settings->endArray();
-   acsize = settings->beginReadArray("AtomStyles");   
-   for (int i = 0; i < acsize; ++i) {
-     settings->setArrayIndex(i);
-     mol.aStyle[i-1] = settings->value("Style").toInt();
-   }
-   settings->endArray();
-   acsize = settings->beginReadArray("CovaleceRadii");   
-   for (int i = 0; i < acsize; ++i) {
-     settings->setArrayIndex(i);
-     mol.Kovalenz_Radien[i-1] = settings->value("Radius").toInt();
-   }
-   settings->endArray();
-  cubeGL->invertMouseZoom->setChecked( settings->value("InvertMouseZoom").toBool());
+  cubeGL->invertMouseZoom->setChecked( mol.einstellung->value("InvertMouseZoom").toBool());
   bool b;
-  if (settings->contains("BackgroundGradient")){
-    back_Grad->setChecked(b=settings->value("BackgroundGradient").toBool());
+  if (mol.einstellung->contains("BackgroundGradient")){
+    back_Grad->setChecked(b=mol.einstellung->value("BackgroundGradient").toBool());
     cubeGL->togglBGG(b);
   }
-  if (settings->contains("UnitCell")){
-    togUnit->setChecked(b=settings->value("UnitCell").toBool());
+  if (mol.einstellung->contains("UnitCell")){
+    togUnit->setChecked(b=mol.einstellung->value("UnitCell").toBool());
     cubeGL->setUnitCell(b);
   }
-  settings->endGroup();
+  mol.einstellung->endGroup();
   move( pos);
   if( size.isNull() )
     resize(640, 480);
@@ -1366,7 +1337,7 @@ createRenameWgd();
 
   }
   net = new QNetworkAccessManager(this);
-  QString Pfad = settings->fileName();
+  QString Pfad = mol.einstellung->fileName();
   Pfad=Pfad.section('/',0,-2);
   Pfad.append("/DABA.txt");
   if (QFileInfo(Pfad).exists()) cubeGL->loadDataBase(Pfad);
@@ -1929,7 +1900,7 @@ void MyWindow::genMoliso() {
     cubeGL->toggXDSetup(false);
     xdSetupAct->setChecked ( false );
     xdMenu->setEnabled(false);
-    togLuft->setVisible(false);
+ //   togLuft->setVisible(false);
     togAxen->setEnabled (true );
     togUnit->setEnabled (true );
     packAct->setVisible(false);
@@ -2005,7 +1976,7 @@ void MyWindow::syncMconf(){
   togBond->setChecked(cubeGL->drawBo );
   togLabel->setChecked(cubeGL->drawLa );
   togHBond->setChecked(cubeGL->drawHb );
-  togLuft->setChecked(cubeGL->Luftschlange );
+ // togLuft->setChecked(cubeGL->Luftschlange );
   depthCueingAct->setChecked(cubeGL->depthCueing );
   mclmox->setChecked(cubeGL->monochrom );
     switch (cubeGL->faceCull){
@@ -2872,15 +2843,15 @@ double MyWindow::dimension(QList<INP> xnp ){
 }
 
 void MyWindow::editAtomColor(){
-  EacDlg eac;          
   extern molekul mol;
-  if ( eac.exec()==QDialog::Accepted){
+  EacDlg eac(&mol);
+  eac.exec();
     mol.bonds_made=0;
     mol.knopf_made=0;
     cubeGL->resetENV();
     initLists(xdinp);
     cubeGL->updateGL();
-  }
+    //reloadFiles();
 
 }
 
@@ -2990,11 +2961,11 @@ void MyWindow::load_fchk(QString fileName){
   xdinp=asymmUnit;
   double dim=dimension(xdinp);
   if ((Norm(atom1Pos)==0)&&(Norm(atom2Pos)==0)) cubeGL->L=100.0/dim;
-  if (mol.nListe>2) {
+  /*if (mol.nListe>2) {
     free(mol.vL);
     mol.vL=NULL;
     mol.nListe=0;
-  }
+  }*/
   cubeGL->resetENV();
   initLists(xdinp);
   cubeGL->setVisible ( true );
@@ -3506,7 +3477,7 @@ void MyWindow::replyFinished(QNetworkReply* antwort){
 void MyWindow::replyFinished2(QNetworkReply* antwort){
   QString a=antwort->readAll();
   //
-  QString Pfad = settings->fileName();
+  QString Pfad = mol.einstellung->fileName();
   Pfad=Pfad.section('/',0,-2);
   Pfad.append("/DABA.txt");
   QFile base(Pfad);
@@ -5648,11 +5619,11 @@ void MyWindow::load_xyz(QString fileName){
 xdinp=asymmUnit;
 double dim=dimension(xdinp);
 if ((Norm(atom1Pos)==0)&&(Norm(atom2Pos)==0)) cubeGL->L=100.0/dim;
-  if (mol.nListe>2) {
+  /*if (mol.nListe>2) {
     free(mol.vL);
     mol.vL=NULL;
     mol.nListe=0;
-  }
+  }*/
   cubeGL->resetENV();
   initLists(xdinp);
   cubeGL->setVisible ( true );
@@ -5829,7 +5800,7 @@ void MyWindow::load_gaus(QString fileName){
 
     }
   }else{ 
-    smx=atmax+dummax;mol.nListe=0;
+    smx=atmax+dummax;//mol.nListe=0;
   }
 /*
   for (int i=0;i<smx;i++)
@@ -5861,11 +5832,11 @@ void MyWindow::load_gaus(QString fileName){
   xdinp=asymmUnit;
   double dim=dimension(xdinp);
   if ((Norm(atom1Pos)==0)&&(Norm(atom2Pos)==0)) cubeGL->L=100.0/dim;
-  if (mol.nListe>2) {
+  /*if (mol.nListe>2) {
     free(mol.vL);
     mol.vL=NULL;
     mol.nListe=0;
-  }
+  }*/
   cubeGL->resetENV();
   initLists(xdinp);
   cubeGL->setVisible ( true );
@@ -6439,7 +6410,7 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
   if (!same) seReAct->setVisible(false);
   if (!same) xdMenu->setEnabled(false);
   fck=false;
-  if (!same) togLuft->setVisible(false);
+ // if (!same) togLuft->setVisible(false);
   if (!same) togAxen->setEnabled (true );
   if (!same) togUnit->setEnabled (true );
   QDir::setCurrent ( fileName.left(fileName.lastIndexOf("/") ))  ;
@@ -6546,26 +6517,26 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
   searchAtomEdit->setCompleter(cc);
   statusBar()->showMessage(tr("File succesfully loaded.") );
   // Zuletzt geffnete File setzen
-  settings->beginGroup("Version 0.1");
-  settings->setValue("lastFile", fileName );
-  QStringList files = settings->value("recentFileList").toStringList();
+  if (mol.einstellung->group()!="Version 0.1")mol.einstellung->beginGroup("Version 0.1");
+  mol.einstellung->setValue("lastFile", fileName );
+  QStringList files = mol.einstellung->value("recentFileList").toStringList();
   files.removeAll(fileName);//alle identischen "fileName" aus der Liste entfernen
   files.prepend(fileName);// und dann vorne anfuegen...
   while (files.size() > MaxRecentFiles)
     files.removeLast();//hinten abschneiden was lnger als MaxRecentFiles ist
-  settings->setValue("recentFileList", files);  
+  mol.einstellung->setValue("recentFileList", files);
   foreach (QWidget *widget, QApplication::topLevelWidgets()) {
     MyWindow *mainWin = qobject_cast<MyWindow *>(widget);
     if (mainWin)
       mainWin->updateRecentFileActions();
   }
   
-  if (settings->contains("UnitCell")){
+  if (mol.einstellung->contains("UnitCell")){
     bool b;
-    togUnit->setChecked(b=settings->value("UnitCell").toBool());
+    togUnit->setChecked(b=mol.einstellung->value("UnitCell").toBool());
     cubeGL->setUnitCell(b);
   }
-  settings->endGroup();
+  mol.einstellung->endGroup();
   filtered=0;
   cubeGL->pause=false;
   cubeGL->updateGL();
@@ -6651,7 +6622,7 @@ void MyWindow::loadDipoleMoments(QString fileName){
 void MyWindow::initLists(QList<INP> xd){
   dFilter->setVisible(true);
   hFilter->setVisible(true);
- bool singleColorBonds_state = mol.singleColorBonds;
+ bool singleColorBonds_state = mol.bondColorStyle;
  bool tubifiedAtoms_state=mol.tubifiedAtoms;
   int adpstate=mol.adp;
   int mx=xd.size();
@@ -6681,7 +6652,7 @@ void MyWindow::initLists(QList<INP> xd){
     glPushMatrix();{
       glScaled( cubeGL->L, cubeGL->L, cubeGL->L );
       mol.intern=1;
-      mol.singleColorBonds=true;
+      mol.bondColorStyle=true;
       mol.bonds(xd);
     }glPopMatrix();    
   }glEndList();
@@ -6723,7 +6694,7 @@ void MyWindow::initLists(QList<INP> xd){
     glPushMatrix();{
       glScaled( cubeGL->L, cubeGL->L, cubeGL->L );
       mol.adp=0;      
-      mol.singleColorBonds=false;
+      mol.bondColorStyle=false;
       mol.bonds(xd);
     }glPopMatrix();    
   }glEndList();
@@ -6772,8 +6743,8 @@ void MyWindow::initLists(QList<INP> xd){
       dock2->raise();
     }
   }
-  if (mol.nListe>2){
-    togLuft->setVisible(true);
+  /*if (mol.nListe>2){
+   // togLuft->setVisible(true);
     statusBar()->showMessage(tr("Draw helices.") );	
     glNewList(cubeGL->bas+6, GL_COMPILE );{        
       glPushMatrix();
@@ -6782,17 +6753,18 @@ void MyWindow::initLists(QList<INP> xd){
       glPopMatrix();
     }glEndList();
   }
+  */
   for (int i=0; i<mx; i++)
     xdinp[i]=xd[i];
   smx=atmax=mx;
   mol.tubifiedAtoms=tubifiedAtoms_state;
-  mol.singleColorBonds = singleColorBonds_state;
+  mol.bondColorStyle = singleColorBonds_state;
 }
 
 void MyWindow::updateRecentFileActions() {
-  QSettings settings(QSettings::IniFormat,  QSettings::UserScope ,"Christian_B._Huebschle", "MoleCoolQt" );
-  settings.beginGroup("Version 0.1");
-  QStringList files = settings.value("recentFileList").toStringList();
+  QSettings einstellung(QSettings::IniFormat,  QSettings::UserScope ,"Christian_B._Huebschle", "MoleCoolQt" );
+  einstellung.beginGroup("Version 0.1");
+  QStringList files = einstellung.value("recentFileList").toStringList();
 
   int numRecentFiles = qMin(files.size(), (int)MaxRecentFiles);
 
@@ -6807,7 +6779,7 @@ void MyWindow::updateRecentFileActions() {
     recentFileActs[j]->setVisible(false);
 
 
-  settings.endGroup();
+  einstellung.endGroup();
 }
 
 QString MyWindow::strippedName(const QString &fullFileName) {
@@ -6872,7 +6844,7 @@ noElli->setChecked(!b);
 }
 
 void MyWindow::toggleSingleColorBond(bool b){
-  mol.singleColorBonds=b;
+  mol.bondColorStyle=b;
   cubeGL->updateGL();
 }
 
@@ -6905,64 +6877,65 @@ void MyWindow::updateTime() {
 }
 
 void MyWindow::closeEvent(QCloseEvent *event)  {
-   settings->beginGroup("Version 0.1");
-   settings->setValue("size", size() );
-   settings->setValue("position", pos() );
-   settings->setValue("text_color_red",cubeGL->tCR);
-   settings->setValue("text_color_green",cubeGL->tCG);
-   settings->setValue("text_color_blue",cubeGL->tCB);
-   settings->setValue("text_color_alpha",cubeGL->tCA);
-   settings->setValue("background_color_red",cubeGL->bgCR);
-   settings->setValue("background_color_green",cubeGL->bgCG);
-   settings->setValue("background_color_blue",cubeGL->bgCB);
-   settings->setValue("background_color_alpha",cubeGL->bgCA);
-   settings->setValue("Matrix00",cubeGL-> MM[0]);
-   settings->setValue("Matrix01",cubeGL-> MM[1]);
-   settings->setValue("Matrix02",cubeGL-> MM[2]);
-   settings->setValue("Matrix03",cubeGL-> MM[3]);
-   settings->setValue("Matrix04",cubeGL-> MM[4]);
-   settings->setValue("Matrix05",cubeGL-> MM[5]);
-   settings->setValue("Matrix06",cubeGL-> MM[6]);
-   settings->setValue("Matrix07",cubeGL-> MM[7]);
-   settings->setValue("Matrix08",cubeGL-> MM[8]);
-   settings->setValue("Matrix09",cubeGL-> MM[9]);
-   settings->setValue("Matrix10",cubeGL->MM[10]);
-   settings->setValue("Matrix11",cubeGL->MM[11]);
-   settings->setValue("Matrix12",cubeGL->MM[12]);
-   settings->setValue("Matrix13",cubeGL->MM[13]);
-   settings->setValue("Matrix14",cubeGL->MM[14]);
-   settings->setValue("Matrix15",cubeGL->MM[15]);
-   settings->setValue("bondColor",mol.bondColor);
-   settings->setValue("bondStrength", mol.bondStrength);
-   settings->setValue("tubes",mol.tubifiedAtoms);
-   settings->setValue("singleColorBonds",mol.singleColorBonds);   
-   settings->setValue("LabelFont",cubeGL->myFont);
-   settings->setValue("MolisoLegendFont",cubeGL->MLegendFont);
-   settings->beginWriteArray("AtomColors",107);   
+
+    if (mol.einstellung->group()!="Version 0.1")mol.einstellung->beginGroup("Version 0.1");
+   mol.einstellung->setValue("size", size() );
+   mol.einstellung->setValue("position", pos() );
+   mol.einstellung->setValue("text_color_red",cubeGL->tCR);
+   mol.einstellung->setValue("text_color_green",cubeGL->tCG);
+   mol.einstellung->setValue("text_color_blue",cubeGL->tCB);
+   mol.einstellung->setValue("text_color_alpha",cubeGL->tCA);
+   mol.einstellung->setValue("background_color_red",cubeGL->bgCR);
+   mol.einstellung->setValue("background_color_green",cubeGL->bgCG);
+   mol.einstellung->setValue("background_color_blue",cubeGL->bgCB);
+   mol.einstellung->setValue("background_color_alpha",cubeGL->bgCA);
+   mol.einstellung->setValue("Matrix00",cubeGL-> MM[0]);
+   mol.einstellung->setValue("Matrix01",cubeGL-> MM[1]);
+   mol.einstellung->setValue("Matrix02",cubeGL-> MM[2]);
+   mol.einstellung->setValue("Matrix03",cubeGL-> MM[3]);
+   mol.einstellung->setValue("Matrix04",cubeGL-> MM[4]);
+   mol.einstellung->setValue("Matrix05",cubeGL-> MM[5]);
+   mol.einstellung->setValue("Matrix06",cubeGL-> MM[6]);
+   mol.einstellung->setValue("Matrix07",cubeGL-> MM[7]);
+   mol.einstellung->setValue("Matrix08",cubeGL-> MM[8]);
+   mol.einstellung->setValue("Matrix09",cubeGL-> MM[9]);
+   mol.einstellung->setValue("Matrix10",cubeGL->MM[10]);
+   mol.einstellung->setValue("Matrix11",cubeGL->MM[11]);
+   mol.einstellung->setValue("Matrix12",cubeGL->MM[12]);
+   mol.einstellung->setValue("Matrix13",cubeGL->MM[13]);
+   mol.einstellung->setValue("Matrix14",cubeGL->MM[14]);
+   mol.einstellung->setValue("Matrix15",cubeGL->MM[15]);
+   mol.einstellung->setValue("bondColor",mol.bondColor);
+   mol.einstellung->setValue("bondStrength", mol.bondStrength);
+   mol.einstellung->setValue("tubes",mol.tubifiedAtoms);
+   mol.einstellung->setValue("singleColorBonds",mol.bondColorStyle);
+   mol.einstellung->setValue("LabelFont",cubeGL->myFont);
+   mol.einstellung->setValue("MolisoLegendFont",cubeGL->MLegendFont);
+   mol.einstellung->beginWriteArray("AtomColors",107);
    for (int i = 0; i < 107; ++i) {
-     settings->setArrayIndex(i);
-     settings->setValue("red",   mol.Acol[i-1][0]);
-     settings->setValue("green", mol.Acol[i-1][1]);
-     settings->setValue("blue",  mol.Acol[i-1][2]);
-     settings->setValue("alpha", mol.Acol[i-1][3]);
+     mol.einstellung->setArrayIndex(i);
+     mol.einstellung->setValue("red",   mol.Acol[i-1][0]);
+     mol.einstellung->setValue("green", mol.Acol[i-1][1]);
+     mol.einstellung->setValue("blue",  mol.Acol[i-1][2]);
+     mol.einstellung->setValue("alpha", mol.Acol[i-1][3]);
    }
-   settings->endArray();
-   settings->beginWriteArray("AtomStyles",107);   
+   mol.einstellung->endArray();
+   mol.einstellung->beginWriteArray("AtomStyles",107);
    for (int i = 0; i < 107; ++i) {
-     settings->setArrayIndex(i);
-     settings->setValue("Style", mol.aStyle[i-1]);
+     mol.einstellung->setArrayIndex(i);
+     mol.einstellung->setValue("Style", mol.aStyle[i-1]);
    }
-   settings->endArray();
-   settings->beginWriteArray("CovaleceRadii",107);   
+   mol.einstellung->endArray();
+   mol.einstellung->beginWriteArray("CovaleceRadii",107);
    for (int i = 0; i < 107; ++i) {
-     settings->setArrayIndex(i);
-     settings->setValue("Radius", mol.Kovalenz_Radien[i-1]);
+     mol.einstellung->setArrayIndex(i);
+     mol.einstellung->setValue("Radius", mol.Kovalenz_Radien[i-1]);
    }
-   settings->endArray();
-   settings->setValue("InvertMouseZoom",(cubeGL->invertMouseZoom->checkState()==Qt::Checked));
-   settings->setValue("BackgroundGradient",(back_Grad->isChecked()));//TOGGLE STATES
-   settings->setValue("UnitCell",(togUnit->isChecked()));//TOGGLE STATES
-   settings->endGroup();
+   mol.einstellung->endArray();
+   mol.einstellung->setValue("InvertMouseZoom",(cubeGL->invertMouseZoom->checkState()==Qt::Checked));
+   mol.einstellung->setValue("BackgroundGradient",(back_Grad->isChecked()));//TOGGLE STATES
+   mol.einstellung->setValue("UnitCell",(togUnit->isChecked()));//TOGGLE STATES
+   mol.einstellung->endGroup();
    if ((cubeGL->moliso)&&(!cubeGL->moliso->faceFile.isEmpty())) {
       destroyMoliso();
    }
@@ -7709,19 +7682,19 @@ void MyWindow::growSymm(int packart,int packatom){
 
   double dim=dimension(xdinp);
   if ((Norm(atom1Pos)==0)&&(Norm(atom2Pos)==0)) cubeGL->L=100.0/dim;
-  if (mol.nListe>2) {
+  /*if (mol.nListe>2) {
     free(mol.vL);
     mol.vL=NULL;
     mol.nListe=0;
-  }
+  }*/
 
-  if ((!fck)&&(!fastrun)) mol.findChains(xdinp);
-  if (mol.nListe>2) {
+  //if ((!fck)&&(!fastrun)) mol.findChains(xdinp);
+  /*if (mol.nListe>2) {
     mol.vL=mol.smoothPoints(mol.vL,mol.nListe);
     mol.vL=mol.smoothPoints(mol.vL,mol.nListe);
     mol.vL=mol.smoothPoints(mol.vL,mol.nListe);
   }
-
+*/
   cubeGL->resetENV();
   initLists(xdinp);
   dock->hide();

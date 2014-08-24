@@ -64,7 +64,6 @@ public:
      QToolBar *toolFile;
      QToolBar *toolMove;
      QToolBar *toolView, *searchBar;
-     QSettings *settings;
      QTimer *idl;
      QAction *ydlStartAct;
      QAction *ydlStopAct;
@@ -232,7 +231,7 @@ protected:
      void load_xyz(QString fileName);
      void load_fchk(QString fileName);
      void setup_zelle();
-     QAction *togAxen,*togUnit,*togLuft;
+     QAction *togAxen,*togUnit;//,*togLuft;
      void loadFile(QString fileName,double GD=-1);
      QMenu *recentFilesMenu;
      enum { MaxRecentFiles = 10 };

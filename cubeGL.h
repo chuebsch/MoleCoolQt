@@ -41,7 +41,9 @@ public:
   int expandatom;
   double milsize;
   bool back_grad;
-  bool drawAt,elli,drawBo,drawLa,drawHb,Luftschlange,invEditAble,moveLab,moveLeg,xdSetupMode,reSe,depthCueing,moai,horizont,monochrom,rename;
+  bool drawAt,elli,drawBo,drawLa,drawHb,
+  //Luftschlange,
+  invEditAble,moveLab,moveLeg,xdSetupMode,reSe,depthCueing,moai,horizont,monochrom,rename;
   QStringList invariomsComplete, invariomsUnique;
   MyAtom rn;
   QFont myFont;
@@ -106,7 +108,7 @@ public slots:
   void setEllipsoid(bool on);
   void setEllipsoidNoUpdate(bool on);
   void setHydrogenBond(bool on);
-  void setHelices(bool on);
+//  void setHelices(bool on);
   void setDepthCueing(bool on);
   void setAtomsClickable(bool on);
   void setLabelsMovable(bool on);

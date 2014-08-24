@@ -56,5 +56,7 @@
         <file>images/f12map.png</file>
         <file>images/fomap.png</file>
         <file>images/diffmap.png</file>
+        <file>images/efminus.png</file>
+        <file>images/efplus.png</file>
     </qresource>
 </RCC>

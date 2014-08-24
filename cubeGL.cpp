@@ -44,7 +44,7 @@ CubeGL::CubeGL(QWidget *parent) : QGLWidget(parent) {
    mlsc=1.0;
    invEditAble=false;
    xdSetupMode=false;
-   Luftschlange=true;
+ //  Luftschlange=true;
    horizont=false;
    MIS=false;
    moai=false;
@@ -193,7 +193,7 @@ void CubeGL::saveMISettings(){
    mconf.write(QString("Draw bonds: %1\r\n").arg(drawBo).toLatin1());
    mconf.write(QString("Draw labels: %1\r\n").arg(drawLa).toLatin1());
    mconf.write(QString("Draw h-bonds: %1\r\n").arg(drawHb).toLatin1());
-   mconf.write(QString("Draw helices: %1\r\n").arg(Luftschlange).toLatin1());
+   mconf.write(QString("Draw helices: %1\r\n").arg(false).toLatin1());
    mconf.write(QString("Depthcueing: %1\r\n").arg(depthCueing).toLatin1());
    mconf.write(QString("Monochrome legend: %1\r\n").arg(monochrom).toLatin1());     
    GLdouble mm[16];
@@ -234,7 +234,7 @@ void CubeGL::loadMISettings(){
   drawBo = all.section(QRegExp("[:\r]"),35,35).toInt();
   drawLa = all.section(QRegExp("[:\r]"),37,37).toInt();
   drawHb = all.section(QRegExp("[:\r]"),39,39).toInt();
-  Luftschlange = all.section(QRegExp("[:\r]"),41,41).toInt();
+ // Luftschlange = all.section(QRegExp("[:\r]"),41,41).toInt();
   depthCueing = all.section(QRegExp("[:\r]"),43,43).toInt();
   monochrom = all.section(QRegExp("[:\r]"),45,45).toInt();
   QString matz = all.section(QRegExp("[:\r]"),47,47);
@@ -461,12 +461,12 @@ void  CubeGL::setAxes(bool on){
   drawAx=on;  
   updateGL();
 }
-
+/*
 void CubeGL::setHelices(bool on){
   Luftschlange=on;
   updateGL();
 }
-
+*/
 void  CubeGL::setUnitCell(bool on){
   drawUz=on;  
   updateGL();
@@ -611,17 +611,17 @@ void CubeGL::initializeGL() {
       }glEndList();
       
 
-bool before=  mol.singleColorBonds;
+bool before=  mol.bondColorStyle;
   glNewList(bas+8, GL_COMPILE );{       //bonds in single color
     glPushMatrix();{
       glScaled( L, L, L );
       mol.intern=1;
 
-      mol.singleColorBonds=true;
+      mol.bondColorStyle=true;
       mol.bonds(xdinp);
     }glPopMatrix();
   }glEndList();
-  mol.singleColorBonds=before;
+  mol.bondColorStyle=before;
 
 
       glNewList(bas+7, GL_COMPILE );{                          //ATOME
@@ -694,14 +694,14 @@ bool before=  mol.singleColorBonds;
       }
 
 
-      if (mol.nListe>2){
+      /*if (mol.nListe>2){
 	glNewList(bas+6, GL_COMPILE );{        //helices
 	  glPushMatrix();
 	  glScaled( L, L, L );
 	  mol.drawSline(mol.vL,mol.nListe);
 	  glPopMatrix();
 	}glEndList();
-      }
+      }//*/
     if (iSel){
       if (ibas) glDeleteLists(ibas,1);
       ibas=glGenLists(1);    
@@ -3530,7 +3530,7 @@ void CubeGL::draw() {
 
       if (drawHb) glCallList(bas+5);
       if (drawBo) {
-     if (mol.singleColorBonds) {
+     if (mol.bondColorStyle) {
        qglColor(mol.bondColor);
        glCallList(bas+8);
      }
@@ -3574,12 +3574,12 @@ void CubeGL::draw() {
   else {
   if (bas) {
     glDisable(GL_CULL_FACE);
-    if (Luftschlange) glCallList(bas+6);      
+ //   if (Luftschlange) glCallList(bas+6);
     glEnable(GL_CULL_FACE);
     if (drawHb) glCallList(bas+5);
     if (cbas) glCallList(cbas);
     if (drawBo) {
-      if (mol.singleColorBonds) {
+      if (mol.bondColorStyle) {
 	qglColor(mol.bondColor);
 	glCallList(bas+8);
       }
@@ -3886,12 +3886,12 @@ void CubeGL::connectSelection(){
   idx++;
   mol.bd[idx].e=selectedAtoms.at(0).GLname;
   mol.bd[idx].a=selectedAtoms.at(1).GLname;
-  bool vorher=mol.singleColorBonds;
+  bool vorher=mol.bondColorStyle;
   glNewList(bas+1, GL_COMPILE );{      //BONDS
     glPushMatrix();{
       glScaled( L, L, L );
       mol.adp=0;      
-      mol.singleColorBonds=false;
+      mol.bondColorStyle=false;
       mol.bonds(xdinp);
     }glPopMatrix();    
   }glEndList();
@@ -3900,11 +3900,11 @@ void CubeGL::connectSelection(){
       glScaled( L, L, L );
       mol.intern=1;
 
-      mol.singleColorBonds=true;
+      mol.bondColorStyle=true;
       mol.bonds(xdinp);
     }glPopMatrix();
   }glEndList();
-  mol.singleColorBonds=vorher;
+  mol.bondColorStyle=vorher;
   selectedAtoms.clear();
   updateBondActions();
   updateGL();
@@ -3931,12 +3931,12 @@ void CubeGL::disConnectSelection(){
  mol.bcnt-=2;
  mol.bd = nbd;
  free(abd);
-  bool vorher=mol.singleColorBonds;
+  bool vorher=mol.bondColorStyle;
   glNewList(bas+1, GL_COMPILE );{      //BONDS
     glPushMatrix();{
       glScaled( L, L, L );
       mol.adp=0;      
-      mol.singleColorBonds=false;
+      mol.bondColorStyle=false;
       mol.bonds(xdinp);
     }glPopMatrix();    
   }glEndList();
@@ -3945,11 +3945,11 @@ void CubeGL::disConnectSelection(){
       glScaled( L, L, L );
       mol.intern=1;
 
-      mol.singleColorBonds=true;
+      mol.bondColorStyle=true;
       mol.bonds(xdinp);
     }glPopMatrix();
   }glEndList();
-  mol.singleColorBonds=vorher;
+  mol.bondColorStyle=vorher;
   selectedAtoms.clear();
   updateBondActions();
   updateGL();

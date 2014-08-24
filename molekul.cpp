@@ -8,6 +8,30 @@
 #include <QtCore> 
 #include <QtOpenGL>
 #define Ato4d(arr)       arr[0], arr[1], arr[2], arr[3]
+void molekul::sphere(int adp){
+  if (adp) glEnable(GL_BLEND);
+  GLUquadricObj *q = gluNewQuadric();
+  gluQuadricNormals(q, GL_SMOOTH);
+  if (dratom){
+    glEnable(GL_BLEND);
+    glDisable(GL_DEPTH_TEST);
+    if (dratom==3)glColor3d(0.4,0.8,1.0);
+    if (dratom<3) glColor3d(1.0,1.0,0.0);
+    gluQuadricDrawStyle(q,GLU_LINE);
+    if (dratom==3)gluSphere(q,0.33,7,7);
+    else if (dratom==5)gluSphere(q,1.00,7,7);
+    else gluSphere(q,0.3,5,5);
+    glEnable(GL_DEPTH_TEST);
+  }
+  else{
+    gluQuadricDrawStyle(q,GLU_FILL);
+    gluSphere(q,0.96,4*LOD,9*LOD);
+    glDisable(GL_BLEND);
+  }
+  gluDeleteQuadric(q);
+}
+
+
 void molekul::ellipse(int style){
   if (style&ATOM_STYLE_WALLS){
   glEnable(GL_ALPHA_TEST);
@@ -970,7 +994,9 @@ void molekul::atoms(QList<INP> xdinp,const int proba){//ADP Schwingungsellipsoid
     if (!dratom){
       glPushMatrix () ;
     glTranslated(xdinp[j].kart.x,xdinp[j].kart.y,xdinp[j].kart.z) ;
-      double rad=arad[xdinp[j].OrdZahl];
+    //double rad=(atom.at(i).an==-2)?0.5:qPeakRad;
+    double rad=arad[xdinp[j].OrdZahl];
+
       if (tubifiedAtoms) rad = bondStrength;
 
       if ((adp)&&(xdinp[j].OrdZahl>-1)) {//adp
@@ -1062,7 +1088,7 @@ void molekul::atoms(QList<INP> xdinp,const int proba){//ADP Schwingungsellipsoid
 
 // */
 	}else 
-	glScaled(0.14,0.14,0.14);
+    glScaled(1.14,1.14,1.14);
       }
 
       GLUquadricObj *q = gluNewQuadric();
@@ -1074,7 +1100,6 @@ void molekul::atoms(QList<INP> xdinp,const int proba){//ADP Schwingungsellipsoid
 
 
       if ((rad>0)&&(xdinp[j].OrdZahl>-1)) {
-
 	if (adp&&intern) ellipse(aStyle[xdinp[j].OrdZahl]);else
 	  if ((!adp)||((aStyle[xdinp[j].OrdZahl]&ATOM_STYLE_SPHERE)&&(!(aStyle[xdinp[j].OrdZahl]&ATOM_STYLE_SOLID))))gluSphere(q,0.96,6*mylod,6*mylod);//Atom als Kugel zeichnen
 	if (xdinp[j].atomname[0]=='D') printf("%s %f \n",xdinp[j].atomname,rad);
@@ -1088,7 +1113,7 @@ void molekul::atoms(QList<INP> xdinp,const int proba){//ADP Schwingungsellipsoid
 	if (xdinp[j].atomname[0]=='Q') {
 	 Farbverlauf(xdinp[j].peakHeight,pmin,pmax);
 	 }
-        ikosa(0.5);
+        ikosa(qPeakRad);
       }
 
       glPopMatrix(); 
@@ -1431,6 +1456,329 @@ void molekul::countMols(QList<INP> & xdinp){
   }while (nextmol);
   printf ("The structure contains %d molecules\n",maxmol);
 }
+#define ROTATE(a,i,j,k,l) g=a[i][j];h=a[k][l];a[i][j]=g-s*(h+g*tau); a[k][l]=h+s*(g-h*tau);
+//NumericalRecepies....
+double * molekul::jacobi2(const Matrix &uij, V3 &ev) {
+
+  int j,iq,ip,i,n=3,nrot;
+  double tresh=0,theta,tau,t,sm,s,h,g,c;
+  double a[3][3],b[3],z[3],v[3][3],d[3];
+  a[0][0]=uij.m11;
+  a[0][1]=uij.m12;
+  a[0][2]=uij.m13;
+  a[1][0]=uij.m21;
+  a[1][1]=uij.m22;
+  a[1][2]=uij.m23;
+  a[2][0]=uij.m31;
+  a[2][1]=uij.m32;
+  a[2][2]=uij.m33;
+  static double erg[4]={0.0,1.0,0.0,0.0};
+  for (ip=1;ip<=n;ip++) {
+    for (iq=1;iq<=n;iq++) v[ip-1][iq-1]=0.0;
+    v[ip-1][ip-1]=1.0;
+  }
+  for (ip=1;ip<=n;ip++) {
+    b[ip-1]=d[ip-1]=a[ip-1][ip-1];
+    z[ip-1]=0.0;
+  }
+  nrot=0;
+  for (i=1;i<=150;i++) {
+    sm=0.0;
+    for (ip=1;ip<=n-1;ip++) {
+      for (iq=ip+1;iq<=n;iq++)
+    sm += fabs(a[ip-1][iq-1]);
+    }
+
+    //printf("sm =%20.19f\n",sm);
+
+    if (float(sm) < tresh) {
+      if ((v[0][0]+v[1][1]+v[2][2])!=3.0) {
+      erg[0]=acos((v[0][0]+v[1][1]+v[2][2]-1.0)/2.0);
+      erg[1]=(v[2][1]-v[1][2])/(2.0*sin(erg[0]));
+      erg[2]=(v[0][2]-v[2][0])/(2.0*sin(erg[0]));
+      erg[3]=(v[1][0]-v[0][1])/(2.0*sin(erg[0]));
+      erg[0]*=180.0/M_PI;}
+      else {erg[0]=0.0;erg[1]=1.0;erg[2]=0.0;erg[3]=0.0; }
+      //printf("%d??ERG:%f %f %f %f\n",i,Ato4d(erg));
+      /*
+      printf("=%d======================================\n%8.5f %8.5f %8.5f \n%8.5f %8.5f %8.5f \n%8.5f %8.5f %8.5f \n%8.5f %8.5f %8.5f\n========================================\n",i,
+              d[0],d[1],d[2],v[0][0],v[0][1],v[0][2]
+          ,v[1][0],v[1][1],v[1][2]
+          ,v[2][0],v[2][1],v[2][2]
+          );*/
+     ev=V3(d[0],d[1],d[2]);
+     return (double*) erg;
+    }
+    if (i < 4) tresh=0.00001;
+    else tresh=0.0001;
+    for (ip=1;ip<=n-1;ip++) {
+      for (iq=ip+1;iq<=n;iq++) {
+    //printf("\np:%i q:%i i:%i nrot:%i\n",ip,iq,i,nrot);
+    g=100.0*fabs(a[ip-1][iq-1]);
+    if ((i > 4) && ((fabs(d[ip-1])+g) == fabs(d[ip-1])) && ((fabs(d[iq-1])+g) == fabs(d[iq-1]))) {a[ip-1][iq-1]=0.0;}
+    else if (fabs(a[ip-1][iq-1]) >= tresh) {
+      h=d[iq-1]-d[ip-1];
+      if ((fabs(h)+g) == fabs(h)) {t=(a[ip-1][iq-1])/h; }
+      else { theta=0.5*h/(a[ip-1][iq-1]);
+      t=1.0/(fabs(theta)+sqrt(1.0+theta*theta));
+      if (theta < 0.0) {t = -1.0*t;}
+      }
+      c=1.0/sqrt(1+t*t);
+      s=t*c;
+      tau=s/(1.0+c);
+      h=t*a[ip-1][iq-1];
+      z[ip-1] -= h;
+      z[iq-1] += h;
+      d[ip-1] -= h;
+      d[iq-1] += h;
+      a[ip-1][iq-1]=0.0;
+      for (j=1;j<=ip-1;j++) {
+           ROTATE(a,j-1,ip-1,j-1,iq-1)
+          //printf("%i %i %i %i",j,ip,j,iq);
+          }
+      for (j=ip+1;j<=iq-1;j++) {
+           ROTATE(a,ip-1,j-1,j-1,iq-1)
+          //printf("%i %i %i %i ",ip,j,j,iq);
+          }
+      for (j=iq+1;j<=n;j++) {
+           ROTATE(a,ip-1,j-1,iq-1,j-1)
+          //printf("%i %i %i %i",ip,j,iq,j);
+          }
+      for (j=1;j<=n;j++) {
+           ROTATE(v,j-1,ip-1,j-1,iq-1)
+          }
+      ++(nrot);
+      //    printf("U|\n%f %f %f  \n%f %f %f\n%f %f %f\nV|\n%f %f %f  \n%f %f %f\n%f %f %f\n\n",a[0][0],a[1][0],a[2][0],a[0][1],a[1][1],a[2][1],a[0][2],a[1][2],a[2][2],v[0][0],v[1][0],v[2][0],v[0][1],v[1][1],v[2][1],v[0][2],v[1][2],v[2][2]);
+    } //else ;//printf("nix:%f p%i q%i",fabs(a[ip-1][iq-1]),ip,iq);
+      }
+    }
+    for (ip=1;ip<=n;ip++) {
+      b[ip-1] += z[ip-1];
+      d[ip-1] =b[ip-1];
+      z[ip-1] =0.0;
+    }
+  }
+  erg[0]=acos((v[0][0]+v[1][1]+v[2][2]-1.0)/2.0);
+  if (erg[0]==0) {
+    erg[1]=1.0;
+    erg[2]=0.0;
+    erg[3]=0.0;
+  }else{
+  erg[1]=(v[2][1]-v[1][2])/(2.0*sin(erg[0]));
+  erg[2]=(v[0][2]-v[2][0])/(2.0*sin(erg[0]));
+  erg[3]=(v[1][0]-v[0][1])/(2.0*sin(erg[0]));
+  erg[0]*=180.0/M_PI;
+  }
+  /*printf("=%d=======================================\n%8.5f %8.5f %8.5f \n%8.5f %8.5f %8.5f \n%8.5f %8.5f %8.5f \n%8.5f %8.5f %8.5f\n========================================\n",i,
+          d[0],d[1],d[2],v[0][0],v[0][1],v[0][2]
+          ,v[1][0],v[1][1],v[1][2]
+          ,v[2][0],v[2][1],v[2][2]
+
+          );*/
+  ev=V3(d[0],d[1],d[2]);
+ return (double*)erg;
+}
+void molekul::loadSettings(){
+    QSettings einstellung( QSettings::IniFormat, QSettings::UserScope ,"Christian_B._Huebschle","MoleCoolQt" );
+    einstellung.beginGroup("Version 0.1");
+    pseSize=einstellung.value("FontSize",10).toInt();
+    LOD=einstellung.value("LevelOfDetail",3).toInt();
+    tubifiedAtoms=einstellung.value("tubes").toBool();
+    bondColorStyle=einstellung.value("singleColorBonds").toBool();
+    QVariant variant;
+    if (einstellung.contains("bondColor")){
+    variant = einstellung.value("bondColor");
+    bondColor=variant.value<QColor>();
+    }else{bondColor=QColor("silver");}
+    if ((einstellung.value("bondStrength").toDouble())>0.001)
+        bondStrength=einstellung.value("bondStrength").toDouble();
+
+    int acsize = einstellung.beginReadArray("AtomColors");
+    for (int i = 0; i < acsize; ++i) {
+      einstellung.setArrayIndex(i);
+      Acol[i-1][0] = (GLfloat)einstellung.value("red"   ).toDouble();
+      Acol[i-1][1] = (GLfloat)einstellung.value("green" ).toDouble();
+      Acol[i-1][2] = (GLfloat)einstellung.value("blue"  ).toDouble();
+      Acol[i-1][3] = (GLfloat)einstellung.value("alpha" ).toDouble();
+    }
+    einstellung.endArray();
+    acsize = einstellung.beginReadArray("AtomStyles");
+    for (int i = 0; i < acsize; ++i) {
+      einstellung.setArrayIndex(i);
+      aStyle[i-1] = einstellung.value("Style").toInt();
+    }
+    einstellung.endArray();
+    acsize = einstellung.beginReadArray("CovaleceRadii");
+    for (int i = 0; i < acsize; ++i) {
+      einstellung.setArrayIndex(i);
+      Kovalenz_Radien[i-1] = einstellung.value("Radius").toInt();
+    }
+    einstellung.endArray();
+
+    acsize = einstellung.beginReadArray("BallRadii");
+    for (int i = 0; i < acsize; ++i) {
+      einstellung.setArrayIndex(i);
+      arad[i-1]=(GLfloat)einstellung.value("Radius").toDouble();
+    }
+    einstellung.endArray();
+}
+#define Ato4d(arr)       arr[0], arr[1], arr[2], arr[3]
+#include <QGLWidget>
+void molekul::atoms(CEnvironment atom,int proba){
+  /*! Draws atoms as spheres or as ellipses cubes or icosahedrons.
+   * @params atoms list of atoms to be drawn .
+   * @params proba ellipsoid probability (currently 10 30 50 70 90 %).
+   *
+   * Molecule.dratom controls the wireframe style of the resulting atom .
+   *
+   * Molecule.tubifiedAtoms atom balls is drawn in bondstrength.
+   *
+   * Molecule.adp atom is drawn as a ellipsoid.
+   *
+   * Molecule.monoQrom Q-Peaks are drawn in Color Molecule.mQolor .
+   * */
+int myAdp=adp;
+int myStyle=7;
+int pminus=0;
+int wire=0;
+//GLfloat white[4]={0.2f, 0.2f, 0.3f, 0.0f};
+GLfloat black[4]={0.0f, 0.0f, 0.0f, 1.0f};
+for  (int i=0; i<atom.size();i++){
+//if ((!dratom)&&(atom.at(i).hidden)) continue;
+//if ((nopm1)&&(atom.at(i).sg)&&(atom.at(i).part<0))continue;
+if ((dratom==2)&&(atom.at(i).part==0))continue;
+if ((dratom==2)&&(atom.at(i).sg)&&(atom.at(i).part<0))continue;
+//if ((dratom==2)&&(atom.at(i).hidden))continue;
+//if ((dratom==5)&&(atom.at(i).hidden))continue;
+int  nonPositiveDefinite=0;
+    glPushMatrix();
+    nonPositiveDefinite=0;
+    glTranslated(atom.at(i).pos.x,atom.at(i).pos.y,atom.at(i).pos.z);
+    double rad=(atom.at(i).an==-2)?0.5:qPeakRad;
+    bool parthigh=false;
+    if (dratom==5){
+      wire=1;
+      dratom=0;
+    }
+    if (dratom==2) {
+      dratom=0;
+      parthigh=true;
+    }
+    if (!dratom){
+ //     printf("ph %d alpha %g tubes %d,myAdp %d %d\n",parthigh,Acol[atom.at(i).an][3],tubes,myAdp,((!myAdp)||((myStyle&ATOM_STYLE_SPHERE)&&(!(myStyle&ATOM_STYLE_SOLID)))));
+     if (atom.at(i).an>-1) {
+       myStyle=aStyle[atom.at(i).an];
+       if (atom.at(i).Label.contains("(noADP)")) myStyle|=ATOM_STYLE_NOADP;
+       glColor4d(Acol[atom.at(i).an][0],
+               Acol[atom.at(i).an][1],
+               Acol[atom.at(i).an][2],
+              Acol[atom.at(i).an][3]);
+       //printf("r%g g%g b%g a%g\n", Acol[atom.at(i).an][0],
+         //             Acol[atom.at(i).an][1],
+           //           Acol[atom.at(i).an][2],
+             //        Acol[atom.at(i).an][3]);
+       rad=arad[atom.at(i).an];
+
+    glMaterialfv( GL_FRONT_AND_BACK, GL_EMISSION,black );
+                  if ((atom.at(i).sg)&&(atom.at(i).part<0)){
+                    glColor4d(Acol[atom.at(i).an][0],
+                              Acol[atom.at(i).an][1],
+                  1.0,
+                  0.3);
+            pminus=1;
+                    myStyle|=ATOM_STYLE_NOADP;
+          }
+                myAdp=(myStyle&ATOM_STYLE_NOADP)?0:adp;
+    }
+     if (wire) {myStyle|=ATOM_STYLE_SPHERE;if (myStyle&ATOM_STYLE_SOLID)myStyle-=ATOM_STYLE_SOLID; }
+     if (tubifiedAtoms){
+       rad=bondStrength;
+       if (atom.at(i).part==666) rad*=4.5;
+       myAdp=0;
+       nonPositiveDefinite=0;
+     }
+    if ((atom.at(i).an<0)||(atom.at(i).Label.startsWith('Q',Qt::CaseInsensitive))){
+      glColor4d(1.0 ,0.7, 0.8 ,0.4);
+      if (atom.at(i).an==-66) {
+    rad*=2;
+    glColor4d(0.6,0.3,0.1,0.3);
+      }
+      //if((atom.at(i).an==-1)&&(!monoQrom))
+          Farbverlauf(atom.at(i).peakHeight, pmin, pmax);
+      //if (monoQrom) glColor3d(mQolor[0],mQolor[1],mQolor.blueF());
+//      if (!wire)
+    ikosa(rad);
+
+    }
+    else {
+      if (myAdp){
+    V3 ev=V3(0,0,0);
+    double *arr=jacobi2(atom.at(i).uc,ev);
+    if ((ev.x>0)&&(ev.y>0)&&(ev.z>0)){
+          nonPositiveDefinite=0;
+    glRotated(Ato4d(arr));
+    double psc=(parthigh)?1.32:1.0;
+        if (atom.at(i).part==666) psc*=1.2;
+    switch (proba ) {
+        case 10 :{ glScaled(0.76*sqrt(ev.x)*psc,0.76*sqrt(ev.y)*psc,0.76*sqrt(ev.z)*psc);break;}   //Hauptachsen der Eliipsoide 10% Wahrscheinlichkeit
+        case 30 :{ glScaled(1.19*sqrt(ev.x)*psc,1.19*sqrt(ev.y)*psc,1.19*sqrt(ev.z)*psc);break;}   //Hauptachsen der Eliipsoide 30% Wahrscheinlichkeit
+        case 50 :{ glScaled(1.54*sqrt(ev.x)*psc,1.54*sqrt(ev.y)*psc,1.54*sqrt(ev.z)*psc);break;}   //Hauptachsen der Eliipsoide 50% Wahrscheinlichkeit
+        case 70 :{ glScaled(1.91*sqrt(ev.x)*psc,1.91*sqrt(ev.y)*psc,1.91*sqrt(ev.z)*psc);break;}   //Hauptachsen der Eliipsoide 70% Wahrscheinlichkeit
+        case 90 :{ glScaled(2.50*sqrt(ev.x)*psc,2.50*sqrt(ev.y)*psc,2.50*sqrt(ev.z)*psc);break;}   //Hauptachsen der Eliipsoide 90% Wahrscheinlichkeit
+        default: ;
+        }
+      }else {nonPositiveDefinite=1;}
+      }
+
+       if (parthigh) {
+     rad*=1.32;
+         if (atom.at(i).part==666) rad*=1.2;
+         glEnable(GL_BLEND);
+         myStyle&=(ATOM_STYLE_SPHERE|ATOM_STYLE_NOADP);
+     myStyle|=ATOM_STYLE_SPHERE;
+       }
+// */
+      /*
+#define ATOM_STYLE_WALLS 1
+#define ATOM_STYLE_RINGS 2
+#define ATOM_STYLE_SPHERE 4
+#define ATOM_STYLE_SOLID 8
+#define ATOM_STYLE_WHITERING 16
+#define ATOM_STYLE_NOLABEL 32
+*/
+      if (atom.at(i).an>-1) {
+
+          glEnable(GL_BLEND);
+          glDisable(GL_CULL_FACE);
+        if (myAdp&&intern) {
+          if (!nonPositiveDefinite) ellipse(myStyle);
+          else dCube(rad);
+          }
+        else if ((!myAdp)||((myStyle&ATOM_STYLE_SPHERE)&&(!(myStyle&ATOM_STYLE_SOLID)))){
+          if (!myAdp) glScaled(rad,rad,rad);
+          if (!nonPositiveDefinite) {
+        if (wire)dratom =5;
+        sphere(myAdp|pminus);
+
+        //ellipse(myAdp);
+      }
+          else dCube(rad);
+        }
+      }
+      else
+        ikosa(rad);
+    }
+    }
+    else{
+     //   atom[i].hidden=0;
+      sphere(0);
+    }
+    glEnable(GL_COLOR_MATERIAL);
+    glMaterialfv( GL_FRONT_AND_BACK, GL_EMISSION,black );
+    glPopMatrix();
+    if (parthigh) dratom=2;
+  }
+}
 
 void molekul::bonds(QList<INP> xdinp){
 
@@ -1444,7 +1792,7 @@ void molekul::bonds(QList<INP> xdinp){
  
   if (!bonds_made) make_bonds(xdinp);
   for (int k=0;k<bcnt;k++){
-    if (!singleColorBonds) glColor4fv(Acol[xdinp[bd[k].a].OrdZahl]); 
+    if (!bondColorStyle) glColor4fv(Acol[xdinp[bd[k].a].OrdZahl]);
     vec=kreuzX(xdinp[bd[k].a].kart.x-xdinp[bd[k].e].kart.x,xdinp[bd[k].a].kart.y-xdinp[bd[k].e].kart.y,xdinp[bd[k].a].kart.z-xdinp[bd[k].e].kart.z,
 	       0.0f,0.0f,1.0f);                 //Achse senkrecht zur Ebene Ursprung, Bindungs-Ende, Z-Achse 
 
@@ -1731,6 +2079,7 @@ void molekul::labels( QList<INP> xdinp)
   glEnable( GL_DEPTH_TEST );  
 }
 */
+/*
 V3 *  molekul::smoothPoints(V3 *vListe, int N){
   //berecnet aus N puntkten N-1 neue Punkte um Kurven etwas abzurunden
   V3 v1,v2,*newP,ppP,laP=V3(0,0,0);
@@ -1801,6 +2150,7 @@ V3 *  molekul::smoothPoints(V3 *vListe, int N){
   vListe=NULL;
  return nL;
 }
+*/
 void molekul::Farbverlauf (GLfloat wrt,GLfloat min,GLfloat max){
   GLclampd ff[4];
   int lauf=0;
@@ -1829,6 +2179,7 @@ void molekul::Farbverlauf (GLfloat wrt,GLfloat min,GLfloat max){
 
  return;
 }
+/*
 void molekul::drawSline(V3 *vL,int N){
 
 
@@ -1872,7 +2223,7 @@ void molekul::drawSline(V3 *vL,int N){
       lnv*=-1.0;
       v1=vL[i]+0.3*nv1;
       v2=vL[i]-0.3*nv1;
-      /*
+      / *
       V3 dumv=lnv+v1;
       glEnd();
       glDisable(GL_LIGHTING);
@@ -1886,7 +2237,7 @@ void molekul::drawSline(V3 *vL,int N){
       case 1:glEnable(GL_LIGHTING);glBegin(GL_TRIANGLE_STRIP);break;
       default :glDisable(GL_LIGHTING);glBegin(GL_LINE_STRIP);break;
       }
-      */
+      * /
     if(fvl)Farbverlauf((float)i,0,N);
       glNormal3f(lnv.x,lnv.y,lnv.z);
       glVertex3f(v1.x,v1.y,v1.z);
@@ -1978,13 +2329,13 @@ void molekul::findChains(QList<INP> xdinp){
 		  vL[nListe-1].y=0; 
 		  vL[nListe-1].z=0; 
 		} 
-		/*
+        / *
 		l2=sqrt( pow((double)xdinp[i].kart[0]-xdinp[l].kart[0],2.0)+//Ketten-Ende
 			 pow((double)xdinp[i].kart[1]-xdinp[l].kart[1],2.0)+
 			 pow((double)xdinp[i].kart[2]-xdinp[l].kart[2],2.0));
 		mini=(mini<l2)?mini:l2;
 		maxi=(maxi>l2)?maxi:l2;
-		*/;
+        * /;
 		double phi=0,psi=0; 
                 rama.append(QString("%1-%2-%3-%4-%5  phi=%6 psi=%7 %8\n") 
 				 .arg(xdinp[h].atomname)
@@ -2021,6 +2372,7 @@ void molekul::findChains(QList<INP> xdinp){
   }
 
 }
+*/
 void molekul::frac2kart (V3 x, V3 & y){
 //x ist fraktionell, y wird kartesisch
 
@@ -2196,6 +2548,226 @@ QString molekul::encodeSymm(int s){
     erg.replace("5/1","5");
     return erg;
 }
+
+
+void molekul::bonds(Connection bond){
+ /*! @params bond list of bonds to be drawn
+  * draws bonds as cylinders with radius Molecule.bondStrength .
+  * Bonds start and stop at the atom surface.
+  */
+    //printf("Bonds %d %d\n",bond.size(),dratom);
+//  GLfloat white[4]={0.2, 0.2, 0.3, 0.0};
+  GLfloat black[4]={0.0, 0.0, 0.0, 1.0};
+  glDisable(GL_BLEND);
+  glEnable(GL_ALPHA_TEST);
+  glBindTexture(GL_TEXTURE_2D, hbtex);
+  //printf("Doing Bonds adp=%d proba=%d tubes%d\n",adp,proba,tubes);
+  V3 vec,bondir;
+  double kurz=0,ara1,ara2;
+  double wink;
+  bool parthigh=false;
+  double psc=1.0;
+  if (dratom==2) {
+    dratom=0;
+    parthigh=true;
+    psc=1.32;
+    glEnable(GL_BLEND);
+    glDisable(GL_ALPHA_TEST);
+//    glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
+  }
+  for (int i=0; i<bond.size();i++){
+      if ((parthigh)&&((bond.at(i).ato1->part==0)||(bond.at(i).ato2->part==0))) continue;
+      if ((parthigh)&&(((bond.at(i).ato1->part<0)&&(bond.at(i).ato1->sg))||((bond.at(i).ato2->part<0)&&(bond.at(i).ato2->sg)))) continue;
+      //if ((nopm1)&&(bond.at(i).ato1->sg)&&(bond.at(i).ato1->part<0))continue;
+      //if ((nopm1)&&(bond.at(i).ato2->sg)&&(bond.at(i).ato2->part<0))continue;
+      glDisable(GL_TEXTURE_2D);
+    glColor4d(0.5,0.3,0.3,1.0);
+    if (adp) {
+      V3 hin=Normalize(bond.at(i).ato2->pos-bond.at(i).ato1->pos);
+      double r=1;
+      switch (proba){
+          case 10:r=0.76;break;
+          case 30:r=1.19;break;
+          case 50:r=1.54;break;
+          case 70:r=1.91;break;
+          case 90:r=2.50;break;
+      }
+      ara1=sqrt((hin*bond.at(i).ato1->uc)*hin);
+      ara1*=r;
+      ara2=sqrt((hin*bond.at(i).ato2->uc)*hin);
+      ara2*=r;
+      //printf("%s-%s %f %f %d %f\n",bond.at(i).ato1->Label.toStdString().c_str(),bond.at(i).ato2->Label.toStdString().c_str(),ara1, ara2, proba,r);
+    }
+    else{
+      ara1=arad[bond.at(i).ato1->an];
+      ara2=arad[bond.at(i).ato2->an];
+    }
+    if (bond.at(i).ato1->Label.contains("noADP"))ara1=arad[bond.at(i).ato1->an];
+    if (bond.at(i).ato2->Label.contains("noADP"))ara2=arad[bond.at(i).ato2->an];
+    if (((bond.at(i).ato1->sg)&&(bond.at(i).ato1->part<0))) ara1=arad[bond.at(i).ato1->an];
+    if (((bond.at(i).ato2->sg)&&(bond.at(i).ato2->part<0))) ara2=arad[bond.at(i).ato2->an];
+    if (tubifiedAtoms) ara1=ara2=bondStrength;
+    if (bond.at(i).ato2->an>-1) {
+        glColor4d(Acol[bond.at(i).ato2->an][0],
+                  Acol[bond.at(i).ato2->an][1],
+                  Acol[bond.at(i).ato2->an][2],
+                  Acol[bond.at(i).ato2->an][3]);
+
+    }
+
+    ara1=qMax(ara1,bondStrength);
+    ara2=qMax(ara2,bondStrength);
+
+   /* if ((highlightEquivalents)&&(bond.at(i).ato2->sg|bond.at(i).ato1->sg))
+        glMaterialfv( GL_FRONT_AND_BACK, GL_EMISSION,white );
+    else */
+        glMaterialfv( GL_FRONT_AND_BACK, GL_EMISSION,black );
+    if ((bond.at(i).ato2->sg|bond.at(i).ato1->sg)&&((bond.at(i).ato2->part<0)||(bond.at(i).ato1->part<0))){
+      //		    glMaterialfv( GL_FRONT_AND_BACK, GL_EMISSION,blue );
+      glColor4d(Acol[bond.at(i).ato2->an][0],
+                Acol[bond.at(i).ato2->an][1],
+        1.0,
+        0.3);
+      glEnable(GL_BLEND);
+    }
+    vec.x=(bond.at(i).ato2->pos.y-bond.at(i).ato1->pos.y);
+    vec.y=(bond.at(i).ato1->pos.x-bond.at(i).ato2->pos.x);
+    vec.z=0;
+    if (Norm(vec)) vec=Normalize(vec);
+    else vec=V3(0,1,0);
+    bondir =V3(0,0,0);
+    if (bondStrength<ara2)
+      bondir= Normalize(bond.at(i).ato1->pos-bond.at(i).ato2->pos)*(0.9*sqrt((ara2*ara2)-bondStrength*bondStrength));
+    kurz=sqrt(Norm(bondir));//  */
+    //printf("%s--%s kurz %f len %f ara2 %f\n",bond.at(i).ato1->Label.toStdString().c_str(),bond.at(i).ato2->Label.toStdString().c_str(),kurz,bond.at(i).length,ara2);
+    glPushMatrix();
+    //    glTranslated (mitsav.x,mitsav.y,mitsav.z);
+    glTranslated (
+    bond.at(i).ato2->pos.x+bondir.x,
+    bond.at(i).ato2->pos.y+bondir.y,
+    bond.at(i).ato2->pos.z+bondir.z);//Anfangspunkt
+    wink=acos(((bond.at(i).ato1->pos.z-bond.at(i).ato2->pos.z)/
+                (sqrt((bond.at(i).ato1->pos.x-bond.at(i).ato2->pos.x)*(bond.at(i).ato1->pos.x-bond.at(i).ato2->pos.x)+
+                  (bond.at(i).ato1->pos.y-bond.at(i).ato2->pos.y)*(bond.at(i).ato1->pos.y-bond.at(i).ato2->pos.y)+
+                  (bond.at(i).ato1->pos.z-bond.at(i).ato2->pos.z)*(bond.at(i).ato1->pos.z-bond.at(i).ato2->pos.z)))))/M_PI*180.0;
+
+    glRotated(wink,vec.x,vec.y,vec.z); // drehen
+    GLUquadricObj *q = gluNewQuadric();
+    gluQuadricNormals(q, GL_SMOOTH);   // ein Zylinder
+    gluQuadricTexture(q,GL_TRUE);
+       if (parthigh) {
+     glEnable(GL_BLEND);
+     QColor pcolor;
+     switch (bond.at(i).ato1->part){
+         case 1: pcolor=QColor("lightskyblue");break;
+         case 2: pcolor=QColor("darkgoldenrod");break;
+         case 3: pcolor=Qt::green;break;
+         case 4: pcolor=Qt::yellow;break;
+         case 5: pcolor=QColor("orange");break;
+         case 6: pcolor=Qt::black;break;
+         case 7: pcolor=QColor("lightsalmon");break;
+         case 8: pcolor=QColor("lightseagreen");break;
+         case -1: pcolor=QColor("aquamarine");break;
+         case -2: pcolor=QColor("olive");break;
+         case -3: pcolor=QColor("bisque");break;
+                 case 666: pcolor=QColor("fuchsia");break;
+         default: if (bond.at(i).ato1->part>0)
+                pcolor=QColor::colorNames().at(qMin(bond.at(i).ato1->part,QColor::colorNames().size()-1));
+              else pcolor=Qt::magenta;
+     }
+     pcolor.setAlpha(140);
+     glColor4d(pcolor.redF(),
+             pcolor.greenF(),
+             pcolor.blueF(),
+             pcolor.alphaF());
+
+       }
+    //if (trans) {glEnable(GL_BLEND);glEnable(GL_CULL_FACE);}
+
+       //gluCylinder(q, bondStrength*psc, bondStrength*psc, (float)bond.at(i).length/2.0f-kurz, 5*LOD, 1);
+       //printf("%g %g %d\n",bondStrength,bond.at(i).length,LOD);
+       gluCylinder(q, bondStrength*psc, bondStrength*psc, (float)(bond.at(i).length /2.0f -kurz), 5*LOD, 1);
+    //if (trans) {glDisable(GL_BLEND);glDisable(GL_CULL_FACE);}
+    glPopMatrix();
+
+    if (bond.at(i).ato1->an>-1){
+        glColor4d(Acol[bond.at(i).ato1->an][0],
+                        Acol[bond.at(i).ato1->an][1],
+                        Acol[bond.at(i).ato1->an][2],
+                        Acol[bond.at(i).ato1->an][3]);
+
+    }
+    if ((bond.at(i).ato2->sg|bond.at(i).ato1->sg)&&((bond.at(i).ato2->part<0)||(bond.at(i).ato1->part<0))){
+      //		    glMaterialfv( GL_FRONT_AND_BACK, GL_EMISSION,blue );
+      glColor4d(Acol[bond.at(i).ato1->an][0],
+                Acol[bond.at(i).ato1->an][1],
+        1.0,
+        0.3);
+      glEnable(GL_BLEND);
+    }
+
+    vec.x=(bond.at(i).ato1->pos.y-bond.at(i).ato2->pos.y);
+    vec.y=(bond.at(i).ato2->pos.x-bond.at(i).ato1->pos.x);
+    vec.z=0;
+    if (Norm(vec)) vec=Normalize(vec);
+    else vec=V3(0,1,0);
+
+    bondir =V3(0,0,0);
+    if (bondStrength<ara1)
+      bondir= Normalize(bond.at(i).ato2->pos-bond.at(i).ato1->pos)*(0.9*sqrt((ara1*ara1)-bondStrength*bondStrength));
+    kurz=sqrt(Norm(bondir));// */
+    glPushMatrix();
+    //    glTranslated (mitsav.x,mitsav.y,mitsav.z);
+    glTranslated (
+            bond.at(i).ato1->pos.x+bondir.x,
+            bond.at(i).ato1->pos.y+bondir.y,
+            bond.at(i).ato1->pos.z+bondir.z);//Anfangspunkt
+    wink=acos(((bond.at(i).ato2->pos.z-bond.at(i).ato1->pos.z)/
+                (sqrt((bond.at(i).ato2->pos.x-bond.at(i).ato1->pos.x)*(bond.at(i).ato2->pos.x-bond.at(i).ato1->pos.x)+
+                  (bond.at(i).ato2->pos.y-bond.at(i).ato1->pos.y)*(bond.at(i).ato2->pos.y-bond.at(i).ato1->pos.y)+
+                  (bond.at(i).ato2->pos.z-bond.at(i).ato1->pos.z)*(bond.at(i).ato2->pos.z-bond.at(i).ato1->pos.z)))))/M_PI*180.0;
+    glRotated(wink,vec.x,vec.y,vec.z); // drehen
+    q = gluNewQuadric();
+    gluQuadricNormals(q, GL_SMOOTH);   // ein Zylinder
+    gluQuadricTexture(q,GL_TRUE);
+    //if (trans) {glEnable(GL_BLEND);glEnable(GL_CULL_FACE);}
+       if (parthigh) {
+     glEnable(GL_BLEND);
+     QColor pcolor;
+     switch (bond.at(i).ato2->part){
+         case 1: pcolor=QColor("lightskyblue");break;
+         case 2: pcolor=QColor("darkgoldenrod");break;
+         case 3: pcolor=Qt::green;break;
+         case 4: pcolor=Qt::yellow;break;
+         case 5: pcolor=QColor("orange");break;
+         case 6: pcolor=Qt::black;break;
+         case 7: pcolor=QColor("lightsalmon");break;
+         case 8: pcolor=QColor("lightseagreen");break;
+         case -1: pcolor=QColor("aquamarine");break;
+         case -2: pcolor=QColor("olive");break;
+         case -3: pcolor=QColor("bisque");break;
+                 case 666: pcolor=QColor("fuchsia");break;
+         default: if (bond.at(i).ato2->part>0)
+                pcolor=QColor::colorNames().at(qMin(bond.at(i).ato2->part,QColor::colorNames().size()-1));
+              else pcolor=Qt::magenta;
+     }
+     pcolor.setAlpha(140);
+     glColor4d(pcolor.redF(),
+             pcolor.greenF(),
+             pcolor.blueF(),
+             pcolor.alphaF());
+
+       }
+    gluCylinder(q, bondStrength*psc, bondStrength*psc, (float)(bond.at(i).length/2.0f-kurz), 5*LOD, 1);
+    //printf("%g %g %d\n",bondStrength,bond.at(i).length,LOD);
+    gluDeleteQuadric(q);
+    glDisable(GL_BLEND);
+    glDisable(GL_TEXTURE_2D);
+    glPopMatrix();
+  }
+
+}
+
 QString molekul::symmcode2human(QStringList brauchSymm){
   QString erg;
   Matrix m;

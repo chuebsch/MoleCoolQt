@@ -3,6 +3,7 @@
 #include <math.h>
 #include <QList>
 #include <QMap>
+#include <QSettings>
 #include <QString>
 #ifndef M_PI
 #define	M_PI		3.14159265358979323846	 
@@ -13,6 +14,9 @@
 #define ATOM_STYLE_SOLID 8
 #define ATOM_STYLE_WHITERING 16
 #define ATOM_STYLE_NOLABEL 32
+#define ATOM_STYLE_NOADP 64
+#define ATOM_STYLE_PLAID 128
+#define ATOM_STYLE_METAL 256
 struct V3 {
   double x, y, z;
   int rc;
@@ -91,57 +95,26 @@ inline V3& Normalize( V3 v ) {
 static V3 erg=V3(0,0,0);
   if (Norm(v))  erg= (v * (1.0/sqrt(Norm(v))));  
   return erg; 
-} 
-typedef struct MyAtom{
-  QString Label;
-  QString Symbol;
-  V3 pos,fpos;
-double screenX,screenY;
-  int an;
-  int part;
-  int index;
-  int sg;
-}MyAtom;
-inline bool  operator ==  (const MyAtom &a1,const MyAtom &a2){
-  return (a1.Label == a2.Label);
 }
-inline bool operator < (const MyAtom &a1, const MyAtom &a2){
-  return (a1.Label < a2.Label);
-}
-typedef struct MyBond{
-MyAtom const *ato1,*ato2;
-  double length,chi;
-  int order;
-  inline MyBond& operator = (const MyBond& b){    
-    length=b.length;
-    chi=b.chi;
-    ato1=b.ato1;
-    ato2=b.ato2;
-    order=b.order;
-    return *this;
-  }
-}MyBond;
-typedef QList<MyBond> Connection;
-typedef QList<MyAtom> CEnvironment;
 struct Matrix{
 double m11, m21, m31, m12, m22, m32, m13, m23, m33;
  inline Matrix(void){}
  inline Matrix( const V3 &a, const V3 &b, const V3 &c):
-	 m11(a.x), m21(b.x), m31(c.x),
-	 m12(a.y), m22(b.y), m32(c.y),
-	 m13(a.z), m23(b.z), m33(c.z){;}
+     m11(a.x), m21(b.x), m31(c.x),
+     m12(a.y), m22(b.y), m32(c.y),
+     m13(a.z), m23(b.z), m33(c.z){;}
  inline Matrix( const double& x11, const double& x21, const double& x31,
                 const double& x12, const double& x22, const double& x32,
                 const double& x13, const double& x23, const double& x33):
-	 m11(x11), m21(x21), m31(x31),
-	 m12(x12), m22(x22), m32(x32),
-	 m13(x13), m23(x23), m33(x33){;}
+     m11(x11), m21(x21), m31(x31),
+     m12(x12), m22(x22), m32(x32),
+     m13(x13), m23(x23), m33(x33){;}
 };
  inline Matrix transponse (Matrix a){//transponse
     return Matrix(
-		  a.m11, a.m12, a.m13,
-		  a.m21, a.m22, a.m23,
-		  a.m31, a.m32, a.m33);
+          a.m11, a.m12, a.m13,
+          a.m21, a.m22, a.m23,
+          a.m31, a.m32, a.m33);
  }
 inline double determinant (Matrix a){
 return a.m11*a.m22*a.m33 - a.m11*a.m23*a.m32 - a.m12*a.m21*a.m33 + a.m12*a.m23*a.m31 +a.m13*a.m21*a.m32 -a.m13*a.m22*a.m31;
@@ -151,9 +124,9 @@ inline Matrix inverse (Matrix A){
   if (D==0) return A;
   D=1.0/D;
   return Matrix(
-		  D*(A.m22*A.m33-A.m23*A.m32),D*(A.m13*A.m32-A.m12*A.m33),D*(A.m21*A.m23-A.m13*A.m22), 
-		  D*(A.m23*A.m31-A.m21*A.m33),D*(A.m11*A.m33-A.m13*A.m31),D*(A.m13*A.m21-A.m11*A.m23), 
-		  D*(A.m21*A.m32-A.m22*A.m31),D*(A.m12*A.m31-A.m11*A.m32),D*(A.m11*A.m22-A.m12*A.m21));
+          D*(A.m22*A.m33-A.m23*A.m32),D*(A.m13*A.m32-A.m12*A.m33),D*(A.m21*A.m23-A.m13*A.m22),
+          D*(A.m23*A.m31-A.m21*A.m33),D*(A.m11*A.m33-A.m13*A.m31),D*(A.m13*A.m21-A.m11*A.m23),
+          D*(A.m21*A.m32-A.m22*A.m31),D*(A.m12*A.m31-A.m11*A.m32),D*(A.m11*A.m22-A.m12*A.m21));
 }
 
 
@@ -162,11 +135,11 @@ inline Matrix operator * (const Matrix &a,const Matrix &b){
   erg.m11 = a.m11 * b.m11 + a.m21 * b.m12 + a.m31 * b.m13;
   erg.m21 = a.m11 * b.m21 + a.m21 * b.m22 + a.m31 * b.m23;
   erg.m31 = a.m11 * b.m31 + a.m21 * b.m32 + a.m31 * b.m33;
-  
+
   erg.m12 = a.m12 * b.m11 + a.m22 * b.m12 + a.m32 * b.m13;
   erg.m22 = a.m12 * b.m21 + a.m22 * b.m22 + a.m32 * b.m23;
   erg.m32 = a.m12 * b.m31 + a.m22 * b.m32 + a.m32 * b.m33;
-  
+
   erg.m13 = a.m13 * b.m11 + a.m23 * b.m12 + a.m33 * b.m13;
   erg.m23 = a.m13 * b.m21 + a.m23 * b.m22 + a.m33 * b.m23;
   erg.m33 = a.m13 * b.m31 + a.m23 * b.m32 + a.m33 * b.m33;
@@ -186,6 +159,43 @@ inline V3 operator * (const V3 &a, const Matrix &b){
   erg.z = b.m31*a.x + b.m32*a.y + b.m33*a.z;
   return erg;
 }
+
+typedef struct MyAtom{
+  QString Label;
+  QString Symbol;
+  V3 pos,fpos;
+  float peakHeight;
+  Matrix uc;
+double screenX,screenY;
+  int an;
+  int part;
+  int index;
+  int sg;
+}MyAtom;
+inline bool  operator ==  (const MyAtom &a1,const MyAtom &a2){
+  return (a1.Label == a2.Label);
+}
+inline bool operator < (const MyAtom &a1, const MyAtom &a2){
+  return (a1.Label < a2.Label);
+}
+typedef struct MyBond{
+MyAtom const *ato1,*ato2;
+int a1,a2;
+  double length,chi;
+  int order;
+  inline MyBond& operator = (const MyBond& b){    
+    length=b.length;
+    chi=b.chi;
+    ato1=b.ato1;
+    ato2=b.ato2;
+    a1=b.a1;
+    a2=b.a2;
+    order=b.order;
+    return *this;
+  }
+}MyBond;
+typedef QList<MyBond> Connection;
+typedef QList<MyAtom> CEnvironment;
 
 #define strgl 40
 struct MAS  {
@@ -399,9 +409,11 @@ inline bool operator < (const SdmItem &a1, const SdmItem &a2){
 
 class molekul {
  public:
+  QSettings *einstellung;
   Cell zelle;
-
+  int LOD;
   Matrix jacobi(Matrix A, V3 &D);
+  double * jacobi2(const Matrix &uij, V3 &ev);
   int adp,intern;
   double bondStrength;
   GLuint hbtex, hbtex2;
@@ -423,20 +435,26 @@ class molekul {
   double gd;
   double HAMax;
   double HAWink;
+  double qPeakRad;
+  int pseSize;
   bool decodeSymmCard(const QString symmCard);
   void countMols(QList<INP> & xdinp);
   bool applyLatticeCentro(const QChar latt,const bool centro);
   QString symmcode2human(QStringList brachSymm);
   QString encodeSymm(int s);
-  bool tubifiedAtoms,singleColorBonds,dratom;
+  bool tubifiedAtoms,bondColorStyle,dratom;
+  void loadSettings();
   molekul(void) {
     dratom=false;
+    qPeakRad=0.05;
+    pseSize=10;
+    LOD=2;
     VZ.x=0;VZ.y=0;VZ.z=1;
     adp=1;
-    bondStrength=0.10;
+    bondStrength=0.03;
     bondColor=QColor("silver");
     tubifiedAtoms=false;
-    singleColorBonds=false;
+    bondColorStyle=false;
     proba=50;
     HAMax=2.3;
     pmin=2000;
@@ -445,9 +463,9 @@ class molekul {
     gd=2.3;
     bonds_made=0;
     knopf_made=0;
-    nListe=0;
-    nL=NULL;
-    vL=NULL;
+    //nListe=0;
+    //nL=NULL;
+    //vL=NULL;
     //
     Kovalenz_Radien[0  ]=55  ;Kovalenz_Radien[1  ]=0   ;Kovalenz_Radien[2  ]=123 ;Kovalenz_Radien[3  ]=90  ;
     Kovalenz_Radien[4  ]=80  ;Kovalenz_Radien[5  ]=77  ;Kovalenz_Radien[6  ]=74  ;Kovalenz_Radien[7  ]=71  ;
@@ -496,7 +514,7 @@ class molekul {
     ElNeg[76]=155;ElNeg[77]=142;ElNeg[78]=142;ElNeg[79]=144;
     ElNeg[80]=144;ElNeg[81]=155;ElNeg[82]=167;  
 
-    for (int i=0; i<107; i++){      
+    for (int i=0; i<107; i++){
       arad[i]=Kovalenz_Radien[i]/(250.0);
       aStyle[i]=ATOM_STYLE_WALLS|ATOM_STYLE_RINGS|ATOM_STYLE_SPHERE;
       switch (i){
@@ -519,9 +537,9 @@ class molekul {
 	Acol[i][3]=0.5;
 	break;
       case 4:
-	Acol[i][0]=0.0;
-	Acol[i][1]=0.3;
-	Acol[i][2]=0.8;
+    Acol[i][0]=0.8;
+    Acol[i][1]=0.4;
+    Acol[i][2]=0.1;
 	Acol[i][3]=0.5;
 	break;
       case 5:
@@ -532,8 +550,8 @@ class molekul {
 	break;
       case 6:
 	Acol[i][0]=0.0;
-	Acol[i][1]=0.6;
-	Acol[i][2]=0.2;
+    Acol[i][1]=0.2;
+    Acol[i][2]=0.6;
 	Acol[i][3]=0.5;
 	break;
       case 7:
@@ -567,9 +585,9 @@ class molekul {
 	Acol[i][3]=0.5;
 	break;
       default:
-	Acol[i][0]=0.5;
-	Acol[i][1]=0.3;
-	Acol[i][2]=0.5;
+    Acol[i][0]=0.4;
+    Acol[i][1]=0.5;
+    Acol[i][2]=0.4;
 	Acol[i][3]=0.5;
 	break; 
       }
@@ -593,6 +611,8 @@ class molekul {
   void copyAcol(GLfloat _Acol[108][4],GLfloat _arad[108],int _aStyle[108]);
   void atoms(QList<INP> xdinp,const int proba);
   void bonds(QList<INP> xdinp);
+  void bonds(Connection bond);
+  void atoms(CEnvironment atom,int proba);
   QString h_bonds(QList<INP> xdinp);
   void cbonds(QList<INP> xdinp);
   void axes(QList<INP> xdinp);
@@ -603,15 +623,16 @@ class molekul {
   int lod;
   GLfloat Acol[108][4],arad[108];
   int aStyle[108];
-  V3 *nL,*vL;
-  int nListe;
-  void findChains(QList<INP> xdinp);
-  V3* smoothPoints(V3 *vListe, int N);
-  void drawSline(V3 *vL,int N);
+  //V3 *nL,*vL;
+  //int nListe;
+  //void findChains(QList<INP> xdinp);
+  //V3* smoothPoints(V3 *vListe, int N);
+  //void drawSline(V3 *vL,int N);
   int highlightResi(QList<INP> xdinp,int inv,GLfloat L,bool el);
   QString pse(int oz);
  private:
   void ellipse(int style);
+  void sphere(int adp);
   struct knpf{
     int lz;
     int lig[30];
