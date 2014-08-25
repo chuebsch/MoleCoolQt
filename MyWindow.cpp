@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=386;
+int rev=388;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -2536,6 +2536,7 @@ void MyWindow::saveScene(){
   cubeGL->_win_width=d;
   cubeGL->_win_height=e;
   cubeGL->noWaitLabel=false;
+
   cubeGL->updateGL();
 }
 

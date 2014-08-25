@@ -541,6 +541,7 @@ void CubeGL::changeTColor() {
 
 void CubeGL::initializeGL() {
   moving->stop();
+  printf("initializeGL\n");
   glEnable(GL_LINE_SMOOTH);   
   glHint(GL_LINE_SMOOTH_HINT,GL_NICEST);
   const GLfloat  position[] = {100.0f, 100.0f,100.0f,0.0f};

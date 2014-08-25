@@ -991,6 +991,8 @@ void molekul::atoms(QList<INP> xdinp,const int proba){//ADP Schwingungsellipsoid
   double a[3][3];
   int mylod =lod;
   for (int j=0;j<xdinp.size();j++){//for atmax
+      int myStyle=aStyle[xdinp[j].OrdZahl];
+    int myAdp=(myStyle&ATOM_STYLE_NOADP)?0:adp;
     if (!dratom){
       glPushMatrix () ;
     glTranslated(xdinp[j].kart.x,xdinp[j].kart.y,xdinp[j].kart.z) ;
@@ -999,7 +1001,7 @@ void molekul::atoms(QList<INP> xdinp,const int proba){//ADP Schwingungsellipsoid
 
       if (tubifiedAtoms) rad = bondStrength;
 
-      if ((adp)&&(xdinp[j].OrdZahl>-1)) {//adp
+      if ((myAdp)&&(xdinp[j].OrdZahl>-1)) {//adp
 	a[0][0]=xdinp[j].u.m11;
 	a[0][1]=xdinp[j].u.m12;
 	a[0][2]=xdinp[j].u.m13;
@@ -1025,7 +1027,7 @@ void molekul::atoms(QList<INP> xdinp,const int proba){//ADP Schwingungsellipsoid
 	default: ;
 	}
       }
-      else if (xdinp[j].OrdZahl>-1){	
+      else if (xdinp[j].OrdZahl>-1){
 	if (rad) glScaled(rad,rad,rad);
 	else glScaled(0.15,0.15,0.15);
       }else {
@@ -1087,8 +1089,7 @@ void molekul::atoms(QList<INP> xdinp,const int proba){//ADP Schwingungsellipsoid
 	  glScaled(0.20,0.20,0.20);
 
 // */
-	}else 
-    glScaled(1.14,1.14,1.14);
+    }//else glScaled(1.0,1.0,1.0);
       }
 
       GLUquadricObj *q = gluNewQuadric();
@@ -1100,8 +1101,8 @@ void molekul::atoms(QList<INP> xdinp,const int proba){//ADP Schwingungsellipsoid
 
 
       if ((rad>0)&&(xdinp[j].OrdZahl>-1)) {
-	if (adp&&intern) ellipse(aStyle[xdinp[j].OrdZahl]);else
-	  if ((!adp)||((aStyle[xdinp[j].OrdZahl]&ATOM_STYLE_SPHERE)&&(!(aStyle[xdinp[j].OrdZahl]&ATOM_STYLE_SOLID))))gluSphere(q,0.96,6*mylod,6*mylod);//Atom als Kugel zeichnen
+    if (myAdp&&intern) ellipse(aStyle[xdinp[j].OrdZahl]);else
+      if ((!myAdp)||((aStyle[xdinp[j].OrdZahl]&ATOM_STYLE_SPHERE)&&(!(aStyle[xdinp[j].OrdZahl]&ATOM_STYLE_SOLID))))gluSphere(q,0.96,6*mylod,6*mylod);//Atom als Kugel zeichnen
 	if (xdinp[j].atomname[0]=='D') printf("%s %f \n",xdinp[j].atomname,rad);
       }
       else {
@@ -1747,9 +1748,9 @@ int  nonPositiveDefinite=0;
 #define ATOM_STYLE_NOLABEL 32
 */
       if (atom.at(i).an>-1) {
-
+/*
           glEnable(GL_BLEND);
-          glDisable(GL_CULL_FACE);
+          glDisable(GL_CULL_FACE);*/
         if (myAdp&&intern) {
           if (!nonPositiveDefinite) ellipse(myStyle);
           else dCube(rad);
@@ -2604,6 +2605,9 @@ void molekul::bonds(Connection bond){
     }
     if (bond.at(i).ato1->Label.contains("noADP"))ara1=arad[bond.at(i).ato1->an];
     if (bond.at(i).ato2->Label.contains("noADP"))ara2=arad[bond.at(i).ato2->an];
+    if (aStyle[bond.at(i).ato1->an]&ATOM_STYLE_NOADP) ara1=arad[bond.at(i).ato1->an];
+    if (aStyle[bond.at(i).ato2->an]&ATOM_STYLE_NOADP) ara2=arad[bond.at(i).ato2->an];
+
     if (((bond.at(i).ato1->sg)&&(bond.at(i).ato1->part<0))) ara1=arad[bond.at(i).ato1->an];
     if (((bond.at(i).ato2->sg)&&(bond.at(i).ato2->part<0))) ara2=arad[bond.at(i).ato2->an];
     if (tubifiedAtoms) ara1=ara2=bondStrength;

@@ -547,10 +547,10 @@ void EacDlg::updateLEs(int OZ){
 
   sphbx->setCheckState((eacGLW->mol->aStyle[OZ]&ATOM_STYLE_SPHERE)?Qt::Checked:Qt::Unchecked);
   sldbx->setCheckState((eacGLW->mol->aStyle[OZ]&ATOM_STYLE_SOLID)?Qt::Checked:Qt::Unchecked);
-  //walbx->setCheckState((eacGLW->mol->aStyle[OZ]&ATOM_STYLE_WALLS)?((eacGLW->mol->aStyle[OZ]&ATOM_STYLE_PLAID)?Qt::PartiallyChecked: Qt::Checked):Qt::Unchecked);
+  walbx->setCheckState((eacGLW->mol->aStyle[OZ]&ATOM_STYLE_WALLS)?Qt::Checked:Qt::Unchecked);
   nlabx->setCheckState((eacGLW->mol->aStyle[OZ]&ATOM_STYLE_NOLABEL)?Qt::Checked:Qt::Unchecked);
   //metalic->setCheckState((eacGLW->mol->aStyle[OZ]&ATOM_STYLE_METAL)?Qt::Checked:Qt::Unchecked);
-  //noadp->setChecked((eacGLW->mol->aStyle[OZ]&ATOM_STYLE_NOADP)?true:false);
+  noadp->setChecked((eacGLW->mol->aStyle[OZ]&ATOM_STYLE_NOADP)?true:false);
   woADP(noadp->isChecked());
   QColor ac=QColor((int)(mol->Acol[OZ][0]*255),
                    (int)(mol->Acol[OZ][1]*255),
@@ -793,7 +793,7 @@ EacDlg::EacDlg(molekul *externMole){
   //mol->loadSettings();
   eacGLW = new EacGLW(mol,this);
   connect(eacGLW,SIGNAL(colorchanged(QColor)),this,SLOT(colorchange(QColor)));
-
+  eacGLW->mol->loadSettings();
   eacGLW->proba=mol->proba;
   //eacGLW->m=em;
   eacGLO = new QGridLayout; 
@@ -891,7 +891,7 @@ EacDlg::EacDlg(molekul *externMole){
   glt->addLayout(glt4);
   globalStuff->setLayout(glt);
   walbx = new QCheckBox("Draw intersecting planes");
-  walbx->setTristate();
+//  walbx->setTristate();
   rinbx = new QCheckBox("Draw principal ellipses");
   rinbx->setTristate();
   sphbx = new QCheckBox("Draw ellipsoid surface");
@@ -1075,6 +1075,7 @@ void EacDlg::reject(){
   for (int i = 0; i < 107; ++i) {
     mol->einstellung->setArrayIndex(i);
     mol->einstellung->setValue("Style", eacGLW->mol->aStyle[i-1]);
+   // printf("Index %d  Style %d\n",i,eacGLW->mol->aStyle[i-1]);
   }
   mol->einstellung->endArray();
   mol->pmin=eacGLW->exmin;

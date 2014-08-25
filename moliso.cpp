@@ -113,6 +113,15 @@ void MolIso::legende(){
 }
 
 void MolIso::loadMI(QString fname, bool om){
+
+  for (int i=0;i<6;i++){
+    if ((mibas)&&(glIsList(mibas+i))) {
+      // printf("deleting list #%d\n",chgl->foubas[fac]);
+      glDeleteLists(mibas+i,1);
+    }
+  }
+//  mibas=0;
+//  mibas=glGenLists(6);*/
   extern QProgressBar *balken;
 
   QFile sf(fname);
