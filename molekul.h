@@ -406,7 +406,12 @@ struct bindi{
 inline bool operator < (const SdmItem &a1, const SdmItem &a2){
   return (a1.d<a2.d);
 }
-
+struct PolyEder{
+    V3 af,bf,cf,ac,bc,cc;
+    GLfloat color[4];
+    int an;
+    double volume;
+};
 class molekul {
  public:
   QSettings *einstellung;
@@ -424,7 +429,10 @@ class molekul {
   QColor bondColor;
   bindi *bd;
   QList<bindi> cBonds;
-
+  QList<PolyEder> polyeders;
+  QMap<int,bool> allowedPolyeders;
+  QList<int> sfac;
+  double maxvolpol;
   int bcnt;
   int firstHL;
   int lastHL;
@@ -492,27 +500,27 @@ class molekul {
     Kovalenz_Radien[88 ]=188 ;Kovalenz_Radien[89 ]=165 ;Kovalenz_Radien[90 ]=161 ;Kovalenz_Radien[91 ]=142 ;
     Kovalenz_Radien[92 ]=130 ;Kovalenz_Radien[93 ]=151 ;Kovalenz_Radien[94 ]=182 ;
     //EN{
-    ElNeg[0]=220; ElNeg[1]=550; ElNeg[2]= 97; ElNeg[3]=147;
-    ElNeg[4]=201; ElNeg[5]=250; ElNeg[6]=307; ElNeg[7]=350;
-    ElNeg[8]=410; ElNeg[9]=480; ElNeg[10]=101;ElNeg[11]=123;
-    ElNeg[12]=147;ElNeg[13]=174;ElNeg[14]=206;ElNeg[15]=244;
-    ElNeg[16]=283;ElNeg[17]=320;ElNeg[18]= 91;ElNeg[19]=104;
-    ElNeg[20]=120;ElNeg[21]=132;ElNeg[22]=145;ElNeg[23]=156;
-    ElNeg[24]=160;ElNeg[25]=164;ElNeg[26]=170;ElNeg[27]=175;
-    ElNeg[28]=175;ElNeg[29]=166;ElNeg[30]=182;ElNeg[31]=202;
-    ElNeg[32]=220;ElNeg[33]=248;ElNeg[34]=274;ElNeg[35]=290;
-    ElNeg[36]= 89;ElNeg[37]= 99;ElNeg[38]=111;ElNeg[39]=122;
-    ElNeg[40]=123;ElNeg[41]=130;ElNeg[42]=136;ElNeg[43]=142;
-    ElNeg[44]=145;ElNeg[45]=130;ElNeg[46]=142;ElNeg[47]=146;
-    ElNeg[48]=149;ElNeg[49]=172;ElNeg[50]=182;ElNeg[51]=201;
-    ElNeg[52]=221;ElNeg[53]=240;ElNeg[54]= 86;ElNeg[55]= 97;
-    ElNeg[56]=108;ElNeg[57]=108;ElNeg[58]=107;ElNeg[59]=107;
-    ElNeg[60]=107;ElNeg[61]=107;ElNeg[62]=110;ElNeg[63]=111;
-    ElNeg[64]=110;ElNeg[65]=110;ElNeg[66]=110;ElNeg[67]=111;
-    ElNeg[68]=111;ElNeg[69]=106;ElNeg[70]=114;ElNeg[71]=123;
-    ElNeg[72]=133;ElNeg[73]=140;ElNeg[74]=146;ElNeg[75]=152;
-    ElNeg[76]=155;ElNeg[77]=142;ElNeg[78]=142;ElNeg[79]=144;
-    ElNeg[80]=144;ElNeg[81]=155;ElNeg[82]=167;  
+    ElNeg[0]= 220; ElNeg[1]= 550;ElNeg[2]=  97;ElNeg[3]= 147;
+    ElNeg[4]= 201; ElNeg[5]= 250;ElNeg[6]= 307;ElNeg[7]= 350;
+    ElNeg[8]= 410; ElNeg[9]= 480;ElNeg[10]=101;ElNeg[11]=123;
+    ElNeg[12]=147; ElNeg[13]=174;ElNeg[14]=206;ElNeg[15]=244;
+    ElNeg[16]=283; ElNeg[17]=320;ElNeg[18]= 91;ElNeg[19]=104;
+    ElNeg[20]=120; ElNeg[21]=132;ElNeg[22]=145;ElNeg[23]=156;
+    ElNeg[24]=160; ElNeg[25]=164;ElNeg[26]=170;ElNeg[27]=175;
+    ElNeg[28]=175; ElNeg[29]=166;ElNeg[30]=182;ElNeg[31]=202;
+    ElNeg[32]=220; ElNeg[33]=248;ElNeg[34]=274;ElNeg[35]=290;
+    ElNeg[36]= 89; ElNeg[37]= 99;ElNeg[38]=111;ElNeg[39]=122;
+    ElNeg[40]=123; ElNeg[41]=130;ElNeg[42]=136;ElNeg[43]=142;
+    ElNeg[44]=145; ElNeg[45]=130;ElNeg[46]=142;ElNeg[47]=146;
+    ElNeg[48]=149; ElNeg[49]=172;ElNeg[50]=182;ElNeg[51]=201;
+    ElNeg[52]=221; ElNeg[53]=240;ElNeg[54]= 86;ElNeg[55]= 97;
+    ElNeg[56]=108; ElNeg[57]=108;ElNeg[58]=107;ElNeg[59]=107;
+    ElNeg[60]=107; ElNeg[61]=107;ElNeg[62]=110;ElNeg[63]=111;
+    ElNeg[64]=110; ElNeg[65]=110;ElNeg[66]=110;ElNeg[67]=111;
+    ElNeg[68]=111; ElNeg[69]=106;ElNeg[70]=114;ElNeg[71]=123;
+    ElNeg[72]=133; ElNeg[73]=140;ElNeg[74]=146;ElNeg[75]=152;
+    ElNeg[76]=155; ElNeg[77]=142;ElNeg[78]=142;ElNeg[79]=144;
+    ElNeg[80]=144; ElNeg[81]=155;ElNeg[82]=167;
 
     for (int i=0; i<107; i++){
       arad[i]=Kovalenz_Radien[i]/(250.0);
@@ -612,6 +620,7 @@ class molekul {
   void atoms(QList<INP> xdinp,const int proba);
   void bonds(QList<INP> xdinp);
   void bonds(Connection bond);
+  void draw_polyeders();
   void atoms(CEnvironment atom,int proba);
   QString h_bonds(QList<INP> xdinp);
   void cbonds(QList<INP> xdinp);
@@ -646,6 +655,7 @@ class molekul {
   void highlightInv(QList<INP> xdinp ,int inv,GLfloat L);
   void make_bonds(QList<INP> xdinp );
   void make_knopf(QList<INP> xdinp );
+  void make_polyeder(QList<INP> xd);
 
   double * jacobi(double a[3][3], double d[3]); 
 };

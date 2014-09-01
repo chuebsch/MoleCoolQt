@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=390;
+int rev=391;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -168,7 +168,8 @@ MyWindow::MyWindow( QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(pa
 
 
 
-
+  sfacMenu= new QMenu("Allowed Polyeders",this);
+  sfacMenu->setIcon(QIcon(":/images/poly.png"));
   QMenu *MolIsoMenu = new QMenu(tr("&MolIso"), this);  
   MolIsoMenu->addAction(createmoliso);
   MolIsoMenu->addAction(showface);
@@ -815,6 +816,11 @@ createRenameWgd();
   viewMenu->addAction(togAxen);
   viewMenu->addAction(togUnit);
   viewMenu->addAction(togElli);
+  cubeGL->showPolys=viewMenu->addAction(QIcon(":/images/poly.png"),"toggle Polyeder",cubeGL,SLOT(updateGL()));
+  cubeGL->showPolys->setCheckable(true);
+  cubeGL->showPolys->setChecked(false);
+  cubeGL->showPolys->setMenu(sfacMenu);
+
 
   viewMenu->addAction(togHBond);
 //  viewMenu->addAction(togLuft);
@@ -1010,7 +1016,7 @@ createRenameWgd();
   toolView->addAction(togLabel);
   toolView->addAction(togAxen);
   toolView->addAction(togUnit);
- // toolView->addAction(togLuft);
+  toolView->addAction(cubeGL->showPolys);
   toolView->addAction(togHBond);
   toolView->addAction(showface);
   toolView->addAction(showLeg);
@@ -1622,7 +1628,7 @@ void MyWindow::createRenameWgd(){
   sufixBox = new QComboBox();
   QLabel *sufixL =new QLabel("Suffix");
   QStringList alpha;
-  alpha<<"'"<<""<<"A"<<"B"<<"C"<<"D"<<"E"<<"F"<<"G"<<"H"<<"I"<<"J"<<"K"
+  alpha<<"'"<<""<<"A"<<"B"<<"C"<<"D"<<"E"<<"F"<<"G"<<"H"<<"I"<<"I"<<"K"
 	  <<"L"<<"M"<<"N"<<"O"<<"P"<<"Q"<<"R"<<"S"<<"T"<<"U"<<"V"<<"W"<<"X"<<"Y"<<"Z"
 	  <<"A'"<<"B'"<<"C'"<<"D'"<<"E'"<<"F'"<<"G'"<<"H'"<<"I'"<<"J'"<<"K'"<<"L'"<<"M'"
 	  <<"N'"<<"O'"<<"P'"<<"Q'"<<"R'"<<"S'"<<"T'"<<"U'"<<"V'"<<"W'"<<"X'"<<"Y'"<<"Z'";
@@ -2861,7 +2867,7 @@ void MyWindow::load_fchk(QString fileName){
   cubeGL->setVisible ( false );
   char PSE_Symbol[109][3] = {"H","He","Li","Be","B","C","N","O","F","Ne","Na","Mg","Al","Si","P","S","Cl","Ar",
 			     "K","Ca","Sc","Ti","V","Cr","Mn","Fe","Co","Ni","Cu","Zn","Ga","Ge","As","Se","Br","Kr",
-			     "Rb","Sr","Y","Zr","Nb","Mo","Tc","Ru","Rh","Pd","Ag","Cd","In","Sn","Sb","Te","J","Xe",
+                 "Rb","Sr","Y","Zr","Nb","Mo","Tc","Ru","Rh","Pd","Ag","Cd","In","Sn","Sb","Te","I","Xe",
 			     "Cs","Ba", "La","Ce","Pr","Nd","Pm","Sm","Eu","Gd","Tb","Dy","Ho","Er","Tm","Yb","Lu",
 			     "Hf","Ta","W","Re","Os","Ir","Pt","Au","Hg","Tl","Pb","Bi","Po","At","Rn","Fr","Ra",
 			     "Ac","Th","Pa","U","Np","Pu","Am","Cm","Bk","Cf","Es","Fm","Md","No","Lr","Ku","Ha","Rf","Ns","Hs","Mt"};
@@ -6516,6 +6522,20 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
   }
   QCompleter *cc = new QCompleter(aSymmList,this);
   searchAtomEdit->setCompleter(cc);
+  mol.sfac.clear();
+  for (int i=0;i<asymmUnit.size();i++) {
+      if ((!mol.sfac.contains(asymmUnit.at(i).OrdZahl))&&(asymmUnit.at(i).OrdZahl>=0))
+          mol.sfac.append(asymmUnit.at(i).OrdZahl);
+  }
+  sfacMenu->clear();
+  sfacMenu->addAction("Allow polyeder centers:");
+  sfacMenu->addSeparator();
+  for (int i=0; i<mol.sfac.size();i++){
+      QAction *a=sfacMenu->addAction(mol.pse(mol.sfac.at(i)),this,SLOT(allowPolyeder()));
+      a->setCheckable(true);
+      a->setChecked(mol.allowedPolyeders.value(mol.sfac.at(i),true));
+      a->setData(mol.sfac.at(i));
+  }
   statusBar()->showMessage(tr("File succesfully loaded.") );
   // Zuletzt geffnete File setzen
   if (mol.einstellung->group()!="Version 0.1")mol.einstellung->beginGroup("Version 0.1");
@@ -6553,6 +6573,20 @@ void MyWindow::openDipoleFile() {
     loadDipoleMoments(fileName);
   }    
   update();
+}
+
+void MyWindow::allowPolyeder(){
+    QAction *action = qobject_cast<QAction *>(sender());
+    int index=0;
+    if (action)
+    index=action->data().toInt();
+    else return;
+    if (mol.allowedPolyeders.contains(index))
+    mol.allowedPolyeders[index]=!mol.allowedPolyeders.value(index);
+    else mol.allowedPolyeders[index]=false;
+    cubeGL->updateGL();
+    qDebug()<<mol.pse(index)<<mol.allowedPolyeders.value(index);
+
 }
 
 void MyWindow::removeDipoleMoments(){
@@ -7399,10 +7433,83 @@ void MyWindow::growSymm(int packart,int packatom){
 	      Usym(asymmUnit[i].uf,mol.zelle.symmops[n],newAtom.uf);
 	      Uf2Uo(newAtom.uf,newAtom.u);
 	    }
+        //printf("%-10s %9.5f %9.5f %9.5f\n",newAtom.atomname,newAtom.frac.x,newAtom.frac.y,newAtom.frac.z);
 	    xdinp.append(newAtom);
 	    smx++;
 	  }
       }
+
+
+      char dumstr[500];
+      for (int j=0; j<3;j++){
+          int asa=xdinp.size();
+          for (int i=0;i<asa;i++){
+          if (fabs(xdinp.at(i).frac.x)<0.05) {
+              newAtom.frac=xdinp.at(i).frac;
+              newAtom.frac.x+=1.0;
+              newAtom.sg=1;
+              newAtom.part=xdinp[i].part;
+              newAtom.OrdZahl=xdinp[i].OrdZahl;
+              newAtom.molindex=xdinp[i].molindex;
+              strcpy(dumstr,xdinp[i].atomname);
+              sprintf(newAtom.atomname,"%s'",strtok(dumstr,"'"));
+              dawars=1000.0;
+              prime=newAtom.frac;
+              for (int g=0; g<xdinp.size();g++){
+                if ((xdinp[i].OrdZahl*xdinp[g].OrdZahl<0)) continue;
+                dl=fl(prime.x-xdinp[g].frac.x, prime.y-xdinp[g].frac.y, prime.z-xdinp[g].frac.z);
+                dawars=(dl<dawars)?dl:dawars;
+              }
+              if (dawars>0.01) {
+                  xdinp.append(newAtom);
+                  //printf("%-10s %9.5f %9.5f %9.5f\n",newAtom.atomname, newAtom.frac.x,newAtom.frac.y,newAtom.frac.z);
+                  smx++;
+              }
+          }
+          if (fabs(xdinp.at(i).frac.y)<0.05) {
+              newAtom.frac=xdinp.at(i).frac;
+              newAtom.frac.y+=1.0;
+              newAtom.sg=1;
+              newAtom.part=xdinp[i].part;
+              newAtom.OrdZahl=xdinp[i].OrdZahl;
+              newAtom.molindex=xdinp[i].molindex;
+              strcpy(dumstr,xdinp[i].atomname);
+              sprintf(newAtom.atomname,"%s'",strtok(dumstr,"'"));
+              dawars=1000.0;
+              prime=newAtom.frac;
+              for (int g=0; g<xdinp.size();g++){
+                if ((xdinp[i].OrdZahl*xdinp[g].OrdZahl<0)) continue;
+                dl=fl(prime.x-xdinp[g].frac.x, prime.y-xdinp[g].frac.y, prime.z-xdinp[g].frac.z);
+                dawars=(dl<dawars)?dl:dawars;
+              }
+              if (dawars>0.01) {
+                xdinp.append(newAtom);
+                //printf("%-10s %9.5f %9.5f %9.5f\n",newAtom.atomname, newAtom.frac.x,newAtom.frac.y,newAtom.frac.z);
+                smx++;
+              }
+          }
+          if (fabs(xdinp.at(i).frac.z)<0.05) {
+              newAtom.frac=xdinp.at(i).frac;
+              newAtom.sg=1;
+              newAtom.part=xdinp[i].part;
+              newAtom.OrdZahl=xdinp[i].OrdZahl;
+              newAtom.molindex=xdinp[i].molindex;
+              strcpy(dumstr,xdinp[i].atomname);
+              sprintf(newAtom.atomname,"%s'",strtok(dumstr,"'"));
+              newAtom.frac.z+=1.0;
+              dawars=1000.0;
+              prime=newAtom.frac;
+              for (int g=0; g<xdinp.size();g++){
+                if ((xdinp[i].OrdZahl*xdinp[g].OrdZahl<0)) continue;
+                dl=fl(prime.x-xdinp[g].frac.x, prime.y-xdinp[g].frac.y, prime.z-xdinp[g].frac.z);
+                dawars=(dl<dawars)?dl:dawars;
+              }
+              if (dawars>0.01){ xdinp.append(newAtom);
+              //printf("%-10s %9.5f %9.5f %9.5f\n",newAtom.atomname, newAtom.frac.x,newAtom.frac.y,newAtom.frac.z);
+              smx++;}
+          }
+          }
+      }// */
       infoKanalNews(QString("Used Symmetry:<br>%1").arg(mol.symmcode2human(brauchSymm)));
       printf("%d\n",smx);
     } 
@@ -7471,6 +7578,21 @@ void MyWindow::growSymm(int packart,int packatom){
 	k-=5;
 	l-=5;
 	s--;
+    /*
+    int psiz=mol.polyeders.size();
+    printf("===>%d\n",mol.polyeders.size());
+    for (int i=0;i<psiz;i++){
+        PolyEder p;
+        p.af=mol.zelle.symmops.at(s)*mol.polyeders.at(i).af+mol.zelle.trans.at(s)+V3(h,k,l);
+        p.bf=mol.zelle.symmops.at(s)*mol.polyeders.at(i).bf+mol.zelle.trans.at(s)+V3(h,k,l);
+        p.cf=mol.zelle.symmops.at(s)*mol.polyeders.at(i).cf+mol.zelle.trans.at(s)+V3(h,k,l);
+        gibscho=0;
+        for(int gbt=0;gbt<psiz;gbt++)
+        if ((fl(p.af.x-mol.polyeders.at(gbt).af.x,p.af.y-mol.polyeders.at(gbt).af.y,p.af.z-mol.polyeders.at(gbt).af.z)+
+             fl(p.bf.x-mol.polyeders.at(gbt).bf.x,p.bf.y-mol.polyeders.at(gbt).bf.y,p.bf.z-mol.polyeders.at(gbt).bf.z)+
+             fl(p.cf.x-mol.polyeders.at(gbt).af.x,p.cf.y-mol.polyeders.at(gbt).cf.y,p.cf.z-mol.polyeders.at(gbt).cf.z))<0.5) gibscho=1;
+        mol.polyeders.append(p);
+    }*/
 	for (int i=0;i<asymmUnit.size();i++) 
 	  if ((asymmUnit[i].molindex==symmgroup)&&(asymmUnit[i].OrdZahl>-1)){ 
 	    newAtom.frac=mol.zelle.symmops.at(s)*asymmUnit[i].frac+mol.zelle.trans.at(s)+V3(h,k,l);
@@ -7503,6 +7625,7 @@ void MyWindow::growSymm(int packart,int packatom){
   for (int i=0; i<smx; i++){
     mol.frac2kart(xdinp[i].frac,xdinp[i].kart);
   }
+
   //int atoms=0;
   /*xs=0;ys=0,zs=0;
   for (int i=0; i<smx; i++){

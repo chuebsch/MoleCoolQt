@@ -30,6 +30,7 @@ public:
   QCheckBox *invertMouseZoom,*minus;
   QAction *rCenter;
   QAction *foact,*fofcact,*f1f2act;
+  QAction *showPolys;
   int cdens, cwid,awidth;
   QAction *addBond,*killBond,*clearSelection,*centerSelection,*addCoordi,*delCoordi; 
   bool molisoTransparence;

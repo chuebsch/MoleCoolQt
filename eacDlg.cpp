@@ -508,7 +508,9 @@ void EacDlg::woADP(bool b){//WithOutADP
     if (eacGLW->mol->aStyle[eacGLW->xd.at(0).an]&ATOM_STYLE_NOADP)
       eacGLW->mol->aStyle[eacGLW->xd.at(0).an]-=ATOM_STYLE_NOADP;
 }
-
+void EacDlg::checkPolyCentr(){
+    mol->allowedPolyeders[ eacGLW->xd[0].an]=pcentr->isChecked();
+}
 void EacGLW::whitA(int st){
   if (st) {
     mol->aStyle[xd.at(0).an]|=ATOM_STYLE_WHITERING;
@@ -544,7 +546,7 @@ void EacDlg::updateLEs(int OZ){
   eacKRAD->setValue(eacGLW->mol->Kovalenz_Radien[OZ]/100.0);
   eacRAD->setValue(eacGLW->mol->arad[OZ]);
   rinbx->setCheckState((eacGLW->mol->aStyle[OZ]&ATOM_STYLE_RINGS)?((eacGLW->mol->aStyle[OZ]&ATOM_STYLE_WHITERING)?Qt::PartiallyChecked :Qt::Checked):Qt::Unchecked);
-
+  pcentr->setCheckState(eacGLW->mol->allowedPolyeders.value(OZ,true)?Qt::Checked:Qt::Unchecked);
   sphbx->setCheckState((eacGLW->mol->aStyle[OZ]&ATOM_STYLE_SPHERE)?Qt::Checked:Qt::Unchecked);
   sldbx->setCheckState((eacGLW->mol->aStyle[OZ]&ATOM_STYLE_SOLID)?Qt::Checked:Qt::Unchecked);
   walbx->setCheckState((eacGLW->mol->aStyle[OZ]&ATOM_STYLE_WALLS)?Qt::Checked:Qt::Unchecked);
@@ -897,6 +899,7 @@ EacDlg::EacDlg(molekul *externMole){
   sphbx = new QCheckBox("Draw ellipsoid surface");
   sldbx = new QCheckBox("Solid ellipsoid");
   noadp = new QCheckBox("No ADP");
+  pcentr= new QCheckBox("Center of polyeder");
   //metalic = new QCheckBox("Dashed Bonds to others");
   nlabx = new QCheckBox("No label!");
   //metalic->setCheckState ( Qt::Unchecked);
@@ -907,6 +910,7 @@ EacDlg::EacDlg(molekul *externMole){
   sldbx->setCheckState ( Qt::Unchecked);
   nlabx->setCheckState ( Qt::Unchecked);  
   noadp->setCheckState ( Qt::Unchecked);
+  pcentr->setCheckState ( Qt::Checked);
 
 
   psew = new PSEWidget();
@@ -967,7 +971,7 @@ EacDlg::EacDlg(molekul *externMole){
   eacGLO->addWidget(sphbx,6,4);
   eacGLO->addWidget(sldbx,6,6);
   eacGLO->addWidget(noadp,6,7);
-  //eacGLO->addWidget(metalic,6,8);
+  eacGLO->addWidget(pcentr,6,8);
   //eacGLO->addWidget(buttonBox,7,0,1,8);
   eacGLO->addWidget(psew,1,6,1,3);
   setLayout(eacGLO);
@@ -980,6 +984,7 @@ EacDlg::EacDlg(molekul *externMole){
 
   connect(nlabx,SIGNAL(stateChanged(int)),eacGLW,SLOT(nolaA(int)));
   connect(walbx,SIGNAL(stateChanged(int)),this,SLOT(checkSolid()));
+  connect(pcentr,SIGNAL(stateChanged(int)),this,SLOT(checkPolyCentr()));
   connect(rinbx,SIGNAL(stateChanged(int)),eacGLW,SLOT(ringA(int)));
   connect(sphbx,SIGNAL(stateChanged(int)),eacGLW,SLOT(spheA(int)));
   connect(sphbx,SIGNAL(stateChanged(int)),this,SLOT(checkBall()));

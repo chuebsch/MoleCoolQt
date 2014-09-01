@@ -75,6 +75,7 @@ Q_OBJECT
   QCheckBox *sphbx;  //!<Draw ellipsoid surface
   QCheckBox *sldbx;  //!<Solid ellipsoid
   QCheckBox *nlabx;  //!<No label
+  QCheckBox *pcentr; //!<Allowed Polyeder center
  // QCheckBox *metalic;//!<Dashed Bonds to others
   QComboBox *start;  //!<First element from which the style should be changed
   QComboBox *end;    //!<Last element from which the style should be changed
@@ -101,6 +102,7 @@ Q_OBJECT
   void checkWall();//!< when solid is checked then solid is unchecked.
   void checkSolid();//!< when walls are checked solid is unchecked. 
   void checkBall();//!< when ellipsoid surface is unchecked the solid checkbox is diabled. 
+  void checkPolyCentr();
   void doMulti();//!< calls MultiStyle dialog
   void unicolor(bool b);//!< the bonds shall have a uniq color. 
   void woADP(bool b);//!< the elemen shall be shown without ADP ellispoids.
@@ -127,6 +129,8 @@ Q_OBJECT
   //QComboBox *eacCB;
   QDoubleSpinBox *eacRAD;
   QDoubleSpinBox *eacKRAD;
+
+  QCheckBox *pcentr; //!<Allowed Polyeder center
   QCheckBox *walbx;
   QCheckBox *rinbx;
   QCheckBox *sphbx;

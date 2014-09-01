@@ -58,5 +58,7 @@
         <file>images/diffmap.png</file>
         <file>images/efminus.png</file>
         <file>images/efplus.png</file>
+        <file>images/adpsphere.png</file>
+        <file>images/poly.png</file>
     </qresource>
 </RCC>

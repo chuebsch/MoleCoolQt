@@ -758,7 +758,7 @@ if (s=="Cv") return 5;
 static QStringList PSE;
 PSE<<"H"<<"He"<<"Li"<<"Be"<<"B"<<"C"<<"N"<<"O"<<"F"<<"Ne"<<"Na"<<"Mg"<<"Al"<<"Si"<<"P"<<"S"<<"Cl"<<"Ar"<<
 			     "K"<<"Ca"<<"Sc"<<"Ti"<<"V"<<"Cr"<<"Mn"<<"Fe"<<"Co"<<"Ni"<<"Cu"<<"Zn"<<"Ga"<<"Ge"<<"As"<<"Se"<<"Br"<<"Kr"<<
-			     "Rb"<<"Sr"<<"Y"<<"Zr"<<"Nb"<<"Mo"<<"Tc"<<"Ru"<<"Rh"<<"Pd"<<"Ag"<<"Cd"<<"In"<<"Sn"<<"Sb"<<"Te"<<"J"<<"Xe"<<
+                 "Rb"<<"Sr"<<"Y"<<"Zr"<<"Nb"<<"Mo"<<"Tc"<<"Ru"<<"Rh"<<"Pd"<<"Ag"<<"Cd"<<"In"<<"Sn"<<"Sb"<<"Te"<<"I"<<"Xe"<<
 			     "Cs"<<"Ba"<< "La"<<"Ce"<<"Pr"<<"Nd"<<"Pm"<<"Sm"<<"Eu"<<"Gd"<<"Tb"<<"Dy"<<"Ho"<<"Er"<<"Tm"<<"Yb"<<"Lu"<<
 			     "Hf"<<"Ta"<<"W"<<"Re"<<"Os"<<"Ir"<<"Pt"<<"Au"<<"Hg"<<"Tl"<<"Pb"<<"Bi"<<"Po"<<"At"<<"Rn"<<"Fr"<<"Ra"<<
 			     "Ac"<<"Th"<<"Pa"<<"U"<<"Np"<<"Pu"<<"Am"<<"Cm"<<"Bk"<<"Cf"<<"Es"<<"Fm"<<"Md"<<"No"<<"Lr"<<"Ku"<<"Ha"<<"Rf"<<"Ns"<<"Hs"<<"Mt";
@@ -770,7 +770,7 @@ int molekul::Get_OZ(const char * S1){//109 Elemente solltenReichen zumindest fue
   if (strlen(S1)>1) s1[1]=tolower(S1[1]);
   char PSE_Symbol[109][3] = {"H","He","Li","Be","B","C","N","O","F","Ne","Na","Mg","Al","Si","P","S","Cl","Ar",
 			     "K","Ca","Sc","Ti","V","Cr","Mn","Fe","Co","Ni","Cu","Zn","Ga","Ge","As","Se","Br","Kr",
-			     "Rb","Sr","Y","Zr","Nb","Mo","Tc","Ru","Rh","Pd","Ag","Cd","In","Sn","Sb","Te","J","Xe",
+                 "Rb","Sr","Y","Zr","Nb","Mo","Tc","Ru","Rh","Pd","Ag","Cd","In","Sn","Sb","Te","I","Xe",
 			     "Cs","Ba", "La","Ce","Pr","Nd","Pm","Sm","Eu","Gd","Tb","Dy","Ho","Er","Tm","Yb","Lu",
 			     "Hf","Ta","W","Re","Os","Ir","Pt","Au","Hg","Tl","Pb","Bi","Po","At","Rn","Fr","Ra",
 			     "Ac","Th","Pa","U","Np","Pu","Am","Cm","Bk","Cf","Es","Fm","Md","No","Lr","Ku","Ha","Rf","Ns","Hs","Mt"};
@@ -1386,6 +1386,72 @@ void molekul::make_bonds(QList<INP> xdinp){
 
 }
 
+void molekul::make_polyeder(QList<INP> xd){
+    V3 zent;
+    PolyEder polyvecs;
+    polyeders.clear();
+    double vol,r1,r2,r3,soll_abst;//,mr;
+    for (int i=0; i<xd.size(); i++){
+        if (Knopf[i].lz<4)continue;
+        zent=xd[i].kart;
+        //if (ElNeg[xd[i].OrdZahl]>240) continue;
+        soll_abst=((Kovalenz_Radien[xd[i].OrdZahl]+Kovalenz_Radien[xd[Knopf[i].lig[0]].OrdZahl])
+               -(0.08*fabs((double)ElNeg[xd[i].OrdZahl]-ElNeg[xd[Knopf[i].lig[0]].OrdZahl])))*1.1;
+        soll_abst*=0.01;
+        soll_abst*=soll_abst;
+        for (int j=0; j<Knopf[i].lz;j++){
+            for (int k=j+1;k<Knopf[i].lz;k++){
+                for (int l=k+1;l<Knopf[i].lz;l++){
+                    vol=((xd[Knopf[i].lig[j]].kart-zent)%(xd[Knopf[i].lig[k]].kart-zent))*(xd[Knopf[i].lig[l]].kart-zent);
+                    if (fabs(vol)<0.2) continue;
+                    r1=(Distance(xd[Knopf[i].lig[j]].kart,xd[Knopf[i].lig[k]].kart))/soll_abst;
+                    r2=(Distance(xd[Knopf[i].lig[l]].kart,xd[Knopf[i].lig[k]].kart))/soll_abst;
+                    r3=(Distance(xd[Knopf[i].lig[j]].kart,xd[Knopf[i].lig[l]].kart))/soll_abst;
+                    //mr=fmax(r3,fmax(r1,r2));
+                    //if (mr>2.0)continue;
+                    //if (mr<0.9)continue;
+                    if (vol>0){
+                    polyvecs.af=xd[Knopf[i].lig[j]].frac;
+                    polyvecs.bf=xd[Knopf[i].lig[k]].frac;
+                    polyvecs.cf=xd[Knopf[i].lig[l]].frac;
+                    }else{
+                    polyvecs.bf=xd[Knopf[i].lig[j]].frac;
+                    polyvecs.af=xd[Knopf[i].lig[k]].frac;
+                    polyvecs.cf=xd[Knopf[i].lig[l]].frac;
+                    }
+                    polyvecs.color[0]=Acol[xd[i].OrdZahl][0];
+                    polyvecs.color[1]=Acol[xd[i].OrdZahl][1];
+                    polyvecs.color[2]=Acol[xd[i].OrdZahl][2];
+                    polyvecs.color[3]=Acol[xd[i].OrdZahl][3];
+                    polyvecs.an=xd[i].OrdZahl;
+                    polyvecs.volume=fabs(vol);
+                    polyeders.append(polyvecs);
+                    /*printf("Knopf#%d %d-%d-%d Vol=%g %g %g %g %g\n",
+                           i,
+                           Knopf[i].lig[j],
+                           Knopf[i].lig[k],
+                           Knopf[i].lig[l],vol,r1,r2,r3,soll_abst);//  */
+                    /*printf("Knopf#%s %s-%s-%s Vol=%g %g %g %g %g\n",
+                           xd[i].atomname,
+                           xd[Knopf[i].lig[j]].atomname,
+                           xd[Knopf[i].lig[k]].atomname,
+                           xd[Knopf[i].lig[l]].atomname,vol,r1,r2,r3,soll_abst);//  */
+                }
+            }
+        }
+        //printf("----\n");
+    }
+    maxvolpol=0.0;
+    for (int i=0; i<polyeders.size();i++){
+        frac2kart(polyeders.at(i).af,polyeders[i].ac);
+        frac2kart(polyeders.at(i).bf,polyeders[i].bc);
+        frac2kart(polyeders.at(i).cf,polyeders[i].cc);
+        maxvolpol=fmax(maxvolpol,polyeders.at(i).volume);
+    }
+printf("%d Polyeders\n",polyeders.size());
+}
+
+
 void molekul::make_knopf(QList<INP> xd){
 
 
@@ -1420,6 +1486,7 @@ void molekul::make_knopf(QList<INP> xd){
 
   }
   knopf_made=1;
+  make_polyeder(xd);
 }
 
 void molekul::countMols(QList<INP> & xdinp){
@@ -1780,7 +1847,36 @@ int  nonPositiveDefinite=0;
     if (parthigh) dratom=2;
   }
 }
+void molekul::draw_polyeders(){
+    //printf("draw_polyeders() %d\n",polyeders.size());
+    if (polyeders.empty()) return;
+    V3 nor;
+    glEnable(GL_BLEND);
+    //glEnable(GL_CULL_FACE);
+    glPushMatrix();
+    glBegin(GL_TRIANGLES);
+    for (int i=0; i<polyeders.size();i++){
+        if (!allowedPolyeders.value(polyeders.at(i).an,true)) continue;
+        GLfloat colo[4]={polyeders.at(i).color[0],
+                         polyeders.at(i).color[1],
+                         polyeders.at(i).color[2],
+                         polyeders.at(i).color[3]
+                        };
+        //colo[3]=0.7-(polyeders.at(i).volume/maxvolpol);
+        nor=Normalize((polyeders.at(i).cc-polyeders.at(i).bc)%(polyeders.at(i).ac-polyeders.at(i).bc));
+        glNormal3d(nor.x,nor.y,nor.z);
+        //glColor4f(0.0f,0.5f,0.0f,0.7f);
 
+        glColor4fv(colo);
+        glVertex3d(polyeders.at(i).ac.x,polyeders.at(i).ac.y,polyeders.at(i).ac.z);
+        glVertex3d(polyeders.at(i).bc.x,polyeders.at(i).bc.y,polyeders.at(i).bc.z);
+        glVertex3d(polyeders.at(i).cc.x,polyeders.at(i).cc.y,polyeders.at(i).cc.z);
+    }
+    glEnd();
+    glPopMatrix();
+    //glDisable(GL_CULL_FACE);
+    glDisable(GL_BLEND);
+}
 void molekul::bonds(QList<INP> xdinp){
 
   //BINDUNGEN ab hier

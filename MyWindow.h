@@ -39,6 +39,7 @@ public:
      QDockWidget *dock,*dock2,*dock3, *renamDock;
      QTextBrowser *infoKanal,*hbKanal ;
      CubeGL *cubeGL;
+     QMenu *sfacMenu;
      QSlider *speedSldr;
      QAction *act1, *act2, *act3, *act4, *ldipAct, *nodipAct, *enterRenameMode;
      QAction *xdSetupAct;
@@ -72,6 +73,7 @@ public:
      QComboBox *filterColumnComboBox;
 
 public slots:
+     void allowPolyeder();
      void addMoreQPeaks();
      void syncMconf();
      void changeGD();
