@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=391;
+int rev=392;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -6585,7 +6585,6 @@ void MyWindow::allowPolyeder(){
     mol.allowedPolyeders[index]=!mol.allowedPolyeders.value(index);
     else mol.allowedPolyeders[index]=false;
     cubeGL->updateGL();
-    qDebug()<<mol.pse(index)<<mol.allowedPolyeders.value(index);
 
 }
 
