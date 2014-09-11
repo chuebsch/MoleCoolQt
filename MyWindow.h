@@ -83,6 +83,7 @@ public slots:
      void destroyMoliso();
      void toggleTubes(bool b);
      //void toggleOrtho(bool b);
+     void polyColorIng(bool b);
      void changeBondStrength();
      void syncBondActs();
      void syncAtomActs();

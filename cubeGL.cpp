@@ -1266,7 +1266,7 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 
 	//888
 	if ((xdinp.size())&&((invEditAble)||(xdSetupMode))) {
-//	  printf("¿%d %d %d\n",xdSetupMode,rename,xdinp[index].OrdZahl);
+//	  printf("Â¿%d %d %d\n",xdSetupMode,rename,xdinp[index].OrdZahl);
 	  if ((!rename)&&(xdinp[index].OrdZahl<0))return;
 	  if ((rename)&&(xdinp[index].OrdZahl==-1)) return;
 	  if (xdinp[index].sg) return; 
@@ -3753,12 +3753,12 @@ if (!selectedAtoms.isEmpty()){
         glEnable(GL_CULL_FACE);
         glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
       }
-      if (showPolys->isChecked()){
-          glClear( GL_DEPTH_BUFFER_BIT);
+      if ((showPolys->isChecked())&&(mol.knopf_made>0)){
+         // glClear( GL_DEPTH_BUFFER_BIT);
     glDisable(   GL_CULL_FACE);
     glPushMatrix();
     glScaled(L,L,L);
-    mol.draw_polyeders();
+    mol.draw_polyeders(xdinp);
     glPopMatrix();
     glEnable(   GL_CULL_FACE);
     glEnable(GL_BLEND);

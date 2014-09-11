@@ -356,7 +356,7 @@ struct INP {
   double d1111,  d2222,  d3333, d1112,  d1113,  d1122, 
 	 d1123,  d1133,  d1222, d1223,  d1233,  d1333,
 	 d2223,  d2233,  d2333;
-                        // Bis hier alles Einträge in xd.inp, danach berechnet   
+                        // Bis hier alles EintrÃÂ¤ge in xd.inp, danach berechnet   
   V3   kart;          // Berechnete kart. Koordinaten in X-Richtung 
   V3   ax1;           // Berechnete Achse 0 
   V3   ax2;           // Berechnete Achse 1 
@@ -406,12 +406,17 @@ struct bindi{
 inline bool operator < (const SdmItem &a1, const SdmItem &a2){
   return (a1.d<a2.d);
 }
+
 struct PolyEder{
-    V3 af,bf,cf,ac,bc,cc;
-    GLfloat color[4];
-    int an;
-    double volume;
+    int zi;
+    V3 norm,mid;
+    QList<int> edge;
+    double umfang;
 };
+//inline bool operator == (const PolyEder &a1, const PolyEder &a2){
+
+//  return ((a1.af==a2.af)&&(a1.bf==a2.bf)&&(a1.cf==a2.cf)&&(a1.volume==a2.volume));
+//}
 class molekul {
  public:
   QSettings *einstellung;
@@ -432,7 +437,7 @@ class molekul {
   QList<PolyEder> polyeders;
   QMap<int,bool> allowedPolyeders;
   QList<int> sfac;
-  double maxvolpol;
+  double maxvolpol,minvolpol;
   int bcnt;
   int firstHL;
   int lastHL;
@@ -445,6 +450,7 @@ class molekul {
   double HAWink;
   double qPeakRad;
   int pseSize;
+  bool polyShapColor;
   bool decodeSymmCard(const QString symmCard);
   void countMols(QList<INP> & xdinp);
   bool applyLatticeCentro(const QChar latt,const bool centro);
@@ -466,7 +472,9 @@ class molekul {
     proba=50;
     HAMax=2.3;
     pmin=2000;
+
     pmax=-2000;
+    polyShapColor=false;
     HAWink=135;
     gd=2.3;
     bonds_made=0;
@@ -620,7 +628,7 @@ class molekul {
   void atoms(QList<INP> xdinp,const int proba);
   void bonds(QList<INP> xdinp);
   void bonds(Connection bond);
-  void draw_polyeders();
+  void draw_polyeders(QList<INP> xdinp);
   void atoms(CEnvironment atom,int proba);
   QString h_bonds(QList<INP> xdinp);
   void cbonds(QList<INP> xdinp);
@@ -650,13 +658,14 @@ class molekul {
   };
 
   knpf *Knopf;
-  void Farbverlauf (GLfloat wrt,GLfloat min,GLfloat max);
+  void Farbverlauf (GLfloat wrt,GLfloat min,GLfloat max,GLfloat alpha=1.0f);
   V3* addToList(V3 *vL,QList<INP> xdinp ,int atom,int N,int rc);
   void highlightInv(QList<INP> xdinp ,int inv,GLfloat L);
   void make_bonds(QList<INP> xdinp );
   void make_knopf(QList<INP> xdinp );
   void make_polyeder(QList<INP> xd);
-
+//  void cyclsort(PolyEder & p);
+  int findPoly(int zi, PolyEder p,QList<INP> xd);
   double * jacobi(double a[3][3], double d[3]); 
 };
 #endif

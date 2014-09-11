@@ -594,9 +594,9 @@ void dCube(GLfloat rad){
 }
 void ikosa(double R){
     /*
-    (0, �1, �f)
-    (�1, �f, 0)
-    (�f, 0, �1)
+    (0, Â±1, Â±f)
+    (Â±1, Â±f, 0)
+    (Â±f, 0, Â±1)
     */
 
 double P =R*(1 / 2.0 *(1+sqrt(5)));
@@ -1332,7 +1332,6 @@ void molekul::make_bonds(QList<INP> xdinp){
 
 
 
-
   double gg,soll_abst;
   bcnt=0;
   bd=NULL;
@@ -1340,8 +1339,8 @@ void molekul::make_bonds(QList<INP> xdinp){
 
 
 
-
   for (int i=0;i<xdinp.size();i++) {
+      //printf("i=%d sg=%d part=%d\n",i,xdinp[i].sg,xdinp[i].part);
     for (int j=0;j<xdinp.size();j++) {
       if (i==j) continue;
 
@@ -1378,19 +1377,59 @@ void molekul::make_bonds(QList<INP> xdinp){
 
 
 
-
   bd=(bindi*)realloc(bd,sizeof(bindi)*bcnt);  
 
   bonds_made=1;
 
 
 }
+/*void molekul::cyclsort(PolyEder & p){
+    int mini=qMin(p.ai,p.bi);
+    int dum1,dum2;
+    mini=qMin(mini,p.ci);
+    if (mini==p.ai){
+ //richtig rum
+    }
+    else if(mini==p.bi){
+        dum1=p.ai;
+        p.ai=p.bi;
+        p.bi=p.ci;
+        p.ci=dum1;
+    }
+    else{
+        dum1=p.bi;
+        dum2=p.ai;
+        p.ai=p.ci;
+        p.bi=dum2;
+        p.ci=dum1;
+    }
+}// */
+int molekul::findPoly(int zi, PolyEder p,QList<INP> xd){
+    int answer=-1;
+    //GLfloat d;
+    for (int i=0; i<polyeders.size(); i++){
+   //     if (zi==polyeders.at(i).zi) printf("%d %g\n",zi,fabsf(p.norm*polyeders.at(i).norm));
+        if ((zi==polyeders.at(i).zi)&&(0.7f<fabsf(p.norm*polyeders.at(i).norm))){
+            if (0.1<(polyeders.at(i).mid-xd[zi].kart)*(p.mid-xd[zi].kart)) {
+                //printf("polyeders.at(i).mid %g %g %g polyeders.at(i).norm %g %g %g\n",
+               //        polyeders.at(i).mid.x,polyeders.at(i).mid.y,polyeders.at(i).mid.z,
+                //       polyeders.at(i).norm.x,polyeders.at(i).norm.y,polyeders.at(i).norm.z
+                //       );
+                return i;
+            }
+        }
+    }
+    return answer;
+}
 
 void molekul::make_polyeder(QList<INP> xd){
+    printf("make_polyeder\n");
+    if (!knopf_made) make_knopf(xd);
     V3 zent;
     PolyEder polyvecs;
     polyeders.clear();
-    double vol,r1,r2,r3,soll_abst;//,mr;
+    int index;
+    double vol,r,soll_abst;//,mr;
     for (int i=0; i<xd.size(); i++){
         if (Knopf[i].lz<4)continue;
         zent=xd[i].kart;
@@ -1398,57 +1437,85 @@ void molekul::make_polyeder(QList<INP> xd){
         soll_abst=((Kovalenz_Radien[xd[i].OrdZahl]+Kovalenz_Radien[xd[Knopf[i].lig[0]].OrdZahl])
                -(0.08*fabs((double)ElNeg[xd[i].OrdZahl]-ElNeg[xd[Knopf[i].lig[0]].OrdZahl])))*1.1;
         soll_abst*=0.01;
-        soll_abst*=soll_abst;
+        //soll_abst*=soll_abst;
         for (int j=0; j<Knopf[i].lz;j++){
             for (int k=j+1;k<Knopf[i].lz;k++){
                 for (int l=k+1;l<Knopf[i].lz;l++){
                     vol=((xd[Knopf[i].lig[j]].kart-zent)%(xd[Knopf[i].lig[k]].kart-zent))*(xd[Knopf[i].lig[l]].kart-zent);
+
                     if (fabs(vol)<0.2) continue;
-                    r1=(Distance(xd[Knopf[i].lig[j]].kart,xd[Knopf[i].lig[k]].kart))/soll_abst;
-                    r2=(Distance(xd[Knopf[i].lig[l]].kart,xd[Knopf[i].lig[k]].kart))/soll_abst;
-                    r3=(Distance(xd[Knopf[i].lig[j]].kart,xd[Knopf[i].lig[l]].kart))/soll_abst;
-                    //mr=fmax(r3,fmax(r1,r2));
-                    //if (mr>2.0)continue;
-                    //if (mr<0.9)continue;
-                    if (vol>0){
-                    polyvecs.af=xd[Knopf[i].lig[j]].frac;
-                    polyvecs.bf=xd[Knopf[i].lig[k]].frac;
-                    polyvecs.cf=xd[Knopf[i].lig[l]].frac;
-                    }else{
-                    polyvecs.bf=xd[Knopf[i].lig[j]].frac;
-                    polyvecs.af=xd[Knopf[i].lig[k]].frac;
-                    polyvecs.cf=xd[Knopf[i].lig[l]].frac;
+                    r=sqrt(Distance(xd[Knopf[i].lig[j]].kart,xd[Knopf[i].lig[k]].kart));//soll_abst;
+                    r+=sqrt(Distance(xd[Knopf[i].lig[l]].kart,xd[Knopf[i].lig[k]].kart));//soll_abst;
+                    r+=sqrt(Distance(xd[Knopf[i].lig[j]].kart,xd[Knopf[i].lig[l]].kart));//soll_abst;
+                    polyvecs.edge.clear();
+                    polyvecs.norm=Normalize((xd[Knopf[i].lig[j]].kart-xd[Knopf[i].lig[k]].kart)%(xd[Knopf[i].lig[l]].kart-xd[Knopf[i].lig[k]].kart));
+                    polyvecs.mid=xd[Knopf[i].lig[j]].kart+xd[Knopf[i].lig[k]].kart+xd[Knopf[i].lig[l]].kart;
+                    polyvecs.mid*=1.0/3.0;
+                    polyvecs.zi=i;
+                    index=findPoly(i,polyvecs,xd);
+                    if (index!=-1){
+                       // printf("foundpoly [%d]\n",index);
+                        polyvecs=polyeders[index];
+                       // printf("foundpoly %d %d\n",i,polyvecs.edge.size());
+                        if (!polyvecs.edge.contains(Knopf[i].lig[j])) polyvecs.edge.append(Knopf[i].lig[j]);
+                        if (!polyvecs.edge.contains(Knopf[i].lig[k])) polyvecs.edge.append(Knopf[i].lig[k]);
+                        if (!polyvecs.edge.contains(Knopf[i].lig[l])) polyvecs.edge.append(Knopf[i].lig[l]);
+                        polyvecs.mid=V3(0,0,0);
+                        for (int m=0;m<polyvecs.edge.size();m++){
+                            polyvecs.mid+=xd[polyvecs.edge.at(m)].kart;
+                          printf("%4s ",xd[polyvecs.edge.at(m)].atomname);
+
+                        }
+                        printf("\n");
+                        if (polyvecs.edge.size())  polyvecs.mid*=1.0/polyvecs.edge.size();
+                        polyvecs.norm=Normalize(polyvecs.mid-zent);
+                        polyvecs.umfang=r;
+                        polyeders[index]=polyvecs;
+                    }else {
+                        polyvecs.mid=V3(0,0,0);
+                        polyvecs.edge.append(Knopf[i].lig[j]);
+                        polyvecs.edge.append(Knopf[i].lig[k]);
+                        polyvecs.edge.append(Knopf[i].lig[l]);
+                        for (int m=0;m<polyvecs.edge.size();m++)
+                            polyvecs.mid+=xd[polyvecs.edge.at(m)].kart;
+                        if (polyvecs.edge.size())  polyvecs.mid*=1.0/polyvecs.edge.size();
+                        polyvecs.norm=Normalize(polyvecs.mid-zent);
+                        polyvecs.umfang=r;
+                        polyeders.append(polyvecs);
                     }
-                    polyvecs.color[0]=Acol[xd[i].OrdZahl][0];
-                    polyvecs.color[1]=Acol[xd[i].OrdZahl][1];
-                    polyvecs.color[2]=Acol[xd[i].OrdZahl][2];
-                    polyvecs.color[3]=Acol[xd[i].OrdZahl][3];
-                    polyvecs.an=xd[i].OrdZahl;
-                    polyvecs.volume=fabs(vol);
-                    polyeders.append(polyvecs);
-                    /*printf("Knopf#%d %d-%d-%d Vol=%g %g %g %g %g\n",
-                           i,
-                           Knopf[i].lig[j],
-                           Knopf[i].lig[k],
-                           Knopf[i].lig[l],vol,r1,r2,r3,soll_abst);//  */
-                    /*printf("Knopf#%s %s-%s-%s Vol=%g %g %g %g %g\n",
-                           xd[i].atomname,
-                           xd[Knopf[i].lig[j]].atomname,
-                           xd[Knopf[i].lig[k]].atomname,
-                           xd[Knopf[i].lig[l]].atomname,vol,r1,r2,r3,soll_abst);//  */
+
                 }
             }
         }
-        //printf("----\n");
+      //  printf("----\n");
+    }    
+    minvolpol=10e38;
+    maxvolpol=-10e38;
+    for (int i=0;i<polyeders.size();i++){
+        minvolpol=qMin(minvolpol,polyeders.at(i).umfang);
+        maxvolpol=qMax(maxvolpol,polyeders.at(i).umfang);
+        if (polyeders.at(i).edge.size()>3){
+            int kk=polyeders.at(i).edge.size();
+            for (int nn=1;nn<polyeders.at(i).edge.size()-1;nn++){
+            V3 start=xd[polyeders.at(i).edge.at(0)].kart;
+            for (int j=1; j<kk;j++){
+                if (Distance(start,xd[polyeders.at(i).edge.at(j)].kart)>Distance(start,xd[polyeders.at(i).edge.at((j+1)%kk)].kart)){
+                //    printf("swapping: %s <=> %s %d %d\n",xd[polyeders.at(i).edge.at(j)].atomname,xd[polyeders.at(i).edge.at((j+1)%kk)].atomname,j,(j+1)%kk);
+                    polyeders[i].edge.swap(j,(j+1)%kk);
+                //    printf("next %s \n",xd[polyeders.at(i).edge.at(j)].atomname);
+                }
+                /*else {printf("not swapping: %s <=> %s %d %d %g %g\n",xd[polyeders.at(i).edge.at(j)].atomname,xd[polyeders.at(i).edge.at((j+1)%kk)].atomname,j,(j+1)%kk,
+                            Distance(start,xd[polyeders.at(i).edge.at(j)].kart),Distance(start,xd[polyeders.at(i).edge.at((j+1)%kk)].kart));}// */
+                start=xd[polyeders.at(i).edge.at(j)].kart;
+            }
+            }
+            for (int j=0; j<kk;j++){
+            //    printf("[%4s]",xd[polyeders.at(i).edge.at(j)].atomname);
+            }
+           // printf("\n");
     }
-    maxvolpol=0.0;
-    for (int i=0; i<polyeders.size();i++){
-        frac2kart(polyeders.at(i).af,polyeders[i].ac);
-        frac2kart(polyeders.at(i).bf,polyeders[i].bc);
-        frac2kart(polyeders.at(i).cf,polyeders[i].cc);
-        maxvolpol=fmax(maxvolpol,polyeders.at(i).volume);
     }
-printf("%d Polyeders\n",polyeders.size());
+    printf("polyeders.size() %d\n",polyeders.size());
 }
 
 
@@ -1847,32 +1914,65 @@ int  nonPositiveDefinite=0;
     if (parthigh) dratom=2;
   }
 }
-void molekul::draw_polyeders(){
+void molekul::draw_polyeders(QList<INP> xdinp){
     //printf("draw_polyeders() %d\n",polyeders.size());
+
     if (polyeders.empty()) return;
     V3 nor;
     glEnable(GL_BLEND);
-    //glEnable(GL_CULL_FACE);
+    glDisable(GL_CULL_FACE);
     glPushMatrix();
     glBegin(GL_TRIANGLES);
     for (int i=0; i<polyeders.size();i++){
-        if (!allowedPolyeders.value(polyeders.at(i).an,true)) continue;
-        GLfloat colo[4]={polyeders.at(i).color[0],
-                         polyeders.at(i).color[1],
-                         polyeders.at(i).color[2],
-                         polyeders.at(i).color[3]
-                        };
+         if (!allowedPolyeders.value(xdinp[polyeders.at(i).zi].OrdZahl,true)) continue;
+        GLfloat colo[4]={
+            Acol[xdinp[polyeders.at(i).zi].OrdZahl][0],
+            Acol[xdinp[polyeders.at(i).zi].OrdZahl][1],
+            Acol[xdinp[polyeders.at(i).zi].OrdZahl][2],
+            Acol[xdinp[polyeders.at(i).zi].OrdZahl][3]}
+            ;
         //colo[3]=0.7-(polyeders.at(i).volume/maxvolpol);
-        nor=Normalize((polyeders.at(i).cc-polyeders.at(i).bc)%(polyeders.at(i).ac-polyeders.at(i).bc));
+        nor=polyeders.at(i).norm;
         glNormal3d(nor.x,nor.y,nor.z);
         //glColor4f(0.0f,0.5f,0.0f,0.7f);
+        if(polyShapColor)
+            Farbverlauf((float)i,(float)0.0,(float)polyeders.size()-1.0f,0.5f);
+         // Farbverlauf((float)polyeders.at(i).umfang,(float)maxvolpol-0.01,(float)maxvolpol+0.01,0.5);
+     // printf("maxvolpol %g %g %g\n",maxvolpol,polyeders.at(i).volume,minvolpol);
+        else glColor4fv(colo);
+        if (polyeders.at(i).edge.size()==3){
+        //    glColor4f(0.0f,0.0f,0.0f,0.0f);
+            glVertex3d(xdinp[polyeders.at(i).edge.at(0)].kart.x,xdinp[polyeders.at(i).edge.at(0)].kart.y,xdinp[polyeders.at(i).edge.at(0)].kart.z);
+            glVertex3d(xdinp[polyeders.at(i).edge.at(1)].kart.x,xdinp[polyeders.at(i).edge.at(1)].kart.y,xdinp[polyeders.at(i).edge.at(1)].kart.z);
+            glVertex3d(xdinp[polyeders.at(i).edge.at(2)].kart.x,xdinp[polyeders.at(i).edge.at(2)].kart.y,xdinp[polyeders.at(i).edge.at(2)].kart.z);
+        }
+        else{
+          for (int j=0; j<polyeders.at(i).edge.size();j++){
+              int kk=polyeders.at(i).edge.size();
+              int v1=polyeders.at(i).edge.at(j),v2=polyeders.at(i).edge.at((j+1)%kk);
+              glVertex3d(polyeders.at(i).mid.x,polyeders.at(i).mid.y,polyeders.at(i).mid.z);
+              glVertex3d(
+                      xdinp[v1].kart.x,
+                      xdinp[v1].kart.y,
+                      xdinp[v1].kart.z);
+              glVertex3d(
+                      xdinp[v2].kart.x,
+                      xdinp[v2].kart.y,
+                      xdinp[v2].kart.z);
+          }
 
-        glColor4fv(colo);
-        glVertex3d(polyeders.at(i).ac.x,polyeders.at(i).ac.y,polyeders.at(i).ac.z);
-        glVertex3d(polyeders.at(i).bc.x,polyeders.at(i).bc.y,polyeders.at(i).bc.z);
-        glVertex3d(polyeders.at(i).cc.x,polyeders.at(i).cc.y,polyeders.at(i).cc.z);
+        }
     }
-    glEnd();
+    glEnd();/*
+    glColor3f(0,0,0);
+    glBegin(GL_LINES);
+    for (int i=0; i<polyeders.size();i++){
+    glVertex3d(polyeders.at(i).mid.x,polyeders.at(i).mid.y,polyeders.at(i).mid.z);
+    glVertex3d(polyeders.at(i).mid.x+polyeders.at(i).norm.x,
+               polyeders.at(i).mid.y+polyeders.at(i).norm.y,
+               polyeders.at(i).mid.z+polyeders.at(i).norm.z);
+    }
+    glEnd();*/
     glPopMatrix();
     //glDisable(GL_CULL_FACE);
     glDisable(GL_BLEND);
@@ -1886,8 +1986,8 @@ void molekul::bonds(QList<INP> xdinp){
   glDisable(GL_CULL_FACE);
 
 
- 
-  if (!bonds_made) make_bonds(xdinp);
+
+  if (!knopf_made) make_knopf(xdinp);
   for (int k=0;k<bcnt;k++){
     if (!bondColorStyle) glColor4fv(Acol[xdinp[bd[k].a].OrdZahl]);
     vec=kreuzX(xdinp[bd[k].a].kart.x-xdinp[bd[k].e].kart.x,xdinp[bd[k].a].kart.y-xdinp[bd[k].e].kart.y,xdinp[bd[k].a].kart.z-xdinp[bd[k].e].kart.z,
@@ -2248,7 +2348,7 @@ V3 *  molekul::smoothPoints(V3 *vListe, int N){
  return nL;
 }
 */
-void molekul::Farbverlauf (GLfloat wrt,GLfloat min,GLfloat max){
+void molekul::Farbverlauf (GLfloat wrt,GLfloat min,GLfloat max,GLfloat alpha){
   GLclampd ff[4];
   int lauf=0;
   const GLclampd farbe[6][4]={{1.0,0.0,0.0,1.0},
@@ -2269,13 +2369,14 @@ void molekul::Farbverlauf (GLfloat wrt,GLfloat min,GLfloat max){
   ff[0]=(1.0-nwrt)*farbe[lauf][0]+farbe[lauf+1][0]*nwrt;
   ff[1]=(1.0-nwrt)*farbe[lauf][1]+farbe[lauf+1][1]*nwrt;
   ff[2]=(1.0-nwrt)*farbe[lauf][2]+farbe[lauf+1][2]*nwrt;
-  ff[3]=1.0;
+  ff[3]=alpha;
 
   glColor4dv(ff);
 
 
  return;
 }
+
 /*
 void molekul::drawSline(V3 *vL,int N){
 
@@ -2475,7 +2576,7 @@ void molekul::frac2kart (V3 x, V3 & y){
 
 
   Matrix u;   /*Cholesky decomposition of theReal space Metric tensor
-	      Wird für die Umrechnung von fraktionellen in kartesischen Koordinaten benötigt.*/
+	      Wird fÃÂ¼r die Umrechnung von fraktionellen in kartesischen Koordinaten benÃÂ¶tigt.*/
 
   const double g2r=180.0/M_PI;
   const double phi=sqrt(1-(cos(zelle.al/g2r)*cos(zelle.al/g2r))-(cos(zelle.be/g2r)*cos(zelle.be/g2r))-(cos(zelle.ga/g2r)*cos(zelle.ga/g2r))
@@ -2509,7 +2610,7 @@ void molekul::kart2frac (V3 x, V3 & y){
 
   const double g2r=180.0/M_PI;
   Matrix u;   /*Cholesky decomposition of theReal space Metric tensor
-              Wird für die Umrechnung von fraktionellen in kartesischen Korrdinaten benötigt.*/
+              Wird fÃÂ¼r die Umrechnung von fraktionellen in kartesischen Korrdinaten benÃÂ¶tigt.*/
 
   phi=sqrt(1-pow(cos(zelle.al/g2r),2.0)-pow(cos(zelle.be/g2r),2.0)-pow(cos(zelle.ga/g2r),2.0)+2.0*cos(zelle.al/g2r)*cos(zelle.be/g2r)*cos(zelle.ga/g2r));
   y.x =0.0 ;

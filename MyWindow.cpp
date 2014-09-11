@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=393;
+int rev=394;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -673,7 +673,7 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
 			" If this is checked hydrogen bonds are visualized as stipled yellow sticks.");
 
   QAction *sma =new QAction("show mat",this);
-  sma->setShortcut(tr("§"));
+  sma->setShortcut(tr("Â§"));
   connect(sma,SIGNAL(triggered()),cubeGL,SLOT(showMatrix()));
 // */
   matrixAct->setShortcut(tr("="));
@@ -5296,7 +5296,7 @@ pdb.write(QString("CRYST1%1%2%3%4%5%6           \n")
 
   double phi; 
   const double g2r=180.0/M_PI;
-  Matrix u;   /*Cholesky decomposition of theReal space Metric tensor Wird fÃ¼r die Umrechnung von fraktionellen in kartesischen Korrdinaten benÃ¶tigt.*/ 
+  Matrix u;   /*Cholesky decomposition of theReal space Metric tensor Wird fÃÂ¼r die Umrechnung von fraktionellen in kartesischen Korrdinaten benÃÂ¶tigt.*/ 
   phi=sqrt(1-pow(cos(mol.zelle.al/g2r),2.0)-pow(cos(mol.zelle.be/g2r),2.0)-pow(cos(mol.zelle.ga/g2r),2.0)+2.0*cos(mol.zelle.al/g2r)*cos(mol.zelle.be/g2r)*cos(mol.zelle.ga/g2r));
   u.m11 = 1.0/mol.zelle.a;
   u.m21 = 0.0;
@@ -6528,7 +6528,11 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
           mol.sfac.append(asymmUnit.at(i).OrdZahl);
   }
   sfacMenu->clear();
-  sfacMenu->addAction("Allow polyeder centers:");
+  {
+  QAction *a=sfacMenu->addAction("Polyeder color mode",this,SLOT(polyColorIng(bool)));
+  a->setCheckable(true);
+  a->setChecked(false);
+  }
   sfacMenu->addSeparator();
   for (int i=0; i<mol.sfac.size();i++){
       QAction *a=sfacMenu->addAction(mol.pse(mol.sfac.at(i)),this,SLOT(allowPolyeder()));
@@ -7544,6 +7548,7 @@ void MyWindow::growSymm(int packart,int packatom){
 	    newAtom.frac=mol.zelle.symmops.at(s)*asymmUnit[i].frac+mol.zelle.trans.at(s)+V3(h,k,l);
 	    sprintf(newAtom.atomname,"%s_%d",asymmUnit[i].atomname,j+1);
 	    newAtom.sg=1+j;
+        newAtom.part=asymmUnit[i].part;
 	    newAtom.OrdZahl=asymmUnit[i].OrdZahl;
 	    newAtom.molindex=asymmUnit[i].molindex;
 	    if ((asymmUnit[i].u.m12==0.0)&&(asymmUnit[i].u.m23==0.0)&&(asymmUnit[i].u.m13==0.0)){
@@ -7827,4 +7832,9 @@ void MyWindow::growSymm(int packart,int packatom){
   dock->show();
   dock->setMaximumWidth(width()/5);
   printf("growSymm %d milliseconds with packart = %d\n",speedTest.restart(),packart);
+}
+
+void MyWindow::polyColorIng(bool b){
+    mol.polyShapColor=b;
+    cubeGL->updateGL();
 }
