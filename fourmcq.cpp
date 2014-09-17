@@ -1,6 +1,7 @@
 #include "fourmcq.h"
 #include <QtCore>
 #include <QtGui>
+//üßäö utf8
 FourMCQ::FourMCQ(molekul *mole_, CubeGL *chgl_,QToolBar *toolView, double resol, double wght){
   mole =mole_;
   chgl=chgl_;
@@ -1071,10 +1072,24 @@ void FourMCQ::jnk(){
   txt->moveBy(100,-40);
   txt = scene->addText(QString("df"),QFont("Helvetica",12,QFont::Bold));
   txt->moveBy(-20,20);
-  txt = scene->addText(QString("r"),QFont("Symbol",16,QFont::Bold));
-  txt->moveBy(450,490);
   txt = scene->addText(QString("0"),QFont("Helvetica",12,QFont::Bold));
   txt->moveBy(460,500);
+//#ifdef __APPLE__
+  txt = scene->addText(QString::fromUtf8("𝛒"),QFont("Helvetica",16,QFont::Bold));
+  txt->moveBy(450,490);
+  txt = scene->addText(QString::fromUtf8("𝛒"),QFont("Helvetica",14));
+  txt->moveBy(295,8);
+  txt = scene->addText(QString::fromUtf8("𝛒"),QFont("Helvetica",14));
+  txt->moveBy(295,24);
+  txt = scene->addText(QString::fromUtf8("𝛒"),QFont("Helvetica",14));
+  txt->moveBy(295,40);
+  txt = scene->addText(QString::fromUtf8("𝛒"),QFont("Helvetica",14));
+  txt->moveBy(295,56);
+  txt = scene->addText(QString::fromUtf8("𝛔"),QFont("Helvetica",14));
+  txt->moveBy(295,106);
+/*#else
+  txt = scene->addText(QString("r"),QFont("Symbol",16,QFont::Bold));
+  txt->moveBy(450,490);
   txt = scene->addText(QString("r"),QFont("Symbol",14));
   txt->moveBy(295,8);
   txt = scene->addText(QString("r"),QFont("Symbol",14));
@@ -1085,9 +1100,9 @@ void FourMCQ::jnk(){
   txt->moveBy(295,56);
   txt = scene->addText(QString("s"),QFont("Symbol",14));
   txt->moveBy(295,106);
-
-  txt = scene->addText(QString("Please cite as: 'K. Meindl, J. Henn, Acta Cryst., 2008, A64, 404-418.'"),QFont("Helvetica",8));
-  txt->moveBy(100,512);
+#endif  // */
+  txt = scene->addText(QString("Please cite as: 'K. Meindl, J. Henn, Acta Cryst., 2008, A64, 404-418.'"),QFont("Helvetica",9));
+  txt->moveBy(100,514);
   QGraphicsView *view = new QGraphicsView(scene,jnkdlg);
 
   QVBoxLayout *lt = new QVBoxLayout(jnkdlg);
