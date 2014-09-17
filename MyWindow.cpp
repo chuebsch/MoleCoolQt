@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=396;
+int rev=397;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -842,7 +842,7 @@ createRenameWgd();
   dialogMenu->addAction(editAtomAct);
   dialogMenu->addAction(filterAct);
   dialogMenu->addAction(unfilterAct);
-  dialogMenu->addAction(tr("Open map control"),this,SLOT(openMapControl()));
+  QAction *mapAct=dialogMenu->addAction(QIcon(":/images/mapcontrol.png"),"Open map control",this,SLOT(openMapControl()));
   dialogMenu->addSeparator();
   dialogMenu->addAction("Save current toggel states",cubeGL,SLOT(saveMISettings()));
   dialogMenu->addAction("Load toggle states",cubeGL,SLOT(loadMISettings()));
@@ -958,6 +958,7 @@ createRenameWgd();
   toolSettings->setIconSize(QSize(23,23));
   toolSettings->setMovable(true);
   toolSettings->addAction(editAtomAct);
+  toolSettings->addAction(mapAct);
   toolSettings->addAction(filterAct);
   toolSettings->addAction(unfilterAct);
   toolSettings->addAction(xdSetupAct);
@@ -1026,6 +1027,7 @@ createRenameWgd();
   {
   QDialogButtonBox *buttonBoxMC = new QDialogButtonBox( QDialogButtonBox::Apply | QDialogButtonBox::Cancel);
   QPushButton *applyMC = buttonBoxMC->button(QDialogButtonBox::Apply);
+  QPushButton *jnkButton=buttonBoxMC->addButton("fractal dim. analysis",QDialogButtonBox::ApplyRole);
   QLabel *wl= new QLabel("Factor to downweight weak data");
   QLabel *pl= new QLabel("Map precision: ");
   QLabel *dl= new QLabel("Fo-Fc map: ");
@@ -1037,6 +1039,7 @@ createRenameWgd();
   QLabel *lt= new QLabel("Line transparency: ");
   md = new QDialog(this);
   md->setWindowTitle("Map Control");
+  connect(jnkButton, SIGNAL(clicked()),this, SLOT(jnk()));
   connect(applyMC , SIGNAL(clicked()), this , SLOT(controlMap()));
   connect(applyMC , SIGNAL(clicked()), this , SLOT(openMapControl()));
   connect(buttonBoxMC, SIGNAL(rejected()), md, SLOT(hide()));
@@ -1424,6 +1427,43 @@ void MyWindow::controlMap(){
   fmcq->iso[2] = -f12maps->value();
   fmcq->inimap();
   cubeGL->updateGL();
+}
+void MyWindow::jnk(){
+  fmcq->maptrunc=mapSchnitt->currentIndex ();
+  if ((fmcq->rw!=weak->value())||(fmcq->rr!=mapprec->value())){
+    fmcq->rr =  mapprec->value();
+    fmcq->rw = weak->value();
+
+    QString fouName;
+    if (dirName.contains(QRegExp("m\\d\\d$"))){
+      fouName=dirName;
+      fouName.chop(3);
+      fouName.append("m80");
+      if (fmcq->loadm80AndPerform(fouName.toStdString().c_str()),false){
+        infoKanalNews(QString("<font color=red>Could not load %1!</font><br>").arg(fouName));
+        fmcq->deleteLists();
+
+      }
+    }else{
+      fouName=dirName;
+      fouName.chop(3);
+      fouName.append("fou");
+      //qDebug()<<fouName;
+      if (fmcq->loadFouAndPerform(fouName.toStdString().c_str()),false){
+        infoKanalNews(QString("<font color=red>Could not load %1!</font><br>").arg(fouName));
+        fmcq->deleteLists();
+
+      }
+    }
+  }
+
+  fmcq->lintrans = lineTrans->value();
+  fmcq->linwidth = lineWidth->value();
+  fmcq->map_radius = maprad->value();
+  fmcq->iso[0] = fomaps->value();
+  fmcq->iso[1] = -difmaps->value();
+  fmcq->iso[2] = -f12maps->value();
+  fmcq->jnk();
 }
 
 void MyWindow::addMoreQPeaks(){

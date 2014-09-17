@@ -139,7 +139,7 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
         D[i+3]=cos(T);
         C[i+6]=(D[i]/(C[i]*C[i]));
       } 
-      V=1.-D[3]*D[3]-D[4]*D[4]-D[5]*D[4]+2.*D[3]*D[4]*D[5];
+      V=1.0-D[3]*D[3]-D[4]*D[4]-D[5]*D[5]+2.0*D[3]*D[4]*D[5];
       C[6]/=V;
       C[7]/=V;
       C[8]/=V;
@@ -368,6 +368,8 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
         lr[n].d6,
         lr[n].d7,n); 
       // */
+      if ((lr[n].ih|lr[n].ik|lr[n].il)==0) printf("%4d%4d%4d fo: %12.5f sfo: %10.5f\n",lr[n].ih,lr[n].ik,lr[n].il,lr[n].d1,lr[n].d2);
+
     }
   }
   // /*
@@ -609,7 +611,7 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu){
       lr[nr].d7=wr[nr].d7;
     }
     else readsize = fread(&lr[nr],sizeof(rec64),1,f);
-    if (((lr[nr].ih|lr[nr].ik|lr[nr].il)!=0)&&(abs(lr[nr].ih)<130)&&(abs(lr[nr].ik)<130)&&(abs(lr[nr].il)<130)) nr++;
+    if ((readsize)&&(abs(lr[nr].ih)<130)&&(abs(lr[nr].ik)<130)&&(abs(lr[nr].il)<130)) nr++;//((lr[nr].ih|lr[nr].ik|lr[nr].il)!=0)&&
     if (nr>=LM) {
       fprintf(stderr,"to many reflections in xd.fou file\n");
       return false;
@@ -715,7 +717,8 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu){
       lr[n].ih=lr[k].ih;
       lr[n].ik=lr[k].ik;
       lr[n].il=lr[k].il;
-      /*fprintf(merg,"%4d%4d%4d fo: %12.5f sfo: %10.5f phase: %10.6f a1: %12g b1: %12g f2c %12.5f f2cphase: %10.6f #%d\n",
+      /*if (0==(lr[n].ih|lr[n].il|lr[n].ik))
+      fprintf(stderr,"%4d%4d%4d fo: %12.5f sfo: %10.5f phase: %10.6f a1: %12g b1: %12g f2c %12.5f f2cphase: %10.6f #%d\n",
         lr[n].ih,
         lr[n].ik,
         lr[n].il,
@@ -795,7 +798,7 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu){
         //	if(typ==0) ss=(fmod1)/(C[14]*(s+t)*sintl);
         else if (typ==1) ss=(lr[i].d1)/(C[14]*(s+t)*sintl);
         else ss=lr[i].d6/(C[14]*(s+t)*sintl);
-        if(fmod1>1.E-6) ss=ss/(1.+rw*pow(lr[i].d2/fmod1,4));
+        //if(fmod1>1.E-6) ss=ss/(1.+rw*pow(lr[i].d2/fmod1,4));
         for (int n=0; n<ns;n++){ 
           int j,k,l,m;
           j=(int) (u*sy[0][n]+ v*sy[3][n] + w*sy[6][n]);
@@ -895,7 +898,203 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu){
   delDA[25]=          n2*dy +n3*dz;
   delDA[26]=   n1*dx +n2*dy +n3*dz;
   gen_surface(neu);
+  /*
+  char xdfougrdname[4096];
+  int len=strlen(filename);
+  strncpy(xdfougrdname,filename,len-6);
+  xdfougrdname[len-6]='\0';
+  strcat(xdfougrdname,"xd_fou.grd");
+  FILE *grd=fopen(xdfougrdname,"wt");
+  fprintf(grd,"3DGRDFIL  0\nFOU\n\n! Gridpoints, Origin, Physical Dimensions\n    %d             %d             %d\n    0.50000        0.50000        0.50000    \n"
+   "    %f         %f         %f    \n! Objects\n   0\n! Connections\n  0\n! Values\n",n1,n2,n3,1.0,1.0,1.0);
+  int j=0;
+
+  for (int zi=0;zi<n3;zi++)
+  for (int yi=0;yi<n2;yi++)
+  for (int xi=0;xi<n1;xi++)
+
+          {
+              j++;
+              fprintf(grd,"%18.9E%s" ,datfo_fc[dex(xi,yi,zi)],(((xi+1)%n1)&&(j%6))?"":"\n");
+              j=((xi+1)%n1)?j:0;
+          }
+  fclose(grd);
+  fprintf(stderr,"%s written!",xdfougrdname);
+  */
+  //printf("Volume %g\n",C[14]);
   return true;
+}
+
+void FourMCQ::jnk(){
+  if(!n5)return;
+  float mini=9e37,maxi=-9e37;
+  float f,r,fstep;
+  double df,DM,DS,sigma,w,e_net,e_gross;
+  r=powf((3*(n1-1)*(n2-1)*(n3-1)),1.0f/3.0f);
+//  printf("%d %d %d %d %f\n",n1,n2,n3,n5,r);
+  float *datfo_fcstp=(float*) malloc(sizeof(float)*n5);
+  float invstep=100.0f;
+  float step=1.0f/invstep;
+  float rhomind2=99999.0f,rhomaxd2=-99999.0f;
+  QMap<float,int> hash;
+  QMap<float,float> hashf;
+  DM=0.0;
+  DS=0.0;
+  w=0.0;
+  for (int i=0; i<n5; i++){
+      df=f=datfo_fc[i];
+      mini=qMin(f,mini);
+      maxi=qMax(f,maxi);
+      DM+=df;
+      DS+=df*df;
+      w+=fabs(df);
+      datfo_fcstp[i]=floorf(f*invstep);
+  }// */
+  e_net=DM/n5*C[14];//C[14] ist das Volumen der UC
+  e_gross=w/(2*n5)*C[14];
+  sigma=sqrt((DS/n5)-((DM/n5)*(DM/n5)));
+  printf("%g %g %g",e_net,e_gross,sigma);
+  for (int zi=0;zi<n3;zi++)
+    for (int yi=0;yi<n2;yi++)
+      for (int xi=0;xi<(n1-1);xi++){
+        if (datfo_fcstp[dex(xi,yi,zi)]>datfo_fcstp[dex(xi+1,yi,zi)]){
+          fstep=datfo_fcstp[dex(xi,yi,zi)];
+          int ze=fstep-datfo_fcstp[dex(xi+1,yi,zi)];
+          for (int zii=0; zii<ze; zii++) hash[(fstep-zii)*step]++;
+        }else if (datfo_fcstp[dex(xi,yi,zi)]<datfo_fcstp[dex(xi+1,yi,zi)]){
+          fstep=datfo_fcstp[dex(xi+1,yi,zi)];
+          int ze=fstep-datfo_fcstp[dex(xi,yi,zi)];
+          for (int zii=0; zii<ze; zii++) hash[(fstep-zii)*step]++;
+        }
+      }
+  for (int xi=0;xi<n1;xi++)
+    for (int zi=0;zi<n3;zi++)
+      for (int yi=0;yi<(n2-1);yi++){
+        if (datfo_fcstp[dex(xi,yi,zi)]>datfo_fcstp[dex(xi,yi+1,zi)]){
+          fstep=datfo_fcstp[dex(xi,yi,zi)];
+          int ze=fstep-datfo_fcstp[dex(xi,yi+1,zi)];
+          for (int zii=0; zii<ze; zii++) hash[(fstep-zii)*step]++;
+        }else if (datfo_fcstp[dex(xi,yi,zi)]<datfo_fcstp[dex(xi,yi+1,zi)]){
+          fstep=datfo_fcstp[dex(xi,yi+1,zi)];
+          int ze=fstep-datfo_fcstp[dex(xi,yi,zi)];
+          for (int zii=0; zii<ze; zii++) hash[(fstep-zii)*step]++;
+        }
+      }
+
+  for (int yi=0;yi<n2;yi++)
+    for (int xi=0;xi<n1;xi++)
+      for (int zi=0;zi<(n3-1);zi++){
+        if (datfo_fcstp[dex(xi,yi,zi)]>datfo_fcstp[dex(xi,yi,zi+1)]){
+          fstep=datfo_fcstp[dex(xi,yi,zi)];
+          int ze=fstep-datfo_fcstp[dex(xi,yi,zi+1)];
+          for (int zii=0; zii<ze; zii++) hash[(fstep-zii)*step]++;
+        }else if (datfo_fcstp[dex(xi,yi,zi)]<datfo_fcstp[dex(xi,yi,zi+1)]){
+          fstep=datfo_fcstp[dex(xi,yi,zi+1)];
+          int ze=fstep-datfo_fcstp[dex(xi,yi,zi)];
+          for (int zii=0; zii<ze; zii++) hash[(fstep-zii)*step]++;
+        }
+      }
+  free(datfo_fcstp);
+  //float range=fmaxf(fabsf(mini),fabsf(maxi));
+  QDialog *jnkdlg = new QDialog();
+   QGraphicsScene*scene= new QGraphicsScene(-30,-50,550,580);
+  scene->setBackgroundBrush(QBrush(QColor("#e9f7d6")));
+  scene->clear ();
+  QGraphicsItem *itm;
+  for (int i=0; i<21;i++){
+    itm=scene->addLine(i*25,0,i*25,500,(i%5)?QPen(QColor("#cbdbbb"),0):QPen(QColor("#959d9d"),0));
+    itm->setData(0,-1);
+  }
+  for (int i=0; i<31;i++){
+  itm=scene->addLine(0,i*16.66666666666667,500,i*16.66666666666667,(i%5)?QPen(QColor("#cbdbbb"),0):QPen(QColor("#959d9d"),0));
+  itm->setData(0,-1);
+  }
+  itm=scene->addLine(250,0,250,500,QPen(QColor("#000000"),0));
+  itm=scene->addLine(0,83.33333333333333,500,83.33333333333333,QPen(QColor("#000000"),0));
+  itm=scene->addLine(0,250,500,250,QPen(QColor("#000000"),0));
+  itm=scene->addLine(0,416.6666666666667,500,416.6666666666667,QPen(QColor("#000000"),0));
+  QGraphicsTextItem *txt = scene->addText("3");
+  txt->moveBy(-15,73.33333333333333);
+  txt = scene->addText("2");
+  txt->moveBy(-15,240);
+  txt = scene->addText("1");
+  txt->moveBy(-15,406.6666666666667);
+  txt = scene->addText("-1.0");
+  txt->moveBy(-15,500);
+  txt = scene->addText("0");
+  txt->moveBy(241,500);
+  txt = scene->addText("1.0");
+  txt->moveBy(485,500);
+
+
+  QMapIterator<float, int> i(hash);
+  while (i.hasNext()) {
+    i.next();
+    f=hashf[i.key()]=logf(i.value())/logf(r);
+    scene->addEllipse(250+(i.key())*250,500-((f-0.5)/3.)*500,4,4,QPen(Qt::NoPen),QBrush(QColor("#0907e6")));
+
+    if (f>2){
+        rhomind2=qMin(rhomind2,i.key());
+        rhomaxd2=qMax(rhomaxd2,i.key());
+    }
+   // printf("jnk: %g %g %g %g %g %g\n",i.key(),f,rhomind2,rhomaxd2,250+(i.key())*250,500-((f-0.5)/3.)*500);
+  }
+ // printf("\ndf(0)= %g %d %g %g\n",hashf.value(0.0f),hash.value(0.0f),rhomind2,rhomaxd2);
+
+  float m,b;
+  m=(hashf.value(rhomind2)-hashf.value(rhomind2-step))/step;
+  b=hashf.value(rhomind2)-m*rhomind2;
+  rhomind2=(2.0f-b)/m;
+  m=(hashf.value(rhomaxd2)-hashf.value(rhomaxd2-step))/step;
+  b=hashf.value(rhomaxd2)-m*(rhomaxd2);
+  rhomaxd2=(2.0f-b)/m;
+ // printf("df(0)= %g %d %g %g\n",hashf.value(0.0f),hash.value(0.0f),rhomind2,rhomaxd2);
+  txt = scene->addText(QString("df(0) = %1").arg((double)hashf.value(0.0f),7,'f',2),QFont("Courier",10));
+  txt->moveBy(328,2);
+  txt = scene->addText(QString("min(d=2) = %1 eA^-3").arg((double)rhomind2,7,'f',3),QFont("Courier",10));
+  txt->moveBy(305,18);
+  txt = scene->addText(QString("max(d=2) = %1 eA^-3").arg((double)rhomaxd2,7,'f',3),QFont("Courier",10));
+  txt->moveBy(305,34);
+  txt = scene->addText(QString("min      = %1 eA^-3").arg((double)mini,7,'f',3),QFont("Courier",10));
+  txt->moveBy(305,50);
+  txt = scene->addText(QString("max      = %1 eA^-3").arg((double)maxi,7,'f',3),QFont("Courier",10));
+  txt->moveBy(305,66);
+  txt = scene->addText(QString("e_net    = %1 e").arg((double)e_net,8,'g',3),QFont("Courier",10));
+  txt->moveBy(295,82);
+  txt = scene->addText(QString("e_gross  = %1 e").arg((double)e_gross,8,'g',3),QFont("Courier",10));
+  txt->moveBy(295,98);
+  txt = scene->addText(QString("         = %1 eA^-3").arg((double)sigma,8,'f',3),QFont("Courier",10));
+  txt->moveBy(295,116);
+  txt = scene->addText(QString("nx ny nz  %1 x %2 x %3 = %4").arg(n1).arg(n2).arg(n3).arg(n5),QFont("Courier",9));
+  txt->moveBy(30,2);
+  txt = scene->addText(QString("fractal dimension vs. residual density"),QFont("Helvetica",14,QFont::Bold));
+  txt->moveBy(100,-40);
+  txt = scene->addText(QString("df"),QFont("Helvetica",12,QFont::Bold));
+  txt->moveBy(-20,20);
+  txt = scene->addText(QString("r"),QFont("Symbol",16,QFont::Bold));
+  txt->moveBy(450,490);
+  txt = scene->addText(QString("0"),QFont("Helvetica",12,QFont::Bold));
+  txt->moveBy(460,500);
+  txt = scene->addText(QString("r"),QFont("Symbol",14));
+  txt->moveBy(295,8);
+  txt = scene->addText(QString("r"),QFont("Symbol",14));
+  txt->moveBy(295,24);
+  txt = scene->addText(QString("r"),QFont("Symbol",14));
+  txt->moveBy(295,40);
+  txt = scene->addText(QString("r"),QFont("Symbol",14));
+  txt->moveBy(295,56);
+  txt = scene->addText(QString("s"),QFont("Symbol",14));
+  txt->moveBy(295,106);
+
+  txt = scene->addText(QString("Please cite as: 'K. Meindl, J. Henn, Acta Cryst., 2008, A64, 404-418.'"),QFont("Helvetica",8));
+  txt->moveBy(100,512);
+  QGraphicsView *view = new QGraphicsView(scene,jnkdlg);
+
+  QVBoxLayout *lt = new QVBoxLayout(jnkdlg);
+  lt->addWidget(view);
+  jnkdlg->show();
+
+
 }
 
 void FourMCQ::deleteLists(){
@@ -1063,13 +1262,13 @@ int FourMCQ::readMas(const char *filename){
 
       for (i=0;i<3;i++){
         if (C[i]<0.1) return 0;
-        T=.0174533*C[i+3];
+        T=0.0174532925199433*C[i+3];
         if (T<0.001) return 0;
         D[i]=sin(T);
         D[i+3]=cos(T);
         C[i+6]=(D[i]/(C[i]*C[i]));
       } 
-      V=1.-D[3]*D[3]-D[4]*D[4]-D[5]*D[4]+2.*D[3]*D[4]*D[5];
+      V=1.0-D[3]*D[3]-D[4]*D[4]-D[5]*D[5]+2.*D[3]*D[4]*D[5];
       C[6]/=V;
       C[7]/=V;
       C[8]/=V;
@@ -1083,7 +1282,7 @@ int FourMCQ::readMas(const char *filename){
       cral=(D[4]*D[5]-D[3])/(D[1]*D[2]); 
       crbe=(D[5]*D[3]-D[4])/(D[2]*D[0]);
       crga=(D[3]*D[4]-D[5])/(D[0]*D[1]);
-      /*      printf("\nC:\n1:%g 2:%g 3:%g\n  4:%g 5:%g 6:%g\n  7:%g 8:%g 9:%g\n  10:%g 11:%g 12:%g   %g\n",
+           /* printf("\nC:\n1:%g 2:%g 3:%g\n  4:%g 5:%g 6:%g\n  7:%g 8:%g 9:%g\n  10:%g 11:%g 12:%g   %g\n",
               C[0],C[1],C[2],C[3],C[4],C[5],C[6],C[7],C[8],C[9],C[10],C[11],C[14] 
               );
               printf("\nD:\n1:%g 2:%g 3:%g\n  4:%g 5:%g 6:%g\n  7:%g 8:%g 9:%g\n ", 
@@ -1670,3 +1869,16 @@ void FourMCQ::MakeElement( int ix, int iy, int iz ,int s1, int s2) {//das ist de
   }
 
 }
+inline int FourMCQ::dex(int x,int y, int z){
+   /*! dex is used to adress elemennts of a one dimensional array by three indizes like it is a 3 dimensional array
+    * @param x,y,z tree dimensional indices
+    * if x is < 0 or > n1 it is not a problem because % is used to clamp it.
+    * if y is < 0 or > n2 it is not a problem because % is used to clamp it.
+    * if z is < 0 or > n3 it is not a problem because % is used to clamp it.
+    * \returns index of an 1 dimensional array
+    */
+     x=(x+n1)%n1;
+     y=(y+n2)%n2;
+     z=(z+n3)%n3;
+    return x+n1*(y+n2*z);
+ }

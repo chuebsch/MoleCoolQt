@@ -70,7 +70,10 @@ Q_OBJECT
 	  CubeGL *chgl;
 	  void deleteLists();
 	  void killmaps();
+      void jnk();
+
   public slots:
+
           void bewegt(V3 v);
           void inimap();
           void change_iso(int numsteps,int diff);
@@ -104,6 +107,7 @@ void decodeSymm2(QString symmCard);
 void deletes(char *s, int count);
 int readMas(const char *filename);
 void sorthkl(int nr, rec64 r[]);
+int dex(int x,int y, int z);
 };
 
 #endif
