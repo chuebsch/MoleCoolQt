@@ -954,7 +954,7 @@ void FourMCQ::jnk(){
   e_net=DM/n5*C[14];//C[14] ist das Volumen der UC
   e_gross=w/(2*n5)*C[14];
   sigma=sqrt((DS/n5)-((DM/n5)*(DM/n5)));
-  printf("%g %g %g",e_net,e_gross,sigma);
+  printf("%g %g %g\n",e_net,e_gross,sigma);
   for (int zi=0;zi<n3;zi++)
     for (int yi=0;yi<n2;yi++)
       for (int xi=0;xi<(n1-1);xi++){
@@ -1088,9 +1088,9 @@ void FourMCQ::jnk(){
   txt = scene->addText(QString::fromUtf8("𝛔"),QFont("Helvetica",14));
   txt->moveBy(295,106);
 #else
-txt = scene->addText(QString::fromUtf8("ϱ"),QFont("Helvetica",16,QFont::Bold));
+txt = scene->addText(QString::fromUtf8("ρ"),QFont("Helvetica",16,QFont::Bold));
 txt->moveBy(450,490);
-txt = scene->addText(QString::fromUtf8("ϱ"),QFont("Helvetica",14));
+txt = scene->addText(QString::fromUtf8("ρ"),QFont("Helvetica",14));
 txt->moveBy(295,8);
 txt = scene->addText(QString::fromUtf8("ϱ"),QFont("Helvetica",14));
 txt->moveBy(295,24);
