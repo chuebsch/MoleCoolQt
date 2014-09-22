@@ -1382,7 +1382,7 @@ void MyWindow::doMapsNow(bool b){
     fouName=dirName;
     fouName.chop(3);
     fouName.append("fou");
-    if (fmcq->loadFouAndPerform(fouName.toStdString().c_str()),false){
+    if (!fmcq->loadFouAndPerform(fouName.toStdString().c_str(),false)){
       infoKanalNews(QString("<font color=red>Could not load %1!</font><br>").arg(fouName));
       fmcq->deleteLists();
     }  
@@ -1401,7 +1401,7 @@ void MyWindow::controlMap(){
       fouName=dirName;
       fouName.chop(3);
       fouName.append("m80");
-      if (fmcq->loadm80AndPerform(fouName.toStdString().c_str()),false){
+      if (!fmcq->loadm80AndPerform(fouName.toStdString().c_str(),false)){
         infoKanalNews(QString("<font color=red>Could not load %1!</font><br>").arg(fouName));
         fmcq->deleteLists();
 
@@ -1411,7 +1411,7 @@ void MyWindow::controlMap(){
       fouName.chop(3);
       fouName.append("fou");
       //qDebug()<<fouName;
-      if (fmcq->loadFouAndPerform(fouName.toStdString().c_str()),false){
+      if (!fmcq->loadFouAndPerform(fouName.toStdString().c_str(),false)){
         infoKanalNews(QString("<font color=red>Could not load %1!</font><br>").arg(fouName));
         fmcq->deleteLists();
 
@@ -1429,33 +1429,32 @@ void MyWindow::controlMap(){
   cubeGL->updateGL();
 }
 void MyWindow::jnk(){
-  fmcq->maptrunc=mapSchnitt->currentIndex ();
-  if ((fmcq->rw!=weak->value())||(fmcq->rr!=mapprec->value())){
-    fmcq->rr =  mapprec->value();
-    fmcq->rw = weak->value();
+  fmcq->maptrunc=mapSchnitt->currentIndex ();  
+  fmcq->rr =  mapprec->value();
+  fmcq->rw = weak->value();
 
-    QString fouName;
-    if (dirName.contains(QRegExp("m\\d\\d$"))){
+  QString fouName;
+  if (dirName.contains(QRegExp("m\\d\\d$"))){
       fouName=dirName;
       fouName.chop(3);
       fouName.append("m80");
-      if (fmcq->loadm80AndPerform(fouName.toStdString().c_str()),false){
+      if (!fmcq->loadm80AndPerform(fouName.toStdString().c_str(),false)){
         infoKanalNews(QString("<font color=red>Could not load %1!</font><br>").arg(fouName));
         fmcq->deleteLists();
 
       }
-    }else{
+  }else{
       fouName=dirName;
       fouName.chop(3);
       fouName.append("fou");
-      //qDebug()<<fouName;
-      if (fmcq->loadFouAndPerform(fouName.toStdString().c_str()),false){
-        infoKanalNews(QString("<font color=red>Could not load %1!</font><br>").arg(fouName));
+      fprintf(stderr,"%s jnk %p",fouName.toStdString().c_str(),fmcq);
+      if (!fmcq->loadFouAndPerform(fouName.toStdString().c_str(),false,4)){
+        infoKanalNews(QString("<font color=red>Could not load %1 for jnk!</font><br>").arg(fouName));
         fmcq->deleteLists();
 
       }
-    }
   }
+
 
   fmcq->lintrans = lineTrans->value();
   fmcq->linwidth = lineWidth->value();
@@ -1464,6 +1463,7 @@ void MyWindow::jnk(){
   fmcq->iso[1] = -difmaps->value();
   fmcq->iso[2] = -f12maps->value();
   fmcq->jnk();
+  cubeGL->updateGL();
 }
 
 void MyWindow::addMoreQPeaks(){

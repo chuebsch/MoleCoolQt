@@ -51,10 +51,10 @@ struct FNode
 class FourMCQ:public QObject{ 
 Q_OBJECT
   public:
-          float *datfo,*datfo_fc,*datf1_f2;
+          float *datfo,*datfo_fc,*datf1_f2,*datfo_f2;
           FourMCQ(molekul *mole_, CubeGL *chgl_,QToolBar *toolView, double resol=2.5, double wght=1.0);
 	  ~FourMCQ();
-          bool loadFouAndPerform(const char filename[],bool neu=true);
+          bool loadFouAndPerform(const char filename[],bool neu=true,int maxmap=3);
           bool loadm80AndPerform(const char filename[],bool neu=true);
           double lintrans,linwidth;
           float sigma[3];
@@ -83,12 +83,14 @@ Q_OBJECT
   private:
 	  double C[15],D[9],sy[12][192],wave,sintl,cral,crbe,crga;
 	  inline int Intersect( double& vm, double& vp ){ return vm*vp <= 0.0 && (vm<0.0 || vp<0.0); }
+      QString path,title;
 	  V3  delDA[27];
 	  fftwf_plan  fwd_plan;
           fftwf_complex *B;
           FNode *nodex,*nodey,*nodez;
 	  rec64 lr[LM];
 	  reco wr[LM];
+      float fc2[LM][3];
 	  char cen,git;
           int nr,nc,ns;
 	  int mtyp;
