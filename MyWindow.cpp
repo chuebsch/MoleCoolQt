@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=403;
+int rev=404;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -1447,7 +1447,7 @@ void MyWindow::jnk(){
       fouName=dirName;
       fouName.chop(3);
       fouName.append("fou");
-      fprintf(stderr,"%s jnk %p",fouName.toStdString().c_str(),fmcq);
+      fprintf(stderr,"%s jnk %p\n",fouName.toStdString().c_str(),fmcq);
       if (!fmcq->loadFouAndPerform(fouName.toStdString().c_str(),false,4)){
         infoKanalNews(QString("<font color=red>Could not load %1 for jnk!</font><br>").arg(fouName));
         fmcq->deleteLists();
