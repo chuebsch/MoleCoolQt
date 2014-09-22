@@ -1198,7 +1198,7 @@ void FourMCQ::jnk(){
   txt->moveBy(-20,20);
   txt = scene->addText(QString("0"),QFont("Helvetica",12,QFont::Bold));
   txt->moveBy(460,500);
-#ifdef __APPLE__
+/*#ifdef __APPLE__
   txt = scene->addText(QString::fromUtf8("𝛒"),QFont("Helvetica",16,QFont::Bold));
   txt->moveBy(450,490);
   txt = scene->addText(QString::fromUtf8("𝛒"),QFont("Helvetica",14));
@@ -1211,7 +1211,7 @@ void FourMCQ::jnk(){
   txt->moveBy(295,56);
   txt = scene->addText(QString::fromUtf8("𝛔"),QFont("Helvetica",14));
   txt->moveBy(295,106);
-#else
+#else*/
 txt = scene->addText(QString::fromUtf8("ρ"),QFont("Helvetica",16,QFont::Bold));
 txt->moveBy(450,490);
 txt = scene->addText(QString::fromUtf8("ρ"),QFont("Helvetica",14));
@@ -1224,7 +1224,7 @@ txt = scene->addText(QString::fromUtf8("ρ"),QFont("Helvetica",14));
 txt->moveBy(295,56);
 txt = scene->addText(QString::fromUtf8("σ"),QFont("Helvetica",14));
 txt->moveBy(295,110);
-#endif  // */
+//#endif  // */
 txt = scene->addText(QString("Please cite as: 'K. Meindl, J. Henn, Acta Cryst., 2008, A64, 404-418.'"),QFont("Helvetica",9));
 txt->moveBy(100,514);
 if (datfo_f2!=NULL){
