@@ -1304,6 +1304,110 @@ void FourMCQ::trimm(char s[]){
   s[j]='\0';
 }
 
+void FourMCQ::exportMaps(int na, const char filename[], const char atomlist[]){
+  FILE *fo,*fof1,*f1f2;
+  char foname[4096];
+  char fof1name[4096];
+  char f1f2name[4096];
+  int len=strlen(filename);
+  float factor=0.1481847095290449;//a0**3
+  double a0=0.52917720859;  
+  int i=0;
+  //
+  //FO MAP
+  //
+  V3 dx1=V3(1.0/(n1),0,0);
+  V3 dy1=V3(0,1.0/(n2),0);
+  V3 dz1=V3(0,0,1.0/(n3));
+  mole->frac2kart(dx1,dx1); 
+  mole->frac2kart(dy1,dy1); 
+  mole->frac2kart(dz1,dz1);     
+  
+  strncpy(foname,filename,len-4);
+  foname[len-4]='\0';
+  strcat(foname,"_fo_densitymap.cube");
+  fo=fopen(foname,"w");
+  if ((fo==NULL)||(datfo==NULL)) return ;
+  fprintf(fo,"F observed map written by MoleCoolQt\nDensity obtained from Fo in xd.fou with phases of model1 transformed using fft\n");
+  fprintf(fo,"%5d%12.6f%12.6f%12.6f\n",na,
+      (dx1.x+dy1.x+dz1.x)*0.5/a0,
+      (dx1.y+dy1.y+dz1.y)*0.5/a0,
+      (dx1.z+dy1.z+dz1.z)*0.5/a0
+//0.0,0.0,0.0
+      );
+  fprintf(fo,"%5d%12.6f%12.6f%12.6f\n",n1,dx1.x/a0,dx1.y/a0,dx1.z/a0);
+  fprintf(fo,"%5d%12.6f%12.6f%12.6f\n",n2,dy1.x/a0,dy1.y/a0,dy1.z/a0);
+  fprintf(fo,"%5d%12.6f%12.6f%12.6f"  ,n3,dz1.x/a0,dz1.y/a0,dz1.z/a0);//no newline here because it is in atomlist
+  fprintf(fo,atomlist);
+  for (int xi=0;xi<n1;xi++)
+    for (int yi=0;yi<n2;yi++)
+      for (int zi=0;zi<n3;zi++)
+      {
+        fprintf(fo,"%s%13.5E",(((i%6)==0)?"\n":""),datfo[dex(xi,yi,zi)]*factor);
+        i++;
+      }
+  fclose(fo);
+  //
+  //FO-F1 MAP
+  //
+
+  strncpy(fof1name,filename,len-4);
+  fof1name[len-4]='\0';
+  strcat(fof1name,"_fo-fmod1_densitymap.cube");
+  fof1=fopen(fof1name,"w");
+  if (fof1==NULL) return ;
+  fprintf(fof1,"F obs-fmod1 map written by MoleCoolQt\nDifferene density Fo-fc in xd.fou transformed using fft\n");
+  fprintf(fof1,"%5d%12.6f%12.6f%12.6f\n",na,
+     (dx1.x+dy1.x+dz1.x)*0.5/a0,
+     (dx1.y+dy1.y+dz1.y)*0.5/a0,
+     (dx1.z+dy1.z+dz1.z)*0.5/a0
+//0.0,0.0,(dx.z+dy.z+dz.z)/a0
+      );
+  fprintf(fof1,"%5d%12.6f%12.6f%12.6f\n",n1,dx1.x/a0,dx1.y/a0,dx1.z/a0);
+  fprintf(fof1,"%5d%12.6f%12.6f%12.6f\n",n2,dy1.x/a0,dy1.y/a0,dy1.z/a0);
+  fprintf(fof1,"%5d%12.6f%12.6f%12.6f"  ,n3,dz1.x/a0,dz1.y/a0,dz1.z/a0);//no newline here because it is in atomlist
+  fprintf(fof1,atomlist);
+  for (int xi=0;xi<n1;xi++)
+    for (int yi=0;yi<n2;yi++)
+      for (int zi=0;zi<n3;zi++)
+      {
+        fprintf(fof1,"%s%13.5E",(((i%6)==0)?"\n":""),datfo_fc[dex(xi,yi,zi)]*factor);
+        i++;
+      }
+  fclose(fof1);
+  //
+  //F1-F2 MAP
+  //
+
+  if (datf1_f2!=NULL){
+    strncpy(f1f2name,filename,len-4);
+    f1f2name[len-4]='\0';
+    strcat(f1f2name,"_fmod1-fmod2_densitymap.cube");
+    f1f2=fopen(f1f2name,"w");
+    if (f1f2==NULL) return ;
+  fprintf(f1f2,"F fmod1-fmod2 map written by MoleCoolQt\nDifferene density fmod1-fmod2 in xd.fou transformed using fft\n");
+  fprintf(f1f2,"%5d%12.6f%12.6f%12.6f\n",na,
+     (dx1.x+dy1.x+dz1.x)*0.5/a0,
+     (dx1.y+dy1.y+dz1.y)*0.5/a0,
+     (dx1.z+dy1.z+dz1.z)*0.5/a0
+//0.0,0.0,(dx.z+dy.z+dz.z)/a0
+      );
+  fprintf(f1f2,"%5d%12.6f%12.6f%12.6f\n",n1,dx1.x/a0,dx1.y/a0,dx1.z/a0);
+  fprintf(f1f2,"%5d%12.6f%12.6f%12.6f\n",n2,dy1.x/a0,dy1.y/a0,dy1.z/a0);
+  fprintf(f1f2,"%5d%12.6f%12.6f%12.6f"  ,n3,dz1.x/a0,dz1.y/a0,dz1.z/a0);//no newline here because it is in atomlist
+  fprintf(f1f2,atomlist);
+  for (int xi=0;xi<n1;xi++)
+    for (int yi=0;yi<n2;yi++)
+      for (int zi=0;zi<n3;zi++)
+      {
+        fprintf(f1f2,"%s%13.5E",(((i%6)==0)?"\n":""),datf1_f2[dex(xi,yi,zi)]*factor);
+        i++;
+      }
+
+    fclose(f1f2);
+  }
+}
+
 void FourMCQ::deletes(char *s, int count){
   if ((s==NULL)||(count <1)||((size_t)count>strlen(s))) return;
   for (int i=0; i<count; i++) s[i]=' ';
@@ -1397,7 +1501,7 @@ int FourMCQ::readMas(const char *filename){
   FILE *f;
   char masname[4096];
   int len=strlen(filename);
-  char line[122],*dum;
+  char line[122];//,*dum;
   //size_t zlen=120;
   int ok=0;
   int i;double T,V;
@@ -1439,7 +1543,8 @@ int FourMCQ::readMas(const char *filename){
      );//  */
   ns=1;
   do{
-    dum=fgets(line,120,f);
+    //dum=
+      fgets(line,120,f);
     if (!strncmp(line,"TITLE",5)) {
       sscanf(line,"TITLE %[^!\r\n]",titl);
       trimm(titl);

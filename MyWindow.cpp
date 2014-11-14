@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=404;
+int rev=405;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -339,7 +339,7 @@ MyWindow::MyWindow( QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(pa
 		     "<p>&Dagger;: Implemetation is still experimental!");
  
   act1 =fileMenu->addAction(QIcon(":/images/diskette.png"),
-			    tr("&Save"),this,SLOT(saveScene()),
+			    tr("&Save screenshot"),this,SLOT(saveScene()),
 			    QKeySequence(tr("S","File|Save")));
   act1->setWhatsThis("Click here to <b>save a screenshot</b> of your stucture. Currently <b>MoleCoolQt</b> can save <b>JPG BMP PPM</b> and <b>PNG</b> files. "
 		     "You can scale the resolution of the stored images by a factor. This factor can be chaged in the 'Settings' menu. "
@@ -360,6 +360,7 @@ MyWindow::MyWindow( QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(pa
   for (int i = 0; i < MaxRecentFiles; ++i)
     fileMenu->addAction(recentFileActs[i]);
   fileMenu->addSeparator();
+  fileMenu->addAction("Export Fourier Maps",this,SLOT(exportFMaps()));
   fileMenu->addAction(createmoliso);
   fileMenu->addAction(noMoliso);
   ldipAct = fileMenu->addAction(QIcon(":images/dipole.png"),tr("Load &Dipole moments"),this,SLOT(openDipoleFile()),QKeySequence(tr("D", "File|Load &Dipole moments"))); 
@@ -5171,6 +5172,7 @@ void cifloop(const QString tag,const QString value,int loopat){
   if (tag=="_atom_site_fract_y") {if (ola!=loopat) asymmUnit.append(newAtom); v.remove(QRegExp("\\(\\d+\\)")); asymmUnit[loopat].frac.y=v.toDouble(); ola=loopat; return;}
   if (tag=="_atom_site_fract_z") {if (ola!=loopat) asymmUnit.append(newAtom); v.remove(QRegExp("\\(\\d+\\)")); asymmUnit[loopat].frac.z=v.toDouble(); ola=loopat; return;}
   if (tag=="_atom_site_label") {if (ola!=loopat) asymmUnit.append(newAtom); sprintf(asymmUnit[loopat].atomname,"%s",v.toStdString().c_str()); ola=loopat; return;}
+  if (tag=="_atom_site_disorder_group") {if (v=="?") return; v.remove(QRegExp("\\(\\d+\\)")); v.replace(".","0");asymmUnit[loopat].part=v.toInt();return;}
   if (tag=="_atom_site_adp_type") {if (v=="Uani") anisIndex.append(loopat);return;}
   if (tag=="_atom_site_type_symbol") {
       if (ola!=loopat) asymmUnit.append(newAtom);
@@ -6696,6 +6698,22 @@ void MyWindow::loadDipoleMoments(QString fileName){
   update();
 }
 
+void  MyWindow::exportFMaps(){
+  QString al;
+  const double a0 = 0.52917720859;
+  int ina=0;
+  for (int i=0; i<asymmUnit.size();i++){
+    if (asymmUnit[i].OrdZahl<0) continue;
+    ina++;
+  }
+  for (int i=0; i<asymmUnit.size();i++){
+    if (asymmUnit[i].OrdZahl<0) continue;
+    mol.frac2kart(asymmUnit[i].frac,asymmUnit[i].kart);
+    al.append(QString("\n%1%2%3%4%5").arg(asymmUnit[i].OrdZahl+1,5).arg(asymmUnit[i].OrdZahl+1.0,12,'f',6).arg(asymmUnit[i].kart.x/a0,12,'f',6).arg(asymmUnit[i].kart.y/a0,12,'f',6).arg(asymmUnit[i].kart.z/a0,12,'f',6));
+  }
+  fmcq->exportMaps(ina, dirName.toStdString().c_str(), al.toStdString().c_str());
+
+}
 
 void MyWindow::initLists(QList<INP> xd){
   dFilter->setVisible(true);

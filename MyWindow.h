@@ -101,6 +101,7 @@ public slots:
      }
      void findAtoms();
      void editAtomColor();
+     void exportFMaps();
      void openFile();
      void openDipoleFile();
      void removeDipoleMoments();

@@ -1347,7 +1347,7 @@ void molekul::make_bonds(QList<INP> xdinp){
 
 
       if((xdinp[i].OrdZahl<0)||(xdinp[j].OrdZahl<0)) continue;
-      if (((xdinp[i].part<0)||(xdinp[j].part<0))&&((xdinp[i].sg!=xdinp[j].sg)||((xdinp[i].part!=xdinp[j].part)))) continue; //part negative
+      if (((xdinp[i].part<0)||(xdinp[j].part<0))&&((xdinp[i].sg!=xdinp[j].sg)||((xdinp[i].part*xdinp[j].part)&&(xdinp[i].part!=xdinp[j].part)))) continue; //part negative
       if ((xdinp[i].part>0)&&(xdinp[j].part>0)&&(xdinp[i].part!=xdinp[j].part)) continue; //different part
       if ((xdinp[i].OrdZahl<83)&&(xdinp[j].OrdZahl<83)&&(xdinp[i].OrdZahl>=0)&&(xdinp[j].OrdZahl>=0)){
 	soll_abst=((Kovalenz_Radien[xdinp[i].OrdZahl]+

@@ -56,6 +56,7 @@ Q_OBJECT
 	  ~FourMCQ();
           bool loadFouAndPerform(const char filename[],bool neu=true,int maxmap=3);
           bool loadm80AndPerform(const char filename[],bool neu=true);
+          void exportMaps(int na, const char filename[], const char atomlist[]);
           double lintrans,linwidth;
           float sigma[3];
           float iso[3];
