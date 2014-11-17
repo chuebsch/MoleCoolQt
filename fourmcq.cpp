@@ -1343,7 +1343,8 @@ void FourMCQ::exportMaps(int na, const char filename[], const char atomlist[]){
     for (int yi=0;yi<n2;yi++)
       for (int zi=0;zi<n3;zi++)
       {
-        fprintf(fo,"%s%13.5E",(((i%6)==0)?"\n":""),datfo[dex(xi,yi,zi)]*factor);
+        //fprintf(fo,"%s%13.5E",(((i%6)==0)?"\n":""),datfo[dex(xi,yi,zi)]*factor);
+        fprintf(fo,"%s",QString("%1%2").arg(((i%6)==0)?"\n":"").arg(datfo[dex(xi,yi,zi)]*factor,13,'E',5).toStdString().c_str());
         i++;
       }
   fclose(fo);
@@ -1371,7 +1372,8 @@ void FourMCQ::exportMaps(int na, const char filename[], const char atomlist[]){
     for (int yi=0;yi<n2;yi++)
       for (int zi=0;zi<n3;zi++)
       {
-        fprintf(fof1,"%s%13.5E",(((i%6)==0)?"\n":""),datfo_fc[dex(xi,yi,zi)]*factor);
+        //fprintf(fof1,"%s%13.5E",(((i%6)==0)?"\n":""),datfo_fc[dex(xi,yi,zi)]*factor);
+        fprintf(fof1,"%s",QString("%1%2").arg(((i%6)==0)?"\n":"").arg(datfo_fc[dex(xi,yi,zi)]*factor,13,'E',5).toStdString().c_str());
         i++;
       }
   fclose(fof1);
@@ -1400,7 +1402,8 @@ void FourMCQ::exportMaps(int na, const char filename[], const char atomlist[]){
     for (int yi=0;yi<n2;yi++)
       for (int zi=0;zi<n3;zi++)
       {
-        fprintf(f1f2,"%s%13.5E",(((i%6)==0)?"\n":""),datf1_f2[dex(xi,yi,zi)]*factor);
+     //   fprintf(f1f2,"%s%13.5E",(((i%6)==0)?"\n":""),datf1_f2[dex(xi,yi,zi)]*factor);
+        fprintf(f1f2,"%s",QString("%1%2").arg(((i%6)==0)?"\n":"").arg(datf1_f2[dex(xi,yi,zi)]*factor,13,'E',5).toStdString().c_str());
         i++;
       }
 
