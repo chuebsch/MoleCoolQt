@@ -112,8 +112,8 @@ void MolIso::legende(){
   glEndList();
 }
 
-void MolIso::loadMI(QString fname, bool om){
-
+void MolIso::loadMI(QString fname, bool om, bool mima){
+ printf("mima %s\n",(mima)?"true":"false");
   for (int i=0;i<6;i++){
     if ((mibas)&&(glIsList(mibas+i))) {
       // printf("deleting list #%d\n",chgl->foubas[fac]);
@@ -133,8 +133,10 @@ void MolIso::loadMI(QString fname, bool om){
   QString all =sf.readAll();
   if (all.isEmpty()) {qDebug()<<"Can not read  "<<fname<<". may be it is empty or corrupt!"; exit(0);}
   QStringList lines = all.split(QRegExp("[\n\r]{1,2}")); 
+  if (mima){
   min=1e99;
   max=-1e99;
+  }
   if (lines.size()){
 
     balken->setMinimum(0);
@@ -173,8 +175,10 @@ void MolIso::loadMI(QString fname, bool om){
 	}
 
 	v.direct=0;
+        if(mima){
 	min=(min>v.color)?v.color:min;
 	max=(max<v.color)?v.color:max;
+        }
 	orte.append(v);
       }
     }
@@ -242,13 +246,14 @@ void MolIso::loadMI(QString fname, bool om){
       }
     }
   }  
-
   balken->setValue(lines[0].toInt());
   glNewList(mibas, GL_COMPILE );{                       //Isooberfl"ache ::Perspektive 1     
     glPushMatrix();{
       glScaled( L, L, L );
       PXsort();
+if (!mima) glDisable( GL_DEPTH_TEST ); 
       DrawPlys();
+if (!mima) glEnable( GL_DEPTH_TEST ); 
     }glPopMatrix();
   }glEndList();
 
@@ -258,7 +263,9 @@ void MolIso::loadMI(QString fname, bool om){
     glPushMatrix();{
       glScaled( L, L, L );
       Pxsort();
+if (!mima) glDisable( GL_DEPTH_TEST ); 
       DrawPlys();
+if (!mima) glEnable( GL_DEPTH_TEST ); 
     }glPopMatrix();
   }glEndList();
 
@@ -267,7 +274,9 @@ void MolIso::loadMI(QString fname, bool om){
     glPushMatrix();{
       glScaled( L, L, L );
       PYsort();
+if (!mima) glDisable( GL_DEPTH_TEST ); 
       DrawPlys();
+if (!mima) glEnable( GL_DEPTH_TEST ); 
     }glPopMatrix();
   }glEndList();
 
@@ -276,7 +285,9 @@ void MolIso::loadMI(QString fname, bool om){
     glPushMatrix();{
       glScaled( L, L, L );
       Pysort();
+if (!mima) glDisable( GL_DEPTH_TEST ); 
       DrawPlys();
+if (!mima) glEnable( GL_DEPTH_TEST ); 
     }glPopMatrix();
   }glEndList();
 
@@ -285,7 +296,9 @@ void MolIso::loadMI(QString fname, bool om){
     glPushMatrix();{
       glScaled( L, L, L );
       PZsort();
+if (!mima) glDisable( GL_DEPTH_TEST ); 
       DrawPlys();
+if (!mima) glEnable( GL_DEPTH_TEST ); 
     }glPopMatrix();
   }glEndList();
 
@@ -294,7 +307,9 @@ void MolIso::loadMI(QString fname, bool om){
     glPushMatrix();{
       glScaled( L, L, L );
       Pzsort();
+if (!mima) glDisable( GL_DEPTH_TEST ); 
       DrawPlys();
+if (!mima) glEnable( GL_DEPTH_TEST ); 
     }glPopMatrix();
   }glEndList();
 
@@ -1349,6 +1364,13 @@ void MolIso::createSurface(QString &storeFaceName, double proba){
   }else{
     CalcVertexes();
     CalcNormals();
+    for( int ix=0; ix<breite-1; ix++ )
+      for( int iy=0; iy<hoehe-1; iy++ )
+        for( int iz=0; iz<tiefe-1; iz++ )
+          MakeElement(ix,iy,iz,breite,bh);
+    iso_level=-0.01;
+    CalcVertexes();
+    CalcNormals();
     tf->open(QIODevice::WriteOnly|QIODevice::Text);
 
     tf->write(QString("%1\n").arg(orte.size()).toLatin1());
@@ -1361,13 +1383,14 @@ void MolIso::createSurface(QString &storeFaceName, double proba){
           .arg(orte.at(i).normal.x,9,'f',6)
           .arg(orte.at(i).normal.y,9,'f',6)
           .arg(orte.at(i).normal.z,9,'f',6)
-          .arg(proba,12,'f',7).toLatin1());
+          .arg(orte.at(i).color,12,'f',7).toLatin1());
       lineNr++;
     }
     for( int ix=0; ix<breite-1; ix++ )
       for( int iy=0; iy<hoehe-1; iy++ )
         for( int iz=0; iz<tiefe-1; iz++ )
           MakeElement(ix,iy,iz,breite,bh);
+
     PXsort();
     QString Line="";
     for (int i=0; i<pgns.size();i++) {

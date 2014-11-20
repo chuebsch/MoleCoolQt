@@ -10,8 +10,9 @@ V3 mil;
 CubeGL::CubeGL(QWidget *parent) : QGLWidget(parent) {
    setFormat(QGLFormat(QGL::DoubleBuffer | QGL::DepthBuffer) );
    atomsClickable=true;
+   negpdf=true;
    faceCull=0;
-   vangle=9.0;
+   vangle=10.0;
    chicken= new QAction("Permanent wireframe mode",this);
    chicken->setCheckable(true);
    chicken->setChecked(false);
@@ -33,7 +34,7 @@ CubeGL::CubeGL(QWidget *parent) : QGLWidget(parent) {
    connect(moving,SIGNAL(timeout()),this,SLOT(updateGL()));
    stereo_mode=0;
    awidth=cwid=1;
-   milsize=1.0;
+   milsize=0.03448275862068966*vangle;
    molisoTransparence=zebra=true;
    drawAt=drawBo=drawLa=drawHb=true;
    drawAx=drawUz=false;
@@ -56,8 +57,8 @@ CubeGL::CubeGL(QWidget *parent) : QGLWidget(parent) {
    MM[0]=MM[5]=MM[10]=MM[15]=1.0;
    MM[1]=MM[2]=MM[3]=MM[4]=MM[6]=MM[7]=MM[8]=MM[9]=MM[11]=MM[12]=MM[13]=0.0;
    MM[14]=-200.0;
-   mil.x=-2.3;
-   mil.y=-0.3;
+   mil.x=-0.07931034482758621*vangle;
+   mil.y=-0.0103448275862069*vangle;
    noWaitLabel=true;
 }
 
@@ -123,7 +124,8 @@ void CubeGL::frontCull(bool b){
 }
 
 void CubeGL::scaleLegend(int size){
-    milsize=size/30.0;
+    milsize=(size/30.0)*0.03448275862068966*vangle;
+    //printf("milsize %g\n",milsize);
     updateGL();
 }
 
@@ -222,6 +224,7 @@ void CubeGL::loadMISettings(){
   faceCull=all.section(QRegExp("[:\r]"),13,13).toInt();  
   MILe=all.section(QRegExp("[:\r]"),15,15).toInt();
   milsize=all.section(QRegExp("[:\r]"),17,17).toDouble();
+    printf("m ilsize %g\n",milsize);
   mil.x=all.section(QRegExp("[:\r]"),19,19).section(",",0,0).toDouble();
   mil.y=all.section(QRegExp("[:\r]"),19,19).section(",",1,1).toDouble();
   horizont=all.section(QRegExp("[:\r]"),21,21).toInt();
@@ -599,7 +602,7 @@ void CubeGL::initializeGL() {
     int adpstate=mol.adp;
     glLoadMatrixd(MM);
    if ((moliso)&&(moliso->mibas)){
-      moliso->loadMI(moliso->faceFile); 
+      moliso->loadMI(moliso->faceFile,false,negpdf); 
    }
 
       glNewList(bas, GL_COMPILE );{                          //ATOME
@@ -3213,13 +3216,15 @@ void CubeGL::mouseMoveEvent(QMouseEvent *event) {
 
       xdinp[labToMove].labPos+=V3(V2[0],V2[1],V2[2]);
     }else if (moveLeg){
+      double sc41=0.1086206896551724*vangle;
       if (horizont) {
-	mil.y+=dx*3.15*(double)_win_width/_win_height;
-	mil.x-=dy*3.15;
+	mil.y+=dx*sc41*(double)_win_width/_win_height;
+	mil.x-=dy*sc41;
       }else{
-	mil.x+=dx*3.15*(double)_win_width/_win_height;
-	mil.y-=dy*3.15;
+	mil.x+=dx*sc41*(double)_win_width/_win_height;
+	mil.y-=dy*sc41;
       }
+     //printf("legend x %g  y %g",mil.x,mil.y); 
     }else{
       glRotateL(dy*360.0,1.0f,0.0f,0.0f);
       glRotateL(dx*360.0,0.0f,1.0f,0.0f);
@@ -3242,12 +3247,16 @@ void CubeGL::mouseMoveEvent(QMouseEvent *event) {
 
 void CubeGL::toggleMolisoLegendDirection(){
   if (horizont){
-    mil.x=-2.4;
-    mil.y=-0.3;
+    //x -0.708863  y -0.0942207
+    mil.x=-0.0788*vangle;
+    mil.y=-0.0105*vangle;
   }else{
-    mil.x=-1.4;
-    mil.y=0.1;
+    //-0.452525  y -0.725207
+    mil.x=-0.05*vangle;
+    mil.y=-0.08*vangle;
   }
+
+  printf("legend x %g  y %g %s",mil.x,mil.y,(!horizont)?"horzontal":"vertical"); 
   horizont=!horizont;
   updateGL();
 }
@@ -3670,7 +3679,6 @@ if (!selectedAtoms.isEmpty()){
 	glDisable(GL_BLEND);
         glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
 
-
 	if (MILe){
 	  GLfloat fw;
 	  glPushMatrix();
@@ -3706,11 +3714,11 @@ if (!selectedAtoms.isEmpty()){
 	    if (!monochrom)  moliso->Farbverlauf(fw); 
 	    else glColor4f(tCR,tCG,tCB,tCA);
 	    glDisable(GL_BLEND);
-	    if (horizont) renderText(mil.y+0.33*i*milsize+0.01,mil.x+0.07*milsize,-6.1,lab ,MLegendFont);
+	    if (horizont) renderText(mil.y+0.33*i*milsize+0.00,mil.x+0.07*milsize,-6.1,lab ,MLegendFont);
 	    else{
-	      if (mil.x<0) renderText(mil.x+0.07*milsize,mil.y+0.33*i*milsize+0.01,-6.1,lab,MLegendFont);
+	      if (mil.x<0) renderText(mil.x+0.07*milsize,mil.y+0.33*i*milsize+0.0,-6.1,lab,MLegendFont);
 	      else {
-		renderText(mil.x-(3.5/_win_height *R.width()),mil.y+0.33*i*milsize+0.01,-6.1,lab ,MLegendFont);
+		renderText(mil.x-(0.18*vangle/_win_width *R.width()),mil.y+0.33*i*milsize+0.0,-6.1,lab ,MLegendFont);
 	      }
 	    }	  
 	  }

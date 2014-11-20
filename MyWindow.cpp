@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=407;
+int rev=408;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -674,7 +674,7 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
 			" If this is checked hydrogen bonds are visualized as stipled yellow sticks.");
 
   QAction *sma =new QAction("show mat",this);
-  sma->setShortcut(tr("Â§"));
+  sma->setShortcut(tr("~"));
   connect(sma,SIGNAL(triggered()),cubeGL,SLOT(showMatrix()));
 // */
   matrixAct->setShortcut(tr("="));
@@ -1791,6 +1791,7 @@ void MyWindow::genMoliso() {
   xdinp.clear();
   asymmUnit.clear();
   cubeGL->pause=true;
+  cubeGL->negpdf=true;
   fmcq->deleteLists();
   fmcq->doMaps->hide();
   cubeGL->fofcact->setVisible(false);
@@ -4783,7 +4784,16 @@ void MyWindow::makePDFGrid(INP atom, double proba,bool c2,bool c3,bool c4){
   statusBar()->showMessage(tr("loading surfaces...") );
   //qDebug()<<cubeGL->moliso->mibas<<cubeGL->foubas[0];
 //  printf("L= %g   %g %g %g %s\n",cubeGL->moliso->L, cubeGL->moliso->orig.x, cubeGL->moliso->orig.y, cubeGL->moliso->orig.z,fac.toStdString().c_str());
-  cubeGL->moliso->loadMI(fac,false);
+  if (c2) {
+    printf("%g %g %g\n",cubeGL->moliso->min,cubeGL->moliso->max,piso);
+    cubeGL->moliso->max=(piso+0.01)*2;
+    cubeGL->moliso->min=-0.01;
+    printf("%g %g %g\n",cubeGL->moliso->min,cubeGL->moliso->max,piso);
+    cubeGL->negpdf=!c2;
+    printf("cubeGL->negpdf %s \n",(cubeGL->negpdf)?"true":"false");
+  }
+
+  cubeGL->moliso->loadMI(fac,false,!c2);
   updateStatusBar();
   statusBar()->showMessage(tr("surfaces loaded") );
   cubeGL->MIS=true;
@@ -5338,7 +5348,7 @@ pdb.write(QString("CRYST1%1%2%3%4%5%6           \n")
 
   double phi; 
   const double g2r=180.0/M_PI;
-  Matrix u;   /*Cholesky decomposition of theReal space Metric tensor Wird fÃÂ¼r die Umrechnung von fraktionellen in kartesischen Korrdinaten benÃÂ¶tigt.*/ 
+  Matrix u;   /*Cholesky decomposition of theReal space Metric tensor Wird fÃÂÃÂ¼r die Umrechnung von fraktionellen in kartesischen Korrdinaten benÃÂÃÂ¶tigt.*/ 
   phi=sqrt(1-pow(cos(mol.zelle.al/g2r),2.0)-pow(cos(mol.zelle.be/g2r),2.0)-pow(cos(mol.zelle.ga/g2r),2.0)+2.0*cos(mol.zelle.al/g2r)*cos(mol.zelle.be/g2r)*cos(mol.zelle.ga/g2r));
   u.m11 = 1.0/mol.zelle.a;
   u.m21 = 0.0;

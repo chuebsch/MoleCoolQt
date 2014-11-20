@@ -22,7 +22,7 @@ public:
   CubeGL(QWidget *parent = 0);
   MolIso *moliso;
   double L;
-  bool pause;
+  bool pause,negpdf;
   int stereo_mode;
   QAction *Istda,*chicken,*quickRot;
   QTimer *moving;

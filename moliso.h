@@ -155,7 +155,7 @@ signals:
   Vector3 orig;
   MolIso();
   ~MolIso();
-  void loadMI(QString fname,bool om=false);
+  void loadMI(QString fname,bool om=false,bool mima=true);
   void readXDGridHeader(QString fname,int &fileType);
   void readJanaHeader(QString fname);
   void createSurface(QString isoFileName, QString mapFileName, QString &storeFaceName,int fileType);
