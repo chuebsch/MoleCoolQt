@@ -155,6 +155,16 @@ void CubeGL::setViewAngle(double ang){
       //printf("View angle = %g degrees. %10.8f %f\n",ang,ang/vangle,vangle);
       glScaled(ang/vangle,ang/vangle,ang/vangle);
       vangle=ang;
+      milsize=0.03448275862068966*vangle;
+      if (!horizont){
+        //x -0.708863  y -0.0942207
+        mil.x=-0.0788*vangle;
+        mil.y=-0.0105*vangle;
+      }else{
+        //-0.452525  y -0.725207
+        mil.x=-0.05*vangle;
+        mil.y=-0.08*vangle;
+      }
       homeXY();
     }
 }
@@ -224,7 +234,6 @@ void CubeGL::loadMISettings(){
   faceCull=all.section(QRegExp("[:\r]"),13,13).toInt();  
   MILe=all.section(QRegExp("[:\r]"),15,15).toInt();
   milsize=all.section(QRegExp("[:\r]"),17,17).toDouble();
-    printf("m ilsize %g\n",milsize);
   mil.x=all.section(QRegExp("[:\r]"),19,19).section(",",0,0).toDouble();
   mil.y=all.section(QRegExp("[:\r]"),19,19).section(",",1,1).toDouble();
   horizont=all.section(QRegExp("[:\r]"),21,21).toInt();
@@ -257,9 +266,11 @@ void CubeGL::loadMISettings(){
   MM[13]= matz.section('/',13,13).toDouble();
   MM[14]= matz.section('/',14,14).toDouble();
   MM[15]= matz.section('/',15,15).toDouble();
+  printf("milsize %g\n",milsize);
   setMatrix();
   emit mconf();
   updateGL();
+    printf("milsize %g\n",milsize);
 }
 
 void CubeGL::setFont(){
@@ -3707,18 +3718,18 @@ if (!selectedAtoms.isEmpty()){
 	  QString lab="AAA";
 	  R= FM.boundingRect(lab);
 
-	  for (int i=0;i<6;i++) {
-	    fw=(0.2*i*(moliso->max-moliso->min)) + moliso->min;
-	    lab = QString::number(fw,'f',4) ;
+	  for (int i=0;i<7;i++) {
+	    fw=(0.1666666666666667*i*(moliso->max-moliso->min)) + moliso->min;
+	    lab = QString::number(fw,'f',3) ;
 	    R= FM.boundingRect(lab);
 	    if (!monochrom)  moliso->Farbverlauf(fw); 
 	    else glColor4f(tCR,tCG,tCB,tCA);
 	    glDisable(GL_BLEND);
-	    if (horizont) renderText(mil.y+0.33*i*milsize+0.00,mil.x+0.07*milsize,-6.1,lab ,MLegendFont);
+	    if (horizont) renderText(mil.y+0.275*i*milsize+0.00,mil.x+0.07*milsize,-6.1,lab ,MLegendFont);
 	    else{
-	      if (mil.x<0) renderText(mil.x+0.07*milsize,mil.y+0.33*i*milsize+0.0,-6.1,lab,MLegendFont);
+	      if (mil.x<0) renderText(mil.x+0.07*milsize,mil.y+0.275*i*milsize+0.0,-6.1,lab,MLegendFont);
 	      else {
-		renderText(mil.x-(0.18*vangle/_win_width *R.width()),mil.y+0.33*i*milsize+0.0,-6.1,lab ,MLegendFont);
+		renderText(mil.x-(0.18*vangle/_win_width *R.width()),mil.y+0.275*i*milsize+0.0,-6.1,lab ,MLegendFont);
 	      }
 	    }	  
 	  }

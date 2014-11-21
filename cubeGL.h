@@ -73,6 +73,7 @@ public:
   QList<V3> poleOrg;
   QList<QColor> farben;
   int faceCull;
+  double vangle;
 public slots:
   void rotCenter();
   void zalman();
@@ -170,7 +171,6 @@ protected:
 private:  
   int imFokus;
 
-  double vangle;
   QString selectedFilter;
   double mlsc;
   int labToMove;

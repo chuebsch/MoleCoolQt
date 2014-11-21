@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=408;
+int rev=410;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -1297,6 +1297,7 @@ createRenameWgd();
     QString fnam;
     int argui=1;
     double gd=-1;
+    double vang=-1.0;
     for (int i=argui;i<argc;i++){
     if ((QCoreApplication::arguments().at(i).contains(".res")) ||
       (QCoreApplication::arguments().at(i).contains(".pdb")) ||
@@ -1333,6 +1334,7 @@ createRenameWgd();
 	i++;	
 	if (i<=argc) mol.HAWink=QCoreApplication::arguments().at(i).toDouble();
       }
+      if ((QCoreApplication::arguments().at(i)=="-viewangle")) vang = QCoreApplication::arguments().at(i+1).toDouble();
     }
     if(!fnam.isEmpty()){
     fnam.replace("\\","/");
@@ -1344,6 +1346,7 @@ createRenameWgd();
       update();
 
     }
+    if (vang>0.0) cubeGL->setViewAngle(vang);
 
   }
   net = new QNetworkAccessManager(this);
@@ -2011,10 +2014,11 @@ void MyWindow::genMoliso() {
 }
 
 void MyWindow::syncMconf(){
-    legendSize->setValue(cubeGL->milsize*30);
+  legendSize->setValue((int)( cubeGL->vangle/cubeGL->milsize ));
+  if ((strikesSldr!=NULL) && (strikesSldr->isVisible())) 
     strikesSldr->setValue(512-cubeGL->cdens);
-    swidthSldr->setValue((cubeGL->cwid+1)*256/cubeGL->cdens);   
-    zebraBox->setChecked(cubeGL->zebra);
+  if (swidthSldr!=NULL)  swidthSldr->setValue((cubeGL->cwid+1)*256/cubeGL->cdens);   
+  if (zebraBox!=NULL)  zebraBox->setChecked(cubeGL->zebra);
     mt->setChecked(cubeGL->molisoTransparence);
   togAxen->setChecked(cubeGL->drawAx );
   togUnit->setChecked(cubeGL->drawUz );
@@ -4458,6 +4462,20 @@ void MyWindow::makePDFGrids(double proba,bool c2,bool c3,bool c4){
   mt->setShortcut(tr("T"));
   cubeGL->togglMolisoTransparence(true);
   zla->addWidget(mt);
+  strikesSldr = new QSlider(Qt::Horizontal);
+  strikesSldr->setMaximum(510);
+  strikesSldr->setMinimum(127);
+  strikesSldr->setValue(496);
+  strikesSldr->setVisible(false);
+  swidthSldr = new QSlider(Qt::Horizontal);
+  swidthSldr->setMaximum(128);
+  swidthSldr->setMinimum(1);
+  swidthSldr->setValue(1);
+  swidthSldr->setVisible(false);
+  zebraBox = new QCheckBox("Show contour belts");
+  zebraBox->setChecked(true);
+  zebraBox->setShortcut(tr("F8"));
+  zebraBox->setVisible(false);
   legendSize = new QSlider(Qt::Horizontal);
   legendSize->setValue(30);
   legendSize->setMaximum(100);
@@ -4786,7 +4804,7 @@ void MyWindow::makePDFGrid(INP atom, double proba,bool c2,bool c3,bool c4){
 //  printf("L= %g   %g %g %g %s\n",cubeGL->moliso->L, cubeGL->moliso->orig.x, cubeGL->moliso->orig.y, cubeGL->moliso->orig.z,fac.toStdString().c_str());
   if (c2) {
     printf("%g %g %g\n",cubeGL->moliso->min,cubeGL->moliso->max,piso);
-    cubeGL->moliso->max=(piso+0.01)*2;
+    cubeGL->moliso->max=(proba+0.005)*2;
     cubeGL->moliso->min=-0.01;
     printf("%g %g %g\n",cubeGL->moliso->min,cubeGL->moliso->max,piso);
     cubeGL->negpdf=!c2;
@@ -4823,6 +4841,20 @@ void MyWindow::makePDFGrid(INP atom, double proba,bool c2,bool c3,bool c4){
   mt->setShortcut(tr("T"));
   cubeGL->togglMolisoTransparence(true);
   zla->addWidget(mt);
+  strikesSldr = new QSlider(Qt::Horizontal);
+  strikesSldr->setMaximum(510);
+  strikesSldr->setMinimum(127);
+  strikesSldr->setValue(496);
+  strikesSldr->setVisible(false);
+  swidthSldr = new QSlider(Qt::Horizontal);
+  swidthSldr->setMaximum(128);
+  swidthSldr->setMinimum(1);
+  swidthSldr->setValue(1);
+  swidthSldr->setVisible(false);
+  zebraBox = new QCheckBox("Show contour belts");
+  zebraBox->setChecked(true);
+  zebraBox->setShortcut(tr("F8"));
+  zebraBox->setVisible(false);
   legendSize = new QSlider(Qt::Horizontal);
   legendSize->setValue(30);
   legendSize->setMaximum(100);

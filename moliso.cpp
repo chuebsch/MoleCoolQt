@@ -1383,7 +1383,8 @@ void MolIso::createSurface(QString &storeFaceName, double proba){
           .arg(orte.at(i).normal.x,9,'f',6)
           .arg(orte.at(i).normal.y,9,'f',6)
           .arg(orte.at(i).normal.z,9,'f',6)
-          .arg(orte.at(i).color,12,'f',7).toLatin1());
+      //    .arg(orte.at(i).color,12,'f',7).toLatin1());
+      .arg((orte.at(i).color>0)?proba:-0.01,12,'f',7).toLatin1());
       lineNr++;
     }
     for( int ix=0; ix<breite-1; ix++ )
