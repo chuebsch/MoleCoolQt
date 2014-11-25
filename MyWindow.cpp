@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=411;
+int rev=413;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -59,6 +59,7 @@ QProgressBar *balken;
 #define iabs(a) (a>0)?(a):(-a) 
 
 MyWindow::MyWindow( QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(parent, flags)  {
+
   QMainWindow::setDockOptions(QMainWindow::AnimatedDocks|QMainWindow::AllowTabbedDocks|QMainWindow::ForceTabbedDocks|QMainWindow::VerticalTabs);
   //  DOCK
 
@@ -833,7 +834,11 @@ createRenameWgd();
   viewMenu->addAction(viewAlong010);
   viewMenu->addAction(viewAlong100);
   viewMenu->addAction(viewAlong001);
-  dialogMenu->addAction(backColor);        
+  noMessBox=new QAction("don't show warnig message boxes",this);
+  dialogMenu->addAction(noMessBox);
+  noMessBox->setCheckable(true);
+  noMessBox->setChecked(true);
+  dialogMenu->addAction(backColor);
   dialogMenu->addAction(back_Grad);
   dialogMenu->addAction(donTGrow);
   dialogMenu->addAction(labelColor);
@@ -1159,6 +1164,8 @@ createRenameWgd();
   mol.loadSettings();
   mol.einstellung = new QSettings( QSettings::IniFormat, QSettings::UserScope ,"Christian_B._Huebschle","MoleCoolQt" );
   mol.einstellung->beginGroup("Version 0.1");
+
+  noMessBox->setChecked(mol.einstellung->value("NoMessageBoxesPopup",true).toBool());
   dirName = mol.einstellung->value("lastFile").toString();
 
   QStringList files = mol.einstellung->value("recentFileList").toStringList();
@@ -1354,7 +1361,6 @@ createRenameWgd();
   Pfad=Pfad.section('/',0,-2);
   Pfad.append("/DABA.txt");
   if (QFileInfo(Pfad).exists()) cubeGL->loadDataBase(Pfad);
-
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -7017,6 +7023,7 @@ void MyWindow::updateTime() {
 void MyWindow::closeEvent(QCloseEvent *event)  {
 
     if (mol.einstellung->group()!="Version 0.1")mol.einstellung->beginGroup("Version 0.1");
+    mol.einstellung->setValue("NoMessageBoxesPopup",noMessBox->isChecked());
    mol.einstellung->setValue("size", size() );
    mol.einstellung->setValue("position", pos() );
    mol.einstellung->setValue("text_color_red",cubeGL->tCR);

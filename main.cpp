@@ -2,19 +2,19 @@
 #include <QApplication>
 #include "MyWindow.h"
 #include <QMessageBox>
-
+QAction *nmbx=NULL;
 void mh(QtMsgType type, const char *msg){
   switch (type){
   case QtDebugMsg:
-    printf("%s\n",msg);fflush(stdout);
+    printf("%s %p\n",msg,nmbx);fflush(stdout);
 #if defined Q_WS_WIN  ||  defined Q_WS_MAC
-    QMessageBox::information(0,msg,msg);
+   if (nmbx!=NULL) if ((!nmbx->isChecked())) QMessageBox::information(0,msg,msg);
 #endif
     break;
   case QtWarningMsg:
     printf("%s\n",msg);fflush(stdout);
 #if defined Q_WS_WIN  ||  defined Q_WS_MAC
-    QMessageBox::warning(0,"warning",msg);
+    if (nmbx!=NULL) if ((!nmbx->isChecked())) QMessageBox::warning(0,"warning",msg);
 #endif
     break;
   case QtCriticalMsg:
@@ -42,6 +42,7 @@ int main(int argc, char *argv[])  {
    */
    qInstallMsgHandler(mh);
    MyWindow *window = new MyWindow();
+   nmbx=window->noMessBox;
    app.setWindowIcon (QIcon(":/images/icon1.png") );
    window->show();
    return app.exec();
