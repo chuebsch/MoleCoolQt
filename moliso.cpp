@@ -334,7 +334,7 @@ void MolIso::DrawPlys(){
       }          
       glEnd();
       break;
-    case  4://if (Quad)
+    case  4:  //if (Quad)
 	{
 	glBegin(GL_QUADS);
 	for (int k=0;k<4;k++) {
@@ -345,7 +345,7 @@ void MolIso::DrawPlys(){
 	}
 	glEnd();
 	break;
-      }
+      }// */
     case  5:
     case  6:
     case  7:

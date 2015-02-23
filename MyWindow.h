@@ -194,6 +194,7 @@ protected:
 //
      QSignalMapper *signalMapper;
      QMenu *xdMenu;
+     QMenu *invariomMenu;
      QNetworkAccessManager *net;
      QNetworkReply *reply;
 

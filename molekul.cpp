@@ -592,7 +592,7 @@ void dCube(GLfloat rad){
   glVertex3f(-rad, rad, -rad);
   glEnd();
 }
-void rhombo(double R){
+/*void rhombo(double R){
   GLfloat p=0.5f*(1+sqrt(5.0f));
   GLfloat p2=p*p;
   GLfloat p3=p2*p;
@@ -608,7 +608,7 @@ GLubyte indices[180] = {0,4,12,12,10,0,0,9,8,8,3,0,0,10,19,19,9,0,0,1,5,5,4,0,0,
 glVertexPointer(3,GL_FLOAT,0,vert);
 glDrawElements(GL_TRIANGLES,60,GL_UNSIGNED_BYTE,indices);
 }
-
+*/
 void ikosa(double R){
     /*
     (0, Â±1, Â±f)

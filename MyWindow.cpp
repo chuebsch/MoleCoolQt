@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=414;
+int rev=415;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -184,7 +184,7 @@ MyWindow::MyWindow( QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(pa
   QMenu *workMenu = new QMenu(tr("&Move"), this);
   QMenu *viewMenu = new QMenu(tr("&View"), this);
   QMenu *dialogMenu = new QMenu(tr("S&ettings"), this);
-  QMenu *invariomMenu = new QMenu(tr("In&varioms"), this);
+  invariomMenu = new QMenu(tr("In&varioms"), this);
   QMenu *helpMenu = new QMenu(tr("&Help"), this);
 
   xdSetupAct = new QAction(tr("Modify XD local coordinate systems"),this);
@@ -834,7 +834,7 @@ createRenameWgd();
   viewMenu->addAction(viewAlong010);
   viewMenu->addAction(viewAlong100);
   viewMenu->addAction(viewAlong001);
-  noMessBox=new QAction("don't show warnig message boxes",this);
+  noMessBox=new QAction("Don't show warning messages",this);
   dialogMenu->addAction(noMessBox);
   noMessBox->setCheckable(true);
   noMessBox->setChecked(true);
@@ -854,7 +854,7 @@ createRenameWgd();
   dialogMenu->addAction("Load toggle states",cubeGL,SLOT(loadMISettings()));
   dialogMenu->addAction(cubeGL->chicken);
   dialogMenu->addAction(cubeGL->quickRot);
-  cubeGL->Istda=invariomMenu->addAction("No data base loded yet.");
+  cubeGL->Istda=invariomMenu->addAction("No Database loaded yet");
   invariomMenu->addAction(invExpAct);
   invariomMenu->addAction(invEdiAct);
   invariomMenu->addAction(invLoadAct);
@@ -2458,10 +2458,10 @@ void MyWindow::about(){
 
   QMessageBox::about(this,tr("About MoleCoolQt"),
 	      tr("<b>MoleCoolQt is written by Dr. Christian B. H&uuml;bschle, University of G&ouml;ttingen, Germany</b><p>"
-		 "Please visit the following web sites: <a href=\"http://wwwuser.gwdg.de/~chuebsc/dittrich/index.html\">"
+		 "Please visit the following web sites: <a href=\"http://ewald.ac.chemie.uni-goettingen.de/index.html\">"
 		 "Dr. Birger Dittrich's Work Group</a> and "
 		 "<a href=\"http://www.molecoolqt.de\">MoleCoolQt site</a><p>"
-		 "If you find bugs, typos or have any suggestions then contact me under <a href=\"mailto:chuebsc@gwdg.de\">chuebsc@gwdg.de</a>"
+		 "If you find bugs, typos or have any suggestions then contact me under <a href=\"mailto:chuebsch@moliso.de\">chuebsc@moliso.de</a>"
                  "<p> This is Revision %1 from: %2 <br> The Version of Qt used is: %3.<br>%4<p>This program was build: %5").arg(rev).arg(date).arg(qVersion ()).arg(openGLVersion).arg(bau_datum));
 
 }
@@ -3522,6 +3522,7 @@ void MyWindow::replyFinished(QNetworkReply* antwort){
   QString a=antwort->readAll();
   QDateTime t=  QDateTime::fromString (a,Qt::ISODate);
   int d=t.daysTo(QDateTime::currentDateTime ());
+  invariomMenu->addAction(QString("The latest database on the web is %1 days old.").arg(d));
   //QMessageBox::information(this,"DA DA DIE DABA DIE IS DA!",QString("Die neuste Datenbank ist %1 alt.").arg(d)); 
   antwort->close();
   antwort->deleteLater();
