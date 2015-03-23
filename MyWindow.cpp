@@ -20,6 +20,9 @@ int hatlokale=0;
 int pdfOnAtom=-1;
 int curentPhase=1;
 const double g2r=180.0/M_PI;
+
+double cfac=1.0;//(M_PI*M_PI*M_PI*8)/6;
+double dfac=1.0;//(M_PI*M_PI*M_PI*M_PI*16)/24;
 double fl(double x,double y,double z){
 	double a,b,c;
   const double g2r=180.0/M_PI;
@@ -1301,11 +1304,22 @@ createRenameWgd();
   int argc=QCoreApplication::arguments().size();
   if (argc>1){
     cubeGL->updateGL();
-    QString fnam;
+    QString fnam="";
+    QString isonam="";
+    QString mapnam="";
     int argui=1;
     double gd=-1;
     double vang=-1.0;
     for (int i=argui;i<argc;i++){
+        if ((isonam.isEmpty())&&((QCoreApplication::arguments().at(i).contains(".grd")) ||
+          (QCoreApplication::arguments().at(i).contains(".cube")) ||
+          (QCoreApplication::arguments().at(i).contains(".m81")))) {isonam=QCoreApplication::arguments().at(i);}
+        if ((!isonam.isEmpty())&&((QCoreApplication::arguments().at(i).contains(".grd")) ||
+          (QCoreApplication::arguments().at(i).contains(".cube")) ||
+          (QCoreApplication::arguments().at(i).contains(".m81")))) {mapnam=QCoreApplication::arguments().at(i);
+        if (mapnam==isonam)mapnam="";
+        }
+
     if ((QCoreApplication::arguments().at(i).contains(".res")) ||
       (QCoreApplication::arguments().at(i).contains(".pdb")) ||
       (QCoreApplication::arguments().at(i).contains(".ent")) ||
@@ -1349,8 +1363,38 @@ createRenameWgd();
 	fnam.prepend("/");
 	fnam.prepend(QDir::currentPath());
       }
-      loadFile(fnam,gd);
+      if (isonam.isEmpty())loadFile(fnam,gd);
       update();
+
+    }
+
+    if(!mapnam.isEmpty()){
+    mapnam.replace("\\","/");
+      if (!mapnam.contains("/")){
+    mapnam.prepend("/");
+    mapnam.prepend(QDir::currentPath());
+      }
+    }
+    if(!isonam.isEmpty()){
+    isonam.replace("\\","/");
+      if (!isonam.contains("/")){
+    isonam.prepend("/");
+    isonam.prepend(QDir::currentPath());
+      }
+      /*
+      mol.einstellung->setValue("iso_grid_name",isonam);
+      mol.einstellung->setValue("map_grid_name",mapnam);
+      mol.einstellung->setValue("load_face_name","");
+      mol.einstellung->setValue("save_face_name","");
+      mol.einstellung->setValue("adp_struct_name","");
+      mol.einstellung->setValue("Moliso_Dialog_checks",mapnam.isEmpty()&1);
+      mol.einstellung->sync();
+      qDebug()<<"hallo"<<mol.einstellung->value("iso_grid_name");
+*/
+      int chk=0;
+      chk=(!mapnam.isEmpty()&1);
+      chk|=(!fnam.isEmpty()&1)<<3;
+      genMoliso(isonam,mapnam,"","",chk,fnam);//fnam,gd);
 
     }
     if (vang>0.0) cubeGL->setViewAngle(vang);
@@ -1793,7 +1837,8 @@ void MyWindow::findAtoms(){
   cubeGL->updateGL();
 }
 
-void MyWindow::genMoliso() {
+void MyWindow::genMoliso(QString isoname, QString mapname, QString lfcename, QString sfcename, int check, QString adpname) {
+
   atmax=0;
   smx=0;
   int fileType=0;
@@ -1816,7 +1861,7 @@ void MyWindow::genMoliso() {
   cubeGL->moliso->L=cubeGL->L;
   cubeGL->moliso->orig=Vector3(0.0,0.0,0.0);
   QString isof,mapf,lfaceFile,sfaceFile,adpName;
-  MolisoStartDlg *msgdlg = new MolisoStartDlg();
+  MolisoStartDlg *msgdlg = new MolisoStartDlg(isoname,mapname,lfcename,sfcename,check,adpname);
   if (msgdlg->exec()==QDialog::Accepted) {
     isof=msgdlg->iso_grid_name;
     mapf=msgdlg->map_grid_name;
@@ -2449,6 +2494,61 @@ void MyWindow::restoreXDfiles(){
   someThingToRestore();
 }
 
+void MyWindow::showADPvalues(){
+
+  int ind=0;
+  QAction *action = qobject_cast<QAction *>(sender());
+  if (action!=NULL){
+      ind=action->data().toInt();
+      ind=qMax(ind,0);
+      ind=qMin(ind,xdinp.size()-1);
+  }
+QMessageBox::information(this,xdinp.at(ind).atomname,QString("U11 = %1 U22 = %2 U33 = %3\nU23 = %4 U13 = %5 U12 = %6\nU11c = %7 U22c = %8 U33c = %9\nU23c = %10 U13c = %11 U12c = %12\n%13\n%14")
+                         .arg(xdinp.at(ind).uf.m11)
+                         .arg(xdinp.at(ind).uf.m22)
+                         .arg(xdinp.at(ind).uf.m33)
+                         .arg(xdinp.at(ind).uf.m23)
+                         .arg(xdinp.at(ind).uf.m13)
+                         .arg(xdinp.at(ind).uf.m12)
+
+                         .arg(xdinp.at(ind).u.m11)
+                         .arg(xdinp.at(ind).u.m22)
+                         .arg(xdinp.at(ind).u.m33)
+                         .arg(xdinp.at(ind).u.m23)
+                         .arg(xdinp.at(ind).u.m13)
+                         .arg(xdinp.at(ind).u.m12)
+.arg((xdinp.at(ind).jtf>2)?QString("c111 = %1 c112 = %2 c113 = %3 c122 = %4 c123 = %5\nc133 = %6 c222 = %7 c223 = %8 c233 = %9 c333 =%10")
+                         .arg(xdinp.at(ind).c111)
+                         .arg(xdinp.at(ind).c112)
+                         .arg(xdinp.at(ind).c113)
+                         .arg(xdinp.at(ind).c122)
+                         .arg(xdinp.at(ind).c123)
+                         .arg(xdinp.at(ind).c133)
+                         .arg(xdinp.at(ind).c222)
+                         .arg(xdinp.at(ind).c223)
+                         .arg(xdinp.at(ind).c233)
+                         .arg(xdinp.at(ind).c333)
+                         :"")
+.arg((xdinp.at(ind).jtf>3)?QString("d1111 = %1 d1112 = %2 d1113 = %3 d1122 = %4 d1123 = %5\nd1133 = %6 d1222 = %7 d1223 = %8 d1233 = %9 d1333 = %10\nd2222 = %11 d2223 = %12 d2233 = %13 d2333 = %14 d3333 = %15 ")
+                          .arg(xdinp.at(ind).d1111)
+                          .arg(xdinp.at(ind).d1112)
+                          .arg(xdinp.at(ind).d1113)
+                          .arg(xdinp.at(ind).d1122)
+                          .arg(xdinp.at(ind).d1123)
+                          .arg(xdinp.at(ind).d1133)
+                          .arg(xdinp.at(ind).d1222)
+                          .arg(xdinp.at(ind).d1223)
+                          .arg(xdinp.at(ind).d1233)
+                          .arg(xdinp.at(ind).d1333)
+                          .arg(xdinp.at(ind).d2222)
+                          .arg(xdinp.at(ind).d2223)
+                          .arg(xdinp.at(ind).d2233)
+                          .arg(xdinp.at(ind).d2333)
+                          .arg(xdinp.at(ind).d3333)
+                        :" ")
+                                  );
+}
+
 void MyWindow::about(){  
   QString date="$LastChangedDate: 2010-12-01 19:15:18 +0100 (Mi, 01 Dez 2010)$";
   date.remove("LastChangedDate:");
@@ -2457,7 +2557,7 @@ void MyWindow::about(){
   QString openGLVersion=QString("OpenGL Version %1").arg((char *)glGetString(GL_VERSION));
 
   QMessageBox::about(this,tr("About MoleCoolQt"),
-	      tr("<b>MoleCoolQt is written by Dr. Christian B. H&uuml;bschle, University of G&ouml;ttingen, Germany</b><p>"
+          tr("<b>MoleCoolQt is written by Dr. Christian B. H&uuml;bschle, University of G&ouml;ttingen, Germany; now: University of Bayreuth</b><p>"
 		 "Please visit the following web sites: <a href=\"http://ewald.ac.chemie.uni-goettingen.de/index.html\">"
 		 "Dr. Birger Dittrich's Work Group</a> and "
 		 "<a href=\"http://www.molecoolqt.de\">MoleCoolQt site</a><p>"
@@ -3421,6 +3521,8 @@ void MyWindow::load_Jana(QString fileName){
   george=true;
   QMap<int,QString> axstr;
   QMap<int,QString> atox;
+  QMap<int,int> axtokcnt;
+  QMap<QString,int> atloc;
   int skip=0;
   for (int li=0; li<all.size();li++){
     tok.clear();
@@ -3462,21 +3564,152 @@ void MyWindow::load_Jana(QString fileName){
               &newAtom.uf.m23);
             
         }
-          
+        if (newAtom.jtf>2) {
+          li++;
+          sscanf(all.at(li).toStdString().c_str(),"%9lf%9lf%9lf%9lf%9lf%9lf",
+              &newAtom.c111,
+              &newAtom.c112,
+              &newAtom.c113,
+              &newAtom.c122,
+              &newAtom.c123,
+              &newAtom.c133);
+
+          li++;
+          sscanf(all.at(li).toStdString().c_str(),"%9lf%9lf%9lf%9lf",
+              &newAtom.c222,
+              &newAtom.c223,
+              &newAtom.c233,
+              &newAtom.c333);
+//*
+          newAtom.c111/=mol.zelle.as*mol.zelle.as*mol.zelle.as*cfac;////Ujkl's whanted
+          newAtom.c222/=mol.zelle.bs*mol.zelle.bs*mol.zelle.bs*cfac;//
+          newAtom.c333/=mol.zelle.cs*mol.zelle.cs*mol.zelle.cs*cfac;//
+          newAtom.c112/=mol.zelle.as*mol.zelle.as*mol.zelle.bs*cfac;//
+          newAtom.c122/=mol.zelle.as*mol.zelle.bs*mol.zelle.bs*cfac;//
+          newAtom.c113/=mol.zelle.as*mol.zelle.as*mol.zelle.cs*cfac;//
+          newAtom.c133/=mol.zelle.as*mol.zelle.cs*mol.zelle.cs*cfac;//
+          newAtom.c223/=mol.zelle.bs*mol.zelle.bs*mol.zelle.cs*cfac;//
+          newAtom.c233/=mol.zelle.bs*mol.zelle.cs*mol.zelle.cs*cfac;//
+          newAtom.c123/=mol.zelle.as*mol.zelle.bs*mol.zelle.cs*cfac;//
+ // */
+        }
+
+        if (newAtom.jtf>3) {
+          li++;
+          sscanf(all.at(li).toStdString().c_str(),"%9lf%9lf%9lf%9lf%9lf%9lf",
+              &newAtom.d1111,
+              &newAtom.d1112,
+              &newAtom.d1113,
+              &newAtom.d1122,
+              &newAtom.d1123,
+              &newAtom.d1133);
+
+          li++;
+          sscanf(all.at(li).toStdString().c_str(),"%9lf%9lf%9lf%9lf%9lf%9lf",
+              &newAtom.d1222,
+              &newAtom.d1223,
+              &newAtom.d1233,
+              &newAtom.d1333,
+              &newAtom.d2222,
+              &newAtom.d2223);
+
+          li++;
+          sscanf(all.at(li).toStdString().c_str(),"%9lf%9lf%9lf",
+              &newAtom.d2233,
+              &newAtom.d2333,
+              &newAtom.d3333);
+//*
+          newAtom.d1111/= mol.zelle.as * mol.zelle.as * mol.zelle.as * mol.zelle.as * dfac;////Ujklm's whanted
+          newAtom.d2222/= mol.zelle.bs * mol.zelle.bs * mol.zelle.bs * mol.zelle.bs * dfac;//
+          newAtom.d3333/= mol.zelle.cs * mol.zelle.cs * mol.zelle.cs * mol.zelle.cs * dfac;//
+          newAtom.d1112/= mol.zelle.as * mol.zelle.as * mol.zelle.as * mol.zelle.bs * dfac;//
+          newAtom.d1222/= mol.zelle.as * mol.zelle.bs * mol.zelle.bs * mol.zelle.bs * dfac;//
+          newAtom.d1113/= mol.zelle.as * mol.zelle.as * mol.zelle.as * mol.zelle.cs * dfac;//
+          newAtom.d1333/= mol.zelle.as * mol.zelle.cs * mol.zelle.cs * mol.zelle.cs * dfac;//
+          newAtom.d2223/= mol.zelle.bs * mol.zelle.bs * mol.zelle.bs * mol.zelle.cs * dfac;//
+          newAtom.d2333/= mol.zelle.bs * mol.zelle.cs * mol.zelle.cs * mol.zelle.cs * dfac;//
+          newAtom.d1122/= mol.zelle.as * mol.zelle.as * mol.zelle.bs * mol.zelle.bs * dfac;//
+          newAtom.d1133/= mol.zelle.as * mol.zelle.as * mol.zelle.cs * mol.zelle.cs * dfac;//
+          newAtom.d2233/= mol.zelle.bs * mol.zelle.bs * mol.zelle.cs * mol.zelle.cs * dfac;//
+          newAtom.d1123/= mol.zelle.as * mol.zelle.as * mol.zelle.bs * mol.zelle.cs * dfac;//
+          newAtom.d1223/= mol.zelle.as * mol.zelle.bs * mol.zelle.bs * mol.zelle.cs * dfac;//
+          newAtom.d1233/= mol.zelle.as * mol.zelle.bs * mol.zelle.cs * mol.zelle.cs * dfac;//
+//  */
+        }
+// H2 ^ H3                    H3                          xz  m
+//1234567890123456789012345678901234567890123456789012345678901234567890
+//         1         2         3         4         5         6         7
         newAtom.OrdZahl=mol.Get_OZ(atypen.at(newAtom.atomtype-1));
         if (newAtom.amul==0) newAtom.OrdZahl=-1;
+        atloc[newAtom.atomname]=asymmUnit.size();
         asymmUnit.append(newAtom);
       }
       }
-      if ((asymmUnit.size()<na)&&(all.at(li).contains(QRegExp("^ [A-z]+")))&&(tok.size()>1)){
+      if ((asymmUnit.size()<=na)&&(all.at(li).contains(QRegExp("^ [A-z]+")))&&(tok.size()>1)){
           axstr[asymmUnit.size()-1]=tok.at(tok.size()-2);
+          axtokcnt[asymmUnit.size()-1]=tok.size()-2;
           for (int xi=0; xi<tok.size()-2;xi++){
-              atox[asymmUnit.size()-1*6+xi]=tok.at(xi);
+              atox[(asymmUnit.size()-1)*6+xi]=tok.at(xi);
           }
       }
     }
   }
+  if (axstr.contains(0)){
+      cubeGL->drawAx=true;
+      hatlokale=1;
+      george=false;
 
+  int ndum=0;
+  for (int i=0;i<asymmUnit.size();i++){
+      if (axstr.value(i)=="xy"){asymmUnit[i].icor1=1;asymmUnit[i].icor2=2;asymmUnit[i].lflag=1;}
+      else if (axstr.value(i)=="xz"){asymmUnit[i].icor1=1;asymmUnit[i].icor2=3;asymmUnit[i].lflag=1;}
+      else if (axstr.value(i)=="yx"){asymmUnit[i].icor1=2;asymmUnit[i].icor2=1;asymmUnit[i].lflag=1;}
+      else if (axstr.value(i)=="yz"){asymmUnit[i].icor1=2;asymmUnit[i].icor2=3;asymmUnit[i].lflag=1;}
+      else if (axstr.value(i)=="zx"){asymmUnit[i].icor1=3;asymmUnit[i].icor2=1;asymmUnit[i].lflag=1;}
+      else if (axstr.value(i)=="zy"){asymmUnit[i].icor1=3;asymmUnit[i].icor2=2;asymmUnit[i].lflag=1;}
+      else if (axstr.value(i)=="xy-"){asymmUnit[i].icor1=1;asymmUnit[i].icor2=2;asymmUnit[i].lflag=-1;}
+      else if (axstr.value(i)=="xz-"){asymmUnit[i].icor1=1;asymmUnit[i].icor2=3;asymmUnit[i].lflag=-1;}
+      else if (axstr.value(i)=="yx-"){asymmUnit[i].icor1=2;asymmUnit[i].icor2=1;asymmUnit[i].lflag=-1;}
+      else if (axstr.value(i)=="yz-"){asymmUnit[i].icor1=2;asymmUnit[i].icor2=3;asymmUnit[i].lflag=-1;}
+      else if (axstr.value(i)=="zx-"){asymmUnit[i].icor1=3;asymmUnit[i].icor2=1;asymmUnit[i].lflag=-1;}
+      else if (axstr.value(i)=="zy-"){asymmUnit[i].icor1=3;asymmUnit[i].icor2=2;asymmUnit[i].lflag=-1;}
+      if (axtokcnt.value(i)==2){
+          asymmUnit[i].nax=atloc.value(atox.value(i*6))+1;
+          asymmUnit[i].nay1=i+1;
+          asymmUnit[i].nay2=atloc.value(atox.value(i*6+1))+1;
+
+      }else{
+          if (atox.value(i*6+1)=="^"){
+              sprintf(newAtom.atomname,"DUM0%d",ndum++);
+              newAtom.frac=asymmUnit[atloc.value(atox.value(i*6))].frac+asymmUnit[atloc.value(atox.value(i*6+2))].frac;
+              newAtom.frac*=0.5;
+              newAtom.OrdZahl=-1;
+              asymmUnit.append(newAtom);
+              asymmUnit[i].nax=asymmUnit.size();
+              asymmUnit[i].nay1=i+1;
+              asymmUnit[i].nay2=atloc.value(atox.value(i*6+3))+1;
+          }
+
+          if (atox.value(i*6+2)=="^"){
+              sprintf(newAtom.atomname,"DUM0%d",ndum++);
+              newAtom.frac=asymmUnit[atloc.value(atox.value(i*6+1))].frac+asymmUnit[atloc.value(atox.value(i*6+3))].frac;
+              newAtom.frac*=0.5;
+              newAtom.OrdZahl=-1;
+              asymmUnit.append(newAtom);
+              asymmUnit[i].nax=atloc.value(atox.value(i*6+3))+1;
+              asymmUnit[i].nay1=i+1;
+              asymmUnit[i].nay2=asymmUnit.size();
+          }
+      }
+     /* printf("%s [%s] 1:%s 2:%s 3:%s 4:%s 5:%s 6:%s\n",asymmUnit.at(i).atomname,axstr.value(i).toStdString().c_str(),
+             atox.value(i*6).toStdString().c_str(),
+             atox.value(i*6+1).toStdString().c_str(),
+             atox.value(i*6+2).toStdString().c_str(),
+             atox.value(i*6+3).toStdString().c_str(),
+             atox.value(i*6+4).toStdString().c_str(),
+             atox.value(i*6+5).toStdString().c_str());*/
+  }
+  }
   if (lavec.isEmpty()){
     mol.applyLatticeCentro(gitt,false);
   }else{
@@ -3511,7 +3744,9 @@ void MyWindow::load_Jana(QString fileName){
     fmcq->doMaps->hide();
   }
   fmcq->doMaps->show();
+  //xdMenu->setEnabled(true);
 }
+
 
 void MyWindow::howOldIsTheLatesDataBase(){
   connect(net, SIGNAL(finished(QNetworkReply*)), this, SLOT(replyFinished(QNetworkReply*)));
@@ -3641,7 +3876,6 @@ void MyWindow::load_xdres(QString fileName) {
   {//RES  
   char line[85]="",dv[20],*dvv;
   int i=0;
-  double cfac=1.0;//6/(M_PI*M_PI*M_PI*8);
   mol.initDir();
   if ((adp=fopen(fileName.toLocal8Bit(),"r"))==NULL) {QMessageBox::critical(this,"Read Error!",QString("read error %1!").arg(fileName),QMessageBox::Ok);exit(2);}  
   i=0;
@@ -3754,23 +3988,38 @@ void MyWindow::load_xdres(QString fileName) {
       &asymmUnit[i].d1123,
       &asymmUnit[i].d1223,
       &asymmUnit[i].d1233);
-      if (XDVERS < 4.105){	
+      if (XDVERS < 4.105){
+          asymmUnit[i].d1111/=dfac;////Ujklm's whanted
+          asymmUnit[i].d2222/=dfac;//
+          asymmUnit[i].d3333/=dfac;//
+          asymmUnit[i].d1112/=dfac;//
+          asymmUnit[i].d1222/=dfac;//
+          asymmUnit[i].d1113/=dfac;//
+          asymmUnit[i].d1333/=dfac;//
+          asymmUnit[i].d2223/=dfac;//
+          asymmUnit[i].d2333/=dfac;//
+          asymmUnit[i].d1122/=dfac;//
+          asymmUnit[i].d1133/=dfac;//
+          asymmUnit[i].d2233/=dfac;//
+          asymmUnit[i].d1123/=dfac;//
+          asymmUnit[i].d1223/=dfac;//
+          asymmUnit[i].d1233/=dfac;//
       } else{
-	asymmUnit[i].d1111/= mol.zelle.as * mol.zelle.as * mol.zelle.as * mol.zelle.as;////Ujklm's whanted
-	asymmUnit[i].d2222/= mol.zelle.bs * mol.zelle.bs * mol.zelle.bs * mol.zelle.bs;//
-	asymmUnit[i].d3333/= mol.zelle.cs * mol.zelle.cs * mol.zelle.cs * mol.zelle.cs;//
-	asymmUnit[i].d1112/= mol.zelle.as * mol.zelle.as * mol.zelle.as * mol.zelle.bs;//
-	asymmUnit[i].d1222/= mol.zelle.as * mol.zelle.bs * mol.zelle.bs * mol.zelle.bs;//
-	asymmUnit[i].d1113/= mol.zelle.as * mol.zelle.as * mol.zelle.as * mol.zelle.cs;//
-	asymmUnit[i].d1333/= mol.zelle.as * mol.zelle.cs * mol.zelle.cs * mol.zelle.cs;//
-	asymmUnit[i].d2223/= mol.zelle.bs * mol.zelle.bs * mol.zelle.bs * mol.zelle.cs;//
-	asymmUnit[i].d2333/= mol.zelle.bs * mol.zelle.cs * mol.zelle.cs * mol.zelle.cs;//
-	asymmUnit[i].d1122/= mol.zelle.as * mol.zelle.as * mol.zelle.bs * mol.zelle.bs;//
-	asymmUnit[i].d1133/= mol.zelle.as * mol.zelle.as * mol.zelle.cs * mol.zelle.cs;//
-	asymmUnit[i].d2233/= mol.zelle.bs * mol.zelle.bs * mol.zelle.cs * mol.zelle.cs;//
-	asymmUnit[i].d1123/= mol.zelle.as * mol.zelle.as * mol.zelle.bs * mol.zelle.cs;//
-	asymmUnit[i].d1223/= mol.zelle.as * mol.zelle.bs * mol.zelle.bs * mol.zelle.cs;//
-	asymmUnit[i].d1233/= mol.zelle.as * mol.zelle.bs * mol.zelle.cs * mol.zelle.cs;//
+    asymmUnit[i].d1111/= mol.zelle.as * mol.zelle.as * mol.zelle.as * mol.zelle.as * dfac;////Ujklm's whanted
+    asymmUnit[i].d2222/= mol.zelle.bs * mol.zelle.bs * mol.zelle.bs * mol.zelle.bs * dfac;//
+    asymmUnit[i].d3333/= mol.zelle.cs * mol.zelle.cs * mol.zelle.cs * mol.zelle.cs * dfac;//
+    asymmUnit[i].d1112/= mol.zelle.as * mol.zelle.as * mol.zelle.as * mol.zelle.bs * dfac;//
+    asymmUnit[i].d1222/= mol.zelle.as * mol.zelle.bs * mol.zelle.bs * mol.zelle.bs * dfac;//
+    asymmUnit[i].d1113/= mol.zelle.as * mol.zelle.as * mol.zelle.as * mol.zelle.cs * dfac;//
+    asymmUnit[i].d1333/= mol.zelle.as * mol.zelle.cs * mol.zelle.cs * mol.zelle.cs * dfac;//
+    asymmUnit[i].d2223/= mol.zelle.bs * mol.zelle.bs * mol.zelle.bs * mol.zelle.cs * dfac;//
+    asymmUnit[i].d2333/= mol.zelle.bs * mol.zelle.cs * mol.zelle.cs * mol.zelle.cs * dfac;//
+    asymmUnit[i].d1122/= mol.zelle.as * mol.zelle.as * mol.zelle.bs * mol.zelle.bs * dfac;//
+    asymmUnit[i].d1133/= mol.zelle.as * mol.zelle.as * mol.zelle.cs * mol.zelle.cs * dfac;//
+    asymmUnit[i].d2233/= mol.zelle.bs * mol.zelle.bs * mol.zelle.cs * mol.zelle.cs * dfac;//
+    asymmUnit[i].d1123/= mol.zelle.as * mol.zelle.as * mol.zelle.bs * mol.zelle.cs * dfac;//
+    asymmUnit[i].d1223/= mol.zelle.as * mol.zelle.bs * mol.zelle.bs * mol.zelle.cs * dfac;//
+    asymmUnit[i].d1233/= mol.zelle.as * mol.zelle.bs * mol.zelle.cs * mol.zelle.cs * dfac;//
       }
    }
    asymmUnit[i].sg=0;
@@ -4118,7 +4367,13 @@ double hermite3(V3 w, Matrix q,
 }
 
 void MyWindow::pdfDlg(){
-
+    int ind=0;
+  QAction *action = qobject_cast<QAction *>(sender());
+  if (action!=NULL){
+      ind=action->data().toInt();
+      ind=qMax(ind,0);
+      ind=qMin(ind,xdinp.size()-1);
+  }
   QDialog *dlg=new QDialog(this);
   dlg->setWindowTitle("Probability Density Function");
   QComboBox *atomBx = new QComboBox(this);
@@ -4127,6 +4382,7 @@ void MyWindow::pdfDlg(){
   if (xdinp[i].sg) continue;
   atomBx->addItem(QString(xdinp[i].atomname),i);
   }
+  atomBx->setCurrentIndex(ind);
   QDoubleSpinBox *proba=new QDoubleSpinBox(this);
   proba->setMinimum(1);
   proba->setMaximum(99);
@@ -4787,7 +5043,7 @@ void MyWindow::makePDFGrid(INP atom, double proba,bool c2,bool c3,bool c4){
 		       atom.d1111,atom.d2222,atom.d3333,
 		       atom.d1112,atom.d1113,atom.d1122,
 		       atom.d1123,atom.d1133,atom.d1222,
-                       atom.d1223,atom.d1233,atom.d1333,
+               atom.d1223,atom.d1233,atom.d1333,
 		       atom.d2223,atom.d2233,atom.d2333);
       tmin=fmin(tmin,third);
       tmax=fmax(tmax,third);
@@ -6858,6 +7114,7 @@ void MyWindow::initLists(QList<INP> xd){
       glPushMatrix();{
 	glScaled( cubeGL->L, cubeGL->L, cubeGL->L );
 	mol.axes(xd); 
+   // printf("xyz axen\n");
       }glPopMatrix();    
       glEnable( GL_DEPTH_TEST );
     }glEndList();
@@ -7762,8 +8019,10 @@ void MyWindow::growSymm(int packart,int packatom){
     xdinp[i].kart.z-=zs;
   }*/
   if (!george){
+      printf("dingdong\n");
     for (int i=0; i<asymmUnit.size() ;i++)
       if (xdinp[i].OrdZahl>-1){
+         // printf("%s %d %d %d %s %s\n",asymmUnit.at(i).atomname,asymmUnit[i].nax,asymmUnit[i].nay2,asymmUnit[i].nay1,asymmUnit[asymmUnit[i].nax-1].atomname,asymmUnit[asymmUnit[i].nay2-1].atomname);
 	if ((asymmUnit[i].nax<1)||(asymmUnit[i].nax-1>xdinp.size()))qDebug()<<"There is something wrong with the local coordinate systems!"<<asymmUnit[i].atomname;
 	if ((asymmUnit[i].nay2<1)||(asymmUnit[i].nay2-1>xdinp.size()))qDebug()<<"There is something wrong with the local coordinate systems!"<<asymmUnit[i].atomname;
 	xdinp[i].ax1=xdinp[asymmUnit[i].nax-1].kart-xdinp[i].kart;

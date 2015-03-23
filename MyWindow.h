@@ -81,7 +81,7 @@ public slots:
      void changeGD();
      void expandAround();
      void showPackDlg();
-     void genMoliso();
+     void genMoliso(QString isoname="",QString mapname="",QString lfcename="",QString sfcename="",int check=0,QString adpname="");
      void destroyMoliso();
      void toggleTubes(bool b);
      //void toggleOrtho(bool b);
@@ -96,6 +96,7 @@ public slots:
      void editXDmas();
      void restoreXDfiles();
      void resinp();
+     void showADPvalues();
      void xdprop();
      void xdlsm();
      void hideSearchAtomButton(bool b){

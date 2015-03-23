@@ -3111,8 +3111,13 @@ void CubeGL::contextMenuEvent(QContextMenuEvent *event) {
 	menu.addAction(&hideThisAct);
 	menu.addAction(&hideThisFragment);
 	menu.addAction(&hideOtherFragments);
-
-	menu.addSeparator();
+    {QAction *a = menu.addAction("Calculate p.d.f. of an atom",parent(),SLOT(pdfDlg()));
+    a->setData(expandatom);
+    }
+    {QAction *a = menu.addAction("Show ADP parameters",parent(),SLOT(showADPvalues()));
+    a->setData(expandatom);
+    }
+    menu.addSeparator();
 	menu.addAction(dntpck);
 	menu.addAction(molpck);
 	menu.addAction(cctpck);

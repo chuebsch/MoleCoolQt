@@ -178,7 +178,7 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
     }
     if (((!phcnt)||((phcnt)&&(curentPhase==phcnt)))&&(!strncmp(line,"symmetry ",9))){
       decodeSymm2(line);
- /*     printf("%4.0f%4.0f%4.0f %4f\n%4.0f%4.0f%4.0f %4f\n%4.0f%4.0f%4.0f %4f\n",
+/*      fprintf(stderr,"%4.0f%4.0f%4.0f %4f\n%4.0f%4.0f%4.0f %4f\n%4.0f%4.0f%4.0f %4f\n",
           sy[0][ns], sy[3][ns],sy[6][ns],sy[9][ns],
           sy[1][ns], sy[4][ns],sy[7][ns],sy[10][ns],
           sy[2][ns], sy[5][ns],sy[8][ns],sy[11][ns]);// */
@@ -216,6 +216,8 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
   // <...
   //
   nr=0;
+  //FILE *test=fopen("test==.hkl","wt");
+
   do {
     skip = 0;
     fsig = 0.1;
@@ -223,9 +225,12 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
       switch (dimension) {
         case 4:
           im = 0;
-          i = sscanf (line, "%hd %hd %hd %hd %hd %f %*f %*f %f %f", &ih0, &ik0, &il0, &im, &iphid, &fo0, &fc0, &f20);
-          if (im != 0)
+          i = sscanf (line, "%4hd%4hd%4hd%4hd%4hd%12f%*12f%*12f%12f%12f", &ih0, &ik0, &il0, &im, &iphid, &fo0, &fc0, &f20);
+         // fprintf(test,"%d %d %d %d %d %f %f %f \n",ih0,ik0,il0,im,iphid,fo0,fc0,f20);
+
+          if (im != 0){
             skip = 1;
+          }
           break;
         case 5:
           im = in = 0;
@@ -246,6 +251,7 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
       i = sscanf (line, "%hd %hd %hd %hd %f %*f %*f %f %f %*f %*f %*f %*f %*f %*f %f", &ih0, &ik0, &il0, &iphid, 
           &fo0, &fc0, &f20, &fsig);
     }
+
     if (iphid!=curentPhase) skip=1;
     if (i < dimension + 3)
       break;
@@ -267,14 +273,15 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
     lr[nr].d4=fc1;//abs fc
     lr[nr].d3=f20;//fc phase
     lr[nr].d5=lr[nr].d6=lr[nr].d7=0;//not there afaik
-    //printf("%4d%4d%4d %9f %9f %9f #%d\n",lr[nr].ih,lr[nr].ik,lr[nr].il,lr[nr].d1,lr[nr].d2,lr[nr].d3,nr);
+//    fprintf(test,"%4d%4d%4d %9f %9f %9f #%d\n",lr[nr].ih,lr[nr].ik,lr[nr].il,lr[nr].d1,lr[nr].d2,lr[nr].d3,nr);
     nr++;
     fgets (line, 199, mapin);
   }while (i > 0 && !feof (mapin));
   fclose(mapin);
+
   printf("%d Reflections read from %s.\n",nr,filename);
   for (int i=0;i<ns;i++){
-  /*printf("SYMM: %d\n%9.6f %9.6f %9.6f %5.2f\n%9.6f %9.6f %9.6f %5.2f\n%9.6f %9.6f %9.6f %5.2f\n",i+1,
+  /*fprintf(test,"SYMM: %d\n%9.6f %9.6f %9.6f %5.2f\n%9.6f %9.6f %9.6f %5.2f\n%9.6f %9.6f %9.6f %5.2f\n",i+1,
       sy[0][i], sy[1][i], sy[2][i], sy[9][i],
       sy[3][i], sy[4][i], sy[5][i], sy[10][i],
       sy[6][i], sy[7][i], sy[8][i], sy[11][i]);// */
@@ -290,8 +297,12 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
       nh=(int) (u*sy[0][k]+ v*sy[3][k] + w*sy[6][k]);
       nk=(int) (u*sy[1][k]+ v*sy[4][k] + w*sy[7][k]);
       nl=(int) (u*sy[2][k]+ v*sy[5][k] + w*sy[8][k]);
-      if((nl<0)||((nl==0)&&(nk<0))||((nl==0)&&(nk==0)&&(nh<0)))
-      {nh*=-1;nk*=-1;nl*=-1;t=-1.0;}
+      //fprintf(test,"== %d %d %d s%d ml%d ==\n",nh,nk,nl,k, ml);
+
+      if((nl<0)||((nl==0)&&(nk<0))||((nl==0)&&(nk==0)&&(nh<0)))      
+    {nh*=-1;nk*=-1;nl*=-1;t=-1.0;
+      //fprintf(test,"%d %d %d s%d ml%d\n",nh,nk,nl,k, ml);
+      }
       if ((nl<ml)||((nl==ml)&&(nk<mk))||((nl==ml)&&(nk==mk)&&(nh<=mh))) continue;
       mh=nh;mk=nk;ml=nl;
       p=u*sy[9][k]+v*sy[10][k]+w*sy[11][k];
@@ -300,7 +311,7 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
     lr[i].ih=mh;
     lr[i].ik=mk;
     lr[i].il=ml;
-    /*    printf("%4d%4d%4d fo: %12.5f sfo: %10.5f phase: %10.6f a1: %12g b1: %12g f2c %12.5f f2cphase: %10.6f \n",
+    /*fprintf(test ,"%4d%4d%4d fo: %12.5f sfo: %10.5f phase: %10.6f a1: %12g b1: %12g f2c %12.5f f2cphase: %10.6f %f %f %f\n",
           lr[i].ih,
           lr[i].ik,
           lr[i].il,
@@ -310,15 +321,17 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
           lr[i].d4,
           lr[i].d5,
           lr[i].d6,
-          lr[i].d7); // */
+          lr[i].d7,u,v,w); // */
 
 
   }
+  //fclose(test);
+
   sorthkl(nr,lr);
   int n=-1;
-  // /*
-  //FILE *unmerg=fopen("unmerged.xd-mcq.hkl","wt");
-  //FILE *merg=fopen("merged.xd-mcq.hkl","wt");
+   /*
+  FILE *unmerg=fopen("unmerged.jana-mcq.hkl","wt");
+  FILE *merg=fopen("merged.xd-mcq.hkl","wt");
   //  */
   {int i=0;
     while(i<nr){
@@ -334,7 +347,7 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
       int m;
       int k=i;
       while ((i<nr)&&(lr[i].ih==lr[k].ih)&&(lr[i].ik==lr[k].ik)&&(lr[i].il==lr[k].il)) {
-         /*
+/*
               fprintf(unmerg,"%4d%4d%4d fo: %12.5f sfo: %10.5f phase: %10.6f a1: %12g b1: %12g f2c %12.5f f2cphase: %10.6f #%d\n",lr[i].ih,lr[i].ik,lr[i].il,
                 lr[i].d1,
                 lr[i].d2,
@@ -378,12 +391,14 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
 
     }
   }
-  // /*
-  //fclose(merg);
-  //fclose(unmerg);
+   /*
+  fclose(merg);
+  fclose(unmerg);
   // */
   n++;
+  //fprintf(stderr,"%d %d \n",nr,n);
   nr=n;
+
   {
     float DX;
     float DY;
@@ -1798,6 +1813,7 @@ void FourMCQ::gen_surface(bool neu,int imin,int imax){
   disconnect(chgl,SIGNAL(diffscroll(int ,int )),0,0);
   disconnect(chgl,SIGNAL(neuemitte(V3)),0,0);
   disconnect(chgl,SIGNAL(inimibas()),0,0);
+  if (datf1_f2==NULL)imax=qMin(3,imax);
   /*
      if ((mode==0)&&(!scroller)) chgl->mibas=glGenLists(2);
      scroller=false;*/

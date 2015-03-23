@@ -1,7 +1,17 @@
 #include "molisoStartDlg.h"
 
-MolisoStartDlg::MolisoStartDlg(){  
-  loadSettings();
+MolisoStartDlg::MolisoStartDlg(QString isoname, QString mapname, QString lfcename, QString sfcename, int check, QString adpname){
+  if (isoname.isEmpty()){
+      loadSettings();
+  }else{
+      iso_grid_name=isoname;
+      checker=check;
+      map_grid_name=   mapname;
+      load_face_name=  lfcename;
+      save_face_name=  sfcename;
+      adp_struct_name= adpname;
+      this->setWindowTitle(QString("%1 MolIso Start Dialog").arg(check));
+  }
   setMinimumSize(QSize(550,200));
   QLabel *isol= new QLabel("Iso-Grid-File");
   mcbx= new QCheckBox("Map-Grid-File");
