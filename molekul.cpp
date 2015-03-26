@@ -1480,10 +1480,10 @@ void molekul::make_polyeder(QList<INP> xd){
                         polyvecs.mid=V3(0,0,0);
                         for (int m=0;m<polyvecs.edge.size();m++){
                             polyvecs.mid+=xd[polyvecs.edge.at(m)].kart;
-                          printf("%4s ",xd[polyvecs.edge.at(m)].atomname);
+                    //      printf("%4s ",xd[polyvecs.edge.at(m)].atomname);
 
                         }
-                        printf("\n");
+                      //  printf("\n");
                         if (polyvecs.edge.size())  polyvecs.mid*=1.0/polyvecs.edge.size();
                         polyvecs.norm=Normalize(polyvecs.mid-zent);
                         polyvecs.umfang=r;
@@ -2691,10 +2691,14 @@ bool molekul::decodeSymmCard(const QString symmCard){
     }
     else if (!axe.at(i).isEmpty()) t[i]=axe.at(i).toDouble();
   }
-  Matrix sm = Matrix(sx[0],sy[0],sz[0],	  sx[1],sy[1],sz[1],  sx[2],sy[2],sz[2]);
+  Matrix sm = Matrix(
+      sx[0],sy[0],sz[0],	  
+      sx[1],sy[1],sz[1],  
+      sx[2],sy[2],sz[2]);
   zelle.symmops.append(sm);
   zelle.trans.append(V3(t[0],t[1],t[2]));
-//printf("%g %g %g %g\n%g %g %g %g\n%g %g %g %g\n", sx[0],sy[0],sz[0],t[0],sx[1],sy[1],sz[1],t[1],  sx[2],sy[2],sz[2],t[2]);
+//printf("\n%g %g %g %g\n%g %g %g %g\n%g %g %g %g\n\n", sx[0],sy[0],sz[0],t[0],sx[1],sy[1],sz[1],t[1],  sx[2],sy[2],sz[2],t[2]);
+//printf("sm\n%g %g %g \n%g %g %g \n%g %g %g \n\n", sm.m11,sm.m21,sm.m31,sm.m12,sm.m22,sm.m32,sm.m13,sm.m23,sm.m33);
 
 
   return true;
@@ -2999,7 +3003,7 @@ QString molekul::symmcode2human(QStringList brauchSymm){
   s--;
   m=zelle.symmops.at(s);
   QString symstrX,symstrY,symstrZ;
-  if (m.m11==1) symstrX.append("+x");
+/*  if (m.m11==1) symstrX.append("+x");
   if (m.m11==-1) symstrX.append("-x");
   if (m.m12==1) symstrX.append("+y");
   if (m.m12==-1) symstrX.append("-y");
@@ -3017,6 +3021,26 @@ QString molekul::symmcode2human(QStringList brauchSymm){
   if (m.m31==-1) symstrZ.append("-x");
   if (m.m32==1) symstrZ.append("+y");
   if (m.m32==-1) symstrZ.append("-y");
+  if (m.m33==1) symstrZ.append("+z");
+  if (m.m33==-1) symstrZ.append("-z");*/
+  if (m.m11==1) symstrX.append("+x");
+  if (m.m11==-1) symstrX.append("-x");
+  if (m.m21==1) symstrX.append("+y");
+  if (m.m21==-1) symstrX.append("-y");
+  if (m.m31==1) symstrX.append("+z");
+  if (m.m31==-1) symstrX.append("-z");
+          
+  if (m.m12==1) symstrY.append("+x");
+  if (m.m12==-1) symstrY.append("-x");
+  if (m.m22==1) symstrY.append("+y");
+  if (m.m22==-1) symstrY.append("-y");
+  if (m.m32==1) symstrY.append("+z");
+  if (m.m32==-1) symstrY.append("-z");
+          
+  if (m.m13==1) symstrZ.append("+x");
+  if (m.m13==-1) symstrZ.append("-x");
+  if (m.m23==1) symstrZ.append("+y");
+  if (m.m23==-1) symstrZ.append("-y");
   if (m.m33==1) symstrZ.append("+z");
   if (m.m33==-1) symstrZ.append("-z");
   t=zelle.trans.at(s);
@@ -3069,9 +3093,13 @@ bool molekul::applyLatticeCentro(const QChar latt,const bool centro){
   Matrix inv(-1.0,0.0,0.0, 0.0,-1.0,0.0, 0.0,0.0,-1.0);
   if (centro) 
     for (int i=0; i<z;i++){
+  //    Matrix mm=zelle.symmops.at(i);
       Matrix m=zelle.symmops.at(i)*inv;
       zelle.symmops.append(m);
       zelle.trans.append(zelle.trans.at(i));
+//printf("inv\n%g %g %g \n%g %g %g \n%g %g %g \n\n", inv.m11,inv.m12,inv.m13,inv.m21,inv.m22,inv.m23,inv.m31,inv.m32,inv.m33);
+//printf("m\n%g %g %g \n%g %g %g \n%g %g %g \n\n", m.m11,m.m12,m.m13,m.m21,m.m22,m.m23,m.m31,m.m32,m.m33);
+//printf("om\n%g %g %g \n%g %g %g \n%g %g %g \n\n", mm.m11,mm.m12,mm.m13,mm.m21,mm.m22,mm.m23,mm.m31,mm.m32,mm.m33);
     }
   z=zelle.symmops.size();
   switch (latt.toAscii()){
@@ -3159,6 +3187,7 @@ bool molekul::applyLatticeCentro(const QChar latt,const bool centro){
   }
   return true;
 }
+
 void molekul::setup_zelle(){  
   const double g2r=180.0/M_PI;
   zelle.phi=  sqrt(1-(cos(zelle.al/g2r)*cos(zelle.al/g2r))-
@@ -3181,4 +3210,50 @@ void molekul::setup_zelle(){
 }
 void molekul::Uf2Uo(const Matrix x, Matrix & y) {
  y=(zelle.o1*x)*transponse(zelle.o1);
+}
+
+Modulat Modulat::applySymm(Matrix sym3d, V3 trans3d, V3 x4sym, int x4,double x4trans){
+  Modulat that=*this;
+  Modulat newatom=Modulat(that);
+  newatom.frac0=(sym3d*frac0)+trans3d;
+  for (int i=0; i<wp;i++){
+  newatom.possin[i]=sym3d*possin[i];
+  newatom.poscos[i]=sym3d*poscos[i];
+  }
+  newatom.uf0=(mol->zelle.o1*uf0)*transponse(mol->zelle.o1);
+  newatom.x4sym=x4sym;
+  newatom.x4=x4;
+  newatom.x4trans=x4trans;
+  return newatom;
+}
+V3 Modulat::kart(double t){
+  V3 p=frac0;
+  double X4=t*(mol->zelle.qvec*frac0);
+  X4=(x4sym*frac0)*x4+x4trans;
+  for (int i=0; i<wp;i++){
+    p+=possin[i]*sin(2*M_PI*(i+1)*X4);
+    p+=poscos[i]*cos(2*M_PI*(i+1)*X4);
+  }
+  V3 y;
+  
+  y.x = p.x * mol->zelle.f2c.m11 + p.y * mol->zelle.f2c.m12 + p.z * mol->zelle.f2c.m13;
+  y.y = p.x * mol->zelle.f2c.m21 + p.y * mol->zelle.f2c.m22 + p.z * mol->zelle.f2c.m23;
+  y.z = p.x * mol->zelle.f2c.m31 + p.y * mol->zelle.f2c.m32 + p.z * mol->zelle.f2c.m33;
+  return y;
+}
+V3 Modulat::frac(double t){
+  V3 p=frac0;
+ // printf("x4sy %g %g %g x4 %d x4tr %g q %g %g %g \n",x4sym.x,x4sym.y,x4sym.z,x4,x4trans,mol->zelle.qvec.x,mol->zelle.qvec.y,mol->zelle.qvec.z);
+  double X4=t+(mol->zelle.qvec*frac0);
+ // printf("X4 %g %g %g %g\n",X4,frac0.x,frac0.y,frac0.z);
+  X4=(x4sym*frac0)+x4*X4+x4trans;
+ // printf("X4 %g\n",X4);
+  for (int i=0; i<wp;i++){
+    p+=possin[i]*sin(2*M_PI*(i+1)*X4);
+    p+=poscos[i]*cos(2*M_PI*(i+1)*X4);
+  }
+  return p;
+}
+void Modulat::errorMsg(QString msg){
+  qDebug()<<msg;
 }

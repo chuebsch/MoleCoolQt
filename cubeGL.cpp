@@ -3287,7 +3287,7 @@ void CubeGL::setMatrix(){
 	  MM[0]*MM[5]*MM[10] - MM[8]*MM[5]*MM[2]+
 	  MM[1]*MM[6]*MM[8]  - MM[9]*MM[6]*MM[0]+
 	  MM[2]*MM[4]*MM[9]  - MM[10]*MM[4]*MM[1];
-  if ((det>0.1)&&(det<9.0)) glLoadMatrixd(MM);
+  if ((det>0.0)&&(det<999.0)) glLoadMatrixd(MM);
   else {
     MM[0]=1;
     MM[1]=0;

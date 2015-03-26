@@ -377,6 +377,7 @@ struct INP {
   uint GLname;
 }; 
 
+
 inline bool operator < (const INP &a1, const INP &a2){
   return a1.peakHeight>a2.peakHeight;
 }
@@ -388,8 +389,12 @@ struct Cell {
   int symuncent;
   QList<Matrix> symmops;
   QList<V3> trans;
+  QList<V3> x4sym;
+  double x4, x4tr;
   double o[3][3];
   Matrix o1;
+  Matrix f2c;
+  V3 qr,qi,qvec;//real, imaginary and q-vector
 };
 struct bindi{
   int a;
@@ -667,5 +672,103 @@ class molekul {
 //  void cyclsort(PolyEder & p);
   int findPoly(int zi, PolyEder p,QList<INP> xd);
   double * jacobi(double a[3][3], double d[3]); 
+};
+class Modulat{
+  public:
+    molekul *mol;
+    char     atomname[strgl];
+    V3       frac0;          // Fraktionelle Koordinaten  
+    V3       kart(double t);          // Berechnete kartesische Koordinaten  
+    V3       frac(double t);          // Berechnete fractionelle Koordinaten  
+    Matrix   uf0;           // Temperaturparameter 
+    Matrix   uf(double t);
+    Matrix   u(double t);
+    double   amul;
+    int      OrdZahl;
+    V3 x4sym;
+    int x4;
+    double x4trans;
+    Modulat(const Modulat &m):so(m.so),sp(m.sp),st(m.st),wo(m.wo),wp(m.wp),wt(m.wt){
+      frac0=m.frac0;
+      uf0=m.uf0;
+      strcpy(atomname,m.atomname);
+      amul=m.amul;
+      OrdZahl=m.OrdZahl;
+      x4sym=m.x4sym;
+      x4=x4;
+      x4trans=x4trans;
+    }
+    Modulat(int _wo, int _wp, int _wt, int _so, int _sp, int _st):so(_so),sp(_sp),st(_st),wo(_wo),wp(_wp),wt(_wt){
+      if (wo>0) {
+        os=(double*)malloc(sizeof(double)*wo);
+        oc=(double*)malloc(sizeof(double)*wo);
+      }else{oc=os=NULL;}
+      if (wp>0) {
+        possin=(V3*)malloc(sizeof(V3)*wp);
+        poscos=(V3*)malloc(sizeof(V3)*wp);
+      }else{ possin=poscos=NULL;}
+      if (wt>0) {
+        usin=(Matrix*)malloc(sizeof(Matrix)*wt);
+        ucos=(Matrix*)malloc(sizeof(Matrix)*wt);
+      }else{ usin=ucos=NULL;}
+      for (int i=0; i<wo; i++) {os[i]=0.0;oc[i]=0.0;}
+      for (int i=0; i<wp; i++) {possin[i]=V3(0,0,0); poscos[i]=V3(0,0,0);};
+      for (int i=0; i<wo; i++) {usin[i]=Matrix(0,0,0, 0,0,0, 0,0,0);ucos[i]=Matrix(0,0,0, 0,0,0, 0,0,0);}
+      x4sym=V3(0,0,0);
+      x4=1;
+      x4trans=0.0;
+    };
+    void setWaveOccPar(int w, double _o,double s, double c){
+      o=_o;
+      if (w>=wo) {
+        errorMsg("Error in filling occupation waves!");
+        exit(33);
+      }
+      os[w]=s;
+      oc[w]=c;
+    }
+    void setWavePosPar(int w, double _xs, double _ys, double _zs, double _xc, double _yc, double _zc){
+      if (w>=wp) {
+        errorMsg("Error in filling position waves!");
+        exit(33);
+      }
+      possin[w]=V3(_xs,_ys,_zs);
+      poscos[w]=V3(_xc,_yc,_zc);
+    }
+    QString debugme(){
+    QString s=QString("so %1 sp %2 st %3 wo %4 wp %5 wt %6").arg(so).arg(sp).arg(st).arg(wo).arg(wp).arg(wt);
+    return s;
+    }
+    QString debugwp(){
+      QString s=QString("xsin %1, ysin %2, zsin %3, xcos %4, ycos %5, zcos %6 x4%7")
+         .arg(possin[0].x)
+         .arg(possin[0].y)
+         .arg(possin[0].z)
+         .arg(poscos[0].x)
+         .arg(poscos[0].y)
+         .arg(poscos[0].z).arg(x4);
+      return s;
+    }
+    void setWaveTemPar(int w, 
+        double _u11s,  double _u22s,  double _u33s,  double _u12s,  double _u13s,  double _u23s,  
+        double _u11c,  double _u22c,  double _u33c,  double _u12c,  double _u13c,  double _u23c){
+      if (w>=wt) {
+        errorMsg("Error in filling adp waves!");
+        exit(33);
+      }
+      usin[w]=Matrix(_u11s,_u12s,_u13s, _u12s,_u22s,_u23s, _u13s,_u23s,_u33s);
+      ucos[w]=Matrix(_u11c,_u12c,_u13c, _u12c,_u22c,_u23c, _u13c,_u23c,_u33c);
+    } 
+    Modulat applySymm(Matrix sym3d, V3 trans3d, V3 x4sym, int x4,double x4trans);
+  private:
+    void errorMsg(QString msg);
+//    const int id;//id of xdinp or assym
+    const int so,sp,st;//kind of mod functions of occupancy position and temperature parameters
+    const int wo,wp,wt;//number of mod functions of occupancy position and temperature parameters
+    V3 *possin,*poscos;//pos
+    double o,*os,*oc;//occ
+    Matrix *usin,*ucos;//uij
+
+
 };
 #endif

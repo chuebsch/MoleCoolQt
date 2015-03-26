@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=419;
+int rev=420;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -56,6 +56,15 @@ void MyWindow::setup_zelle(){
   mol.zelle.o1.m31=mol.zelle.o[2][0] = mol.zelle.cs*mol.zelle.c* cos(mol.zelle.be/g2r);
   mol.zelle.o1.m32=mol.zelle.o[2][1] = mol.zelle.cs*tau;
   mol.zelle.o1.m33=mol.zelle.o[2][2] = mol.zelle.cs*mol.zelle.c* mol.zelle.phi / sin(mol.zelle.ga /g2r);
+  mol.zelle.f2c.m11 = mol.zelle.a;
+  mol.zelle.f2c.m21 = 0.0;
+  mol.zelle.f2c.m31 = 0.0;
+  mol.zelle.f2c.m12 = mol.zelle.b * cos(mol.zelle.ga/g2r);
+  mol.zelle.f2c.m22 = mol.zelle.b * sin(mol.zelle.ga/g2r);
+  mol.zelle.f2c.m32 = 0.0;
+  mol.zelle.f2c.m13 = mol.zelle.c * cos(mol.zelle.be/g2r);
+  mol.zelle.f2c.m23 = tau;
+  mol.zelle.f2c.m33 = mol.zelle.c * mol.zelle.phi / sin(mol.zelle.ga/g2r);
 }
 char *egals;
 QProgressBar *balken;
@@ -3467,13 +3476,23 @@ void MyWindow::load_Jana(QString fileName){
         gitt=tok.at(1).toUpper()[0].toLatin1();
 //        qDebug()<<"gitter "<<gitt;
       }
-      if (((!phcnt)||((phcnt)&&(curentPhase==phcnt)))&&(tok.size()>1 )&&(tok.at(0).toUpper()=="LATTVEC")){
+      if (((!phcnt)||((phcnt)&&(curentPhase==phcnt)))&&(tok.size()>3 )&&(tok.at(0).toUpper()=="LATTVEC")){
        V3 v=V3(0,0,0);
         v.x  = tok.at(1).toDouble();
         v.y  = tok.at(2).toDouble();
         v.z  = tok.at(3).toDouble();
         lavec.append(v);
       }
+      if (((!phcnt)||((phcnt)&&(curentPhase==phcnt)))&&(tok.size()>3 )&&(tok.at(0).toUpper()=="QR")){
+        mol.zelle.qr.x=tok.at(1).toDouble();
+        mol.zelle.qr.y=tok.at(2).toDouble();
+        mol.zelle.qr.z=tok.at(3).toDouble();
+      }
+      if (((!phcnt)||((phcnt)&&(curentPhase==phcnt)))&&(tok.size()>3 )&&(tok.at(0).toUpper()=="QI")){
+        mol.zelle.qi.x=tok.at(1).toDouble();
+        mol.zelle.qi.y=tok.at(2).toDouble();
+        mol.zelle.qi.z=tok.at(3).toDouble();
+ }
       if (((!phcnt)||((phcnt)&&(curentPhase==phcnt)))&&(tok.size()>1 )&&(tok.at(0).toUpper()=="ATOM")){
         atypen.append(tok.at(1));
        // qDebug()<<"ATOMS"<<tok;
@@ -3503,6 +3522,21 @@ void MyWindow::load_Jana(QString fileName){
     }
   }
   all.clear();
+  if (mol.dimensions==4){
+    mol.zelle.qvec.x=sqrt(mol.zelle.qr.x*mol.zelle.qr.x+mol.zelle.qi.x*mol.zelle.qi.x);
+    mol.zelle.qvec.y=sqrt(mol.zelle.qr.y*mol.zelle.qr.y+mol.zelle.qi.y*mol.zelle.qi.y);
+    mol.zelle.qvec.z=sqrt(mol.zelle.qr.z*mol.zelle.qr.z+mol.zelle.qi.z*mol.zelle.qi.z);
+    printf("\nQr%g %g %g\nQi%g %g %g\nQv%g %g %g\n",
+        mol.zelle.qr.x,
+        mol.zelle.qr.y,
+        mol.zelle.qr.z,
+        mol.zelle.qi.x,
+        mol.zelle.qi.y,
+        mol.zelle.qi.z,
+        mol.zelle.qvec.x,
+        mol.zelle.qvec.y,
+        mol.zelle.qvec.z);
+  }
   if (phcnt){
   phaseSpin->setMaximum(phcnt);
   phaseSpin->show();
@@ -3527,7 +3561,6 @@ void MyWindow::load_Jana(QString fileName){
   for (int li=0; li<all.size();li++){
     tok.clear();
     tok=all.at(li).split(" ",QString::SkipEmptyParts);
-//    qDebug()<<"li "<<li<<(curentPhase-1)<<tok.size()<<all.at(li);
     if (tok.size()){
       if (li<(curentPhase-1)) {
         skip+=tok.at(0).toInt();
@@ -3545,11 +3578,13 @@ void MyWindow::load_Jana(QString fileName){
         //C1        1  1     1.000000 0.199051 0.122184 0.071881    
         //123456789012345678901234567890123456789012345678901234567890
         //000000000111111111122222222223333333333444444444455555555556
-        //
+        //Sm        1  2     0.250000 0.000000 0.000000 0.000106      000  0  1  0
         newAtom.lmax=-1;
+        int so,sp,st,wo,wp,wt;
         if ((all.at(li).length()>16)&&(all.at(li)[16]!=' ')) 
         iread=sscanf(all.at(li).toStdString().c_str(),"%8s%3d%3d%3d %9lf%9lf%9lf%9lf",newAtom.atomname,&newAtom.atomtype,&newAtom.jtf, &newAtom.lmax, &newAtom.amul, &newAtom.frac.x, &newAtom.frac.y, &newAtom.frac.z);
-        else iread=sscanf(all.at(li).toStdString().c_str(),"%8s%3d%3d    %9lf%9lf%9lf%9lf",newAtom.atomname,&newAtom.atomtype,&newAtom.jtf,  &newAtom.amul, &newAtom.frac.x, &newAtom.frac.y, &newAtom.frac.z);
+        else iread=sscanf(all.at(li).toStdString().c_str(),"%8s%3d%3d    %9lf%9lf%9lf%9lf     %1d%1d%1d%3d%3d%3d",newAtom.atomname,&newAtom.atomtype,&newAtom.jtf,  &newAtom.amul, &newAtom.frac.x, &newAtom.frac.y, &newAtom.frac.z,&so,&sp,&st,&wo,&wp,&wt);
+        printf("so%d sp%d st%d wo%d wp%d wt%d\n",so,sp,st,wo,wp,wt);
    //     qDebug()<<all.at(li)<<all.at(li)[16];
    //     printf("'11111111222333444 555555555666666666777777777888888888'\n");
         printf("%3d%3d%3d %-10s %4d %12.6f%12.6f%12.6f%12.6f\n",iread,newAtom.jtf,newAtom.lmax,newAtom.atomname,newAtom.atomtype,newAtom.frac.x,newAtom.frac.y,newAtom.frac.z,newAtom.amul);
@@ -3564,6 +3599,7 @@ void MyWindow::load_Jana(QString fileName){
               &newAtom.uf.m23);
             
         }
+
         if (newAtom.jtf>2) {
           li++;
           sscanf(all.at(li).toStdString().c_str(),"%9lf%9lf%9lf%9lf%9lf%9lf",
@@ -3635,6 +3671,58 @@ void MyWindow::load_Jana(QString fileName){
           newAtom.d1223/= mol.zelle.as * mol.zelle.bs * mol.zelle.bs * mol.zelle.cs * dfac;//
           newAtom.d1233/= mol.zelle.as * mol.zelle.bs * mol.zelle.cs * mol.zelle.cs * dfac;//
 //  */
+        }
+        if (mol.dimensions==4){
+          Modulat *modat=new Modulat(wo,wp,wt,so,sp,st);
+          modat->mol=&mol;
+          strcpy(modat->atomname,newAtom.atomname);
+          modat->frac0=newAtom.frac;
+          modat->amul=newAtom.amul;
+          modat->uf0=newAtom.uf;
+        if (wo){
+          li++;
+          double o,os,oc;
+          sscanf(all.at(li).toStdString().c_str(),"%9lf",&o);
+          for (int ok=0; ok<wo;ok++){
+          li++;
+          sscanf(all.at(li).toStdString().c_str(),"%9lf%9lf",&os,&oc);
+          modat->setWaveOccPar(ok,o,os,oc);
+          }
+        }
+        if (wp){ 
+          for (int pk=0; pk<wp;pk++){       
+          li++;
+          double xs,ys,zs,
+                 xc,yc,zc;
+          sscanf(all.at(li).toStdString().c_str(),"%9lf%9lf%9lf%9lf%9lf%9lf",
+              &xs,&ys,&zs,&xc,&yc,&zc);
+//          printf("%d %f %f %f %f %f %f\n",pk,xs,ys,zs,xc,yc,zc);
+//          qDebug()<<modat->debugme();
+          modat->setWavePosPar(pk,xs,ys,zs,xc,yc,zc);
+          }
+        }
+        if (wt){ 
+          for (int tk=0; tk<wp;tk++){       
+          li++;
+          double u11s,u22s,u33s, u12s,u13s,u23s;
+          double u11c,u22c,u33c, u12c,u13c,u23c;
+          sscanf(all.at(li).toStdString().c_str(),"%9lf%9lf%9lf%9lf%9lf%9lf",
+              &u11s,&u22s,&u33s, &u12s,&u13s,&u23s);
+          li++;
+          sscanf(all.at(li).toStdString().c_str(),"%9lf%9lf%9lf%9lf%9lf%9lf",
+              &u11c,&u22c,&u33c, &u12c,&u13c,&u23c);
+          modat->setWaveTemPar(tk,u11s,u22s,u33s, u12s,u13s,u23s,u11c,u22c,u33c, u12c,u13c,u23c);
+          }
+        }
+        //qDebug()<<modat->debugwp();
+        V3 testpos=modat->frac(0.0);
+        printf ("%-8s %9.6f %9.6f %9.6f at t=0.0\n",modat->atomname,testpos.x,testpos.y,testpos.z);
+        testpos=modat->frac(0.25);
+        printf ("%-8s %9.6f %9.6f %9.6f at t=0.25\n",modat->atomname,testpos.x,testpos.y,testpos.z);
+        testpos=modat->frac(0.5);
+        printf ("%-8s %9.6f %9.6f %9.6f at t=0.5\n",modat->atomname,testpos.x,testpos.y,testpos.z);
+        testpos=modat->frac(0.75);
+        printf ("%-8s %9.6f %9.6f %9.6f at t=0.75\n",modat->atomname,testpos.x,testpos.y,testpos.z);
         }
 // H2 ^ H3                    H3                          xz  m
 //1234567890123456789012345678901234567890123456789012345678901234567890
