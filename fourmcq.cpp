@@ -1362,7 +1362,7 @@ void FourMCQ::exportMaps(int na, const char filename[], const char atomlist[]){
   fprintf(fo,"%5d%12.6f%12.6f%12.6f\n",n1,dx1.x/a0,dx1.y/a0,dx1.z/a0);
   fprintf(fo,"%5d%12.6f%12.6f%12.6f\n",n2,dy1.x/a0,dy1.y/a0,dy1.z/a0);
   fprintf(fo,"%5d%12.6f%12.6f%12.6f"  ,n3,dz1.x/a0,dz1.y/a0,dz1.z/a0);//no newline here because it is in atomlist
-  fprintf(fo,atomlist);
+  fprintf(fo,"%s",atomlist);
   for (int xi=0;xi<n1;xi++)
     for (int yi=0;yi<n2;yi++)
       for (int zi=0;zi<n3;zi++)
@@ -1391,7 +1391,7 @@ void FourMCQ::exportMaps(int na, const char filename[], const char atomlist[]){
   fprintf(fof1,"%5d%12.6f%12.6f%12.6f\n",n1,dx1.x/a0,dx1.y/a0,dx1.z/a0);
   fprintf(fof1,"%5d%12.6f%12.6f%12.6f\n",n2,dy1.x/a0,dy1.y/a0,dy1.z/a0);
   fprintf(fof1,"%5d%12.6f%12.6f%12.6f"  ,n3,dz1.x/a0,dz1.y/a0,dz1.z/a0);//no newline here because it is in atomlist
-  fprintf(fof1,atomlist);
+  fprintf(fof1,"%s",atomlist);
   for (int xi=0;xi<n1;xi++)
     for (int yi=0;yi<n2;yi++)
       for (int zi=0;zi<n3;zi++)
@@ -1421,7 +1421,7 @@ void FourMCQ::exportMaps(int na, const char filename[], const char atomlist[]){
   fprintf(f1f2,"%5d%12.6f%12.6f%12.6f\n",n1,dx1.x/a0,dx1.y/a0,dx1.z/a0);
   fprintf(f1f2,"%5d%12.6f%12.6f%12.6f\n",n2,dy1.x/a0,dy1.y/a0,dy1.z/a0);
   fprintf(f1f2,"%5d%12.6f%12.6f%12.6f"  ,n3,dz1.x/a0,dz1.y/a0,dz1.z/a0);//no newline here because it is in atomlist
-  fprintf(f1f2,atomlist);
+  fprintf(f1f2,"%s",atomlist);
   for (int xi=0;xi<n1;xi++)
     for (int yi=0;yi<n2;yi++)
       for (int zi=0;zi<n3;zi++)

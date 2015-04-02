@@ -816,8 +816,8 @@ class Modulat{
   private:
     void errorMsg(QString msg);
 //    const int id;//id of xdinp or assym
-    const int so,sp,st;//kind of mod functions of occupancy position and temperature parameters
-    const int wo,wp,wt;//number of mod functions of occupancy position and temperature parameters
+    int so,sp,st;//kind of mod functions of occupancy position and temperature parameters
+    int wo,wp,wt;//number of mod functions of occupancy position and temperature parameters
     QList<V3> possin,poscos;//pos
     double o;
     QList<double> os,oc;//occ
