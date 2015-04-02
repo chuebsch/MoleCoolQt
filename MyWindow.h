@@ -67,11 +67,14 @@ public:
      QToolBar *toolFile;
      QToolBar *toolMove;
      QToolBar *toolView, *searchBar;
-     QTimer *idl;
+     QTimer *idl,*tidl;
      QAction *ydlStartAct;
      QAction *ydlStopAct;
+     QAction *tMovieStartAct;
+     QAction *tMovieStopAct;
      QAction *seReAct;
      void growSymm(int packart,int packatom = -1);
+     void mgrowSymm(int packart,int packatom = -1);
      QComboBox *filterColumnComboBox;
 
 public slots:
@@ -118,7 +121,12 @@ public slots:
      void replyFinished2(QNetworkReply* antwort);
      void idleMoveStart();
      void idleMoveStop();
+     void incT();
+     void exportShelxAtTvalue();
+     void tMovieStart();
+     void tMovieStop();
      void changeScalePic();
+     void changeViewAngle();
      void editPartAux();
      void changeADP();
      void zoomIn();
@@ -166,6 +174,7 @@ public slots:
      void setGD(double gd);
      void pdbOutput();
      void SDM(QStringList &brauchSymm,int packart=0);
+     void mSDM(QStringList &brauchSymm,int packart=0);
      void renamUpdate(bool vis);
      void changeElemetofLabel(const QString &pse);
      void changeIndexofLabel(const int i);
@@ -226,6 +235,7 @@ protected:
      void updateRecentFileActions();
      QString strippedName(const QString &fullFileName);
      double dimension(QList<INP> xdinp);
+     double mdimension(QList<Modulat> xdinp);
      void loadDipoleMoments(QString fileName);
      void someThingToRestore();
      void load_pdb(QString fileName);

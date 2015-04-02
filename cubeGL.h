@@ -19,7 +19,7 @@
 class CubeGL : public QGLWidget {
 Q_OBJECT
 public:
-  CubeGL(QWidget *parent = 0);
+  CubeGL(QWidget *parent ,double vang);
   MolIso *moliso;
   double L;
   bool pause,negpdf;
@@ -36,6 +36,7 @@ public:
   bool molisoTransparence;
   bool zebra;
   bool noWaitLabel;
+  double tvalue;
   double mixdim,miydim,mizdim;
   int wirbas,cbas, bas, ibas, iSel, foubas[5];
   int rotze;
@@ -90,6 +91,7 @@ public slots:
   void setContourCnt(int cnt);
   void setContourWidth(int width);
   void setViewAngle(double ang);
+  double viewAngle(){return vangle;}
   void togglContours(bool b);
   void togglMolisoTransparence(bool b);  
   void setMLFont(QFont fo);

@@ -1332,30 +1332,26 @@ void molekul::UnitZell(void) {
       
       glEnd();
       
-      glDisable( GL_DEPTH_TEST );
-      glColor4f(1.0f,1.0f,1.0f,1.0f); /*
+//      glDisable( GL_DEPTH_TEST );
+//      glColor4f(1.0f,1.0f,1.0f,1.0f); 
+      /*
       cubeGL->renderText( uz1k.x,uz1k.y,uz1k.z, "X",myFont);
       cubeGL->renderText( uz2k.x,uz2k.y,uz2k.z, "Y",myFont);
       cubeGL->renderText( uz3k.x,uz3k.y,uz3k.z, "Z",myFont);
 				      */
-      glEnable( GL_DEPTH_TEST ); 
+//      glEnable( GL_DEPTH_TEST ); 
       glPopMatrix();     
   glLineWidth(1);
   glEnable(GL_LIGHTING);
 }
 
 void molekul::make_bonds(QList<INP> xdinp){
-
-
-
-
+  if (xdinp.isEmpty()) return;
   double gg,soll_abst;
   bcnt=0;
   bd=NULL;
-  if (NULL==(bd=(bindi*)malloc(sizeof(bindi)*(xdinp.size()*10))))return;
-
-
-
+  int msiz=(xdinp.size()*10);
+  if (NULL==(bd=(bindi*)malloc(sizeof(bindi)*msiz)))return;
   for (int i=0;i<xdinp.size();i++) {
       //printf("i=%d sg=%d part=%d\n",i,xdinp[i].sg,xdinp[i].part);
     for (int j=0;j<xdinp.size();j++) {
@@ -1386,19 +1382,64 @@ void molekul::make_bonds(QList<INP> xdinp){
 			    xdinp[bd[bcnt].e].part,
 			    bcnt);*/
 	  bcnt++;
+          if (bcnt>=msiz){
+          msiz+=10;
+          bd=(bindi*)realloc(bd,sizeof(bindi)*msiz);  
+          }
 	}//bindung
       }//Ordnungzahl-ok
     }//j
   }//i
-  
-
-
-
   bd=(bindi*)realloc(bd,sizeof(bindi)*bcnt);  
-
   bonds_made=1;
-
-
+}
+void molekul::make_bonds(QList<Modulat> xdinp,double t){
+  if (xdinp.isEmpty()) return;
+//  printf("make_bonds %g\n",t);
+  double gg,soll_abst;
+  if (bd!=NULL) free(bd);
+  bcnt=0;
+  bd=NULL;
+  int msiz=(xdinp.size()*10);
+  if (NULL==(bd=(bindi*)malloc(sizeof(bindi)*msiz)))return;
+  for (int i=0;i<xdinp.size();i++) {
+      //printf("i=%d sg=%d part=%d\n",i,xdinp[i].sg,xdinp[i].part);
+    for (int j=0;j<xdinp.size();j++) {
+      if (i==j) continue;
+      if((xdinp[i].OrdZahl<0)||(xdinp[j].OrdZahl<0)) continue;
+//      if (((xdinp[i].part<0)||(xdinp[j].part<0))&&((xdinp[i].sg!=xdinp[j].sg)||((xdinp[i].part*xdinp[j].part)&&(xdinp[i].part!=xdinp[j].part)))) continue; //part negative
+//      if ((xdinp[i].part>0)&&(xdinp[j].part>0)&&(xdinp[i].part!=xdinp[j].part)) continue; //different part
+      if ((xdinp[i].OrdZahl<83)&&(xdinp[j].OrdZahl<83)&&(xdinp[i].OrdZahl>=0)&&(xdinp[j].OrdZahl>=0)){
+	soll_abst=((Kovalenz_Radien[xdinp[i].OrdZahl]+
+		    Kovalenz_Radien[xdinp[j].OrdZahl])
+		   -(0.08*fabs((double)ElNeg[xdinp[i].OrdZahl]
+			       -ElNeg[xdinp[j].OrdZahl])))*1.1;
+	gg=100.0*sqrt( Distance(xdinp[i].kart(t),xdinp[j].kart(t)));
+	if (gg<soll_abst) {
+	  bd[bcnt].a=i;	
+	  bd[bcnt].e=j;
+/*	    printf("%s[%d](%d,%d)-%s[%d](%d,%d) %d\n",
+			    xdinp[bd[bcnt].a].atomname,
+			    bd[bcnt].a,
+			    xdinp[bd[bcnt].a].sg,
+			    xdinp[bd[bcnt].a].part,
+			    xdinp[bd[bcnt].e].atomname,
+			    bd[bcnt].e,
+			    xdinp[bd[bcnt].e].sg,
+			    xdinp[bd[bcnt].e].part,
+			    bcnt);*/
+	  bcnt++;
+          if (bcnt>=msiz){
+          msiz+=10;
+          bd=(bindi*)realloc(bd,sizeof(bindi)*msiz);  
+          }
+	}//bindung
+      }//Ordnungzahl-ok
+    }//j
+  }//i
+  bd=(bindi*)realloc(bd,sizeof(bindi)*bcnt);  
+  bonds_made=1;
+  mbonds_last_t=t;
 }
 /*void molekul::cyclsort(PolyEder & p){
     int mini=qMin(p.ai,p.bi);
@@ -1776,6 +1817,98 @@ void molekul::loadSettings(){
 }
 #define Ato4d(arr)       arr[0], arr[1], arr[2], arr[3]
 #include <QGLWidget>
+
+void molekul::modulated(double t,QList<Modulat> mato,int draw) {
+  const int dr_atoms =1;
+  const int dr_bonds =2;
+  const int dr_unit =4;
+  const int dr_adp =8;
+//  const int dr_la =16;
+
+  if (draw&dr_atoms) {
+    for  (int i=0; i<mato.size();i++){
+      int myStyle=aStyle[mato[i].OrdZahl];
+      int myAdp=(myStyle&ATOM_STYLE_NOADP)?0:(draw&dr_adp);
+      glPushMatrix();
+      V3 pos=mato[i].kart(t);
+      int nonPositiveDefinite=0;
+      //int proba=50;
+
+      //     if (i==2) printf("%-8s %9g %9g %9g at t=%g\n",mato[i].atomname,pos.x,pos.y,pos.z,t);
+      double rad=(mato[i].OrdZahl>=0)?arad[mato[i].OrdZahl]:0.15;
+      glTranslated(pos.x,pos.y,pos.z);
+      if (myAdp){
+        Matrix u=mato[i].u(t);
+        V3 ev=V3(0,0,0);
+        double *arr=jacobi2(u,ev);
+        if ((ev.x>0)&&(ev.y>0)&&(ev.z>0)){
+          nonPositiveDefinite=0;
+          glRotated(Ato4d(arr));
+          double psc=1.0;
+          // if (atom.at(i).part==666) psc*=1.2;
+          switch (proba ) {
+            case 10 :{ glScaled(0.76*sqrt(ev.x)*psc,0.76*sqrt(ev.y)*psc,0.76*sqrt(ev.z)*psc);break;}   //Hauptachsen der Eliipsoide 10% Wahrscheinlichkeit
+            case 30 :{ glScaled(1.19*sqrt(ev.x)*psc,1.19*sqrt(ev.y)*psc,1.19*sqrt(ev.z)*psc);break;}   //Hauptachsen der Eliipsoide 30% Wahrscheinlichkeit
+            case 50 :{ glScaled(1.54*sqrt(ev.x)*psc,1.54*sqrt(ev.y)*psc,1.54*sqrt(ev.z)*psc);break;}   //Hauptachsen der Eliipsoide 50% Wahrscheinlichkeit
+            case 70 :{ glScaled(1.91*sqrt(ev.x)*psc,1.91*sqrt(ev.y)*psc,1.91*sqrt(ev.z)*psc);break;}   //Hauptachsen der Eliipsoide 70% Wahrscheinlichkeit
+            case 90 :{ glScaled(2.50*sqrt(ev.x)*psc,2.50*sqrt(ev.y)*psc,2.50*sqrt(ev.z)*psc);break;}   //Hauptachsen der Eliipsoide 90% Wahrscheinlichkeit
+            default: ;
+          }
+        }else {nonPositiveDefinite=1;}
+      }else glScaled(rad,rad,rad);
+      GLUquadricObj *q = gluNewQuadric();
+      gluQuadricNormals(q, GL_SMOOTH);   
+      glColor4fv(Acol[mato[i].OrdZahl]); 
+      if (!nonPositiveDefinite) sphere(0);
+      else dCube(rad);
+
+      glPopMatrix();
+    }
+  }//dr_atoms
+  if (draw&dr_bonds){
+    glPushMatrix();
+    glEnable(GL_BLEND);
+    glDisable(GL_LIGHTING);
+    glLineWidth(1.5);
+    glBegin(GL_LINES);
+    glColor3f(0.5,0.3,0.3);
+//    printf("bonds_made %d t-mbonds_last_t %g t= %g\n",bonds_made,t-mbonds_last_t,t);
+    if ((!bonds_made)||(fabs(t-mbonds_last_t)>0.1))make_bonds(mato,t);
+/*    V3 beg,end;
+    double soll_abst;
+    for  (int i=0; i<mato.size();i++)
+      for  (int j=i+1; j<mato.size();j++) {
+        beg=mato[i].kart(t);
+        end=mato[j].kart(t); 
+        soll_abst=((Kovalenz_Radien[mato[i].OrdZahl]+
+              Kovalenz_Radien[mato[j].OrdZahl]))*0.011;
+        soll_abst*=soll_abst;
+        if (soll_abst>Distance(beg,end)){
+          glVertex3d(beg.x, beg.y, beg.z);
+          glVertex3d(end.x, end.y, end.z);
+        }
+      }
+//      */
+    V3 beg,end;
+    for (int k=0;k<bcnt;k++){
+        beg=mato[bd[k].a].kart(t);
+        end=mato[bd[k].e].kart(t); 
+        glVertex3d(beg.x, beg.y, beg.z);
+        glVertex3d(end.x, end.y, end.z);
+    }
+    glEnd();
+    glLineWidth(1);
+    glPopMatrix();
+  }
+  if (draw&dr_unit){
+    glPushMatrix();
+    UnitZell();
+    glEnable(GL_LIGHTING);    
+    glDisable(GL_BLEND);
+    glPopMatrix();
+  }
+}
+
 void molekul::atoms(CEnvironment atom,int proba){
   /*! Draws atoms as spheres or as ellipses cubes or icosahedrons.
    * @params atoms list of atoms to be drawn .
@@ -2025,7 +2158,7 @@ void molekul::bonds(QList<INP> xdinp){
     gluQuadricTexture(q,GL_TRUE);
     gg=100.0*sqrt( Distance(xdinp[bd[k].a].kart,xdinp[bd[k].e].kart));
 
-    gluCylinder(q, bondStrength, bondStrength, (float)gg/(200.0f), 8, 5); 
+    gluCylinder(q, bondStrength, bondStrength, (float)gg/(200.0f), 5*LOD, 1); 
 
     glPopMatrix();
   }	
@@ -2223,7 +2356,7 @@ hbonds.append("<h2>Hydrogen Bonds</h2><table border=1><tr><th>Donator---Hydrogen
 	    //if (!adp) 
 	    if (gg>2.0) glColor4f(1,0.6,0,1);	else glColor4f(1,1,0,1);	
 	    gluQuadricTexture(q,GL_TRUE);
-	    gluCylinder(q,bondStrength*1.05 , bondStrength*1.05, (float)gg, 8, 50);	    
+	    gluCylinder(q,bondStrength*1.05 , bondStrength*1.05, (float)gg, 5*LOD, 1);	    
 	    glPopMatrix(); 
 	  }
 	}
@@ -2268,7 +2401,7 @@ void molekul::cbonds(QList<INP> xdinp){
     //if (!adp) 
     glColor4f(1,0,1,1);	
     gluQuadricTexture(q,GL_TRUE);
-    gluCylinder(q,bondStrength*1.05 , bondStrength*1.05, (float)gg, 8, 50);	    
+    gluCylinder(q,bondStrength*1.05 , bondStrength*1.05, (float)gg, 5*LOD, 1);	    
     glPopMatrix(); 
   }
   glDisable(GL_ALPHA_TEST);
@@ -2590,33 +2723,10 @@ void molekul::findChains(QList<INP> xdinp){
 */
 void molekul::frac2kart (V3 x, V3 & y){
 //x ist fraktionell, y wird kartesisch
-
-
-  Matrix u;   /*Cholesky decomposition of theReal space Metric tensor
-	      Wird fÃÂ¼r die Umrechnung von fraktionellen in kartesischen Koordinaten benÃÂ¶tigt.*/
-
-  const double g2r=180.0/M_PI;
-  const double phi=sqrt(1-(cos(zelle.al/g2r)*cos(zelle.al/g2r))-(cos(zelle.be/g2r)*cos(zelle.be/g2r))-(cos(zelle.ga/g2r)*cos(zelle.ga/g2r))
-		  +2*cos(zelle.al/g2r)*cos(zelle.be/g2r)*cos(zelle.ga/g2r));
-  const double tau=zelle.c *((cos(zelle.al/g2r)-cos(zelle.be/g2r)*cos(zelle.ga/g2r))/sin(zelle.ga/g2r));
-
-  u.m11 = zelle.a;
-  u.m21 = 0.0;
-  u.m31 = 0.0;
-  u.m12 = zelle.b * cos(zelle.ga/g2r);
-  u.m22 = zelle.b * sin(zelle.ga/g2r);
-  u.m32 = 0.0;
-  u.m13 = zelle.c * cos(zelle.be/g2r);
-  u.m23 = tau;
-  u.m33 = zelle.c * phi / sin(zelle.ga/g2r);
-/*  printf("\n%12.9f %12.9f %12.9f \n",u.m11,u.m21,u.m31);
-  printf("%12.9f %12.9f %12.9f \n",u.m12,u.m22,u.m32);
-  printf("%12.9f %12.9f %12.9f \n\n",u.m13,u.m23,u.m33);*/
-      // Wird jetzt hier genauso wie in XD berechnet.
   
-  y.x = x.x * u.m11 + x.y * u.m12 + x.z * u.m13;
-  y.y = x.x * u.m21 + x.y * u.m22 + x.z * u.m23;
-  y.z = x.x * u.m31 + x.y * u.m32 + x.z * u.m33;
+  y.x = x.x * zelle.f2c.m11 + x.y * zelle.f2c.m12 + x.z * zelle.f2c.m13;
+  y.y = x.x * zelle.f2c.m21 + x.y * zelle.f2c.m22 + x.z * zelle.f2c.m23;
+  y.z = x.x * zelle.f2c.m31 + x.y * zelle.f2c.m32 + x.z * zelle.f2c.m33;
   
 }
 void molekul::kart2frac (V3 x, V3 & y){
@@ -2695,10 +2805,35 @@ bool molekul::decodeSymmCard(const QString symmCard){
       sx[0],sy[0],sz[0],	  
       sx[1],sy[1],sz[1],  
       sx[2],sy[2],sz[2]);
+  if (axe.size()==4){
+    V3 x4sym;
+    double x4,x4tr;
+    x4sym.x=0;x4sym.y=0;x4sym.z=0;x4tr=0;
+    if (axe.at(3).contains("-X")) {x4sym.x=-1.0;axe[3].remove("-X");}
+    else if (axe.at(3).contains("X")) {x4sym.x=1.0;axe[3].remove("X");}
+    if (axe.at(3).contains("-Y")) {x4sym.y=-1.0;axe[3].remove("-Y");}
+    else if (axe.at(3).contains("Y")) {x4sym.y=1.0;axe[3].remove("Y");}
+    if (axe.at(3).contains("-Z")) {x4sym.z=-1.0;axe[3].remove("-Z");}
+    else if (axe.at(3).contains("Z")) {x4sym.z=1.0;axe[3].remove("Z");}
+    if (axe.at(3).contains("-R")) {x4=-1.0;axe[3].remove("-R");}
+    else if (axe.at(3).contains("R")) {x4=1.0;axe[3].remove("R");}
+    if (axe.at(3).endsWith("+")) axe[3].remove("+");
+    if (axe.at(3).contains("/")) {
+      bruch=axe.at(3).split("/");
+      if (bruch.size()==2) x4tr=bruch.at(0).toDouble() / bruch.at(1).toDouble();  
+    }
+    else if (!axe.at(3).isEmpty()) x4tr=axe.at(3).toDouble();
+  
+  zelle.x4.append(x4);
+  zelle.x4tr.append(x4tr);
+  zelle.x4sym.append(x4sym);
+  printf("sm\n%2g %2g %2g %2g, %g\n%2g %2g %2g %2g, %g\n%2g %2g %2g %2g, %g\n%2g %2g %2g %2g, %g\n\n", sm.m11,sm.m21,sm.m31,0.,t[0],sm.m12,sm.m22,sm.m32,0.,t[1],sm.m13,sm.m23,sm.m33,0.,t[2],x4sym.x,x4sym.y,x4sym.z,x4,x4tr);
+//  printf("[%d]%s%s%s%s%s%f\n",zelle.x4.size(),(x4sym.x==0.0)?"":(x4sym.x==1.0)?"x1":"-x1", (x4sym.y==0.0)?"":(x4sym.y==1.0)?"+x2":"-x2", (x4sym.z==0.0)?"":(x4sym.z==1.0)?"+x3":"-x3", (x4==1.0)?"+x4":"-x4", (x4tr<0)?"":"+",x4tr); 
+  }
   zelle.symmops.append(sm);
   zelle.trans.append(V3(t[0],t[1],t[2]));
 //printf("\n%g %g %g %g\n%g %g %g %g\n%g %g %g %g\n\n", sx[0],sy[0],sz[0],t[0],sx[1],sy[1],sz[1],t[1],  sx[2],sy[2],sz[2],t[2]);
-//printf("sm\n%g %g %g \n%g %g %g \n%g %g %g \n\n", sm.m11,sm.m21,sm.m31,sm.m12,sm.m22,sm.m32,sm.m13,sm.m23,sm.m33);
+//printf("Sm\n%g %g %g \n%g %g %g \n%g %g %g \n\n", sm.m11,sm.m21,sm.m31,sm.m12,sm.m22,sm.m32,sm.m13,sm.m23,sm.m33);
 
 
   return true;
@@ -3111,6 +3246,10 @@ bool molekul::applyLatticeCentro(const QChar latt,const bool centro){
 		    tt.z=(tt.z>1)?tt.z-1:tt.z;
 		    zelle.symmops.append(zelle.symmops.at(i));
 		    zelle.trans.append(tt);
+                    zelle.x4sym.append(zelle.x4sym.at(i));
+                    zelle.x4.append(zelle.x4.at(i));
+                    zelle.x4tr.append(zelle.x4tr.at(i));
+
 		  }
 		  break;
 	  case 'B' :
@@ -3121,6 +3260,9 @@ bool molekul::applyLatticeCentro(const QChar latt,const bool centro){
 		    tt.z=(tt.z>1)?tt.z-1:tt.z;
 		    zelle.symmops.append(zelle.symmops.at(i));
 		    zelle.trans.append(tt);
+                    zelle.x4sym.append(zelle.x4sym.at(i));
+                    zelle.x4.append(zelle.x4.at(i));
+                    zelle.x4tr.append(zelle.x4tr.at(i));
 		  }
 		  break;
 	  case 'C' :
@@ -3131,6 +3273,9 @@ bool molekul::applyLatticeCentro(const QChar latt,const bool centro){
 		    tt.z=(tt.z>1)?tt.z-1:tt.z;
 		    zelle.symmops.append(zelle.symmops.at(i));
 		    zelle.trans.append(tt);
+                    zelle.x4sym.append(zelle.x4sym.at(i));
+                    zelle.x4.append(zelle.x4.at(i));
+                    zelle.x4tr.append(zelle.x4tr.at(i));
 		  }
 		  break;
 	  case 'F' :
@@ -3153,6 +3298,9 @@ bool molekul::applyLatticeCentro(const QChar latt,const bool centro){
 		    tt.z=(tt.z>1)?tt.z-1:tt.z;
 		    zelle.symmops.append(zelle.symmops.at(i));
 		    zelle.trans.append(tt);
+                    zelle.x4sym.append(zelle.x4sym.at(i));
+                    zelle.x4.append(zelle.x4.at(i));
+                    zelle.x4tr.append(zelle.x4tr.at(i));
 		  }
 		  break;
 	  case 'I' :
@@ -3163,6 +3311,9 @@ bool molekul::applyLatticeCentro(const QChar latt,const bool centro){
 		    tt.z=(tt.z>1)?tt.z-1:tt.z;
 		    zelle.symmops.append(zelle.symmops.at(i));
 		    zelle.trans.append(tt);
+                    zelle.x4sym.append(zelle.x4sym.at(i));
+                    zelle.x4.append(zelle.x4.at(i));
+                    zelle.x4tr.append(zelle.x4tr.at(i));
 		  }
 		  break;
 	  case 'R' :
@@ -3179,10 +3330,15 @@ bool molekul::applyLatticeCentro(const QChar latt,const bool centro){
 		    tt.z=(tt.z>1)?tt.z-1:tt.z;
 		    zelle.symmops.append(zelle.symmops.at(i));
 		    zelle.trans.append(tt);
+                    zelle.x4sym.append(zelle.x4sym.at(i));
+                    zelle.x4.append(zelle.x4.at(i));
+                    zelle.x4tr.append(zelle.x4tr.at(i));
 
 		  }
 		  break;
 	  case 'P' :break;  
+  //        case 'X' ://jana superspace group centering
+  //                  break;
 	  default: return false;
   }
   return true;
@@ -3214,22 +3370,31 @@ void molekul::Uf2Uo(const Matrix x, Matrix & y) {
 
 Modulat Modulat::applySymm(Matrix sym3d, V3 trans3d, V3 x4sym, int x4,double x4trans){
   Modulat that=*this;
-  Modulat newatom=Modulat(that);
-  newatom.frac0=(sym3d*frac0)+trans3d;
+  Modulat *newatom=new Modulat(that);
+  newatom->frac0=(sym3d*frac0)+trans3d;
+//  printf("applySymm %d = %d %d = %d %d = %d\n",newatom->wo,newatom->os.size(),newatom->wp,newatom->possin.size(),newatom->wt,newatom->usin.size());
   for (int i=0; i<wp;i++){
-  newatom.possin[i]=sym3d*possin[i];
-  newatom.poscos[i]=sym3d*poscos[i];
+  //  printf("%sfrac o sin %g %g %g cos %g %g %g\n",atomname,possin[i].x,possin[i].y,possin[i].z,poscos[i].x,poscos[i].y,poscos[i].z);
+  newatom->possin[i]=possin[i]*sym3d;
+  newatom->poscos[i]=poscos[i]*sym3d;
+//    printf("%sfrac wp%d sin %g %g %g cos %g %g %g %p\n",atomname,i,newatom->possin[i].x,newatom->possin[i].y,newatom->possin[i].z,newatom->poscos[i].x,newatom->poscos[i].y,newatom->poscos[i].z,newatom);
   }
-  newatom.uf0=(mol->zelle.o1*uf0)*transponse(mol->zelle.o1);
-  newatom.x4sym=x4sym;
-  newatom.x4=x4;
-  newatom.x4trans=x4trans;
-  return newatom;
+  newatom->uf0=(sym3d*uf0)*transponse(sym3d);
+  for (int i=0; i<wt; i++){
+  newatom->usin[i]=(sym3d*usin[i])*transponse(sym3d);
+  newatom->ucos[i]=(sym3d*ucos[i])*transponse(sym3d);
+  }
+  newatom->x4sym=x4sym;
+  newatom->x4=x4;
+  newatom->x4trans=x4trans;
+  return *newatom;
 }
-V3 Modulat::kart(double t){
+const V3 Modulat::kart(const double t){
   V3 p=frac0;
-  double X4=t*(mol->zelle.qvec*frac0);
-  X4=(x4sym*frac0)*x4+x4trans;
+  //printf("x4sy %g %g %g x4 %d x4tr %g q %g %g %g \n",x4sym.x,x4sym.y,x4sym.z,x4,x4trans,mol->zelle.qvec.x,mol->zelle.qvec.y,mol->zelle.qvec.z);
+  double X4=t+(mol->zelle.qvec*frac0);
+  X4=(x4sym*frac0)+x4*X4+x4trans;
+  //printf("X4 %g %g %g %g\n",X4,frac0.x,frac0.y,frac0.z);
   for (int i=0; i<wp;i++){
     p+=possin[i]*sin(2*M_PI*(i+1)*X4);
     p+=poscos[i]*cos(2*M_PI*(i+1)*X4);
@@ -3241,19 +3406,129 @@ V3 Modulat::kart(double t){
   y.z = p.x * mol->zelle.f2c.m31 + p.y * mol->zelle.f2c.m32 + p.z * mol->zelle.f2c.m33;
   return y;
 }
-V3 Modulat::frac(double t){
+const V3 Modulat::frac(const double t){
   V3 p=frac0;
- // printf("x4sy %g %g %g x4 %d x4tr %g q %g %g %g \n",x4sym.x,x4sym.y,x4sym.z,x4,x4trans,mol->zelle.qvec.x,mol->zelle.qvec.y,mol->zelle.qvec.z);
+// printf("%sfrac x4sy %g %g %g x4 %d x4tr %g q %g %g %g \n",atomname,x4sym.x,x4sym.y,x4sym.z,x4,x4trans,mol->zelle.qvec.x,mol->zelle.qvec.y,mol->zelle.qvec.z);
   double X4=t+(mol->zelle.qvec*frac0);
- // printf("X4 %g %g %g %g\n",X4,frac0.x,frac0.y,frac0.z);
+//  printf("%sfrac X4 %g frac0 %g %g %g t%g\n",atomname,X4,frac0.x,frac0.y,frac0.z,t);
   X4=(x4sym*frac0)+x4*X4+x4trans;
- // printf("X4 %g\n",X4);
+//  printf("%sfrac X4 %g\n",atomname,X4);
   for (int i=0; i<wp;i++){
+  //  printf("%sfrac sin %g %g %g cos %g %g %g\n",atomname,possin[i].x,possin[i].y,possin[i].z,poscos[i].x,poscos[i].y,poscos[i].z);
     p+=possin[i]*sin(2*M_PI*(i+1)*X4);
     p+=poscos[i]*cos(2*M_PI*(i+1)*X4);
   }
+ // printf("%sfrac %g %g %g\n",atomname,p.x,p.y,p.z);
   return p;
 }
+
+Matrix Modulat::uf(double t){
+  Matrix m=uf0;
+  if ((m.m22==0.0)&&(m.m33==0.0)) {
+      m.m33=m.m22=m.m11;
+      m.m12=m.m13=m.m23=0.0;
+  }
+//  if (OrdZahl==0){ printf("%-9s %g %g %g %g %g %g\n",atomname,m.m11, m.m22, m.m33, m.m12, m.m13, m.m23); }
+  double X4=t+(mol->zelle.qvec*frac0);
+  X4=(x4sym*frac0)+x4*X4+x4trans;
+  double cs,sn;
+  for (int i=0; i<wt;i++){
+    sn=sin(2*M_PI*(i+1)*X4);
+    cs=cos(2*M_PI*(i+1)*X4);
+
+    m.m11+=usin[i].m11*sn;
+    m.m22+=usin[i].m22*sn;
+    m.m33+=usin[i].m33*sn;
+    m.m12+=usin[i].m12*sn;
+    m.m13+=usin[i].m13*sn;
+    m.m23+=usin[i].m23*sn;
+
+    m.m11+=ucos[i].m11*cs;
+    m.m22+=ucos[i].m22*cs;
+    m.m33+=ucos[i].m33*cs;
+    m.m12+=ucos[i].m12*cs;
+    m.m13+=ucos[i].m13*cs;
+    m.m23+=ucos[i].m23*cs;
+  }
+  m.m21=m.m12;
+  m.m31=m.m13;
+  m.m32=m.m23;
+  return m;
+}
+
+Matrix Modulat::u(double t){
+  Matrix m=uf(t);
+  //Matrix n=(mol->zelle.o1*m)*transponse(mol->zelle.o1);
+  Matrix n=(transponse(mol->zelle.o1)*m)*(mol->zelle.o1);
+  return n;
+}
+
 void Modulat::errorMsg(QString msg){
   qDebug()<<msg;
 }
+    INP Modulat::toINP(double t){
+    INP atom;
+    strcpy(atom.atomname,atomname);
+    atom.lflag=atom.icor1=atom.icor2=atom.nax=atom.nay1=atom.nay2=atom.na3=0;
+    atom.jtf=2;
+    atom.atomtype=1;
+    atom.noofkappa=atom.lmax=atom.isym=atom.ichcon=0;
+    atom.amul=amul;
+    atom.imul=imul;
+    atom.frac=frac(t);
+    atom.kart=kart(t);
+    atom.OrdZahl=OrdZahl;
+    atom.part=atom.resiNr=0;  
+    atom.sg=sg;
+    atom.molindex=molindex;
+    atom.screenX=screenX;
+    atom.screenY=screenY;
+    return atom;
+    }
+
+/*
+ *
+struct INP {
+  char     atomname[strgl]; // Name of the Atom(s)   
+  int      lflag; //R-L
+  int      icor1;            // Erstes Achse des Koordinatensystems, meist 3, also Z  
+  int      icor2;            // Zweites Achse des Koordinatensystems, meist 2, also Y 
+  int      nax;              // Achse 1
+  int      nay1;             // Achse 2
+  int      nay2;             // Achse 3
+  int      na3;//3ZX
+  int      jtf;              // Ordnung des Verschiebungsparametertensors(ADP)
+  int      atomtype;         // Atomtyp als Integer 
+  int      noofkappa;        // Number des Kappas 
+  int      lmax;             // lmax 
+  int      isym;             // isym 
+  int      ichcon;           // chemical constraint
+  double   amul;
+  int   imul;
+  V3   frac;          // Fraktionelle Koordinaten in X-Richtung 
+  Matrix uf;           // Temperaturparameter 
+  Matrix u;
+  double c111, c222, c333, c112, c122, c113, c133, c223, c233, c123;
+  double d1111,  d2222,  d3333, d1112,  d1113,  d1122, 
+	 d1123,  d1133,  d1222, d1223,  d1233,  d1333,
+	 d2223,  d2233,  d2333;
+                        // Bis hier alles EintrÃÂ¤ge in xd.inp, danach berechnet   
+  V3   kart;          // Berechnete kart. Koordinaten in X-Richtung 
+  V3   ax1;           // Berechnete Achse 0 
+  V3   ax2;           // Berechnete Achse 1 
+  V3   ax3;           // Berechnete Achse 2 
+  int      OrdZahl;
+  int firstNeighbors;
+  int secondNeighbors;
+  char     invariomname[80];
+  V3 labPos;
+  int part;
+  int resiNr;
+  char ami3[5];
+  char shortname[strgl];
+  double peakHeight;
+  int molindex;
+  int sg;
+  double screenX,screenY;
+  uint GLname;
+};*/ 

@@ -6,7 +6,7 @@ QAction *nmbx=NULL;
 void mh(QtMsgType type, const char *msg){
   switch (type){
   case QtDebugMsg:
-    printf("%s %p\n",msg,nmbx);fflush(stdout);
+    printf("%s \n",msg);fflush(stdout);
 #if defined Q_WS_WIN  ||  defined Q_WS_MAC
    if (nmbx!=NULL) if ((!nmbx->isChecked())) QMessageBox::information(0,msg,msg);
 #endif

@@ -7,12 +7,13 @@
 #include "XDDlg.h"  
 #include "inames.h"
 V3 mil;
-CubeGL::CubeGL(QWidget *parent) : QGLWidget(parent) {
+CubeGL::CubeGL(QWidget *parent,double vang) : QGLWidget(parent) {
    setFormat(QGLFormat(QGL::DoubleBuffer | QGL::DepthBuffer) );
    atomsClickable=true;
    negpdf=true;
    faceCull=0;
-   vangle=10.0;
+   tvalue=0.0;
+   vangle=vang;
    chicken= new QAction("Permanent wireframe mode",this);
    chicken->setCheckable(true);
    chicken->setChecked(false);
@@ -609,7 +610,8 @@ void CubeGL::initializeGL() {
   setupTexture();
   //888
   
-  if (!xdinp.isEmpty()) {
+//    glLoadMatrixd(MM);
+  if (0&&!xdinp.isEmpty()) {
     int adpstate=mol.adp;
     glLoadMatrixd(MM);
    if ((moliso)&&(moliso->mibas)){
@@ -1118,10 +1120,17 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
   double nahda=200.0,da=0;
   int nahdai=-1;
   extern QList<INP> xdinp;
+  extern QList<Modulat> matoms;
   //for (int i=0; i<xdinp.size(); i++) printf("%-9s -->%d<--\n",xdinp.at(i).atomname,xdinp.at(i).molindex);
   for (int j=0; j<xdinp.size();j++){
     da=(((xdinp.at(j).screenX-event->x())*( xdinp.at(j).screenX-event->x()))+ 
 		    ((xdinp.at(j).screenY-event->y())*( xdinp.at(j).screenY-event->y())));
+    nahdai=(da<nahda)?j:nahdai;
+    nahda=qMin(nahda,da);
+  }
+  for (int j=0; j<matoms.size();j++){
+    da=(((matoms.at(j).screenX-event->x())*( matoms.at(j).screenX-event->x()))+ 
+		    ((matoms.at(j).screenY-event->y())*( matoms.at(j).screenY-event->y())));
     nahdai=(da<nahda)?j:nahdai;
     nahda=qMin(nahda,da);
   }
@@ -1133,6 +1142,15 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
       GLuint index=nahdai;
       if (index==((GLuint)-1))return;
       rotze=((int)index<xdinp.size())?index:-1;  
+      if (rotze>-1) rCenter->setVisible(true);
+      homeXY();
+      updateGL();
+
+    }
+    if (nahdai<matoms.size()) {
+      GLuint index=nahdai;
+      if (index==((GLuint)-1))return;
+      rotze=((int)index<matoms.size())?index:-1;  
       if (rotze>-1) rCenter->setVisible(true);
       homeXY();
       updateGL();
@@ -1249,12 +1267,27 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 	  ppp=pp;
 	  pp=p;
 	  p=index;
-	  if (event->modifiers()==Qt::NoModifier) {
+/*	  if (event->modifiers()==Qt::NoModifier) {
 	    selectedAtoms.clear();
 	    selectedAtoms.append(xdinp[index]);
 	    selectedAtoms.last().GLname=index;
 	    updateGL();
-	  }
+	  }*/
+
+	    if (event->modifiers()==Qt::NoModifier) {
+	      int isschon=-1;
+	      for (int i=0; i< selectedAtoms.size();i++){
+		isschon=((GLuint)selectedAtoms.at(i).GLname==index)?index:isschon;
+	      }
+	      selectedAtoms.clear();
+	      if (isschon==-1){
+		selectedAtoms.append(xdinp[index]);
+		selectedAtoms.last().GLname=index;
+	      }
+	    updateGL();
+	    }
+
+
 	  if (event->modifiers()==Qt::ShiftModifier){
 	  GLuint min=xdinp.size(),max=0;
 	  for (int i=0;i<selectedAtoms.size();i++) {
@@ -1472,7 +1505,102 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 	  updateGL();
 	}	
       }
-  }
+    if (nahdai<matoms.size()) {
+//      extern QList<INP> xdinp;
+      extern molekul mol;
+	GLuint index=nahdai;
+	if (index==((GLuint)-1))return;
+	double w=0,dw=0;
+	if (((GLuint) ppp)>((GLuint)matoms.size())) {
+	  ppp=pp;
+	  pp=p;
+	  p=index;
+	}
+	if (((GLuint) pp)>((GLuint)matoms.size())) {
+	  ppp=index;
+	  pp=p;
+	  p=index;
+	}
+	if (((GLuint) p)>((GLuint)matoms.size())) {
+	  ppp=pp;
+	  pp=index;
+	  p=index;
+	}
+	if ((pp!=p)&&(pp!=index)&&(p!=index)) {
+	  w=m.winkel(matoms[p].kart(tvalue)-matoms[pp].kart(tvalue),
+			  matoms[p].kart(tvalue)-matoms[index].kart(tvalue));
+	  if ((ppp!=p)&&(ppp!=pp)&&(ppp!=index))
+	    dw=m.dieder(matoms[pp].kart(tvalue)-matoms[ppp].kart(tvalue),
+			    matoms[pp].kart(tvalue)-matoms[p].kart(tvalue),
+			    matoms[p].kart(tvalue)-matoms[index].kart(tvalue));
+	}
+	if (atomsClickable){
+	  {
+	    emit bigmessage(QString("Geometry:<table><tr><td><b>%1</b> clicked at t0 = %15.</td><td align=\"left\"></td></tr><tr><td><b>%2--%3</b></td><td align=\"left\">%4 &Aring;</td></tr><tr><td><b>%5--%6--%7</b></td><td align=\"left\">%8&deg;</td></tr><tr><td><b>%9--%10--%11--%12 </b></td><td align=\"left\">%13&deg;</td></tr><tr><td>Fragment</td><td align=\"left\">%14</td></tr><table>")
+			    .arg((matoms[index].atomname))                         //1
+			    .arg((matoms[index].atomname))			        //2
+			    .arg((matoms[p].atomname))						//3
+			    .arg(sqrt(Distance(matoms[index].kart(tvalue),matoms[p].kart(tvalue))),0,'f',5) //4
+			    .arg((matoms[pp].atomname))			                        //5
+			    .arg((matoms[p].atomname))			                        //6
+			    .arg((matoms[index].atomname))			        //7
+			    .arg(w,0,'f',3)			                                                //8
+			    .arg((matoms[ppp].atomname))			                        //9
+			    .arg((matoms[pp].atomname))			                        //10
+			    .arg((matoms[p].atomname))			                        //11
+			    .arg((matoms[index].atomname))			        //12
+			    .arg(dw,0,'f',3)
+			    .arg(matoms[index].molindex)
+                            .arg(tvalue)
+			    );
+	  }
+	  ppp=pp;
+	  pp=p;
+	  p=index;
+/*	  if (event->modifiers()==Qt::NoModifier) {
+	    selectedAtoms.clear();
+	    selectedAtoms.append(matoms[index].toINP(tvalue));
+	    selectedAtoms.last().GLname=index;
+	    updateGL();
+	  }*/
+	    if (event->modifiers()==Qt::NoModifier) {
+	      int isschon=-1;
+	      for (int i=0; i< selectedAtoms.size();i++){
+		isschon=((GLuint)selectedAtoms.at(i).GLname==index)?index:isschon;
+	      }
+	      selectedAtoms.clear();
+	      if (isschon==-1){
+		selectedAtoms.append(matoms[index].toINP(tvalue));
+		selectedAtoms.last().GLname=index;
+	      }
+	    updateGL();
+	    }
+	  if (event->modifiers()==Qt::ShiftModifier){
+	  GLuint min=matoms.size(),max=0;
+	  for (int i=0;i<selectedAtoms.size();i++) {
+	    min=(selectedAtoms.at(i).GLname<min)?selectedAtoms.at(i).GLname:min;
+	    max=(selectedAtoms.at(i).GLname>max)?selectedAtoms.at(i).GLname:max;
+	  }
+	    min=(index<min)?index:min;
+	    max=(index>max)?index:max;
+	    selectedAtoms.clear();
+	    for (GLuint i=min; i<=max; i++){
+	    selectedAtoms.append(matoms[i].toINP(tvalue));
+	    selectedAtoms.last().GLname=i;
+	    }
+	    updateGL();
+	  }
+	  if (event->modifiers()==Qt::ControlModifier){
+	    selectedAtoms.append(matoms[index].toINP(tvalue));
+	    selectedAtoms.last().GLname=index;
+	    updateGL();
+	  }
+	  updateBondActions();
+	}
+
+      }
+  // OOOOOOOOOOOOOOO //
+    }
 }
 
 /////////
@@ -3095,9 +3223,16 @@ void CubeGL::contextMenuEvent(QContextMenuEvent *event) {
     double nahda=200.0,da=0;
     int nahdai=-1;
     extern QList<INP> xdinp;
+    extern QList<Modulat> matoms;
     for (int j=0; j<xdinp.size();j++){
       da=(((xdinp.at(j).screenX-event->x())*( xdinp.at(j).screenX-event->x()))+ 
 		      ((xdinp.at(j).screenY-event->y())*( xdinp.at(j).screenY-event->y())));
+      nahdai=(da<nahda)?j:nahdai;
+      nahda=qMin(nahda,da);
+    }
+    for (int j=0; j<matoms.size();j++){
+      da=(((matoms.at(j).screenX-event->x())*( matoms.at(j).screenX-event->x()))+ 
+          ((matoms.at(j).screenY-event->y())*( matoms.at(j).screenY-event->y())));
       nahdai=(da<nahda)?j:nahdai;
       nahda=qMin(nahda,da);
     }
@@ -3125,6 +3260,18 @@ void CubeGL::contextMenuEvent(QContextMenuEvent *event) {
 	menu.addAction(changeGDAct);
 	QAction *a = menu.addAction("edit xd_part.aux",parent(),SLOT(editPartAux()));
 	a->setData(qMax(expandatom,0));
+	menu.exec(event->globalPos());
+      }
+      else if (expandatom<matoms.size()) {
+	if (expandatom<0) {expandatom=-1;return;}
+	expandAct.setText(tr("Expand %1 Ang. arround %2.").arg(mol.gd).arg(matoms.at(expandatom).atomname));
+	menu.addAction(&expandAct);
+        menu.addSeparator();
+	menu.addAction(dntpck);
+	menu.addAction(molpck);
+	menu.addAction(cctpck);
+	menu.addAction(ccmpck);
+	menu.addAction(changeGDAct);
 	menu.exec(event->globalPos());
       }
       else{expandatom=-1;}
@@ -3192,9 +3339,16 @@ void CubeGL::mouseMoveEvent(QMouseEvent *event) {
   double nahda=200.0,da=0;
   int nahdai=-1;
   extern QList<INP> xdinp;
+  extern QList<Modulat> matoms;
   for (int j=0; j<xdinp.size();j++){
     da=(((xdinp.at(j).screenX-event->x())*( xdinp.at(j).screenX-event->x()))+ 
 			((xdinp.at(j).screenY-event->y())*( xdinp.at(j).screenY-event->y())));
+    nahdai=(da<nahda)?j:nahdai;
+    nahda=qMin(nahda,da);
+  }
+  for (int j=0; j<matoms.size();j++){
+    da=(((matoms.at(j).screenX-event->x())*( matoms.at(j).screenX-event->x()))+ 
+		    ((matoms.at(j).screenY-event->y())*( matoms.at(j).screenY-event->y())));
     nahdai=(da<nahda)?j:nahdai;
     nahda=qMin(nahda,da);
   }
@@ -3206,20 +3360,20 @@ void CubeGL::mouseMoveEvent(QMouseEvent *event) {
   if ((!moai)&&(!event->buttons())) {
     if (imFokus!=nahdai){
       imFokus=nahdai;
-      if (imFokus>=0) emit message(xdinp[imFokus].atomname);
+      if ((imFokus>=0)&&(matoms.isEmpty())) emit message(xdinp[imFokus].atomname);
+      if ((imFokus>=0)&&(xdinp.isEmpty())) emit message(matoms[imFokus].atomname);
       else emit message("");
       updateGL();
     }
   }
   if (event->buttons() & Qt::MidButton){
       if (!noWaitLabel)moving->start(80);
-    glTranslateL(dx*100.0,-dy*100.0,0);
+    glTranslateL(dx*vangle*3,-dy*vangle*3,0);
     updateGL();
   }
   if ((event->buttons() & Qt::LeftButton)) {
       if (!noWaitLabel)moving->start(80);
-    if (moveLab){
-      extern QList<INP> xdinp;
+    if ((!xdinp.isEmpty())&&(moveLab)){
       GLdouble ML[16];
       glGetDoublev(GL_MODELVIEW_MATRIX,ML);
       double V2[3],V1[3];
@@ -3282,12 +3436,14 @@ void CubeGL::togglGrow(bool on){
 }
 
 void CubeGL::setMatrix(){
+//#include <float.h>
+//qDebug()<<"setMatrix()";  
   glMatrixMode(GL_MODELVIEW);
     GLdouble det=
 	  MM[0]*MM[5]*MM[10] - MM[8]*MM[5]*MM[2]+
 	  MM[1]*MM[6]*MM[8]  - MM[9]*MM[6]*MM[0]+
 	  MM[2]*MM[4]*MM[9]  - MM[10]*MM[4]*MM[1];
-  if ((det>0.0)&&(det<999.0)) glLoadMatrixd(MM);
+  if ((det>=0)&&(det<9990000.0)) glLoadMatrixd(MM);
   else {
     MM[0]=1;
     MM[1]=0;
@@ -3307,6 +3463,7 @@ void CubeGL::setMatrix(){
     MM[15]=1;
     glLoadIdentity();
     glLoadMatrixd(MM);
+    
   }
     updateGL();
 }
@@ -3338,8 +3495,8 @@ void CubeGL::nostereo(){
 } 
 
 void CubeGL::showMatrix(){
-  stereo_mode++;
-  stereo_mode%=4;
+//  stereo_mode++;
+//  stereo_mode%=4;
   updateGL();
 #ifdef Q_WS_MAC
  // qDebug()<<QCoreApplication::libraryPaths () <<QImageWriter::supportedImageFormats ();
@@ -3364,7 +3521,7 @@ void CubeGL::showMatrix(){
 	  mm[0]*mm[5]*mm[10] - mm[8]*mm[5]*mm[2]+
 	  mm[1]*mm[6]*mm[8]  - mm[9]*mm[6]*mm[0]+
 	  mm[2]*mm[4]*mm[9]  - mm[10]*mm[4]*mm[1];
-  printf("die Determinante der Drehmatrix ist: %f\n",det);
+  printf("die Determinante der Drehmatrix ist: %g\n",det);
   glGetDoublev(GL_PROJECTION_MATRIX,mm);
   printf("Die Pmatrix ist:\n%9.6f %9.6f %9.6f %9.6f\n%9.6f %9.6f %9.6f %9.6f\n%9.6f %9.6f %9.6f %9.6f\n%9.6f %9.6f %9.6f %9.6f\n",
 		  mm[0],mm[1],mm[2],mm[3],
@@ -3375,7 +3532,7 @@ void CubeGL::showMatrix(){
 	  mm[0]*mm[5]*mm[10] - mm[8]*mm[5]*mm[2]+
 	  mm[1]*mm[6]*mm[8]  - mm[9]*mm[6]*mm[0]+
 	  mm[2]*mm[4]*mm[9]  - mm[10]*mm[4]*mm[1];
-  printf("die Determinante der Drehmatrix ist: %f\n",det);
+  printf("die Determinante der Drehmatrix ist: %g\n",det);
 #endif
 }
 
@@ -3433,10 +3590,11 @@ void CubeGL::draw() {
     if (pause) return;
   if (depthCueing) glEnable(GL_FOG);
   else glDisable(GL_FOG);
-
+  int drawopt=(drawAt&1)|(drawBo<<1)|(drawUz<<2)|(elli<<3)|(drawLa<<4);
   static int Pers;
   extern QList<INP> xdinp;
   extern molekul mol;
+  extern QList<Modulat> matoms;
   double gmat[16];
   static double max=0;
 
@@ -3471,9 +3629,19 @@ void CubeGL::draw() {
     }
     else iSel=0;
   }else {
+    if (!matoms.isEmpty()) {
+      for (int i=0;i<matoms.size();i++){
+    //    printf("%9g %9g %9g\n",sumse.x,sumse.y,sumse.z);
+      sumse+=matoms[i].kart(0.0);
+      }
+    sumse*=1.0/qMax(matoms.size(),1);
+    }
+    else {
     for (int i=0;i<xdinp.size();i++)
       sumse+=xdinp[i].kart;
-    sumse*=1.0/xdinp.size();
+    sumse*=1.0/qMax(xdinp.size(),1);
+    }
+//    qDebug()<<sumse.x<<sumse.y<<sumse.z<<xdinp.size()<<masymmUnit.size();
     double gmat[16];
     glGetDoublev( GL_MODELVIEW_MATRIX, (double*)gmat );
     ori.x=gmat[0] * sumse.x + gmat[4] * sumse.y + gmat[8] * sumse.z;
@@ -3500,19 +3668,55 @@ void CubeGL::draw() {
   glGetIntegerv(GL_RENDER_MODE,&rmode);
 
   if (rotze>-1) {
-    sumse=xdinp.at(rotze).kart;
+    sumse=(xdinp.isEmpty())?matoms[rotze].kart(tvalue):xdinp.at(rotze).kart;
 //    printf("%s %g %g %g\n",xdinp.at(rotze).atomname, xdinp.at(rotze).kart.x, xdinp.at(rotze).kart.y, xdinp.at(rotze).kart.z);
     double gmat[16];
     glGetDoublev( GL_MODELVIEW_MATRIX, (double*)gmat );
-    ori.x=gmat[0] * xdinp.at(rotze).kart.x + gmat[4] * xdinp.at(rotze).kart.y + gmat[8] *  xdinp.at(rotze).kart.z;
-    ori.y=gmat[1] * xdinp.at(rotze).kart.x + gmat[5] * xdinp.at(rotze).kart.y + gmat[9] *  xdinp.at(rotze).kart.z;
-    ori.z=gmat[2] * xdinp.at(rotze).kart.x + gmat[6] * xdinp.at(rotze).kart.y + gmat[10] * xdinp.at(rotze).kart.z;    
+    ori.x=gmat[0] * sumse.x + gmat[4] * sumse.y + gmat[8] *  sumse.z;
+    ori.y=gmat[1] * sumse.x + gmat[5] * sumse.y + gmat[9] *  sumse.z;
+    ori.z=gmat[2] * sumse.x + gmat[6] * sumse.y + gmat[10] * sumse.z;    
   }
 
   QFont nonAtomFont=QFont(myFont);
   nonAtomFont.setPointSize(myFont.pointSize()/2);
   glPushMatrix();
-  if (back_grad&&(rmode==GL_RENDER)){
+  if (back_grad&&(rmode==GL_RENDER)){ 
+    glPushMatrix();
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective( 29, (double)_win_width/_win_height, 5.0, 8000.0 );
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    glDisable( GL_LIGHTING ); 
+    glDisable( GL_DEPTH_TEST ); 
+    glBegin(GL_QUADS);
+    double xx = ((double) _win_width/_win_height) * 2.0,
+	   yy = 1.77777777778;
+    glColor4f(1.0,1.0,1.0,0.5);
+    //glTexCoord2d(-1,-1);
+    glVertex3f(-xx,-yy,-6.0);
+    glColor4f(1.0,1.0,1.0,0.5);
+    //glTexCoord2d(0,-1);
+    glVertex3f( xx,-yy,-6.0);
+    //glTexCoord2d(0,0);
+    glColor4f(0.3,0.3,0.3,0.7);
+    glVertex3f( xx, yy,-6.0);
+    glColor4f(0.3,0.3,0.3,0.7);
+    //glTexCoord2d(-1,0);
+    glVertex3f(-xx, yy,-6.0);
+    glEnd();
+
+    glPopMatrix();
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(  vangle, (double)_win_width/_win_height, 5.0, 8000.0 );
+    glMatrixMode(GL_MODELVIEW);
+    glEnable( GL_LIGHTING ); 
+    glEnable( GL_DEPTH_TEST ); 
+    glPopMatrix();
+  }  
+/*{
     double mat[16];
     //  else
     glDisable(GL_TEXTURE_2D);
@@ -3537,7 +3741,7 @@ void CubeGL::draw() {
     glEnable( GL_LIGHTING ); 
     glEnable( GL_DEPTH_TEST ); 
     glLoadMatrixd(mat);
-  }  
+  }*/  
   glDisable(GL_TEXTURE_2D);
   glPopMatrix();
   glPushMatrix();
@@ -3629,6 +3833,17 @@ void CubeGL::draw() {
 	if (mol.tubifiedAtoms)glCallList(bas+9);
 	else glCallList(bas+4);
       }
+
+
+    } 
+    glEnable(GL_BLEND);
+  }else{
+  glPushMatrix();
+  glScaled( L, L, L );
+  mol.modulated(tvalue,matoms,drawopt);
+//if (drawBo) mol.modulated
+  glPopMatrix();
+  }
 if (!selectedAtoms.isEmpty()){
     int at = mol.tubifiedAtoms;
 	int ae = mol.adp;
@@ -3645,16 +3860,11 @@ if (!selectedAtoms.isEmpty()){
     mol.tubifiedAtoms=at;
     mol.adp=ae;
   }
-
-
-    } 
-    glEnable(GL_BLEND);
-  }
   }
     if (rmode==GL_RENDER){
 
-      if (drawAx) glCallList(bas+2);
-      if (drawUz) glCallList(bas+3);
+      if ((bas)&&(drawAx)) glCallList(bas+2);
+      if ((bas)&&(drawUz)) glCallList(bas+3);
       if ((MIS)&&(moliso->mibas)) { 
 	glDisable(GL_CULL_FACE);
         if (moving->isActive()||chicken->isChecked()) {Pers=1; glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);}
@@ -3803,6 +4013,13 @@ if (!selectedAtoms.isEmpty()){
 		  renderText( xdinp[j].labPos.x,xdinp[j].labPos.y,xdinp[j].labPos.z, xdinp[j].atomname,myFont);
 	    }
 	  }    
+	  for (int j=0;j<matoms.size();j++){
+	    if (imFokus==j) qglColor(Qt::yellow); else  glColor4f(tCR,tCG,tCB,tCA);
+            if ((imFokus==j)||(!(mol.aStyle[matoms[j].OrdZahl]&ATOM_STYLE_NOLABEL))){
+              V3 lpos=matoms[j].kart(tvalue);
+              renderText( lpos.x,lpos.y,lpos.z, matoms[j].atomname,myFont);
+            }
+          }
 	}glPopMatrix();
       }
     {
@@ -3819,6 +4036,12 @@ if (!selectedAtoms.isEmpty()){
 	      if (((iSel)&&(mol.firstHL<=j)&&(mol.lastHL>=j))||(!iSel)){
 		if (!posTo2D(xdinp.at(j).kart,model,proj,viewport, &xdinp[j].screenX, &xdinp[j].screenY))
                 {xdinp[j].screenX=-200; xdinp[j].screenY=-200;}
+            }
+	    }
+            for (int j=0;j<matoms.size();j++){
+	      if (((iSel)&&(mol.firstHL<=j)&&(mol.lastHL>=j))||(!iSel)){
+		if (!posTo2D(matoms[j].kart(tvalue),model,proj,viewport, &matoms[j].screenX, &matoms[j].screenY))
+                {matoms[j].screenX=-200; matoms[j].screenY=-200;}
             }
 	    }
         }

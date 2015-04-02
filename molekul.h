@@ -5,6 +5,7 @@
 #include <QMap>
 #include <QSettings>
 #include <QString>
+#include <QDebug>
 #ifndef M_PI
 #define	M_PI		3.14159265358979323846	 
 #endif
@@ -390,7 +391,7 @@ struct Cell {
   QList<Matrix> symmops;
   QList<V3> trans;
   QList<V3> x4sym;
-  double x4, x4tr;
+  QList<double> x4, x4tr;
   double o[3][3];
   Matrix o1;
   Matrix f2c;
@@ -422,6 +423,7 @@ struct PolyEder{
 
 //  return ((a1.af==a2.af)&&(a1.bf==a2.bf)&&(a1.cf==a2.cf)&&(a1.volume==a2.volume));
 //}
+class Modulat;
 class molekul {
  public:
   QSettings *einstellung;
@@ -477,7 +479,7 @@ class molekul {
     proba=50;
     HAMax=2.3;
     pmin=2000;
-
+    mbonds_last_t=-2.0;
     pmax=-2000;
     polyShapColor=false;
     HAWink=135;
@@ -631,6 +633,7 @@ class molekul {
   void Uf2Uo(const Matrix x, Matrix & y);
   void copyAcol(GLfloat _Acol[108][4],GLfloat _arad[108],int _aStyle[108]);
   void atoms(QList<INP> xdinp,const int proba);
+  void modulated(double t,QList<Modulat> mato,int draw);
   void bonds(QList<INP> xdinp);
   void bonds(Connection bond);
   void draw_polyeders(QList<INP> xdinp);
@@ -667,19 +670,21 @@ class molekul {
   V3* addToList(V3 *vL,QList<INP> xdinp ,int atom,int N,int rc);
   void highlightInv(QList<INP> xdinp ,int inv,GLfloat L);
   void make_bonds(QList<INP> xdinp );
+  void make_bonds(QList<Modulat> xdinp,double t );
   void make_knopf(QList<INP> xdinp );
   void make_polyeder(QList<INP> xd);
 //  void cyclsort(PolyEder & p);
   int findPoly(int zi, PolyEder p,QList<INP> xd);
   double * jacobi(double a[3][3], double d[3]); 
+  double mbonds_last_t;
 };
 class Modulat{
   public:
     molekul *mol;
     char     atomname[strgl];
     V3       frac0;          // Fraktionelle Koordinaten  
-    V3       kart(double t);          // Berechnete kartesische Koordinaten  
-    V3       frac(double t);          // Berechnete fractionelle Koordinaten  
+    const V3       kart(const double t);          // Berechnete kartesische Koordinaten  
+    const V3       frac(const double t);          // Berechnete fractionelle Koordinaten  
     Matrix   uf0;           // Temperaturparameter 
     Matrix   uf(double t);
     Matrix   u(double t);
@@ -688,17 +693,20 @@ class Modulat{
     V3 x4sym;
     int x4;
     double x4trans;
-    Modulat(const Modulat &m):so(m.so),sp(m.sp),st(m.st),wo(m.wo),wp(m.wp),wt(m.wt){
+    int   imul;
+    int molindex;
+    int sg;
+    double screenX,screenY;
+/*    Modulat(const Modulat &m):so(m.so),sp(m.sp),st(m.st),wo(m.wo),wp(m.wp),wt(m.wt){
+      mol=m.mol;
       frac0=m.frac0;
       uf0=m.uf0;
       strcpy(atomname,m.atomname);
       amul=m.amul;
       OrdZahl=m.OrdZahl;
       x4sym=m.x4sym;
-      x4=x4;
-      x4trans=x4trans;
-    }
-    Modulat(int _wo, int _wp, int _wt, int _so, int _sp, int _st):so(_so),sp(_sp),st(_st),wo(_wo),wp(_wp),wt(_wt){
+      x4=m.x4;
+      x4trans=m.x4trans;
       if (wo>0) {
         os=(double*)malloc(sizeof(double)*wo);
         oc=(double*)malloc(sizeof(double)*wo);
@@ -711,15 +719,56 @@ class Modulat{
         usin=(Matrix*)malloc(sizeof(Matrix)*wt);
         ucos=(Matrix*)malloc(sizeof(Matrix)*wt);
       }else{ usin=ucos=NULL;}
-      for (int i=0; i<wo; i++) {os[i]=0.0;oc[i]=0.0;}
-      for (int i=0; i<wp; i++) {possin[i]=V3(0,0,0); poscos[i]=V3(0,0,0);};
-      for (int i=0; i<wo; i++) {usin[i]=Matrix(0,0,0, 0,0,0, 0,0,0);ucos[i]=Matrix(0,0,0, 0,0,0, 0,0,0);}
+      for (int i=0; i<wo; i++) {os[i]=m.os[i];oc[i]=m.oc[i];}
+      for (int i=0; i<wp; i++) {possin[i]=m.possin[i]; poscos[i]=poscos[i];};
+      for (int i=0; i<wo; i++) {usin[i]=m.usin[i];ucos[i]=m.ucos[i];}
+   //   qDebug()<<"const"<<__LINE__<<atomname;
+    }
+    Modulat(Modulat &m):so(m.so),sp(m.sp),st(m.st),wo(m.wo),wp(m.wp),wt(m.wt){
+      mol=m.mol;
+      frac0=V3(m.frac0.x,m.frac0.y,m.frac0.z);
+      uf0=m.uf0;
+      strcpy(atomname,m.atomname);
+      amul=m.amul;
+      OrdZahl=m.OrdZahl;
+      x4sym=m.x4sym;
+      x4=m.x4;
+      x4trans=m.x4trans;
+      if (wo>0) {
+        os=(double*)malloc(sizeof(double)*wo);
+        oc=(double*)malloc(sizeof(double)*wo);
+      }else{oc=os=NULL;}
+      if (wp>0) {
+        possin=(V3*)malloc(sizeof(V3)*wp);
+        poscos=(V3*)malloc(sizeof(V3)*wp);
+      }else{ possin=poscos=NULL;}
+      if (wt>0) {
+        usin=(Matrix*)malloc(sizeof(Matrix)*wt);
+        ucos=(Matrix*)malloc(sizeof(Matrix)*wt);
+      }else{ usin=ucos=NULL;}
+      for (int i=0; i<wo; i++) {os[i]=m.os[i];oc[i]=m.oc[i];}
+      for (int i=0; i<wp; i++) {possin[i]=m.possin[i]; poscos[i]=poscos[i];};
+      for (int i=0; i<wo; i++) {usin[i]=m.usin[i];ucos[i]=m.ucos[i];}
+      qDebug()<<"non"<<__LINE__<<atomname<<this;
+    }*/
+    Modulat(int _wo, int _wp, int _wt, int _so, int _sp, int _st):so(_so),sp(_sp),st(_st),wo(_wo),wp(_wp),wt(_wt){
+      os.clear();
+      oc.clear();
+      possin.clear();
+      poscos.clear();
+      usin.clear();
+      ucos.clear();
+      for (int i=0; i<wo; i++) {os.append(0.0);oc.append(0.0);}
+      for (int i=0; i<wp; i++) {possin.append(V3(0,0,0)); poscos.append(V3(0,0,0));};
+      for (int i=0; i<wt; i++) {usin.append(Matrix(0,0,0, 0,0,0, 0,0,0));ucos.append(Matrix(0,0,0, 0,0,0, 0,0,0));}
       x4sym=V3(0,0,0);
       x4=1;
       x4trans=0.0;
+      //printf("modulat konstr\n");
     };
     void setWaveOccPar(int w, double _o,double s, double c){
       o=_o;
+//      qDebug()<<"Occ"<<w<<wo<<os.size();
       if (w>=wo) {
         errorMsg("Error in filling occupation waves!");
         exit(33);
@@ -728,6 +777,7 @@ class Modulat{
       oc[w]=c;
     }
     void setWavePosPar(int w, double _xs, double _ys, double _zs, double _xc, double _yc, double _zc){
+  //    qDebug()<<"Pos"<<w<<wp<<possin.size();
       if (w>=wp) {
         errorMsg("Error in filling position waves!");
         exit(33);
@@ -740,18 +790,21 @@ class Modulat{
     return s;
     }
     QString debugwp(){
-      QString s=QString("xsin %1, ysin %2, zsin %3, xcos %4, ycos %5, zcos %6 x4%7")
+      QString s=QString("%8frac xsin %1, ysin %2, zsin %3, xcos %4, ycos %5, zcos %6 x4= %7")
+
          .arg(possin[0].x)
          .arg(possin[0].y)
          .arg(possin[0].z)
          .arg(poscos[0].x)
          .arg(poscos[0].y)
-         .arg(poscos[0].z).arg(x4);
+         .arg(poscos[0].z).arg(x4).arg(atomname);
       return s;
     }
+    INP toINP(double t);
     void setWaveTemPar(int w, 
         double _u11s,  double _u22s,  double _u33s,  double _u12s,  double _u13s,  double _u23s,  
         double _u11c,  double _u22c,  double _u33c,  double _u12c,  double _u13c,  double _u23c){
+     // qDebug()<<"temp"<<w<<wt<<usin.size();
       if (w>=wt) {
         errorMsg("Error in filling adp waves!");
         exit(33);
@@ -765,10 +818,9 @@ class Modulat{
 //    const int id;//id of xdinp or assym
     const int so,sp,st;//kind of mod functions of occupancy position and temperature parameters
     const int wo,wp,wt;//number of mod functions of occupancy position and temperature parameters
-    V3 *possin,*poscos;//pos
-    double o,*os,*oc;//occ
-    Matrix *usin,*ucos;//uij
-
-
+    QList<V3> possin,poscos;//pos
+    double o;
+    QList<double> os,oc;//occ
+    QList<Matrix> usin,ucos;//uij
 };
 #endif

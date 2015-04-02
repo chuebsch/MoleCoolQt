@@ -508,15 +508,24 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
   }//2
   sigma[2]=9*sigma[0];
   extern QList<INP> xdinp;      
+  extern QList<Modulat> matoms;      
   urs=V3(0,0,0);int gt=0;
-  for (int i=0; i<xdinp.size();i++) {
-    urs+=xdinp.at(i).frac;
-    gt++;
+  if (xdinp.isEmpty()){
+    for (int i=0; i<matoms.size();i++) {
+      urs+=matoms.at(i).frac0;
+      gt++;
+    }
+  }else{
+    for (int i=0; i<xdinp.size();i++) {
+      urs+=xdinp.at(i).frac;
+      gt++;
+    }
   }
+  gt=(gt>0)?gt:1;
   urs*=1.0/gt;
   urs=V3(1,1,1)-1.0*urs;
   mole->frac2kart(urs,urs);
-  //    printf("ursprung %g %g %g \n",urs.x,urs.y,urs.z);
+  //printf("ursprung %g %g %g %d\n",urs.x,urs.y,urs.z,gt);
   nodex= (FNode*)malloc(sizeof(FNode)*n5);
   nodey= (FNode*)malloc(sizeof(FNode)*n5);
   nodez= (FNode*)malloc(sizeof(FNode)*n5);
@@ -840,7 +849,7 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu, int maxmap){
         }
         //sintl=(lr[i].ih*lr[i].ih*D[6]*D[6] + lr[i].ik*lr[i].ik*D[7]*D[7] + lr[i].il*lr[i].il*D[8]*D[8] + 2*lr[i].ih*lr[i].il*D[6]*D[8]*crbe+ 2*lr[i].ik*lr[i].il*D[7]*D[8]*cral+ 2*lr[i].ih*lr[i].ik*D[6]*D[7]*crga)*-M_PI;//this is -4*pi*(sin(theta) / lambda)^2
         //       if (abs(lr[i].ih)+abs(lr[i].ik)+abs(lr[i].il)<7) printf("%4d%4d%4d %g %g %g\n",lr[i].ih,lr[i].ik,lr[i].il ,sintl,sqrt(sintl),1.0/sintl);
-        sintl=1.0;
+        sintl=1.0;ss=0.0;
         switch (typ){
         case 0: ss=(lr[i].d1-fmod1)/(C[14]*(s+t));break;
         case 1: ss=(lr[i].d1)/(C[14]*(s+t)*sintl);break;
@@ -2058,8 +2067,12 @@ void FourMCQ::makeFaces(int n, FNode poly[] ){
     else if (maptrunc==2) {
       double maexle=2;
       extern QList<INP> xdinp;      
+      extern QList<Modulat> matoms;      
       for (int g=0; g<xdinp.size();g++){
         maexle=qMin(maexle,Distance(mid_ver+delDA[w],xdinp.at(g).kart));
+      }
+      for (int g=0; g<matoms.size();g++){
+        maexle=qMin(maexle,Distance(mid_ver+delDA[w],matoms[g].kart(0)));
       }
       if (maexle==2) continue;
     }
@@ -2140,7 +2153,7 @@ void FourMCQ::MakeElement( int ix, int iy, int iz ,int s1, int s2) {//das ist de
   for( int is=0; is<12; is++ ) {
     if( !node[is] ) continue;
 
-    int n=0, i=is, m=0,ai=i;
+    int n=0, i=is, m=0;//,ai=i;
     GLfloat dis;
     dis=0;
     do {
@@ -2150,7 +2163,7 @@ void FourMCQ::MakeElement( int ix, int iy, int iz ,int s1, int s2) {//das ist de
           node[conn[i][m][1]],
           node[conn[i][m][2]],
           node[conn[i][m][3]]);
-      ai=i;
+  //    ai=i;
       i = conn[i][m][sol];
       if( sol == 2 ) m ^= 1;
       dis+=Distance(polygon[0].vertex,node[i].vertex);
