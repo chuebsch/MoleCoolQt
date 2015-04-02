@@ -3689,7 +3689,8 @@ void CubeGL::draw() {
     glPushMatrix();
     glLoadIdentity();
     glDisable( GL_LIGHTING ); 
-    glDisable( GL_DEPTH_TEST ); 
+    glDisable( GL_DEPTH_TEST );
+    glDisable( GL_BLEND );
     glBegin(GL_QUADS);
     double xx = ((double) _win_width/_win_height) * 2.0,
 	   yy = 1.77777777778;

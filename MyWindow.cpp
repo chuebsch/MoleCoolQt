@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=421;
+int rev=422;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -8229,7 +8229,7 @@ void MyWindow::mgrowSymm(int packart,int packatom){
   mol.frac2kart(uz7f,mol.uz7k);
   double dim=mdimension(matoms);
   cubeGL->L=100.0/dim;
-  qDebug()<<dim<<cubeGL->L;
+//  qDebug()<<dim<<cubeGL->L;
   cubeGL->bas=0;
 
   cubeGL->resetENV();
@@ -8243,9 +8243,9 @@ void MyWindow::mgrowSymm(int packart,int packatom){
 }
 
 void MyWindow::growSymm(int packart,int packatom){
-  qDebug()<<smx<<atmax <<asymmUnit.size();
+//  qDebug()<<smx<<atmax <<asymmUnit.size();
   if ((asymmUnit.isEmpty())&&(!masymmUnit.isEmpty())){
-    qDebug()<<packart<<packatom<<"modul grow";
+//    qDebug()<<packart<<packatom<<"modul grow";
     mgrowSymm(packart,packatom);
     return;
   }
@@ -8801,7 +8801,7 @@ void MyWindow::growSymm(int packart,int packatom){
   double dim=dimension(xdinp);
   if ((asymmUnit.isEmpty())&&(!masymmUnit.isEmpty()))  dim=mdimension(matoms);
   if ((Norm(atom1Pos)==0)&&(Norm(atom2Pos)==0)) cubeGL->L=100.0/dim;
-  qDebug()<<dim<<cubeGL->L;
+//  qDebug()<<dim<<cubeGL->L;
   /*if (mol.nListe>2) {
     free(mol.vL);
     mol.vL=NULL;
