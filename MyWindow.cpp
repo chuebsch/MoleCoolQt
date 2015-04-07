@@ -40,32 +40,41 @@ double fl(double x,double y,double z){
 void MyWindow::setup_zelle(){
 
   packAct->setVisible(true);
-  mol.zelle.phi=  sqrt(1-(cos(mol.zelle.al/g2r)*cos(mol.zelle.al/g2r))-
-		  (cos(mol.zelle.be/g2r)*cos(mol.zelle.be/g2r))-(cos(mol.zelle.ga/g2r)*cos(mol.zelle.ga/g2r))
-		  +2*cos(mol.zelle.al/g2r)*cos(mol.zelle.be/g2r)*cos(mol.zelle.ga/g2r));
+
+  double
+          cs_al=(mol.zelle.al==90)?0:cos(mol.zelle.al/g2r),
+          cs_be=(mol.zelle.be==90)?0:cos(mol.zelle.be/g2r),
+          cs_ga=(mol.zelle.ga==90)?0:cos(mol.zelle.ga/g2r),
+
+          sn_al=(mol.zelle.al==90)?1:sin(mol.zelle.al/g2r),
+          sn_be=(mol.zelle.be==90)?1:sin(mol.zelle.be/g2r),
+          sn_ga=(mol.zelle.ga==90)?1:sin(mol.zelle.ga/g2r);
+
+  mol.zelle.phi=  sqrt(1-(cs_al*cs_al)-(cs_be*cs_be)-(cs_ga*cs_ga) + 2*cs_al*cs_be*cs_ga);
   mol.zelle.V = mol.zelle.a*mol.zelle.b*mol.zelle.c*mol.zelle.phi;
-  mol.zelle.as=mol.zelle.c*mol.zelle.b*sin(mol.zelle.al/g2r)/mol.zelle.V;
-  mol.zelle.bs=mol.zelle.c*mol.zelle.a*sin(mol.zelle.be/g2r)/mol.zelle.V;
-  mol.zelle.cs=mol.zelle.a*mol.zelle.b*sin(mol.zelle.ga/g2r)/mol.zelle.V;
-  const double tau=mol.zelle.c*((cos(mol.zelle.al/g2r)-cos(mol.zelle.be/g2r)*cos(mol.zelle.ga/g2r))/sin(mol.zelle.ga/g2r));
-  mol.zelle.o1.m11=mol.zelle.o[0][0] =mol.zelle.as*mol.zelle.a;
+  mol.zelle.as=mol.zelle.c*mol.zelle.b*sn_al/mol.zelle.V;
+  mol.zelle.bs=mol.zelle.c*mol.zelle.a*sn_be/mol.zelle.V;
+  mol.zelle.cs=mol.zelle.a*mol.zelle.b*sn_ga/mol.zelle.V;
+  const double tau=mol.zelle.c*((cs_al-cs_be*cs_ga)/sn_ga);
+  mol.zelle.o1.m11=mol.zelle.o[0][0] = mol.zelle.as*mol.zelle.a;
   mol.zelle.o1.m12=mol.zelle.o[0][1] = 0.0;
   mol.zelle.o1.m13=mol.zelle.o[0][2] = 0.0;
-  mol.zelle.o1.m21=mol.zelle.o[1][0] = mol.zelle.bs*mol.zelle.b*cos(mol.zelle.ga/g2r);
-  mol.zelle.o1.m22=mol.zelle.o[1][1] = mol.zelle.bs*mol.zelle.b*sin(mol.zelle.ga/g2r);
+  mol.zelle.o1.m21=mol.zelle.o[1][0] = mol.zelle.bs*mol.zelle.b*cs_ga;
+  mol.zelle.o1.m22=mol.zelle.o[1][1] = mol.zelle.bs*mol.zelle.b*sn_ga;
   mol.zelle.o1.m23=mol.zelle.o[1][2] = 0.0;
-  mol.zelle.o1.m31=mol.zelle.o[2][0] = mol.zelle.cs*mol.zelle.c* cos(mol.zelle.be/g2r);
+  mol.zelle.o1.m31=mol.zelle.o[2][0] = mol.zelle.cs*mol.zelle.c* cs_be;
   mol.zelle.o1.m32=mol.zelle.o[2][1] = mol.zelle.cs*tau;
   mol.zelle.o1.m33=mol.zelle.o[2][2] = mol.zelle.cs*mol.zelle.c* mol.zelle.phi / sin(mol.zelle.ga /g2r);
   mol.zelle.f2c.m11 = mol.zelle.a;
   mol.zelle.f2c.m21 = 0.0;
   mol.zelle.f2c.m31 = 0.0;
-  mol.zelle.f2c.m12 = mol.zelle.b * cos(mol.zelle.ga/g2r);
-  mol.zelle.f2c.m22 = mol.zelle.b * sin(mol.zelle.ga/g2r);
+  mol.zelle.f2c.m12 = mol.zelle.b * cs_ga;
+  mol.zelle.f2c.m22 = mol.zelle.b * sn_ga;
   mol.zelle.f2c.m32 = 0.0;
-  mol.zelle.f2c.m13 = mol.zelle.c * cos(mol.zelle.be/g2r);
+  mol.zelle.f2c.m13 = mol.zelle.c * cs_be;
   mol.zelle.f2c.m23 = tau;
-  mol.zelle.f2c.m33 = mol.zelle.c * mol.zelle.phi / sin(mol.zelle.ga/g2r);
+  mol.zelle.f2c.m33 = mol.zelle.c * mol.zelle.phi / sn_ga;
+ // qDebug()<< mol.zelle.o1.m11<<mol.zelle.o1.m12<<mol.zelle.o1.m13<<"\n"<<mol.zelle.o1.m21<< mol.zelle.o1.m22<<mol.zelle.o1.m23<<"\n"<<mol.zelle.o1.m31<< mol.zelle.o1.m32<<mol.zelle.o1.m33;
 }
 char *egals;
 QProgressBar *balken;
@@ -2688,7 +2697,7 @@ void MyWindow::tMovieStart(){
 }
 
 void MyWindow::incT(){
-  cubeGL->tvalue=fmod(cubeGL->tvalue+0.01,1.0);
+  cubeGL->tvalue=fmod(cubeGL->tvalue+cubeGL->tstep,1.0);
 //  speedSldr->setValue((int)(cubeGL->tvalue*128));
   statusBar()->showMessage(QString("t0 = %1").arg(cubeGL->tvalue));
   cubeGL->updateGL(); 
@@ -3681,6 +3690,49 @@ void MyWindow::load_Jana(QString fileName){
   }
   all.clear();
   if (mol.dimensions==4){
+      QDialog *modulDlg=new QDialog(this);
+      modulDlg->setWindowTitle("Loding a modulated structure...");
+      QRadioButton *rad1_ = new QRadioButton("Load as avarage structure",modulDlg);
+      QRadioButton *rad2_ = new QRadioButton("Load as aproximant structure with variable t",modulDlg);
+      rad2_->setChecked(true);
+      QDoubleSpinBox *tzeroBox= new QDoubleSpinBox(modulDlg);
+      tzeroBox->setMaximum(0);
+      tzeroBox->setMaximum(1);
+      tzeroBox->setSingleStep(0.01);
+      tzeroBox->setValue(0.00);
+      tzeroBox->setDecimals(3);
+      QDoubleSpinBox *tstepBox= new QDoubleSpinBox(modulDlg);
+      tstepBox->setMinimum(0.001);
+      tstepBox->setValue(0.01);
+      tstepBox->setSingleStep(0.001);
+      tstepBox->setMaximum(0.999);
+      tstepBox->setDecimals(3);
+
+      tstepBox->setDecimals(3);
+      QDialogButtonBox *bbx = new    QDialogButtonBox(QDialogButtonBox::Open,Qt::Horizontal,modulDlg);
+
+      connect(bbx, SIGNAL(accepted()), modulDlg, SLOT(accept()));
+      connect(bbx, SIGNAL(rejected()), modulDlg, SLOT(reject()));
+      QLabel *tzl,*tstl;
+
+      QGridLayout *glt= new QGridLayout(modulDlg);
+      glt->addWidget(rad1_,1,0,1,1);
+      glt->addWidget(rad2_,1,1,1,1);
+
+      glt->addWidget(tzeroBox,2,1,1,1);
+      tzl= new QLabel("t0 = ",modulDlg);
+      glt->addWidget(tzl,2,0,1,1);
+
+      glt->addWidget(tstepBox,3,1,1,1);
+      tstl= new QLabel("t steps for movie = ",modulDlg);
+      glt->addWidget(tstl,3,0,1,1);
+      glt->addWidget(bbx,10,0,1,3);
+      if (modulDlg->exec()==QDialog::Accepted){
+          cubeGL->tvalue=tzeroBox->value();
+          cubeGL->tstep =tstepBox->value();
+          cubeGL->isModulated=rad2_->isChecked();
+      }
+    if (cubeGL->isModulated){
     mol.zelle.qvec.x=sqrt(mol.zelle.qr.x*mol.zelle.qr.x+mol.zelle.qi.x*mol.zelle.qi.x);
     mol.zelle.qvec.y=sqrt(mol.zelle.qr.y*mol.zelle.qr.y+mol.zelle.qi.y*mol.zelle.qi.y);
     mol.zelle.qvec.z=sqrt(mol.zelle.qr.z*mol.zelle.qr.z+mol.zelle.qi.z*mol.zelle.qi.z);
@@ -3696,6 +3748,7 @@ void MyWindow::load_Jana(QString fileName){
         mol.zelle.qvec.z);
   tMovieStartAct->setEnabled(true);
   exportShelxAtTvalueAct->setEnabled(true);
+    }
   }
   if (phcnt){
   phaseSpin->setMaximum(phcnt);
@@ -3832,13 +3885,14 @@ void MyWindow::load_Jana(QString fileName){
           newAtom.d1233/= mol.zelle.as * mol.zelle.bs * mol.zelle.cs * mol.zelle.cs * dfac;//
 //  */
         }
-        if (mol.dimensions==4){
+        if ((cubeGL->isModulated)&&(mol.dimensions==4)){
           Modulat *modat=new Modulat(wo,wp,wt,so,sp,st);
           modat->mol=&mol;
           strcpy(modat->atomname,newAtom.atomname);
           modat->frac0=newAtom.frac;
           modat->amul=newAtom.amul;
           modat->uf0=newAtom.uf;
+          modat->sg=0;
         if (wo){
           li++;
           double o,os,oc;
@@ -3979,11 +4033,13 @@ void MyWindow::load_Jana(QString fileName){
         tt.z=(tt.z>1)?tt.z-1:tt.z;
         mol.zelle.symmops.append(mol.zelle.symmops.at(i));
         mol.zelle.trans.append(tt);
+        if (cubeGL->isModulated){
         mol.zelle.x4sym.append(mol.zelle.x4sym.at(i));
         mol.zelle.x4.append(mol.zelle.x4.at(i));
         double tr4=mol.zelle.x4tr.at(i);
         if (lavec4.size()>j) tr4=fmod(99+tr4+lavec4.at(j),1.0);
         mol.zelle.x4tr.append(tr4);
+        }
       }
     }
   }
@@ -3994,7 +4050,7 @@ void MyWindow::load_Jana(QString fileName){
       asymmUnit[i].u.m11=asymmUnit[i].u.m22=asymmUnit[i].u.m33=asymmUnit[i].uf.m11;
       asymmUnit[i].u.m12=asymmUnit[i].u.m13=asymmUnit[i].u.m23=asymmUnit[i].u.m21=asymmUnit[i].u.m31=asymmUnit[i].u.m32=0.0;}
     else Uf2Uo(asymmUnit[i].uf,asymmUnit[i].u);
-//    printf("%12.6f%12.6f%12.6f%12.6f%12.6f%12.6f\n",asymmUnit[i].u.m11,asymmUnit[i].u.m22,asymmUnit[i].u.m33, asymmUnit[i].u.m12, asymmUnit[i].u.m13,asymmUnit[i].u.m23);
+  printf("%12.6f%12.6f%12.6f%12.6f%12.6f%12.6f\n",asymmUnit[i].u.m11,asymmUnit[i].u.m22,asymmUnit[i].u.m33, asymmUnit[i].u.m12, asymmUnit[i].u.m13,asymmUnit[i].u.m23);
   }
   growSymm(6);
   fmcq->curentPhase=curentPhase;

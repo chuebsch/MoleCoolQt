@@ -633,7 +633,7 @@ class molekul {
   void Uf2Uo(const Matrix x, Matrix & y);
   void copyAcol(GLfloat _Acol[108][4],GLfloat _arad[108],int _aStyle[108]);
   void atoms(QList<INP> xdinp,const int proba);
-  void modulated(double t,QList<Modulat> mato,int draw);
+  void modulated(double t, QList<Modulat> mato, int draw, double steps);
   void bonds(QList<INP> xdinp);
   void bonds(Connection bond);
   void draw_polyeders(QList<INP> xdinp);

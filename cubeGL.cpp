@@ -3876,7 +3876,8 @@ void CubeGL::draw() {
     //glTexCoord2d(-1,0);
     glVertex3f(-xx, yy,-6.0);
     glEnd();
-
+    glColor4f(1.0,1.0,1.0,0.5);
+    if (!matoms.isEmpty())  renderText(-xx*0.85,yy*0.95,-6.9,QString("t0 = %1 %2").arg(tvalue,10,'f',4).arg(mol.bcnt) ,MLegendFont);
     glPopMatrix();
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -4010,7 +4011,7 @@ void CubeGL::draw() {
   }else{
   glPushMatrix();
   glScaled( L, L, L );
-  if (!matoms.isEmpty()) mol.modulated(tvalue,matoms,drawopt);
+  if (!matoms.isEmpty()) mol.modulated(tvalue,matoms,drawopt,tstep);
 //if (drawBo) mol.modulated
   glPopMatrix();
   }

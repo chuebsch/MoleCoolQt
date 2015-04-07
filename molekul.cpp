@@ -1396,24 +1396,25 @@ void molekul::make_bonds(QList<INP> xdinp){
 void molekul::make_bonds(QList<Modulat> xdinp,double t){
   if (xdinp.isEmpty()) return;
 //  printf("make_bonds %g\n",t);
-  double gg,soll_abst;
-  if (bd!=NULL) free(bd);
-  bcnt=0;
-  bd=NULL;
   int msiz=(xdinp.size()*10);
+  double gg,soll_abst;
+  bcnt=0;
+  if (bd!=NULL) free(bd);
+  bd=NULL;
   if (NULL==(bd=(bindi*)malloc(sizeof(bindi)*msiz)))return;
   for (int i=0;i<xdinp.size();i++) {
       //printf("i=%d sg=%d part=%d\n",i,xdinp[i].sg,xdinp[i].part);
     for (int j=0;j<xdinp.size();j++) {
       if (i==j) continue;
       if((xdinp[i].OrdZahl<0)||(xdinp[j].OrdZahl<0)) continue;
+      if ((xdinp[i].sg!=xdinp[j].sg))continue;
 //      if (((xdinp[i].part<0)||(xdinp[j].part<0))&&((xdinp[i].sg!=xdinp[j].sg)||((xdinp[i].part*xdinp[j].part)&&(xdinp[i].part!=xdinp[j].part)))) continue; //part negative
 //      if ((xdinp[i].part>0)&&(xdinp[j].part>0)&&(xdinp[i].part!=xdinp[j].part)) continue; //different part
       if ((xdinp[i].OrdZahl<83)&&(xdinp[j].OrdZahl<83)&&(xdinp[i].OrdZahl>=0)&&(xdinp[j].OrdZahl>=0)){
 	soll_abst=((Kovalenz_Radien[xdinp[i].OrdZahl]+
 		    Kovalenz_Radien[xdinp[j].OrdZahl])
 		   -(0.08*fabs((double)ElNeg[xdinp[i].OrdZahl]
-			       -ElNeg[xdinp[j].OrdZahl])))*1.1;
+                   -ElNeg[xdinp[j].OrdZahl])))*1.25;
 	gg=100.0*sqrt( Distance(xdinp[i].kart(t),xdinp[j].kart(t)));
 	if (gg<soll_abst) {
 	  bd[bcnt].a=i;	
@@ -1437,7 +1438,7 @@ void molekul::make_bonds(QList<Modulat> xdinp,double t){
       }//Ordnungzahl-ok
     }//j
   }//i
-  bd=(bindi*)realloc(bd,sizeof(bindi)*bcnt);  
+  bd=(bindi*)realloc(bd,sizeof(bindi)*(bcnt+10));
   bonds_made=1;
   mbonds_last_t=t;
 }
@@ -1818,7 +1819,7 @@ void molekul::loadSettings(){
 #define Ato4d(arr)       arr[0], arr[1], arr[2], arr[3]
 #include <QGLWidget>
 
-void molekul::modulated(double t,QList<Modulat> mato,int draw) {
+void molekul::modulated(double t,QList<Modulat> mato,int draw,double steps) {
   const int dr_atoms =1;
   const int dr_bonds =2;
   const int dr_unit =4;
@@ -1873,7 +1874,7 @@ void molekul::modulated(double t,QList<Modulat> mato,int draw) {
     glBegin(GL_LINES);
     glColor3f(0.5,0.3,0.3);
 //    printf("bonds_made %d t-mbonds_last_t %g t= %g\n",bonds_made,t-mbonds_last_t,t);
-    if ((!bonds_made)||(fabs(t-mbonds_last_t)>0.1))make_bonds(mato,t);
+    if ((!bonds_made)||(fabs(t-mbonds_last_t)>(steps*10)))make_bonds(mato,t);
 /*    V3 beg,end;
     double soll_abst;
     for  (int i=0; i<mato.size();i++)
@@ -3400,15 +3401,7 @@ Modulat Modulat::applySymm(Matrix sym3d, V3 trans3d, V3 x4sym, int x4,double x4t
   return *newatom;
 }
 const V3 Modulat::kart(const double t){
-  V3 p=frac0;
-  //printf("x4sy %g %g %g x4 %d x4tr %g q %g %g %g \n",x4sym.x,x4sym.y,x4sym.z,x4,x4trans,mol->zelle.qvec.x,mol->zelle.qvec.y,mol->zelle.qvec.z);
-  double X4=t+(mol->zelle.qvec*frac0);
-  X4=(x4sym*frac0)+x4*X4+x4trans;
-  //printf("X4 %g %g %g %g\n",X4,frac0.x,frac0.y,frac0.z);
-  for (int i=0; i<wp;i++){
-    p+=possin[i]*sin(2*M_PI*(i+1)*X4);
-    p+=poscos[i]*cos(2*M_PI*(i+1)*X4);
-  }
+  V3 p=frac(t);
   V3 y;
   
   y.x = p.x * mol->zelle.f2c.m11 + p.y * mol->zelle.f2c.m12 + p.z * mol->zelle.f2c.m13;
@@ -3423,10 +3416,17 @@ const V3 Modulat::frac(const double t){
 //  printf("%sfrac X4 %g frac0 %g %g %g t%g\n",atomname,X4,frac0.x,frac0.y,frac0.z,t);
   X4=(x4sym*frac0)+x4*X4+x4trans;
 //  printf("%sfrac X4 %g\n",atomname,X4);
+  switch (sp) {
+  case 0:
   for (int i=0; i<wp;i++){
   //  printf("%sfrac sin %g %g %g cos %g %g %g\n",atomname,possin[i].x,possin[i].y,possin[i].z,poscos[i].x,poscos[i].y,poscos[i].z);
     p+=possin[i]*sin(2*M_PI*(i+1)*X4);
     p+=poscos[i]*cos(2*M_PI*(i+1)*X4);
+  }
+  break;
+  case 1://sawtooth
+//not yet
+      break;
   }
  // printf("%sfrac %g %g %g\n",atomname,p.x,p.y,p.z);
   return p;

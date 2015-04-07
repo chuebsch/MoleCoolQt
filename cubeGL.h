@@ -36,7 +36,8 @@ public:
   bool molisoTransparence;
   bool zebra;
   bool noWaitLabel;
-  double tvalue;
+  double tvalue,tstep;
+  bool isModulated;
   double mixdim,miydim,mizdim;
   int wirbas,cbas, bas, ibas, iSel, foubas[5];
   int rotze;
