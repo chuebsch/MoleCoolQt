@@ -22,7 +22,7 @@ public:
   CubeGL(QWidget *parent ,double vang);
   MolIso *moliso;
   double L;
-  bool pause,negpdf;
+  bool pause,negpdf,paparazi;
   int stereo_mode;
   QAction *Istda,*chicken,*quickRot;
   QTimer *moving;
@@ -178,6 +178,7 @@ private:
   int labToMove;
   void draw();
   void dieDiPole(V3 org);
+  void callList(int list);
   bool atomsClickable,growIt;
   double getHDist(int index);
   GLuint selectBuf[MAXSELECT];

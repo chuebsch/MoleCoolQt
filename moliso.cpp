@@ -113,17 +113,19 @@ void MolIso::legende(){
 }
 
 void MolIso::loadMI(QString fname, bool om, bool mima){
- printf("mima %s\n",(mima)?"true":"false");
+ printf("mima %s  OM = %s\n",(mima)?"true":"false",(om)?"true":"false");
   for (int i=0;i<6;i++){
     if ((mibas)&&(glIsList(mibas+i))) {
-      // printf("deleting list #%d\n",chgl->foubas[fac]);
-      glDeleteLists(mibas+i,1);
+      printf("NOT deleting list #%d\n",mibas+i);
+    }else{
+    printf("deleting %d\n",mibas+i);
+      if (mibas) glDeleteLists(mibas+i,1);
     }
   }
 //  mibas=0;
 //  mibas=glGenLists(6);*/
   extern QProgressBar *balken;
-
+  if (orte.isEmpty()){
   QFile sf(fname);
   if (!sf.exists()) {qDebug()<<"The File "<<fname<<" does not exist!"; exit(0);}
   if (!sf.open(QIODevice::ReadOnly)) {qDebug()<<"Can not open "<<fname<<" for reading. Please check your rights."; exit(0);}
@@ -140,7 +142,7 @@ void MolIso::loadMI(QString fname, bool om, bool mima){
   if (lines.size()){
 
     balken->setMinimum(0);
-    balken->setMaximum(lines[0].toInt()*7);
+    balken->setMaximum(7);
     balken->show();
     double dm=0,ds=0,sigma=0,dmp=0,dmm=0,dsp=0,dsm=0,sigmap=0,sigmam=0,api;//,potsigplus=0,potsigminus=0;
     int np=0,nm=0;
@@ -246,30 +248,32 @@ void MolIso::loadMI(QString fname, bool om, bool mima){
       }
     }
   }  
-  balken->setValue(lines[0].toInt());
+  }//orte is Empty
+  printf("%d orte.size %d \n",orte.size(),pgns.size());
+  balken->setValue(1);
   glNewList(mibas, GL_COMPILE );{                       //Isooberfl"ache ::Perspektive 1     
     glPushMatrix();{
       glScaled( L, L, L );
       PXsort();
-if (!mima) glDisable( GL_DEPTH_TEST ); 
+      if (!mima) glDisable( GL_DEPTH_TEST ); 
       DrawPlys();
-if (!mima) glEnable( GL_DEPTH_TEST ); 
+      if (!mima) glEnable( GL_DEPTH_TEST ); 
     }glPopMatrix();
   }glEndList();
 
 
-  balken->setValue(2*lines[0].toInt());
+  balken->setValue(2);
   glNewList(mibas+1, GL_COMPILE  );{                       //Isooberfl"ache ::Perspektive 1     
     glPushMatrix();{
       glScaled( L, L, L );
       Pxsort();
-if (!mima) glDisable( GL_DEPTH_TEST ); 
+      if (!mima) glDisable( GL_DEPTH_TEST ); 
       DrawPlys();
-if (!mima) glEnable( GL_DEPTH_TEST ); 
+      if (!mima) glEnable( GL_DEPTH_TEST ); 
     }glPopMatrix();
   }glEndList();
 
-  balken->setValue(3*lines[0].toInt());
+  //balken->setValue(3*lines[0].toInt());
   glNewList(mibas+2, GL_COMPILE  );{                       //Isooberfl"ache ::Perspektive 1     
     glPushMatrix();{
       glScaled( L, L, L );
@@ -280,7 +284,7 @@ if (!mima) glEnable( GL_DEPTH_TEST );
     }glPopMatrix();
   }glEndList();
 
-  balken->setValue(4*lines[0].toInt());
+  balken->setValue(4);
   glNewList(mibas+3, GL_COMPILE  );{                       //Isooberfl"ache ::Perspektive 1     
     glPushMatrix();{
       glScaled( L, L, L );
@@ -291,7 +295,7 @@ if (!mima) glEnable( GL_DEPTH_TEST );
     }glPopMatrix();
   }glEndList();
 
-  balken->setValue(5*lines[0].toInt());
+  balken->setValue(5);
   glNewList(mibas+4, GL_COMPILE  );{                       //Isooberfl"ache ::Perspektive 1     
     glPushMatrix();{
       glScaled( L, L, L );
@@ -302,7 +306,7 @@ if (!mima) glEnable( GL_DEPTH_TEST );
     }glPopMatrix();
   }glEndList();
 
-  balken->setValue(6*lines[0].toInt());  
+  balken->setValue(6);  
   glNewList(mibas+5, GL_COMPILE  );{                       //Isooberfl"ache ::Perspektive 1     
     glPushMatrix();{
       glScaled( L, L, L );
@@ -314,7 +318,7 @@ if (!mima) glEnable( GL_DEPTH_TEST );
   }glEndList();
 
 
-  balken->setValue(7*lines[0].toInt());  
+  balken->setValue(7);  
 
   balken->hide();
   faceFile=fname;
@@ -1300,7 +1304,7 @@ void MolIso::createSurface(QString &storeFaceName, double proba){
   balken->setMinimum(0);
   balken->setMaximum(100);
   balken->show();
-  balken->setValue(1);
+  balken->setValue(0);
   if (( grad =(Vector3*)malloc(sizeof(Vector3)*bh*tiefe))==NULL) {
     fprintf(stderr ,"Less Memory(grad)%d !!\n",bh*tiefe);
     exit(1);

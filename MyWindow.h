@@ -47,6 +47,7 @@ public:
      QAction *xdSetupAct;
      QAction *xdRestoreAct;
      QAction *Start;
+     QAction *exportShelxAtTvalueAct;
      QAction *filterAct , *packAct;
      QAction *ignorant,*hFilter,*dFilter;
      QAction *atomClickAct  ;

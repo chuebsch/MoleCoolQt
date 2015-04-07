@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=423;
+int rev=424;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -626,6 +626,7 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
   QAction *fiftyp   = elliMenu->addAction("50%");
   QAction *seventyp = elliMenu->addAction("70%");
   QAction *ninetyp  = elliMenu->addAction("90%");
+  tidl=NULL;
   
   noElli  ->setCheckable(true);    
   tenp    ->setCheckable(true);    
@@ -831,8 +832,9 @@ createRenameWgd();
   tMovieStopAct->setEnabled(false);
   tMovieStartAct->setEnabled(false);
   {
-  QAction *a=workMenu->addAction("Export Shelx.res file at current t0 value",this,SLOT(exportShelxAtTvalue()));  
+  QAction *a=exportShelxAtTvalueAct=workMenu->addAction("Export Shelx.res file at current t0 value",this,SLOT(exportShelxAtTvalue()));  
   a->setShortcut(tr("Alt+t"));
+  a->setEnabled(false);
   }
   workMenu->addAction(fontSizeUpAct);
   workMenu->addAction(fontSizeDownAct);
@@ -2696,9 +2698,10 @@ void MyWindow::tMovieStop(){
   tMovieStartAct->setEnabled(true);
   tMovieStopAct->setEnabled(false);
 //  speedSldr->hide();
-  tidl->stop();
+  if (tidl!=NULL)tidl->stop();
   infoKanalNews(QString("t0-movie stopped at t0 = %1").arg(cubeGL->tvalue));
   delete tidl;
+  tidl=NULL;
 
 }
 
@@ -2773,6 +2776,7 @@ void MyWindow::changeADP(){
     mol.adp=ad;
     update();
   }
+  cubeGL->updateGL();
 }
 
 void MyWindow::changeBondStrength(){
@@ -2811,10 +2815,15 @@ void MyWindow::saveScene(){
     f = cubeGL->myFont.pointSize (),
     h = cubeGL->MLegendFont.pointSize ();
   if (!fileName.isEmpty()){
+    QString endung=selectedFilter.section('*',1,1).section(')',0,0);
+    if (!fileName.endsWith(endung)) fileName.append(endung);
+    printf("!%s! %s\n",endung.toStdString().c_str(),fileName.toStdString().c_str());fflush(stdout);
     cubeGL->myFont.setPointSize(c);
     cubeGL->MLegendFont.setPointSize(g);
     cubeGL->noWaitLabel=true;
+    cubeGL->paparazi=true;
     QPixmap   map = cubeGL->renderPixmap(a,b);
+    cubeGL->paparazi=false;
     map.save(fileName);/*
     if (fileName.endsWith(".bmp")) map.save(fileName,"BMP",-1);
     if (fileName.endsWith(".png")) map.save(fileName,"PNG",80);
@@ -3686,6 +3695,7 @@ void MyWindow::load_Jana(QString fileName){
         mol.zelle.qvec.y,
         mol.zelle.qvec.z);
   tMovieStartAct->setEnabled(true);
+  exportShelxAtTvalueAct->setEnabled(true);
   }
   if (phcnt){
   phaseSpin->setMaximum(phcnt);
@@ -4039,6 +4049,7 @@ void MyWindow::replyFinished2(QNetworkReply* antwort){
 //
 void MyWindow::load_xdres(QString fileName) {
   INP newAtom;
+//  printf("loadxd %d\n",__LINE__);
   newAtom.part=0;
   newAtom.sg=0;
   someThingToRestore();
@@ -4059,6 +4070,7 @@ void MyWindow::load_xdres(QString fileName) {
   mol.zelle.trans.append(nl);
   mol.zelle.symmops.append(Matrix(1,0,0, 0,1,0, 0,0,1));
   QStringList atypen;
+//  printf("loadxd %d\n",__LINE__);fflush(stdout);
   {//MAS//
     FILE *mas;
     char line[220];
@@ -4081,25 +4093,31 @@ void MyWindow::load_xdres(QString fileName) {
   while (strstr(line,"LATT")==NULL) {egal=fscanf(mas,"%[^\n\r]\n\r",line);}
   sscanf(line,"LATT %c %c",&Centr,&gitt) ;
   mol.applyLatticeCentro(gitt,toupper(Centr)=='C');
-
+//  printf("loadxd %d %d %d  %d %d \n",mol.zelle.trans.size(),mol.zelle.symmops.size(),mol.zelle.x4tr.size(),mol.zelle.x4.size(),mol.zelle.x4sym.size());
   while (strstr(line,"SCAT")==NULL) {egal=fscanf(mas,"%[^\n\r]\n\r",line);}
   while (strstr(line,"END")==NULL){  
     egal=fscanf(mas,"%[^\n\r]\n\r",line);
     if ((isalpha(line[0]))&&((strstr(line,"END")==NULL))) {
-
       atypen.append(strtok(line," "));
       pserbt[mol.Get_OZ(atypen.last())+1]->show();
       if (mol.Get_OZ(atypen.last())==5) pserbt[mol.Get_OZ(atypen.last())+1]->setChecked(true); 
     }
   }
+//  printf("loadxd %d\n",__LINE__);
   sfacBox->setFixedSize((atypen.size()+1)*52,70);
+ // printf("loadxd %d %d\n",__LINE__,atypen.size());
   rewind(mas);
-  chargeGroups->clear();
-  chargeGroups->addItem("Charge Group 1 (all)",0);
+  //printf("loadxd %d %s count %d\n",__LINE__,chargeGroups->currentText().toStdString().c_str(),chargeGroups->count());fflush(stdout);
+  if (chargeGroups->count()>1){
+    printf("loadxd %d\n",__LINE__);fflush(stdout);
+    chargeGroups->clear();
+    chargeGroups->addItem("Charge Group 1 (all)",0);
+  }
   chargeGroups->setVisible(false);
   chargeGroups->setEnabled(false);
   while (!feof(mas)) {
     egal=fscanf(mas,"%[^\n\r]\n\r",line);
+//    printf("%s->[%d]\n",line,egal);fflush(stdout);
     char ll[122],*tok;
     sscanf(line,"%[^!]",ll);  
     if (
@@ -4111,16 +4129,17 @@ void MyWindow::load_xdres(QString fileName) {
       chargeGroups->setEnabled(true);
       if (chargeGroups->findData(gnr)==-1) chargeGroups->addItem(QString("Charge Group %1").arg(gnr),gnr);
       for (tok=strtok(ll, " "); tok; tok=strtok(NULL, " ")) {
-	if (strstr(tok,"GROUP")==NULL)
-//	  printf("%d->%s<-\n",gnr,tok);
+	if (strstr(tok,"GROUP")==NULL){
+	  printf("%d->%s<-\n",gnr,tok);
 	ladungsgruppen[gnr].append(tok);
+        }
       }
       //printf("==>%s<== %c %d %d \n",gns,ll[5],(line[5]>47),(line[5]<59));
     }
-    
   }
   fclose(mas);
   }
+//  printf("loadxd %d\n",__LINE__);fflush(stdout);
   FILE *adp;
   double XDVERS=0;
   {//RES  
@@ -6977,8 +6996,13 @@ void MyWindow::showPackDlg(){
 }
 
 void MyWindow::loadFile(QString fileName,double GD){//empty
+//  printf("loadFILe %d\n",__LINE__);
   cubeGL->pause=true;
   hatlokale=0;
+  tMovieStop();
+
+  mol.zelle.qr=mol.zelle.qi=mol.zelle.qvec=V3(0,0,0),
+  exportShelxAtTvalueAct->setEnabled(false);
   tMovieStartAct->setEnabled(false);
   phaseSpin->hide();
   infoKanal->clear();
@@ -7012,6 +7036,12 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
   asymmUnit.clear();
   masymmUnit.clear();
   matoms.clear();
+  mol.zelle.symmops.clear();
+  mol.zelle.trans.clear();
+  mol.zelle.x4sym.clear();
+  mol.zelle.x4.clear();
+  mol.zelle.x4tr.clear();
+//  printf("loadFILe %d\n",__LINE__);
   george=false;
   if (!same) seReAct->setEnabled(false);
   if (!same) seReAct->setVisible(false);
@@ -7107,12 +7137,14 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
     if ((xxx=fopen(fileName.toLocal8Bit().data(),"r"))==NULL) {fprintf(stderr,"Can't open %s!!!\n",fileName.toLocal8Bit().data());exit(2);}      
     egal=fscanf(xxx,"%[^\n\r]\n\r",test);
     fclose(xxx);
+//  printf("loadFILe %d\n",__LINE__);
     if (strcmp(test,"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")) 
     { 
       load_sheldrick(fileName);}
     else    
       load_xdres(fileName);    
     togAxen->setChecked ( cubeGL->drawAx );
+//  printf("loadFILe %d\n",__LINE__);
   }
   updateStatusBar();
   QStringList aSymmList;
@@ -7162,6 +7194,7 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
   }
   mol.einstellung->endGroup();
   filtered=0;
+//  printf("loadFILe %d\n",__LINE__);
   cubeGL->pause=false;
   cubeGL->updateGL();
 }

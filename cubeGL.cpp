@@ -12,6 +12,7 @@ CubeGL::CubeGL(QWidget *parent,double vang) : QGLWidget(parent) {
    atomsClickable=true;
    negpdf=true;
    faceCull=0;
+   paparazi=false;
    tvalue=0.0;
    vangle=vang;
    chicken= new QAction("Permanent wireframe mode",this);
@@ -609,14 +610,15 @@ void CubeGL::initializeGL() {
   extern molekul mol;
   setupTexture();
   //888
+    glLoadMatrixd(MM);
+   if ((paparazi)&&(moliso)&&(moliso->mibas)){
+      moliso->loadMI(moliso->faceFile,false,negpdf); 
+   }
+//  printf("initializeGL %d\n",__LINE__);
   
 //    glLoadMatrixd(MM);
   if (0&&!xdinp.isEmpty()) {
     int adpstate=mol.adp;
-    glLoadMatrixd(MM);
-   if ((moliso)&&(moliso->mibas)){
-      moliso->loadMI(moliso->faceFile,false,negpdf); 
-   }
 
       glNewList(bas, GL_COMPILE );{                          //ATOME
 	glPushMatrix();{
@@ -741,11 +743,178 @@ bool before=  mol.bondColorStyle;
       mol.adp=adpstate;      ;
   }
 
+ // printf("initializeGL %d\n",__LINE__);
   if (foubas[0]|foubas[1]|foubas[2]|foubas[3]|foubas[4]){
       emit inimibas();
   }//else printf("dountinit\n");
+ // printf("initializeGL %d\n",__LINE__);
   if (!noWaitLabel) moving->start(80);
 
+}
+
+void CubeGL::callList(int list){
+//  printf("%d--%d %d\n",__LINE__,list,paparazi);
+  extern QList<INP> xdinp;
+  extern molekul mol;
+    if ((paparazi)&&(moliso)&&(glIsList(moliso->mibas))){
+      if (list>=moliso->mibas){glCallList(list);
+     // printf("Call List #%d %d\n",list,paparazi);
+      }
+    }
+
+  int isobase=((moliso)&&(moliso->mibas)&&(glIsList(moliso->mibas)))?list-moliso->mibas:-666;
+  if (isobase!=-666){
+  //  moliso->loadMI(moliso->faceFile,false,negpdf); 
+  
+    if (isobase>=0) {
+    glCallList(list);
+   // printf("call List #%d %d\n",list,paparazi);
+  }
+  }
+  //int foubase=(foubas[0]|foubas[1]|foubas[2]|foubas[3]|foubas[4]);
+    int molbase=list-bas;
+  if ((paparazi)&&(!xdinp.isEmpty())) {
+    int adpstate=mol.adp;
+//printf("molbas %d bas %d\n",molbase,bas);
+
+    if ((bas>0)&&(molbase<10)){
+      switch (molbase){
+        case 0: { //ATOMS
+                  glPushMatrix();{
+                    glScaled( L, L, L );
+                    mol.intern=1;
+                    mol.adp=1;
+                    mol.atoms(xdinp,mol.proba);
+                  }glPopMatrix();    
+                }
+                break; 
+
+        case 1: {  //BONDS
+                  glPushMatrix();{
+                    glScaled( L, L, L );
+                    mol.adp=0;      
+                    mol.bonds(xdinp);
+                  }glPopMatrix();    
+                }
+                break;
+        case 2: //local axis
+                if (drawAx) {
+                  glDisable( GL_DEPTH_TEST ); 
+                  glPushMatrix();{
+
+                    glScaled( L, L, L );
+                    mol.axes(xdinp); 
+                  }glPopMatrix();    
+                  glEnable( GL_DEPTH_TEST );
+                }
+                break;
+        case 3: { //unit cell    
+                  glPushMatrix();{
+                    glScaled( L, L, L );           
+                    mol.UnitZell(); 
+                  }glPopMatrix();    
+                }
+                break;
+        case 4: {                          //ATOME
+                  glPushMatrix();{
+                    glScaled( L, L, L );
+                    mol.adp=0;
+                    mol.atoms(xdinp,mol.proba);
+                  }glPopMatrix();    
+                }
+                break;
+        case 5:
+
+                if (mol.HAMax!=0.0){
+                  glPushMatrix();{
+
+                    glScaled( L, L, L );
+                    mol.h_bonds(xdinp); 
+                  }glPopMatrix();    
+                }
+                break;
+        case 7:{
+                 bool before=  mol.bondColorStyle;
+                 glPushMatrix();{
+                   glScaled( L, L, L );
+                   mol.intern=0;
+                   mol.adp=1;
+                   mol.atoms(xdinp,mol.proba);
+                 }glPopMatrix();    
+                 mol.bondColorStyle=before;
+               }
+               break;
+        case 8:{
+
+
+                 bool before=  mol.bondColorStyle;
+                 glPushMatrix();{
+                   glScaled( L, L, L );
+                   mol.intern=1;
+
+                   mol.bondColorStyle=true;
+                   mol.bonds(xdinp);
+                 }glPopMatrix();
+                 mol.bondColorStyle=before;
+               }
+               break;
+        case 9:{
+                 bool before=mol.tubifiedAtoms;
+                 glPushMatrix();{
+                   glScaled( L, L, L );
+                   mol.intern=1;
+
+                   mol.tubifiedAtoms=true;
+                   mol.atoms(xdinp,mol.proba);
+                 }glPopMatrix();
+                 mol.tubifiedAtoms=before;
+               }
+               break;
+      }
+
+    mol.adp=adpstate;
+
+
+      /*if (mol.nListe>2){
+        glNewList(bas+6, GL_COMPILE );{        //helices
+        glPushMatrix();
+        glScaled( L, L, L );
+        mol.drawSline(mol.vL,mol.nListe);
+        glPopMatrix();
+        }glEndList();
+        }// */
+      /*
+         if (iSel){
+         if (ibas) glDeleteLists(ibas,1);
+         ibas=glGenLists(1);    
+         glNewList(ibas, GL_COMPILE );
+         extern QList<INP> xdinp;
+         extern molekul mol;
+         mol.intern=1;
+         mol.highlightResi(xdinp,mol.firstHL,L,elli);
+         glEndList();	    
+         }
+         if (cbas){
+         glDeleteLists(cbas,1);
+         glNewList(cbas, GL_COMPILE );
+         glPushMatrix();
+         glScaled( L, L, L );
+         mol.cbonds(xdinp);
+         glPopMatrix();
+         glEndList();
+         }
+         mol.adp=adpstate;      ;
+         }
+
+         if (foubas[0]|foubas[1]|foubas[2]|foubas[3]|foubas[4]){
+         emit inimibas();
+         }//else printf("dountinit\n");  */
+  }
+}else
+    if ((bas>0)&&(molbase<10)){
+      glCallList(list);
+ //     printf("molbas %d bas %d list %d  paparazi %d\n",molbase,bas,list,paparazi);
+    }
 }
 
 void CubeGL::resizeGL(int width, int height) {
@@ -1507,7 +1676,7 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
       }
     if (nahdai<matoms.size()) {
 //      extern QList<INP> xdinp;
-      extern molekul mol;
+   //   extern molekul mol;
 	GLuint index=nahdai;
 	if (index==((GLuint)-1))return;
 	double w=0,dw=0;
@@ -3360,8 +3529,8 @@ void CubeGL::mouseMoveEvent(QMouseEvent *event) {
   if ((!moai)&&(!event->buttons())) {
     if (imFokus!=nahdai){
       imFokus=nahdai;
-      if ((imFokus>=0)&&(matoms.isEmpty())) emit message(xdinp[imFokus].atomname);
-      if ((imFokus>=0)&&(xdinp.isEmpty())) emit message(matoms[imFokus].atomname);
+      if ((imFokus>=0)&&(!xdinp.isEmpty())&&(matoms.isEmpty())) emit message(xdinp[imFokus].atomname);
+      if ((imFokus>=0)&&(xdinp.isEmpty())&&(!matoms.isEmpty())) emit message(matoms[imFokus].atomname);
       else emit message("");
       updateGL();
     }
@@ -3668,7 +3837,7 @@ void CubeGL::draw() {
   glGetIntegerv(GL_RENDER_MODE,&rmode);
 
   if (rotze>-1) {
-    sumse=(xdinp.isEmpty())?matoms[rotze].kart(tvalue):xdinp.at(rotze).kart;
+    sumse=(xdinp.isEmpty())?(matoms.isEmpty())?V3(0,0,0):matoms[rotze].kart(tvalue):xdinp.at(rotze).kart;
 //    printf("%s %g %g %g\n",xdinp.at(rotze).atomname, xdinp.at(rotze).kart.x, xdinp.at(rotze).kart.y, xdinp.at(rotze).kart.z);
     double gmat[16];
     glGetDoublev( GL_MODELVIEW_MATRIX, (double*)gmat );
@@ -3766,13 +3935,13 @@ void CubeGL::draw() {
   }  
   if ((moving->isActive())) {
 
-      if (drawHb) glCallList(bas+5);
+      if (drawHb) callList(bas+5);
       if (drawBo) {
      if (mol.bondColorStyle) {
        qglColor(mol.bondColor);
-       glCallList(bas+8);
+       callList(bas+8);
      }
-     else glCallList(bas+1);
+     else callList(bas+1);
    }
 /*
       if (pole.size()>0){
@@ -3783,8 +3952,8 @@ void CubeGL::draw() {
         dieDiPole(sumse);
         glPopMatrix();
       }
-      if (drawAx) glCallList(bas+2);
-      if (drawUz) glCallList(bas+3);
+      if (drawAx) callList(bas+2);
+      if (drawUz) callList(bas+3);
       if (foubas[0]|foubas[1]|foubas[2]|foubas[3]|foubas[4]) {
         if ((MIS)&&(moliso->mibas)) glClear( GL_DEPTH_BUFFER_BIT);
         glDisable(GL_CULL_FACE);
@@ -3807,32 +3976,32 @@ void CubeGL::draw() {
         glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);*/
       //}
    //qDebug()<<wirbas<<glIsList(wirbas+1)<<glIsList(wirbas);
-   //if (glIsList(bas+6)) glCallList(bas+6);
+   //if (glIsList(bas+6)) callList(bas+6);
   }
   else {
   if (bas) {
     glDisable(GL_CULL_FACE);
- //   if (Luftschlange) glCallList(bas+6);
+ //   if (Luftschlange) callList(bas+6);
     glEnable(GL_CULL_FACE);
-    if (drawHb) glCallList(bas+5);
+    if (drawHb) callList(bas+5);
     if (cbas) glCallList(cbas);
     if (drawBo) {
       if (mol.bondColorStyle) {
 	qglColor(mol.bondColor);
-	glCallList(bas+8);
+	callList(bas+8);
       }
-      else glCallList(bas+1);
+      else callList(bas+1);
     }
     if (drawAt) {
       if (elli) {
-	glCallList(bas);
+	callList(bas);
 	glEnable(GL_BLEND);
-	glCallList(bas+7);
+	callList(bas+7);
 	if ((ibas)&&(iSel)) ;
 	else glDisable(GL_BLEND);
       }else {
-	if (mol.tubifiedAtoms)glCallList(bas+9);
-	else glCallList(bas+4);
+	if (mol.tubifiedAtoms)callList(bas+9);
+	else callList(bas+4);
       }
 
 
@@ -3841,7 +4010,7 @@ void CubeGL::draw() {
   }else{
   glPushMatrix();
   glScaled( L, L, L );
-  mol.modulated(tvalue,matoms,drawopt);
+  if (!matoms.isEmpty()) mol.modulated(tvalue,matoms,drawopt);
 //if (drawBo) mol.modulated
   glPopMatrix();
   }
@@ -3864,8 +4033,8 @@ if (!selectedAtoms.isEmpty()){
   }
     if (rmode==GL_RENDER){
 
-      if ((bas)&&(drawAx)) glCallList(bas+2);
-      if ((bas)&&(drawUz)) glCallList(bas+3);
+      if ((bas)&&(drawAx)) callList(bas+2);
+      if ((bas)&&(drawUz)) callList(bas+3);
       if ((MIS)&&(moliso->mibas)) { 
 	glDisable(GL_CULL_FACE);
         if (moving->isActive()||chicken->isChecked()) {Pers=1; glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);}
@@ -3892,12 +4061,12 @@ if (!selectedAtoms.isEmpty()){
 	if (faceCull==2) glCullFace(GL_FRONT);
 	if (faceCull==1) glCullFace(GL_BACK);
 	switch (Pers) {
-		case 1: {glCallList(moliso->mibas);break;}
-		case 2: {glCallList(moliso->mibas+1);break;}
-		case 3: {glCallList(moliso->mibas+2);break;}
-		case 4: {glCallList(moliso->mibas+3);break;}
-		case 5: {glCallList(moliso->mibas+4);break;}
-		case 6: {glCallList(moliso->mibas+5);break;}
+		case 1: {callList(moliso->mibas);break;}
+		case 2: {callList(moliso->mibas+1);break;}
+		case 3: {callList(moliso->mibas+2);break;}
+		case 4: {callList(moliso->mibas+3);break;}
+		case 5: {callList(moliso->mibas+4);break;}
+		case 6: {callList(moliso->mibas+5);break;}
 		default: qDebug()<<"Impossible Orientation!!!";exit(1);
 	}      
 	glDisable(GL_TEXTURE_1D);

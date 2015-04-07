@@ -3246,10 +3246,11 @@ bool molekul::applyLatticeCentro(const QChar latt,const bool centro){
 		    tt.z=(tt.z>1)?tt.z-1:tt.z;
 		    zelle.symmops.append(zelle.symmops.at(i));
 		    zelle.trans.append(tt);
+                    if (!zelle.x4sym.isEmpty()){
                     zelle.x4sym.append(zelle.x4sym.at(i));
                     zelle.x4.append(zelle.x4.at(i));
                     zelle.x4tr.append(zelle.x4tr.at(i));
-
+                    }
 		  }
 		  break;
 	  case 'B' :
@@ -3260,9 +3261,11 @@ bool molekul::applyLatticeCentro(const QChar latt,const bool centro){
 		    tt.z=(tt.z>1)?tt.z-1:tt.z;
 		    zelle.symmops.append(zelle.symmops.at(i));
 		    zelle.trans.append(tt);
+                    if (!zelle.x4sym.isEmpty()){
                     zelle.x4sym.append(zelle.x4sym.at(i));
                     zelle.x4.append(zelle.x4.at(i));
                     zelle.x4tr.append(zelle.x4tr.at(i));
+                    }
 		  }
 		  break;
 	  case 'C' :
@@ -3273,9 +3276,11 @@ bool molekul::applyLatticeCentro(const QChar latt,const bool centro){
 		    tt.z=(tt.z>1)?tt.z-1:tt.z;
 		    zelle.symmops.append(zelle.symmops.at(i));
 		    zelle.trans.append(tt);
+                    if (!zelle.x4sym.isEmpty()){
                     zelle.x4sym.append(zelle.x4sym.at(i));
                     zelle.x4.append(zelle.x4.at(i));
                     zelle.x4tr.append(zelle.x4tr.at(i));
+                    }
 		  }
 		  break;
 	  case 'F' :
@@ -3298,9 +3303,11 @@ bool molekul::applyLatticeCentro(const QChar latt,const bool centro){
 		    tt.z=(tt.z>1)?tt.z-1:tt.z;
 		    zelle.symmops.append(zelle.symmops.at(i));
 		    zelle.trans.append(tt);
+                    if (!zelle.x4sym.isEmpty()){
                     zelle.x4sym.append(zelle.x4sym.at(i));
                     zelle.x4.append(zelle.x4.at(i));
                     zelle.x4tr.append(zelle.x4tr.at(i));
+                    }
 		  }
 		  break;
 	  case 'I' :
@@ -3311,9 +3318,11 @@ bool molekul::applyLatticeCentro(const QChar latt,const bool centro){
 		    tt.z=(tt.z>1)?tt.z-1:tt.z;
 		    zelle.symmops.append(zelle.symmops.at(i));
 		    zelle.trans.append(tt);
+                    if (!zelle.x4sym.isEmpty()){
                     zelle.x4sym.append(zelle.x4sym.at(i));
                     zelle.x4.append(zelle.x4.at(i));
                     zelle.x4tr.append(zelle.x4tr.at(i));
+                    }
 		  }
 		  break;
 	  case 'R' :
@@ -3330,10 +3339,11 @@ bool molekul::applyLatticeCentro(const QChar latt,const bool centro){
 		    tt.z=(tt.z>1)?tt.z-1:tt.z;
 		    zelle.symmops.append(zelle.symmops.at(i));
 		    zelle.trans.append(tt);
+                    if (!zelle.x4sym.isEmpty()){
                     zelle.x4sym.append(zelle.x4sym.at(i));
                     zelle.x4.append(zelle.x4.at(i));
                     zelle.x4tr.append(zelle.x4tr.at(i));
-
+                    }
 		  }
 		  break;
 	  case 'P' :break;  
