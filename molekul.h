@@ -423,6 +423,7 @@ struct PolyEder{
 
 //  return ((a1.af==a2.af)&&(a1.bf==a2.bf)&&(a1.cf==a2.cf)&&(a1.volume==a2.volume));
 //}
+#include <QtGui>
 class Modulat;
 class molekul {
  public:
@@ -457,6 +458,7 @@ class molekul {
   double HAWink;
   double qPeakRad;
   int pseSize;
+  QCheckBox *bondsBetweenSGs;
   bool polyShapColor;
   bool decodeSymmCard(const QString symmCard);
   void countMols(QList<INP> & xdinp);

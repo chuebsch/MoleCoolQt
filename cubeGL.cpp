@@ -432,7 +432,7 @@ void  CubeGL::toggInvEdit(bool on){
 						    -mol.ElNeg[ce.at(j).an])/100.0)));
 	    gg=sqrt( Distance(ce.at(i).pos,ce.at(j).pos));
 	    if (gg<soll_abst*1.2) {
-              printf("O%g %s %s",gg,ce.at(i).Label.toStdString().c_str(),ce.at(j).Label.toStdString().c_str());
+              printf("O%g %s %s\n",gg,ce.at(i).Label.toStdString().c_str(),ce.at(j).Label.toStdString().c_str());
 	      bond.ato1=&ce.at(i);
 	      bond.ato2=&ce.at(j);
 	      bond.length=gg;
@@ -450,6 +450,7 @@ void  CubeGL::toggInvEdit(bool on){
     }
     CEnvironment sel;
     QString ina;
+//    printf("ix %d \n",ix);
     invom.Label=xdinp[ix].atomname;
     invom.pos=xdinp[ix].kart;
     invom.an=xdinp[ix].OrdZahl;
@@ -460,6 +461,7 @@ void  CubeGL::toggInvEdit(bool on){
     }
   }
   }
+printf("ok\n");
 }
 
 void CubeGL::toggXDSetup(bool on){
@@ -1479,7 +1481,6 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 	  }
 	  updateBondActions();
 	}
-
 	//888
 	if ((xdinp.size())&&((invEditAble)||(xdSetupMode))) {
 //	  printf("Â¿%d %d %d\n",xdSetupMode,rename,xdinp[index].OrdZahl);
@@ -1555,8 +1556,9 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 	  invom.sg=xdinp[index].sg;
 	  invom.Symbol=PSE_Symbol[xdinp[index].OrdZahl];
           orgAtom=invom;
+
 	  if (rename){
-//	    printf("ich rename\n");
+	    printf("ich rename\n");
 	  invom.Label=rn.Label;
 	  invom.an=rn.an;
 	  invom.Symbol=PSE_Symbol[rn.an];
@@ -1642,6 +1644,7 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
 		}
 	      }
 	  if (invEditAble) {
+            printf("invDlg %d\n",__LINE__);
 	    invDlg *id=new invDlg(&cel,&cll,dataBase);//TESTXDEDIT
 	    id->update();
 	    if (id->exec()==QDialog::Rejected)
@@ -1770,6 +1773,7 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
       }
   // OOOOOOOOOOOOOOO //
     }
+    printf("!\n");
 }
 
 /////////
@@ -3595,7 +3599,7 @@ void CubeGL::toggleMolisoLegendDirection(){
     mil.y=-0.08*vangle;
   }
 
-  printf("legend x %g  y %g %s",mil.x,mil.y,(!horizont)?"horzontal":"vertical"); 
+  printf("legend x %g  y %g %s\n",mil.x,mil.y,(!horizont)?"horizontal":"vertical"); 
   horizont=!horizont;
   updateGL();
 }

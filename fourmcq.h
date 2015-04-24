@@ -56,6 +56,8 @@ Q_OBJECT
 	  ~FourMCQ();
           bool loadFouAndPerform(const char filename[],bool neu=true,int maxmap=3);
           bool loadm80AndPerform(const char filename[],bool neu=true);
+          void temp(INP atom, int h, int k, int  l, double &eij, double &TA, double &TB);
+          void PDFbyFFT(int i, int options=14,double proba=50.0);
           void exportMaps(int na, const char filename[], const char atomlist[]);
           double lintrans,linwidth;
           float sigma[3];

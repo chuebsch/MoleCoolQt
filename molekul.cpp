@@ -4,9 +4,9 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
-#include <QtGui>
 #include <QtCore> 
 #include <QtOpenGL>
+#include <QtGui>
 #define Ato4d(arr)       arr[0], arr[1], arr[2], arr[3]
 void molekul::sphere(int adp){
   if (adp) glEnable(GL_BLEND);
@@ -1008,13 +1008,14 @@ void molekul::atoms(QList<INP> xdinp,const int proba){//ADP Schwingungsellipsoid
   double a[3][3];
   int mylod =lod;
   for (int j=0;j<xdinp.size();j++){//for atmax
-      int myStyle=aStyle[xdinp[j].OrdZahl];
+//    qDebug()<<__LINE__<<xdinp[j].OrdZahl;
+      int myStyle=(xdinp[j].OrdZahl>-1)?aStyle[xdinp[j].OrdZahl]:0;
     int myAdp=(myStyle&ATOM_STYLE_NOADP)?0:adp;
     if (!dratom){
       glPushMatrix () ;
     glTranslated(xdinp[j].kart.x,xdinp[j].kart.y,xdinp[j].kart.z) ;
     //double rad=(atom.at(i).an==-2)?0.5:qPeakRad;
-    double rad=arad[xdinp[j].OrdZahl];
+    double rad=(xdinp[j].OrdZahl>-1)?arad[xdinp[j].OrdZahl]:0.15;
 
       if (tubifiedAtoms) rad = bondStrength;
 
@@ -1112,7 +1113,7 @@ void molekul::atoms(QList<INP> xdinp,const int proba){//ADP Schwingungsellipsoid
       GLUquadricObj *q = gluNewQuadric();
       gluQuadricNormals(q, GL_SMOOTH);   
 
-      glColor4fv(Acol[xdinp[j].OrdZahl]); 
+      if (xdinp[j].OrdZahl>-1) glColor4fv(Acol[xdinp[j].OrdZahl]); 
       if (xdinp[j].part) glMaterialfv( GL_FRONT_AND_BACK, GL_EMISSION, white );
       else glMaterialfv( GL_FRONT_AND_BACK, GL_EMISSION, black );
 
@@ -1130,6 +1131,7 @@ void molekul::atoms(QList<INP> xdinp,const int proba){//ADP Schwingungsellipsoid
 	if (xdinp[j].atomname[0]=='O') glColor3f(0.0,0.3,0.1);
 	if (xdinp[j].atomname[0]=='Q') {
 	 Farbverlauf(xdinp[j].peakHeight,pmin,pmax);
+//    qDebug()<<__LINE__<<xdinp[j].OrdZahl;
 	 }
         ikosa(qPeakRad);
       }
@@ -1407,7 +1409,7 @@ void molekul::make_bonds(QList<Modulat> xdinp,double t){
     for (int j=0;j<xdinp.size();j++) {
       if (i==j) continue;
       if((xdinp[i].OrdZahl<0)||(xdinp[j].OrdZahl<0)) continue;
-      if ((xdinp[i].sg!=xdinp[j].sg))continue;
+      if ((bondsBetweenSGs->isChecked())&&(xdinp[i].sg!=xdinp[j].sg))continue;
 //      if (((xdinp[i].part<0)||(xdinp[j].part<0))&&((xdinp[i].sg!=xdinp[j].sg)||((xdinp[i].part*xdinp[j].part)&&(xdinp[i].part!=xdinp[j].part)))) continue; //part negative
 //      if ((xdinp[i].part>0)&&(xdinp[j].part>0)&&(xdinp[i].part!=xdinp[j].part)) continue; //different part
       if ((xdinp[i].OrdZahl<83)&&(xdinp[j].OrdZahl<83)&&(xdinp[i].OrdZahl>=0)&&(xdinp[j].OrdZahl>=0)){
@@ -2508,6 +2510,7 @@ void molekul::Farbverlauf (GLfloat wrt,GLfloat min,GLfloat max,GLfloat alpha){
 			{0.0,1.0,1.0,1.0},
 			{0.0,0.0,1.0,1.0},
 			{1.0,0.0,1.0,1.0}};
+  if ((max-min)<0.0001) max+=0.0001;
   GLfloat nwrt=(wrt-min)/(max-min);
   nwrt=(nwrt>=1.0)?0.99999:nwrt;
   nwrt=(nwrt<=0.0)?0.00001:nwrt;

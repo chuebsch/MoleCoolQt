@@ -136,6 +136,9 @@ signals:
   Node *nodey;
   Node *nodez;
  public:
+  void setCubeFileOrigin(bool b){
+    cubeiso=b;
+  }
   int breite, hoehe, tiefe,bh;
   double iso_level;
   int lineNr;
@@ -152,14 +155,14 @@ signals:
   GLclampd farbe[7][4];
   int mibas;
   double min,max;
-  Vector3 orig;
+  Vector3 orig,test3;
   MolIso();
   ~MolIso();
   void loadMI(QString fname,bool om=false,bool mima=true);
   void readXDGridHeader(QString fname,int &fileType);
   void readJanaHeader(QString fname);
   void createSurface(QString isoFileName, QString mapFileName, QString &storeFaceName,int fileType);
-  void createSurface(QString &storeFaceName, double proba);
+  void createSurface(QString &storeFaceName, double proba,double iso99,bool mapping,bool minus99);
   void legende();
   void Farbverlauf (GLfloat wrt);
 };

@@ -116,7 +116,8 @@ void MolIso::loadMI(QString fname, bool om, bool mima){
  printf("mima %s  OM = %s\n",(mima)?"true":"false",(om)?"true":"false");
   for (int i=0;i<6;i++){
     if ((mibas)&&(glIsList(mibas+i))) {
-      printf("NOT deleting list #%d\n",mibas+i);
+//      printf("NOT deleting list #%d\n",mibas+i);
+;
     }else{
     printf("deleting %d\n",mibas+i);
       if (mibas) glDeleteLists(mibas+i,1);
@@ -139,6 +140,7 @@ void MolIso::loadMI(QString fname, bool om, bool mima){
   min=1e99;
   max=-1e99;
   }
+ mima=true;
   if (lines.size()){
 
     balken->setMinimum(0);
@@ -228,9 +230,10 @@ void MolIso::loadMI(QString fname, bool om, bool mima){
     /*potnu=potsigplus*potsigminus/(potsigtot*potsigtot);
       printf("\nAverage of positive surface values VS+= %f %s\n Average of negative surface values VS-= %f %s\n Average deviation from the average surface value PI= %f %s\n sigma square + = %f (%s)^2\n sigma square - = %f (%s)^2\n sigma square total = %f (%s)^2\n nu = %f \n\n",
       avpotplus,lul,avpotminus,lul,avdevPI,lul,potsigplus,lul,potsigminus,lul,potsigtot,lul,potnu);*/
-
-    max+=max*0.00001+0.00001;
-    min-=min*0.00001+0.00001;
+    if ((max-min)<0.001){
+    max+=0.00001;
+    min-=0.00001;
+    }
     if (fixmin!=666.666) min=fixmin;
     if (fixmax!=666.666) max=fixmax;
     for (int i=lines[0].toInt()+1;i<lines.size();i++){
@@ -632,7 +635,7 @@ void MolIso::readXDGridHeader(QString fname,int &fileType){
     printf("cubefile?\n");
     fileType=125;
     double a,b,c;
-    double bohr=0.5291775108;
+    double bohr=0.52917720859 ;//0.5291775108;
     if (lines.size()>6) {
       QStringList tok;
       tok=lines.at(2).split(QRegExp("\\s+"),QString::SkipEmptyParts);
@@ -822,8 +825,6 @@ void MolIso::simpelGrad(void){
 void MolIso::CalcVertex( int ix, int iy, int iz ) {
   GLfloat vo, vx=0, vy=0, vz=0,sig;
   //Vector3 movo(0.5,0.5,0.5);
-  Vector3 test3= ((breite-1)/-2.0) *  x_dim + ((hoehe-1)/-2.0) * y_dim + ((tiefe-1)/-2.0) * z_dim + orig;
-  if (cubeiso) test3 =orig;
   Ort o;
   sig = (iso_level>0)?-1:1;
   vo = data.at(ix+iy*breite+iz*bh)  - iso_level;
@@ -866,7 +867,13 @@ void MolIso::CalcVertex( int ix, int iy, int iz ) {
 }
 
 void MolIso::CalcVertexes( void ) {
-  //  printf("ooo %g %g %g\n",orig.x,orig.y,orig.z);
+//  printf("ooo %g %g %g\n",orig.x,orig.y,orig.z);
+  test3= ((breite-1)/-2.0) *  x_dim + ((hoehe-1)/-2.0) * y_dim + ((tiefe-1)/-2.0) * z_dim + orig;
+//  Vector3 test4 = ((breite-1)) *  x_dim + ((hoehe-1)) * y_dim + ((tiefe-1)) * z_dim + orig;
+
+  if (cubeiso) test3 =orig;
+//  printf("boq %g %g %g\n",test3.x,test3.y,test3.z);
+//  printf("||| %g %g %g\n",test4.x,test4.y,test4.z);
   for( int ix=0; ix<breite; ix++ ){
     for( int iy=0; iy<hoehe; iy++ ){
       for( int iz=0; iz<tiefe; iz++ ){
@@ -1271,34 +1278,66 @@ void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &st
 }
 
 
-void MolIso::createSurface(QString &storeFaceName, double proba){
-  Farben=5;    
-  farbe[0][0]=1.0;    
-  farbe[0][1]=0;    
-  farbe[0][2]=0;    
-  farbe[0][3]=0.6;
+void MolIso::createSurface(QString &storeFaceName, double proba,double iso99,bool mapping,bool minus99){
+  if (mapping){
+    Farben=6;    
+    farbe[0][0]=0.6;    
+    farbe[0][1]=0;    
+    farbe[0][2]=0;    
+    farbe[0][3]=0.5;
+    farbe[1][0]=0.6;    
+    farbe[1][1]=0.5;    
+    farbe[1][2]=0;    
+    farbe[1][3]=0.5;
+    farbe[2][0]=0;    
+    farbe[2][1]=0.5;    
+    farbe[2][2]=0;    
+    farbe[2][3]=0.5;
+    farbe[3][0]=0;    
+    farbe[3][1]=0.5;    
+    farbe[3][2]=0.9;    
+    farbe[3][3]=0.5;
+    farbe[4][0]=0;    
+    farbe[4][1]=0;    
+    farbe[4][2]=0.9;    
+    farbe[4][3]=0.5;    
+    farbe[5][0]=0.6;    
+    farbe[5][1]=0;    
+    farbe[5][2]=0.9;    
+    farbe[5][3]=0.5;    
+    farbe[6][0]=0.6;    
+    farbe[6][1]=0;    
+    farbe[6][2]=0;    
+    farbe[6][3]=0.5;  
+  }else{
+    Farben=5;    
+    farbe[0][0]=1.0;    
+    farbe[0][1]=0;    
+    farbe[0][2]=0;    
+    farbe[0][3]=0.6;
 
-  farbe[1][0]=1.0;    
-  farbe[1][1]=0.0;    
-  farbe[1][2]=0.0;    
-  farbe[1][3]=0.5;
+    farbe[1][0]=1.0;    
+    farbe[1][1]=0.0;    
+    farbe[1][2]=0.0;    
+    farbe[1][3]=0.5;
 
-  farbe[2][0]=0.3;    
-  farbe[2][1]=0.7;    
-  farbe[2][2]=0.3;    
-  farbe[2][3]=0.6;
+    farbe[2][0]=0.3;    
+    farbe[2][1]=0.7;    
+    farbe[2][2]=0.3;    
+    farbe[2][3]=0.6;
 
-  farbe[3][0]=0.0;    
-  farbe[3][1]=0.0;    
-  farbe[3][2]=1.0;    
-  farbe[3][3]=0.5;
+    farbe[3][0]=0.0;    
+    farbe[3][1]=0.0;    
+    farbe[3][2]=1.0;    
+    farbe[3][3]=0.5;
 
-  farbe[4][0]=0;    
-  farbe[4][1]=0;    
-  farbe[4][2]=1.0;    
-  farbe[4][3]=0.6;    
+    farbe[4][0]=0;    
+    farbe[4][1]=0;    
+    farbe[4][2]=1.0;    
+    farbe[4][3]=0.6;    
+    mdata=data;
+  }
   QFile *tf = new QFile(storeFaceName);
-  mdata=data;
   bh=breite*hoehe;
   extern QProgressBar *balken;
   balken->setMinimum(0);
@@ -1372,9 +1411,12 @@ void MolIso::createSurface(QString &storeFaceName, double proba){
       for( int iy=0; iy<hoehe-1; iy++ )
         for( int iz=0; iz<tiefe-1; iz++ )
           MakeElement(ix,iy,iz,breite,bh);
-    iso_level=-0.01;
-    CalcVertexes();
-    CalcNormals();
+    if (minus99){
+      iso_level=-iso99;
+      printf("99%% %g %g\n",iso99,iso_level);
+      CalcVertexes();
+      CalcNormals();
+    }
     tf->open(QIODevice::WriteOnly|QIODevice::Text);
 
     tf->write(QString("%1\n").arg(orte.size()).toLatin1());
@@ -1387,8 +1429,8 @@ void MolIso::createSurface(QString &storeFaceName, double proba){
           .arg(orte.at(i).normal.x,9,'f',6)
           .arg(orte.at(i).normal.y,9,'f',6)
           .arg(orte.at(i).normal.z,9,'f',6)
-      //    .arg(orte.at(i).color,12,'f',7).toLatin1());
-      .arg((orte.at(i).color>0)?proba:-0.01,12,'f',7).toLatin1());
+          .arg((mapping)?orte.at(i).color:
+          ((orte.at(i).color>0)?proba:-99),12,'f',7).toLatin1());
       lineNr++;
     }
     for( int ix=0; ix<breite-1; ix++ )
