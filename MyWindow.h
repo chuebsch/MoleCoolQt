@@ -69,6 +69,7 @@ public:
      QToolBar *toolMove;
      QToolBar *toolView, *searchBar;
      QTimer *idl,*tidl;
+     QAction *searchAtomButton;
      QAction *ydlStartAct;
      QAction *ydlStopAct;
      QAction *tMovieStartAct;
@@ -225,7 +226,7 @@ protected:
      QLineEdit *fromEdit,*toEdit,*regExpEdit;
      QDoubleValidator *qv;
      QLineEdit *searchAtomEdit;
-     QAction *searchAtomButton, *searchAtomCancel,*orthoAct;
+     QAction  *searchAtomCancel,*orthoAct;
      QDialog *sfdlg;
      QDialog *packdlg;
      int maxResi,filtered;

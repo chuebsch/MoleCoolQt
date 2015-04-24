@@ -577,6 +577,15 @@ void FourMCQ::temp(INP atom, int h, int k,int  l, double &eij, double &TA, doubl
          rbpi=mole->zelle.bs*M_PI,
          rcpi=mole->zelle.cs*M_PI;
     double p2=M_PI*M_PI,p3=p2*M_PI,p4=p2*p2;
+    if (atom.jtf<2) {
+        arg =atom.uf.m11 * rapi * rapi * h * h * 2;
+        arg+=atom.uf.m11 * rbpi * rbpi * k * k * 2;
+        arg+=atom.uf.m11 * rcpi * rcpi * l * l * 2;//this might be incorrect.
+        eij=exp(-arg);
+        TA=eij;
+        TB=0;
+        return;
+    }
     arg =atom.uf.m11 * rapi * rapi * h * h * 2;
     arg+=atom.uf.m12 * rapi * rbpi * h * k * 4;
     arg+=atom.uf.m13 * rapi * rcpi * h * l * 4;

@@ -11,7 +11,7 @@
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
 #include <locale.h>
-int rev=426;
+int rev=427;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -910,7 +910,7 @@ createRenameWgd();
   sLabel->setText("MolecoolQt a viewing program for molecular strutures");
   balken = new QProgressBar(this);
   balken->hide();
-  statusBar()->addPermanentWidget(balken);
+statusBar()->addPermanentWidget(balken);
   statusBar()->addPermanentWidget(speedSldr);
   statusBar()->addPermanentWidget(sLabel);
   
@@ -942,6 +942,26 @@ createRenameWgd();
   QAction *a;
   QToolBar *tb= new QToolBar("Atom Selection Tools",this);
   tb->setIconSize(QSize(23,23));
+
+          searchBar = new QToolBar(tr("Search"),this);
+          addToolBar(Qt::BottomToolBarArea,searchBar);
+          searchBar->setIconSize(QSize(23,23));
+          searchBar->setMovable(true);
+          searchAtomEdit = new QLineEdit(this);
+          searchAtomEdit->setMaxLength(20);
+          searchAtomCancel = searchBar->addAction(QIcon(":/images/cancel.png"),"hide Search", searchBar , SLOT(hide()));
+
+          searchBar->addWidget(searchAtomEdit);
+          searchBar->addAction(QIcon(":/images/search.png"),"search",this,SLOT(findAtoms()));
+          connect(searchAtomEdit,SIGNAL(returnPressed ()),this,SLOT(findAtoms()));
+
+          searchAtomButton=tb->addAction(QIcon(":/images/search.png"),"Search",searchBar,SLOT(show()));
+          searchAtomButton->setShortcut( QKeySequence(tr("Ctrl+F")));
+          connect(searchAtomButton,SIGNAL(triggered()),searchAtomEdit,SLOT(setFocus()));
+
+          searchBar->hide();
+          connect(searchBar,SIGNAL(visibilityChanged(bool )),this,SLOT(hideSearchAtomButton(bool )));
+
   a=hFilter=tb->addAction("Hide hydrogen atoms",this, SLOT(filterHydrogens(bool) ));
   hFilter->setCheckable ( true );
   hFilter->setChecked (  true );
@@ -1185,21 +1205,6 @@ createRenameWgd();
   connect(chargeGroups,SIGNAL(currentIndexChanged ( int )), this, SLOT(filterGroup(int)));
   chargeGroups->addItem("Charge Group 1 (all)",0);
   toolView->addWidget(chargeGroups);
-  
-  searchBar = addToolBar(tr("Search"));
-  searchBar->setIconSize(QSize(23,23));
-  searchBar->setMovable(true);
-  searchAtomEdit = new QLineEdit(this);
-  searchAtomEdit->setMaxLength(20);
-  searchAtomCancel = searchBar->addAction(QIcon(":/images/cancel.png"),"hide Search", searchBar , SLOT(hide())); 
-
-  searchBar->addWidget(searchAtomEdit);
-  searchBar->addAction(QIcon(":/images/search.png"),"search",this,SLOT(findAtoms()));
-  connect(searchAtomEdit,SIGNAL(returnPressed ()),this,SLOT(findAtoms())); 
-  searchAtomButton = toolView->addAction(QIcon(":/images/search.png"),"Search",searchBar,SLOT(show()));
-
-  searchBar->hide(); 
-  connect(searchBar,SIGNAL(visibilityChanged(bool )),this,SLOT(hideSearchAtomButton(bool )));
   chargeGroups->setVisible(false);
   chargeGroups->setEnabled(false);
   toolView->setWhatsThis("This is the view tool bar. You can move it to any window border if you want."
@@ -2023,7 +2028,7 @@ void MyWindow::genMoliso(QString isoname, QString mapname, QString lfcename, QSt
   zla->addWidget(swidthSldr);
   mt = new QCheckBox("transparence");
   mt->setChecked(true);
-  mt->setShortcut(tr("T"));
+  mt->setShortcut(tr("Alt+T"));
   cubeGL->togglMolisoTransparence(true);
   zla->addWidget(mt);
   legendSize = new QSlider(Qt::Horizontal);
@@ -4168,13 +4173,13 @@ void MyWindow::load_xdres(QString fileName) {
   sfacBox->setFixedSize((atypen.size()+1)*52,70);
  // printf("loadxd %d %d\n",__LINE__,atypen.size());
   rewind(mas);
-  printf("loadxd %d %s count %d\n",__LINE__,chargeGroups->currentText().toStdString().c_str(),chargeGroups->count());fflush(stdout);
+ // printf("loadxd %d %s count %d\n",__LINE__,chargeGroups->currentText().toStdString().c_str(),chargeGroups->count());fflush(stdout);
   if (chargeGroups->count()>1){
-    printf("loadxd %d\n",__LINE__);fflush(stdout);
+   // printf("loadxd %d\n",__LINE__);fflush(stdout);
     chargeGroups->clear();
     chargeGroups->addItem("Charge Group 1 (all)",0);
   }
-  printf("loadxd %d\n",__LINE__);fflush(stdout);
+  //printf("loadxd %d\n",__LINE__);fflush(stdout);
   chargeGroups->setVisible(false);
   chargeGroups->setEnabled(false);
   while (!feof(mas)) {
@@ -4201,7 +4206,7 @@ void MyWindow::load_xdres(QString fileName) {
   }
   fclose(mas);
   }
-  printf("loadxd %d\n",__LINE__);fflush(stdout);
+ // printf("loadxd %d\n",__LINE__);fflush(stdout);
   FILE *adp;
   double XDVERS=0;
   {//RES  
@@ -4749,6 +4754,9 @@ void MyWindow::pdfDlg(){
   la->addWidget(buttonBox,10,1,1,3);
   dlg->setLayout(la);
   if(dlg->exec()==QDialog::Accepted){
+      infoKanalNews("<b>Running p.d.f. via FFT please be patient!</b>");
+      update();
+
     int i=atomBx->itemData(atomBx->currentIndex()).toInt();
     int options=(coarse->isChecked())?1:0;
     options|=(sec->isChecked())?2:0;
@@ -4757,7 +4765,6 @@ void MyWindow::pdfDlg(){
     options|=(mapping->isChecked())?16:0;
     options|=(minus99->isChecked())?32:0;
     printf("Atom i=%d probability %g options %d %g %g\n",i,proba->value(),options,kuhs(3,xdinp[i]),kuhs(4,xdinp[i]));
-    
     fmcq->PDFbyFFT(i,options,proba->value());
     //loadFile(dirName);
     //cubeGL->moliso->L=cubeGL->L;
@@ -4770,7 +4777,7 @@ void MyWindow::pdfDlg(){
     mildir->setChecked ( true  );
     mildir->setVisible(true);
     setCursor(Qt::ArrowCursor);
-    dock->hide();
+    //dock->hide();
     dock2->hide();
     cubeGL->setVisible ( true );
     createmoliso->setVisible(false);
@@ -4783,7 +4790,7 @@ void MyWindow::pdfDlg(){
     QVBoxLayout *zla= new QVBoxLayout();
     mt = new QCheckBox("transparence");
     mt->setChecked(true);
-    mt->setShortcut(tr("T"));
+    mt->setShortcut(tr("Alt+T"));
     cubeGL->togglMolisoTransparence(true);
     zla->addWidget(mt);
     strikesSldr = new QSlider(Qt::Horizontal);
@@ -6091,7 +6098,7 @@ void MyWindow::load_cif(QString fileName) {
 }
 double MyWindow::kuhs(int n,INP atom){
 double k=(sqrt(2.0*n*twologtwo))/(sqrt(2.0*M_PI*ueq(atom.uf)));
-k/=4*M_PI;
+k/=2*M_PI;
 return k;
 }
 
@@ -7215,7 +7222,7 @@ void MyWindow::showPackDlg(){
 }
 
 void MyWindow::loadFile(QString fileName,double GD){//empty
-  printf("loadFILe %d\n",__LINE__);
+//  printf("loadFILe %d\n",__LINE__);
   cubeGL->pause=true;
   cubeGL->rename=false;
   hatlokale=0;
@@ -7261,7 +7268,7 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
   mol.zelle.x4sym.clear();
   mol.zelle.x4.clear();
   mol.zelle.x4tr.clear();
-  printf("loadFILe %d\n",__LINE__);
+//  printf("loadFILe %d\n",__LINE__);
   george=false;
   if (!same) seReAct->setEnabled(false);
   if (!same) seReAct->setVisible(false);
@@ -8530,9 +8537,9 @@ void MyWindow::growSymm(int packart,int packatom){
     if (brauchSymm.isEmpty()) {SDM(brauchSymm,packart);packart=6;}
     if (brauchSymm.isEmpty()) {packart=0;}
   }
-  printf("growSymm line %d\n",__LINE__);
+//  printf("growSymm line %d\n",__LINE__);
   if (!george) makeXDPartAux();
-  printf("growSymm line %d\n",__LINE__);
+//  printf("growSymm line %d\n",__LINE__);
   xdinp=asymmUnit;
   //matoms=masymmUnit;//*
 
@@ -8820,7 +8827,7 @@ void MyWindow::growSymm(int packart,int packatom){
       statusBar()->showMessage(tr("Neighbor search is finished"));
     }  
     if (packart==6){ 
-  printf("growSymm line %d\n",__LINE__);
+ // printf("growSymm line %d\n",__LINE__);
       int s,h,k,l,gibscho=0,symmgroup;
       balken->setMinimum(0);
       balken->setMaximum(brauchSymm.size());
@@ -8904,9 +8911,9 @@ void MyWindow::growSymm(int packart,int packatom){
     xdinp[i].kart.y-=ys;
     xdinp[i].kart.z-=zs;
   }*/
-  printf("growSymm line %d\n",__LINE__);
+//  printf("growSymm line %d\n",__LINE__);
   if (!george){
-  printf("growSymm line %d\n",__LINE__);
+//  printf("growSymm line %d\n",__LINE__);
     for (int i=0; i<asymmUnit.size() ;i++)
       if (xdinp[i].OrdZahl>-1){
          // printf("%s %d %d %d %s %s\n",asymmUnit.at(i).atomname,asymmUnit[i].nax,asymmUnit[i].nay2,asymmUnit[i].nay1,asymmUnit[asymmUnit[i].nax-1].atomname,asymmUnit[asymmUnit[i].nay2-1].atomname);
@@ -8927,7 +8934,7 @@ void MyWindow::growSymm(int packart,int packatom){
 	xdinp[i].ax3*=(double)xdinp[i].lflag;
       }
   }
-  printf("growSymm line %d\n",__LINE__);
+//  printf("growSymm line %d\n",__LINE__);
   V3 uz0f,uz1f,uz2f,uz3f,uz4f,uz5f,uz6f,uz7f;
   uz0f.x=0.0;  uz0f.y=0.0;  uz0f.z=0.0;
   uz1f.x=1.0;  uz1f.y=0.0;  uz1f.z=0.0;
@@ -9064,7 +9071,7 @@ void MyWindow::growSymm(int packart,int packatom){
     //mol.uz7k=mol.uz7k+cubeGL->moliso->orig;
   }
 
-  printf("growSymm line %d\n",__LINE__);
+ // printf("growSymm line %d\n",__LINE__);
   double dim=dimension(xdinp);
   if ((asymmUnit.isEmpty())&&(!masymmUnit.isEmpty()))  dim=mdimension(matoms);
   if ((Norm(atom1Pos)==0)&&(Norm(atom2Pos)==0)) cubeGL->L=100.0/dim;
@@ -9082,11 +9089,11 @@ void MyWindow::growSymm(int packart,int packatom){
     mol.vL=mol.smoothPoints(mol.vL,mol.nListe);
   }
 */
-  printf("growSymm line %d\n",__LINE__);
+//  printf("growSymm line %d\n",__LINE__);
   cubeGL->resetENV();
   if ((!asymmUnit.isEmpty())&&(masymmUnit.isEmpty())) initLists(xdinp);
   else {cubeGL->bas=0;printf("keine listen!\n");}
-  printf("growSymm line %d\n",__LINE__);
+//  printf("growSymm line %d\n",__LINE__);
   dock->hide();
   dock2->hide();
   cubeGL->setVisible(true);
