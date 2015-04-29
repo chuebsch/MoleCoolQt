@@ -1,6 +1,7 @@
 #include "fourmcq.h"
 #include <QtCore>
 #include <QtGui>
+#include <omp.h>
 //üßäö utf8
 FourMCQ::FourMCQ(molekul *mole_, CubeGL *chgl_,QToolBar *toolView, double resol, double wght){
   mole =mole_;
@@ -740,6 +741,85 @@ const double piso[100]={
 return piso[ip]*(1.0-fp)+piso[ip+1]*(fp);
 }
 
+double FourMCQ::aborp(double max,double v){
+  /*
+   * Final set of parameters            Asymptotic Standard Error
+   * =======================            ==========================
+   *
+   * a0              = 52.8343          +/- 0.5022       (0.9505%)
+   * a1              = -4.18442         +/- 0.0556       (1.329%)
+   * a2              = 46.6335          +/- 0.5221       (1.12%)
+   * a3              = 2.39034          +/- 0.01631      (0.6821%)
+   * a4              = -6.14029         +/- 0.1194       (1.945%)
+   *
+   *
+   * correlation matrix of the fit parameters:
+   *
+   *                a0     a1     a2     a3     a4     
+   *                a0              1.000 
+   *                a1              0.991  1.000 
+   *                a2             -0.999 -0.996  1.000 
+   *                a3             -0.889 -0.858  0.880  1.000 
+   *                a4             -0.805 -0.784  0.798  0.971  1.000 
+   *                gnuplot> plot '50',f(x)
+   *                gnuplot>          warning: Warning - difficulty fitting plot titles into key
+   *
+   *                gnuplot> f(x)=a0*exp(a1*x)+a2*exp(-a3*x**2)+a4*x
+   *
+   * */
+  double 
+    a0=52.8343,
+    a1=-4.18442,
+    a2=46.6335,
+    a3= 2.39034,
+    a4=-6.14029,
+    f,x;
+  int sig=(v<0.0)?-1:1;
+  x=fabs(v/max);
+  f=a0*exp(a1*x)+a2*exp(-a3*x*x)+a4*x;
+  return f*sig;
+}
+
+double FourMCQ::proba(double max, double prob){
+/*
+ * Final set of parameters            Asymptotic Standard Error
+ * =======================            ==========================
+ *
+ * a0              = 0.307677         +/- 0.007174     (2.332%)
+ * a1              = -0.0781131       +/- 0.002391     (3.061%)
+ * a2              = 0.239788         +/- 0.008283     (3.454%)
+ * a3              = 0.000363011      +/- 1.775e-05    (4.889%)
+ * a4              = -0.00428186      +/- 0.0001403    (3.277%)
+ * a5              = 0.417391         +/- 0.01486      (3.559%)
+ *
+ *
+ * correlation matrix of the fit parameters:
+ *
+ *                a0     a1     a2     a3     a4     a5     
+ *                a0              1.000 
+ *                a1              0.923  1.000 
+ *                a2              0.752  0.519  1.000 
+ *                a3             -0.984 -0.890 -0.825  1.000 
+ *                a4              0.926  0.775  0.940 -0.961  1.000 
+ *                a5             -0.936 -0.791 -0.931  0.971 -0.999  1.000 
+ *                gnuplot> plot '50' u 2:1 ,f(x)
+ *                gnuplot> f(x)=a0*exp(a1*x)+a2*exp(-a3*x**2)+a4*x+a5
+ *
+ * */
+double 
+  a0              = 0.307677,
+                  a1              = -0.0781131,
+                  a2              = 0.239788,
+                  a3              = 0.000363011,
+                  a4              = -0.00428186,
+                  a5              = 0.417391;
+int sig=(prob<0.0)?-1:1;
+double x=fabs(prob);
+double f=a0*exp(a1*x)+a2*exp(-a3*x*x)+a4*x+a5;
+return max*sig*f;
+}
+
+
 void FourMCQ::PDFbyFFT(int i, int options,double proba){
   const int it[480]= {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 20, 21, 22, 24, 25, 26, 27,
     28, 30, 32, 33, 35, 36, 39, 40, 42, 44, 45, 48, 49, 50, 52, 54, 55, 56, 60, 63, 64, 65, 66, 70, 72, 75, 77,
@@ -778,7 +858,8 @@ void FourMCQ::PDFbyFFT(int i, int options,double proba){
   frth=options&1<<3;
   mapping=options&1<<4;
   minus99=options&1<<5;
-//  printf("%-8s %12.6f %12.6f %12.6f\n",atom.atomname,atom.frac.x,atom.frac.y,atom.frac.z);
+  int N1=0,N2=0,N3=0,N4,N5;
+  //  printf("%-8s %12.6f %12.6f %12.6f\n",atom.atomname,atom.frac.x,atom.frac.y,atom.frac.z);
   int mh,mk,ml,j,m,mm;
   double p,DD,DS=0,DM=0,DX,DY,DZ;
   double TA,TB;
@@ -790,68 +871,68 @@ void FourMCQ::PDFbyFFT(int i, int options,double proba){
   ml=(int)(mole->zelle.c/divis);
   printf("%d %d %d\n",mh,mk,ml);
   j=(int)(mh+.5);
-  for (int i=0; it[i]< j; i++)n1=it[i+1];
+  for (int i=0; it[i]< j; i++)N1=it[i+1];
   j=(int)(mk+.5);
-  for (int i=0; it[i]< j; i++)n2=it[i+1];
+  for (int i=0; it[i]< j; i++)N2=it[i+1];
   j=(int)(ml+.5);
-  for (int i=0; it[i]< j; i++)n3=it[i+1];
-  n4=n2*n1;
-  n5=n3*n4;
+  for (int i=0; it[i]< j; i++)N3=it[i+1];
+  N4=N2*N1;
+  N5=N3*N4;
+  printf("%d %d %d %d %d\n",N1,N2,N3,N4,N5);
   int n6=(coarse)?32:56;
   int n7=n6*n6,
       n8=n6*n6*n6;
   float *pdf=(float*) malloc(sizeof(float)*n8);
   int *locat=NULL;
-  if (mapping) locat  =(int*) malloc(sizeof(int)*n5);
-  DX=1./(n1);
-  DY=1./(n2);
-  DZ=1./(n3);
+  if (mapping) locat  =(int*) malloc(sizeof(int)*N5);
+  DX=1./(N1);
+  DY=1./(N2);
+  DZ=1./(N3);
   int hi,ki,li;
   double FA,FB,tharm;
-  B=(fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*n5);
-  fftwf_complex *Harm=(fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*n5);
-  for (int i=0; i<n5; i++){
+  B=(fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*N5);
+  fftwf_complex *Harm=(fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*N5);
+  for (int i=0; i<N5; i++){
     B[i][0]=0;
     B[i][1]=0;
     Harm[i][0]=0;
     Harm[i][1]=0;
   }
   V3 pos= atom.frac;
-  //printf("Calculate %d structure factors for p.d.f. (%d ms)\n",n5,tack.elapsed());
-  info=QString("Calculate %1 structure factors for p.d.f.").arg(n5);
+  //printf("Calculate %d structure factors for p.d.f. (%d ms)\n",N5,tack.elapsed());
+  info=QString("Calculate %1 structure factors for p.d.f.").arg(N5);
   emit bigmessage(info);
-/*  for (int m=0; m<n5; m++){
-   int rest,h,k,l;
-   l= (int) m /n4;
-   rest=m - l*n4;
-   k= (int) rest/n1;
-   rest-= k*n1;
-   h = rest;
-   h-=n1/2;
-   k-=n2/2;
-   l-=n3/2;
-*/
+  /*  for (int m=0; m<N5; m++){
+      int rest,h,k,l;
+      l= (int) m /N4;
+      rest=m - l*N4;
+      k= (int) rest/N1;
+      rest-= k*n1;
+      h = rest;
+      h-=N1/2;
+      k-=N2/2;
+      l-=N3/2;
+      */
 
-  int Hmx=n1/2;
-  int Kmx=n2/2;
-  int Lmx=n3/2;
+  int Hmx=N1/2;
+  int Kmx=N2/2;
+  int Lmx=N3/2;
 
   int Hmn=-Hmx;
   int Kmn=-Kmx;
   int Lmn=0;
-
   for (int l=Lmn; l<=Lmx; l++){
     for (int k=Kmn; k<=Kmx; k++){
       for (int h=Hmn; h<=Hmx; h++){
-        hi=(n1*999+h)%n1;
-        ki=(n2*999+k)%n2;
-        li=(n3*999+l)%n3;
-        m=hi+n1*(ki+n2*li);
+        hi=(N1*999+h)%N1;
+        ki=(N2*999+k)%N2;
+        li=(N3*999+l)%N3;
+        m=hi+N1*(ki+N2*li);
         //        TA=TB=1.0;*/
         temp(atom,h,k,l,tharm,TA,TB);
         /*
-           if((m<0)||(m>=n5)) {
-           fprintf(stderr,"m aout of rage!\n %4d%4d%4d %d %d \n",hi,ki,li,m,n5);
+           if((m<0)||(m>=N5)) {
+           fprintf(stderr,"m aout of rage!\n %4d%4d%4d %d %d \n",hi,ki,li,m,N5);
            exit(0);
            } */
         p=fourpi
@@ -867,12 +948,12 @@ void FourMCQ::PDFbyFFT(int i, int options,double proba){
           if (!scnd) {TA-=tharm;}
           B[m][0]=FA;
           B[m][1]=FB;
-          B[m][0]*=TA/n5;
-          B[m][1]*=TA/n5;
-          hi=(n1*999-h)%n1;
-          ki=(n2*999-k)%n2;
-          li=(n3*999-l)%n3;
-          mm=hi+n1*(ki+n2*li);
+          B[m][0]*=TA/N5;
+          B[m][1]*=TA/N5;
+          hi=(N1*999-h)%N1;
+          ki=(N2*999-k)%N2;
+          li=(N3*999-l)%N3;
+          mm=hi+N1*(ki+N2*li);
           B[mm][0]= B[m][0];
           B[mm][1]=-B[m][1];
           //   B[mm][0]= B[m][0];
@@ -887,49 +968,49 @@ void FourMCQ::PDFbyFFT(int i, int options,double proba){
           if (!scnd) {TA-=tharm;}
           B[m][0]=FA*TA-FB*TB;
           B[m][1]=FB*TA+FA*TB;
-          B[m][0]*=1.0/n5;
-          B[m][1]*=1.0/n5;
-          hi=(n1*999-h)%n1;
-          ki=(n2*999-k)%n2;
-          li=(n3*999-l)%n3;
-          mm=hi+n1*(ki+n2*li);
+          B[m][0]*=1.0/N5;
+          B[m][1]*=1.0/N5;
+          hi=(N1*999-h)%N1;
+          ki=(N2*999-k)%N2;
+          li=(N3*999-l)%N3;
+          mm=hi+N1*(ki+N2*li);
           B[mm][0]= B[m][0];
           B[mm][1]=-B[m][1];
         }
 
-          Harm[m][0]=FA*tharm/n5;
-          Harm[m][1]=FB*tharm/n5;
-          Harm[mm][0]= Harm[m][0];
-          Harm[mm][1]=-Harm[m][1];
+        Harm[m][0]=FA*tharm/N5;
+        Harm[m][1]=FB*tharm/N5;
+        Harm[mm][0]= Harm[m][0];
+        Harm[mm][1]=-Harm[m][1];
 
         //          if ((h==0)&&(k==0)&&(l==0)) printf("000 FA %g FB %g ph %g TA %g TB %g  A %g B %g p %g\n",FA,FB,stph,TA,TB,a,b ,p);
         //   }
         /* 
            hi*=-1;
-           if(hi<0)hi=n1+hi;
+           if(hi<0)hi=N1+hi;
            ki*=-1;
-           if(ki<0)ki=n2+ki;
+           if(ki<0)ki=N2+ki;
            li*=-1;
-           if(li<0)li=n3+li;
-           m=hi+n1*(ki+n2*li);
+           if(li<0)li=N3+li;
+           m=hi+N1*(ki+N2*li);
            B[m][0]=a;
            B[m][1]=-b;/ * */
     }
   }
-} 
-  int mx=(int)(atom.frac.x/DX+0.5); 
-  int my=(int)(atom.frac.y/DY+0.5); 
-  int mz=(int)(atom.frac.z/DZ+0.5); 
-  mx=((99*n1)+mx)%n1;
-  my=((99*n2)+my)%n2;
-  mz=((99*n3)+mz)%n3;
-  int mxs=mx-n6/2+1;
-  int mys=my-n6/2+1;
-  int mzs=mz-n6/2+1;
-  int loc;
-  V3 dx1=V3(DX,0,0);
-  V3 dy1=V3(0,DY,0);
-  V3 dz1=V3(0,0,DZ);
+}
+int mx=(int)(atom.frac.x/DX+0.5); 
+int my=(int)(atom.frac.y/DY+0.5); 
+int mz=(int)(atom.frac.z/DZ+0.5); 
+mx=((99*N1)+mx)%N1;
+my=((99*N2)+my)%N2;
+mz=((99*N3)+mz)%N3;
+int mxs=mx-n6/2+1;
+int mys=my-n6/2+1;
+int mzs=mz-n6/2+1;
+int loc;
+V3 dx1=V3(DX,0,0);
+V3 dy1=V3(0,DY,0);
+V3 dz1=V3(0,0,DZ);
 {
   if (chgl->moliso){
     glDeleteLists(chgl->moliso->mibas,6);
@@ -942,73 +1023,73 @@ void FourMCQ::PDFbyFFT(int i, int options,double proba){
   chgl->moliso->L=chgl->L;
   chgl->moliso->lineNr=0;
   chgl->moliso->setCubeFileOrigin(true);
-//  chgl->moliso->cubeiso=true;
+  //  chgl->moliso->cubeiso=true;
   mole->frac2kart(dx1,dx1); 
   mole->frac2kart(dy1,dy1); 
   mole->frac2kart(dz1,dz1);     
-  Vector3  fl=Vector3(floor(atom.frac.x)*n1,floor(atom.frac.y)*n2,floor(atom.frac.z)*n3);
+  Vector3  fl=Vector3(floor(atom.frac.x)*N1,floor(atom.frac.y)*N2,floor(atom.frac.z)*N3);
 
-      
+
   V3 org=dx1*(fl.x+mxs-1.0)+dy1*(fl.y+mys-1.0)+dz1*(fl.z+mzs-1.0);
   chgl->moliso->orig=Vector3(org.x,org.y,org.z
-    //Vector3(0,0,0//+0.612855,  -0.040819,  -0.057129
-      );//Vector3(atom.kart.x,atom.kart.y,atom.kart.z);//+Vector3(urs.x,urs.y,urs.z);
-/*  
-  printf("floor %9.6f %9.6f %9.6f  %4d%4d%4d \n",fl.x,fl.y,fl.z,mxs,mys,mzs);
-  printf("u %9.6f %9.6f %9.6f\n",org.x,org.y,org.z);
-  printf("x0 %9.6f %9.6f %9.6f\n",atom.kart.x,atom.kart.y,atom.kart.z);
-// */
-  chgl->moliso->x_dim=Vector3(dx1.x,dx1.y,dx1.z);
-  chgl->moliso->y_dim=Vector3(dy1.x,dy1.y,dy1.z);
-  chgl->moliso->z_dim=Vector3(dz1.x,dz1.y,dz1.z);
-/*  
-  printf("%9g %9g %9g\n",chgl->moliso->x_dim.x,chgl->moliso->x_dim.y,chgl->moliso->x_dim.z);
-  printf("%9g %9g %9g\n",chgl->moliso->x_dim.y,chgl->moliso->y_dim.y,chgl->moliso->y_dim.z);
-  printf("%9g %9g %9g\n",chgl->moliso->z_dim.x,chgl->moliso->z_dim.y,chgl->moliso->z_dim.z);
-// */
-  chgl->moliso->breite=chgl->moliso->hoehe=chgl->moliso->tiefe=n6;
-  chgl->moliso->data.clear();
-  chgl->moliso->mdata.clear();
-}
-  fprintf(stderr,"Starting p.d.f.Fourier %d %d %d! (ms %d)\n",n1,n2,n3,tack.elapsed());
+      //Vector3(0,0,0//+0.612855,  -0.040819,  -0.057129
+    );//Vector3(atom.kart.x,atom.kart.y,atom.kart.z);//+Vector3(urs.x,urs.y,urs.z);
+      /*  
+          printf("floor %9.6f %9.6f %9.6f  %4d%4d%4d \n",fl.x,fl.y,fl.z,mxs,mys,mzs);
+          printf("u %9.6f %9.6f %9.6f\n",org.x,org.y,org.z);
+          printf("x0 %9.6f %9.6f %9.6f\n",atom.kart.x,atom.kart.y,atom.kart.z);
+      // */
+      chgl->moliso->x_dim=Vector3(dx1.x,dx1.y,dx1.z);
+      chgl->moliso->y_dim=Vector3(dy1.x,dy1.y,dy1.z);
+      chgl->moliso->z_dim=Vector3(dz1.x,dz1.y,dz1.z);
+      /*  
+          printf("%9g %9g %9g\n",chgl->moliso->x_dim.x,chgl->moliso->x_dim.y,chgl->moliso->x_dim.z);
+          printf("%9g %9g %9g\n",chgl->moliso->x_dim.y,chgl->moliso->y_dim.y,chgl->moliso->y_dim.z);
+          printf("%9g %9g %9g\n",chgl->moliso->z_dim.x,chgl->moliso->z_dim.y,chgl->moliso->z_dim.z);
+      // */
+      chgl->moliso->breite=chgl->moliso->hoehe=chgl->moliso->tiefe=n6;
+      chgl->moliso->data.clear();
+      chgl->moliso->mdata.clear();
+      }
+      fprintf(stderr,"Starting p.d.f.Fourier %d %d %d! (ms %d)\n",N1,N2,N3,tack.elapsed());
   info=QString("Starting p.d.f.Fourier...");
   emit bigmessage(info); 
-  fwd_plan = fftwf_plan_dft_3d(n3,n2,n1,B,B,FFTW_FORWARD,FFTW_ESTIMATE);
+  fwd_plan = fftwf_plan_dft_3d(N3,N2,N1,B,B,FFTW_FORWARD,FFTW_ESTIMATE);
   fftwf_execute(fwd_plan);
   fftwf_destroy_plan(fwd_plan);
   float t=0,pmin=1e99,pmax=-1e99,boxmin=1e99,boxmax=-1e99;
   int inbox=0;//,imax=0,imin=0;
-  for (int i=0,rest,h,k,l,ho,ko,lo; i<n5;i++){
+  for (int i=0,rest,h,k,l,ho,ko,lo; i<N5;i++){
     DD=B[i][0];
     if (mapping)locat[i]=-1;
-//    if (DD<pmin) imin=i;
+    //    if (DD<pmin) imin=i;
     pmin=fmin(DD,pmin);
-//    if (DD>pmax) imax=i;
+    //    if (DD>pmax) imax=i;
     pmax=fmax(DD,pmax);
-    l= (int) i /n4;
-    rest=i - l*n4;
-    k= (int) rest/n1;
-    rest-= k*n1;
+    l= (int) i /N4;
+    rest=i - l*N4;
+    k= (int) rest/N1;
+    rest-= k*N1;
     h = rest;
-    ho=(9*n1+(h-(mxs)))%n1;
-    ko=(9*n2+(k-(mys)))%n2;
-    lo=(9*n3+(l-(mzs)))%n3;
+    ho=(9*N1+(h-(mxs)))%N1;
+    ko=(9*N2+(k-(mys)))%N2;
+    lo=(9*N3+(l-(mzs)))%N3;
     loc=(ho)+((ko)*n6)+((lo)*n7);
     if ((ho>=0)&&(ho<n6)&&
         (ko>=0)&&(ko<n6)&&
         (lo>=0)&&(lo<n6)&&(loc>=0)&&(loc<n8)){
-//      printf("%4d%4d%4d  %d  %4d%4d%4d  %4d%4d%4d %4d%4d%4d\n",h,k,l,loc, mx-45,my-45,mz-45,mx+45,my+45,mz+45,ho,ko,lo);
+      //      printf("%4d%4d%4d  %d  %4d%4d%4d  %4d%4d%4d %4d%4d%4d\n",h,k,l,loc, mx-45,my-45,mz-45,mx+45,my+45,mz+45,ho,ko,lo);
       pdf[loc]=DD;
       if (mapping) locat[i]=loc;
-     // if (loc==0) printf("x- %9.6f%9.6f%9.6f %4d%4d%4d %g\n",dx1.x*h,dy1.y*k,dz1.z*l,h,k,l,DD);
+      // if (loc==0) printf("x- %9.6f%9.6f%9.6f %4d%4d%4d %g\n",dx1.x*h,dy1.y*k,dz1.z*l,h,k,l,DD);
 
-/*
-  if ((ho==lo)&&(ho==ko)&&(ho==n6/2)) {
-        printf("\nx? %9.6f%9.6f%9.6f %4d%4d%4d %g\n",dx1.x*h,dy1.y*k,dz1.z*l,h,k,l,DD);
-        printf("%4d%4d%4d  %d<%d  %4d%4d%4d  %4d%4d%4d %4d%4d%4d\n\n",h,k,l,loc,n8, mx-45,my-45,mz-45,mx+45,my+45,mz+45,ho,ko,lo);
-      }
-  // */
-     // if (loc==n8-1) printf("x+ %9.6f%9.6f%9.6f %4d%4d%4d %g\n",dx1.x*h,dy1.y*k,dz1.z*l,h,k,l,DD);
+      /*
+         if ((ho==lo)&&(ho==ko)&&(ho==n6/2)) {
+         printf("\nx? %9.6f%9.6f%9.6f %4d%4d%4d %g\n",dx1.x*h,dy1.y*k,dz1.z*l,h,k,l,DD);
+         printf("%4d%4d%4d  %d<%d  %4d%4d%4d  %4d%4d%4d %4d%4d%4d\n\n",h,k,l,loc,n8, mx-45,my-45,mz-45,mx+45,my+45,mz+45,ho,ko,lo);
+         }
+      // */
+      // if (loc==n8-1) printf("x+ %9.6f%9.6f%9.6f %4d%4d%4d %g\n",dx1.x*h,dy1.y*k,dz1.z*l,h,k,l,DD);
       boxmin=fmin(DD,boxmin);
       boxmax=fmax(DD,boxmax);
       DM+=DD;
@@ -1016,41 +1097,41 @@ void FourMCQ::PDFbyFFT(int i, int options,double proba){
       inbox++;
     }
   }
-  t=sqrt((DS/n8)-((DM/n8)*(DM/n8)));
-  for (int i=0; i<n8; i++) 
-      chgl->moliso->data.append(pdf[i]);
+t=sqrt((DS/n8)-((DM/n8)*(DM/n8)));
+for (int i=0; i<n8; i++) 
+chgl->moliso->data.append(pdf[i]);
 
 /*{
   int h,k,l,rest;
-  l= (int) imax /n4;
-  rest=imax - l*n4;
-  k= (int) rest/n1;
-  rest-= k*n1;
+  l= (int) imax /N4;
+  rest=imax - l*N4;
+  k= (int) rest/N1;
+  rest-= k*N1;
   h = rest;
   printf("%d %g %4d%4d%4d %g\n",imax,B[imax][0],h,k,l,boxmax);
-  l= (int) imin /n4;
-  rest=imin - l*n4;
-  k= (int) rest/n1;
-  rest-= k*n1;
+  l= (int) imin /N4;
+  rest=imin - l*N4;
+  k= (int) rest/N1;
+  rest-= k*N1;
   h = rest;
   printf("%d %g %4d%4d%4d %g\n",imin,B[imin][0],h,k,l,boxmin);
-}//  */
-  fftwf_free(B);
-  fprintf(stderr,"Finished p.d.f.Fourier sigma %g DS%g DM%g n5%d Vol%g min %g max %g (ms %d) iso 50%% = %g, iso 90%% = %g, 99%% = %g\n",t,DS,DM,n5,mole->zelle.V,pmin,pmax,tack.elapsed()
+  }//  */
+fftwf_free(B);
+  fprintf(stderr,"Finished p.d.f.Fourier sigma %g DS%g DM%g N5%d Vol%g min %g max %g (ms %d) iso 50%% = %g, iso 90%% = %g, 99%% = %g\n",t,DS,DM,n8,mole->zelle.V,pmin,pmax,tack.elapsed()
       ,pmax*prob(50.0)
       ,pmax*prob(90.0) 
       ,pmax*prob(99.0));
-//  fprintf(stderr,"%d (%d %d %d )\n",inbox,mx,my,mz);
- info=QString("Finished p.d.f.Fourier. "); 
- emit bigmessage(info);
-  fwd_plan = fftwf_plan_dft_3d(n3,n2,n1,Harm,Harm,FFTW_FORWARD,FFTW_ESTIMATE);
+  //  fprintf(stderr,"%d (%d %d %d )\n",inbox,mx,my,mz);
+  info=QString("Finished p.d.f.Fourier. "); 
+  double ahpmin=pmin;
+  emit bigmessage(info);
+  fwd_plan = fftwf_plan_dft_3d(N3,N2,N1,Harm,Harm,FFTW_FORWARD,FFTW_ESTIMATE);
   fftwf_execute(fwd_plan);
   fftwf_destroy_plan(fwd_plan);
   DM=DS=t=0;
   pmin= 1e99;
   pmax=-1e99;
-
-  for (int i=0; i<n5;i++){
+  for (int i=0; i<N5;i++){
     DD=Harm[i][0];
     if ((mapping)&&(locat[i]!=-1)) pdf[locat[i]]=DD;
     DM+=DD;
@@ -1058,19 +1139,19 @@ void FourMCQ::PDFbyFFT(int i, int options,double proba){
     pmin=fmin(DD,pmin);
     pmax=fmax(DD,pmax);
   }
-  t=sqrt((DS/n5)-((DM/n5)*(DM/n5)));
-  if (mapping) for (int i=0; i<n8; i++) 
-      chgl->moliso->mdata.append(pdf[i]);
-  fprintf(stderr,"Values for harmonic p.d.f. sigma %g DS%g DM%g n5%d Vol%g min %g max %g (ms %d) iso 50%% = %g, iso 90%% = %g, 99%% = %g\n",t,DS,DM,n5,mole->zelle.V,pmin,pmax,tack.elapsed()
+t=sqrt((DS/N5)-((DM/N5)*(DM/N5)));
+if (mapping) for (int i=0; i<n8; i++) 
+chgl->moliso->mdata.append(pdf[i]);
+  fprintf(stderr,"Values for harmonic p.d.f. sigma %g DS%g DM%g N5%d Vol%g min %g max %g (ms %d) iso 50%% = %g, iso 90%% = %g, 99%% = %g\n",t,DS,DM,N5,mole->zelle.V,pmin,pmax,tack.elapsed()
       ,pmax*prob(50.0)
       ,pmax*prob(90.0) 
       ,pmax*prob(99.0));
   double P=pmax*prob(proba);
-  fprintf(stderr,"\nDesired probability of %g%% is at %g\n",proba,pmax*prob(proba));
+  fprintf(stderr,"\nDesired probability of %g%% is at %g minimum in p.d.f is at %g%%\n",proba,pmax*prob(proba),aborp(pmax,ahpmin));
   QString fac("testpdf.face");
   chgl->moliso->iso_level=(scnd)?P:pmax*prob(99.0);
-  chgl->moliso->createSurface(fac,(scnd)?proba:99.0,pmax*prob(99.0),mapping,minus99);
-  
+  chgl->moliso->createSurface(fac,(scnd)?proba:99.0,pmax*prob(99.0),mapping,minus99,pmax);
+
   chgl->pause=true;
   if (chgl->moliso->mibas) glDeleteLists(chgl->moliso->mibas,6);
   chgl->moliso->mibas=glGenLists(6);
@@ -1084,77 +1165,80 @@ void FourMCQ::PDFbyFFT(int i, int options,double proba){
   chgl->updateGL();
   fftwf_free(Harm);
   fprintf(stderr,"p.d.f. finished after %d ms\n",tack.elapsed());
- info=QString("Finished p.d.f. after %1 ms").arg(tack.elapsed()); 
- emit bigmessage(info);
+  double minpct=aborp(pmax,ahpmin);
+if (fabs(minpct)<99.0)  
+  info=QString("Finished p.d.f. after %1 ms  minimal p.d.f. value %2%").arg(tack.elapsed()).arg(aborp(pmax,ahpmin),0,'f',3); 
+  else info=QString("Finished p.d.f. after %1 ms").arg(tack.elapsed()); 
+  emit bigmessage(info);
   free(pdf);
   if (0){ // for checking...
-  FILE *fo;
-  char foname[4096];
-  int len=strlen(atom.atomname);
-  //float factor=0.1481847095290449;//a0**3
-  double a0=0.52917720859;  
-  j=0;
-  V3 dx1=V3(DX,0,0);
-  V3 dy1=V3(0,DY,0);
-  V3 dz1=V3(0,0,DZ);
-  mole->frac2kart(dx1,dx1); 
-  mole->frac2kart(dy1,dy1); 
-  mole->frac2kart(dz1,dz1);     
-  int na=0;
-  for (int i=0; i<xdinp.size();i++){
-  if (xdinp[i].OrdZahl>=0) na++;
-  } 
-  strncpy(foname,atom.atomname,len);
-  strcat(foname,"_pdf_map.cube");
-  printf("writing %s ...(ms %d\n",foname,tack.elapsed());
-  fo=fopen(foname,"w");
-  fprintf(fo,"p.d.f. by FFT map written by MoleCoolQt\ntest\n");
-  
-  V3  fl=V3(floor(atom.frac.x)*n1,floor(atom.frac.y)*n2,floor(atom.frac.z)*n3);
+    FILE *fo;
+    char foname[4096];
+    int len=strlen(atom.atomname);
+    //float factor=0.1481847095290449;//a0**3
+    double a0=0.52917720859;  
+    j=0;
+    V3 dx1=V3(DX,0,0);
+    V3 dy1=V3(0,DY,0);
+    V3 dz1=V3(0,0,DZ);
+    mole->frac2kart(dx1,dx1); 
+    mole->frac2kart(dy1,dy1); 
+    mole->frac2kart(dz1,dz1);     
+    int na=0;
+    for (int i=0; i<xdinp.size();i++){
+      if (xdinp[i].OrdZahl>=0) na++;
+    } 
+    strncpy(foname,atom.atomname,len);
+    strcat(foname,"_pdf_map.cube");
+    printf("writing %s ...(ms %d\n",foname,tack.elapsed());
+    fo=fopen(foname,"w");
+    fprintf(fo,"p.d.f. by FFT map written by MoleCoolQt\ntest\n");
 
-  V3 org=dx1*(fl.x+mxs-1.0)+dy1*(fl.y+mys-1.0)+dz1*(fl.z+mzs-1.0);
-//      (dx1.x+dy1.x+dz1.x)*(fl.x+mxs-1.0),   //+.5
-//      (dx1.y+dy1.y+dz1.y)*(fl.y+mys-1.0),   //+.5
-//      (dx1.z+dy1.z+dz1.z)*(fl.z+mzs-1.0));  //+.5
-//  org*=0.5;
-  printf("floorCube %9.6f %9.6f %9.6f  %4d%4d%4d \n",fl.x,fl.y,fl.z,mxs,mys,mzs);
-  printf("%12.6f%12.6f%12.6f\n",org.x,org.y,org.z);
-  org*=1.0/a0;
-  fprintf(fo,"%5d%12.6f%12.6f%12.6f\n",na,
-      org.x,org.y,org.z
-      //((dx1.x+dy1.x+dz1.x)* -(n6+2)*0.5)/a0, ((dx1.y+dy1.y+dz1.y)* -(n6+2)*0.5)/a0, ((dx1.z+dy1.z+dz1.z)* -(n6+2)*0.5)/a0
-      //(-1.8+(dx1.x+dy1.x+dz1.x))/a0, (-1.8+(dx1.y+dy1.y+dz1.y))/a0, (-1.8+(dx1.z+dy1.z+dz1.z))/a0
-//0.0,0.0,0.0
-      );
-  fprintf(fo,"%5d%12.6f%12.6f%12.6f\n",n6,dx1.x/a0,dx1.y/a0,dx1.z/a0);
-  fprintf(fo,"%5d%12.6f%12.6f%12.6f\n",n6,dy1.x/a0,dy1.y/a0,dy1.z/a0);
-  fprintf(fo,"%5d%12.6f%12.6f%12.6f\n",n6,dz1.x/a0,dz1.y/a0,dz1.z/a0);
-// *  
-   for (int i=0; i<xdinp.size();i++){
-    //mole->frac2kart(xdinp[i].frac,xdinp[i].kart);
-    if (xdinp[i].OrdZahl>=0) 
-    //fprintf(fo,"%5d%12.6f%12.6f%12.6f%12.6f\n",xdinp[i].OrdZahl+1,xdinp[i].OrdZahl+1.0,(xdinp[i].kart.x+dx1.x)/a0,(xdinp[i].kart.y+dy1.y)/a0,(xdinp[i].kart.z+dz1.z)/a0);
-    //fprintf(fo,"%5d%12.6f%12.6f%12.6f%12.6f\n",xdinp[i].OrdZahl+1,xdinp[i].OrdZahl+1.0,(xdinp[i].kart.x+dx1.x)/a0,(xdinp[i].kart.y+dy1.y)/a0,(xdinp[i].kart.z+dz1.z)/a0);
-    ///fprintf(fo,"%5d%12.6f%12.6f%12.6f%12.6f\n",xdinp[i].OrdZahl+1,xdinp[i].OrdZahl+1.0,(xdinp[i].kart.x+0.5*dx1.x)/a0,(xdinp[i].kart.y+0.5*dy1.y)/a0,(xdinp[i].kart.z+0.5*dz1.z)/a0);
-    fprintf(fo,"%5d%12.6f%12.6f%12.6f%12.6f\n",xdinp[i].OrdZahl+1,xdinp[i].OrdZahl+1.0,
-        (xdinp[i].kart.x)/a0,
-        (xdinp[i].kart.y)/a0,
-        (xdinp[i].kart.z)/a0);
-  }// * /
- // fprintf(fo,"%5d%12.6f%12.6f%12.6f%12.6f\n",1,1.0,(dx1.x*n1/2.0)/a0,(dy1.y*n2/2.0)/a0,(dz1.z*n3/2.0)/a0);
-  for (int xi=0;xi<n6;xi++)
-    for (int yi=0;yi<n6;yi++)
-      for (int zi=0;zi<n6;zi++)
-      {
-        //fprintf(fo,"%s%13.5E",(((i%6)==0)?"\n":""),datfo[dex(xi,yi,zi)]*factor);
-        //fprintf(fo,"%s",QString("%1%2").arg(((j)&&((j%6)==0))?"\n":"").arg(pdf[dex(xi,yi,zi)],13,'E',5).toStdString().c_str());
-        //fprintf(fo,"%s",QString("%1%2").arg(((j)&&((j%6)==0))?"\n":"").arg((double)dex(xi,yi,zi),13,'E',5).toStdString().c_str());
-        fprintf(fo,"%s%13.5E",(((j)&&((j%6)==0))?"\n":""),(pdf[xi+yi*n6+zi*n7]));
-        j++;
-      }
-  fclose(fo);
-  printf("... %s written. (ms %d)\n",foname,tack.elapsed());
-  free(pdf);
+    V3  fl=V3(floor(atom.frac.x)*N1,floor(atom.frac.y)*N2,floor(atom.frac.z)*N3);
+
+    V3 org=dx1*(fl.x+mxs-1.0)+dy1*(fl.y+mys-1.0)+dz1*(fl.z+mzs-1.0);
+    //      (dx1.x+dy1.x+dz1.x)*(fl.x+mxs-1.0),   //+.5
+    //      (dx1.y+dy1.y+dz1.y)*(fl.y+mys-1.0),   //+.5
+    //      (dx1.z+dy1.z+dz1.z)*(fl.z+mzs-1.0));  //+.5
+    //  org*=0.5;
+    printf("floorCube %9.6f %9.6f %9.6f  %4d%4d%4d \n",fl.x,fl.y,fl.z,mxs,mys,mzs);
+    printf("%12.6f%12.6f%12.6f\n",org.x,org.y,org.z);
+    org*=1.0/a0;
+    fprintf(fo,"%5d%12.6f%12.6f%12.6f\n",na,
+        org.x,org.y,org.z
+        //((dx1.x+dy1.x+dz1.x)* -(n6+2)*0.5)/a0, ((dx1.y+dy1.y+dz1.y)* -(n6+2)*0.5)/a0, ((dx1.z+dy1.z+dz1.z)* -(n6+2)*0.5)/a0
+        //(-1.8+(dx1.x+dy1.x+dz1.x))/a0, (-1.8+(dx1.y+dy1.y+dz1.y))/a0, (-1.8+(dx1.z+dy1.z+dz1.z))/a0
+        //0.0,0.0,0.0
+        );
+    fprintf(fo,"%5d%12.6f%12.6f%12.6f\n",n6,dx1.x/a0,dx1.y/a0,dx1.z/a0);
+    fprintf(fo,"%5d%12.6f%12.6f%12.6f\n",n6,dy1.x/a0,dy1.y/a0,dy1.z/a0);
+    fprintf(fo,"%5d%12.6f%12.6f%12.6f\n",n6,dz1.x/a0,dz1.y/a0,dz1.z/a0);
+    // *  
+    for (int i=0; i<xdinp.size();i++){
+      //mole->frac2kart(xdinp[i].frac,xdinp[i].kart);
+      if (xdinp[i].OrdZahl>=0) 
+        //fprintf(fo,"%5d%12.6f%12.6f%12.6f%12.6f\n",xdinp[i].OrdZahl+1,xdinp[i].OrdZahl+1.0,(xdinp[i].kart.x+dx1.x)/a0,(xdinp[i].kart.y+dy1.y)/a0,(xdinp[i].kart.z+dz1.z)/a0);
+        //fprintf(fo,"%5d%12.6f%12.6f%12.6f%12.6f\n",xdinp[i].OrdZahl+1,xdinp[i].OrdZahl+1.0,(xdinp[i].kart.x+dx1.x)/a0,(xdinp[i].kart.y+dy1.y)/a0,(xdinp[i].kart.z+dz1.z)/a0);
+        ///fprintf(fo,"%5d%12.6f%12.6f%12.6f%12.6f\n",xdinp[i].OrdZahl+1,xdinp[i].OrdZahl+1.0,(xdinp[i].kart.x+0.5*dx1.x)/a0,(xdinp[i].kart.y+0.5*dy1.y)/a0,(xdinp[i].kart.z+0.5*dz1.z)/a0);
+        fprintf(fo,"%5d%12.6f%12.6f%12.6f%12.6f\n",xdinp[i].OrdZahl+1,xdinp[i].OrdZahl+1.0,
+            (xdinp[i].kart.x)/a0,
+            (xdinp[i].kart.y)/a0,
+            (xdinp[i].kart.z)/a0);
+    }// * /
+    // fprintf(fo,"%5d%12.6f%12.6f%12.6f%12.6f\n",1,1.0,(dx1.x*N1/2.0)/a0,(dy1.y*N2/2.0)/a0,(dz1.z*N3/2.0)/a0);
+    for (int xi=0;xi<n6;xi++)
+      for (int yi=0;yi<n6;yi++)
+        for (int zi=0;zi<n6;zi++)
+        {
+          //fprintf(fo,"%s%13.5E",(((i%6)==0)?"\n":""),datfo[dex(xi,yi,zi)]*factor);
+          //fprintf(fo,"%s",QString("%1%2").arg(((j)&&((j%6)==0))?"\n":"").arg(pdf[dex(xi,yi,zi)],13,'E',5).toStdString().c_str());
+          //fprintf(fo,"%s",QString("%1%2").arg(((j)&&((j%6)==0))?"\n":"").arg((double)dex(xi,yi,zi),13,'E',5).toStdString().c_str());
+          fprintf(fo,"%s%13.5E",(((j)&&((j%6)==0))?"\n":""),(pdf[xi+yi*n6+zi*n7]));
+          j++;
+        }
+    fclose(fo);
+    printf("... %s written. (ms %d)\n",foname,tack.elapsed());
+    free(pdf);
   }
 }
 
@@ -2359,7 +2443,7 @@ void FourMCQ::bewegt(V3 nm){
 
   //  printf("ursprung %g %g %g \n",urs.x,urs.y,urs.z);
   if (urs==alturs) return;
-
+  if (maptrunc==2) return; // this will not change
   //balken->setMinimum(0);
   //balken->setMaximum(n3*6);
   //balken->show();
@@ -2398,7 +2482,6 @@ void FourMCQ::inimap(){//for screenies
   //balken->hide();
   //chgl->pause=false;
 }
-#include <omp.h>
 
 void FourMCQ::gen_surface(bool neu,int imin,int imax){
   /*if (!((chgl->isFO())||(chgl->isDF()))) {
@@ -2559,29 +2642,35 @@ void FourMCQ::CalcVertex( int ix, int iy, int iz) {
   //nodex[(ix+n1*(iy+n2*iz))%n5].index=0;
   //nodey[(ix+n1*(iy+n2*iz))%n5].index=0;
   //nodez[(ix+n1*(iy+n2*iz))%n5].index=0;
-  nodex[(ix+n1*(iy+n2*iz))%n5].flag=0;
-  nodey[(ix+n1*(iy+n2*iz))%n5].flag=0;
-  nodez[(ix+n1*(iy+n2*iz))%n5].flag=0;
-  if (mtyp==0){//*datfo,*datfo_fc,*datf1_f2
-    vo = datfo[ (ix+n1*iy+n2*n1*iz                  )%n5]   -iso[mtyp];
-    vx = datfo[ (((ix+1)%n1) + n1* iy    + n2*n1 *  iz   )%n5]   -iso[mtyp];
-    vy = datfo[ ( ix +    n1*((iy+1)%n2)+ n2*n1 *  iz   )%n5]   -iso[mtyp];
-    vz = datfo[ ( ix +    n1* iy    + n2*n1 * ((iz+1)%n3))%n5]   -iso[mtyp];
-  }else if (mtyp==1){
-    vo = datfo_fc[(ix+n1*iy+n2*n1*iz                  )%n5]   -iso[mtyp];
-    vx = datfo_fc[(((ix+1)%n1) + n1* iy    + n2*n1 *  iz   )%n5]   -iso[mtyp];
-    vy = datfo_fc[( ix +    n1*((iy+1)%n2) + n2*n1 *  iz   )%n5]   -iso[mtyp];
-    vz = datfo_fc[( ix +    n1* iy    + n2*n1 * ((iz+1)%n3))%n5]   -iso[mtyp];
-  }else{
-    vo = datf1_f2[(ix+n1*iy+n2*n1*iz                  )%n5]   -iso[mtyp];
-    vx = datf1_f2[(((ix+1)%n1) + n1* iy    + n2*n1 *  iz   )%n5]   -iso[mtyp];
-    vy = datf1_f2[( ix +    n1*((iy+1)%n2) + n2*n1 *  iz   )%n5]   -iso[mtyp];
-    vz = datf1_f2[( ix +    n1* iy    + n2*n1 * ((iz+1)%n3))%n5]   -iso[mtyp];
-  }
+  int ind=(ix+n1*(iy+n2*iz));
+    if (ind<0) printf("?? how%d %d\n",ind,n5);
+    if (ind>n5) {
+      printf("?? how !%d %d\n",ind,n5);
+      ind=ind%n5;
+    }
+    nodex[ind].flag=0;
+    nodey[ind].flag=0;
+    nodez[ind].flag=0;
+    if (mtyp==0){//*datfo,*datfo_fc,*datf1_f2
+      vo = datfo[ ind]   -iso[mtyp];
+      vx = datfo[ (((ix+1)%n1) + n1* iy    + n2*n1 *  iz   )%n5]   -iso[mtyp];
+      vy = datfo[ ( ix +    n1*((iy+1)%n2)+ n2*n1 *  iz   )%n5]   -iso[mtyp];
+      vz = datfo[ ( ix +    n1* iy    + n2*n1 * ((iz+1)%n3))%n5]   -iso[mtyp];
+    }else if (mtyp==1){
+      vo = datfo_fc[ind]   -iso[mtyp];
+      vx = datfo_fc[(((ix+1)%n1) + n1* iy    + n2*n1 *  iz   )%n5]   -iso[mtyp];
+      vy = datfo_fc[( ix +    n1*((iy+1)%n2) + n2*n1 *  iz   )%n5]   -iso[mtyp];
+      vz = datfo_fc[( ix +    n1* iy    + n2*n1 * ((iz+1)%n3))%n5]   -iso[mtyp];
+    }else{
+      vo = datf1_f2[ind]   -iso[mtyp];
+      vx = datf1_f2[(((ix+1)%n1) + n1* iy    + n2*n1 *  iz   )%n5]   -iso[mtyp];
+      vy = datf1_f2[( ix +    n1*((iy+1)%n2) + n2*n1 *  iz   )%n5]   -iso[mtyp];
+      vz = datf1_f2[( ix +    n1* iy    + n2*n1 * ((iz+1)%n3))%n5]   -iso[mtyp];
+    }
 
-  if (Intersect(vo,vx)) {
-    o=dx*((vo/(vo-vx))+ix) + dy*iy + dz*iz+urs;
-    mole->kart2frac(o,o);
+    if (Intersect(vo,vx)) {
+      o=dx*((vo/(vo-vx))+ix) + dy*iy + dz*iz+urs;
+      mole->kart2frac(o,o);
     o+=V3(-0.5,-0.5,-0.5);
     fl=V3(floor(o.x),floor(o.y),floor(o.z));
     o+=-1.0*fl;
@@ -2590,8 +2679,8 @@ void FourMCQ::CalcVertex( int ix, int iy, int iz) {
     o+=-1.0*urs;
     o+=mdz;
     //    orte.append(o);
-    nodex[ix+n1*iy+n2*n1*iz].vertex=o;
-    nodex[ix+n1*iy+n2*n1*iz].flag=1;
+    nodex[ind].vertex=o;
+    nodex[ind].flag=1;
   }
   if (Intersect(vo,vy)) {
     o=dx*ix + dy*((vo/(vo-vy))+iy) + dz*iz+urs;
@@ -2604,8 +2693,8 @@ void FourMCQ::CalcVertex( int ix, int iy, int iz) {
     o+=-1.0*urs;
     o+=mdz;
     //    orte.append(o);
-    nodey[ix+n1*iy+n2*n1*iz].vertex=o;
-    nodey[ix+n1*iy+n2*n1*iz].flag=1;
+    nodey[ind].vertex=o;
+    nodey[ind].flag=1;
   }
   if (Intersect(vo,vz)) {
     o=dx*ix + dy*iy + dz*((vo/(vo-vz))+iz)+urs;
@@ -2618,8 +2707,8 @@ void FourMCQ::CalcVertex( int ix, int iy, int iz) {
     o+=-1.0*urs;
     o+=mdz;
     //    orte.append(o);
-    nodez[ix+n1*iy+n2*n1*iz].vertex=o;
-    nodez[ix+n1*iy+n2*n1*iz].flag=1;
+    nodez[ind].vertex=o;
+    nodez[ind].flag=1;
   }
 }
 

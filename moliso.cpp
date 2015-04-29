@@ -85,6 +85,7 @@ MolIso::MolIso(){
   farbe[6][2]=0;    
   farbe[6][3]=0.5;
   mibas=0;
+  thisIsPDF=false;
 }
 void MolIso::legende(){
   glNewList(mibas+6, GL_COMPILE ); 
@@ -1083,6 +1084,7 @@ void MolIso::MakeElement( int ix, int iy, int iz ,int s1, int s2) {//das ist der
 }
 
 void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &storeFaceName,int fileType){
+  thisIsPDF=false;
   if (storeFaceName.isEmpty()){
     QTemporaryFile *tf = new  QTemporaryFile();
     tf->open();
@@ -1278,7 +1280,46 @@ void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &st
 }
 
 
-void MolIso::createSurface(QString &storeFaceName, double proba,double iso99,bool mapping,bool minus99){
+double MolIso::aborp(double max,double v){
+  /*
+   * Final set of parameters            Asymptotic Standard Error
+   * =======================            ==========================
+   *
+   * a0              = 52.8343          +/- 0.5022       (0.9505%)
+   * a1              = -4.18442         +/- 0.0556       (1.329%)
+   * a2              = 46.6335          +/- 0.5221       (1.12%)
+   * a3              = 2.39034          +/- 0.01631      (0.6821%)
+   * a4              = -6.14029         +/- 0.1194       (1.945%)
+   *
+   *
+   * correlation matrix of the fit parameters:
+   *
+   *                a0     a1     a2     a3     a4     
+   *                a0              1.000 
+   *                a1              0.991  1.000 
+   *                a2             -0.999 -0.996  1.000 
+   *                a3             -0.889 -0.858  0.880  1.000 
+   *                a4             -0.805 -0.784  0.798  0.971  1.000 
+   *                gnuplot> plot '50',f(x)
+   *                gnuplot>          warning: Warning - difficulty fitting plot titles into key
+   *
+   *                gnuplot> f(x)=a0*exp(a1*x)+a2*exp(-a3*x**2)+a4*x
+   *
+   * */
+  double 
+    a0=52.8343,
+    a1=-4.18442,
+    a2=46.6335,
+    a3= 2.39034,
+    a4=-6.14029,
+    f,x;
+  int sig=(v<0.0)?-1:1;
+  x=fabs(v/max);
+  f=a0*exp(a1*x)+a2*exp(-a3*x*x)+a4*x;
+  return f*sig;
+}
+void MolIso::createSurface(QString &storeFaceName, double proba,double iso99,bool mapping,bool minus99,double maxharm){
+  thisIsPDF=true;
   if (mapping){
     Farben=6;    
     farbe[0][0]=0.6;    
@@ -1429,7 +1470,7 @@ void MolIso::createSurface(QString &storeFaceName, double proba,double iso99,boo
           .arg(orte.at(i).normal.x,9,'f',6)
           .arg(orte.at(i).normal.y,9,'f',6)
           .arg(orte.at(i).normal.z,9,'f',6)
-          .arg((mapping)?orte.at(i).color:
+          .arg((mapping)?aborp(maxharm,orte.at(i).color):
           ((orte.at(i).color>0)?proba:-99),12,'f',7).toLatin1());
       lineNr++;
     }

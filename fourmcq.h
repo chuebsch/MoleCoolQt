@@ -59,6 +59,8 @@ Q_OBJECT
           void temp(INP atom, int h, int k, int  l, double &eij, double &TA, double &TB);
           void PDFbyFFT(int i, int options=14,double proba=50.0);
           void exportMaps(int na, const char filename[], const char atomlist[]);
+          double aborp(double max,double v);
+          double proba(double max,double v);
           double lintrans,linwidth;
           float sigma[3];
           float iso[3];

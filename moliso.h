@@ -109,6 +109,7 @@ signals:
   int atomanzahl;
   QVector<Ort> orte;
   QVector<Polygn> pgns;
+  double aborp(double max,double v);
   void DrawPlys();
   void PXsort( void); 
   void Pxsort( void); 
@@ -140,6 +141,7 @@ signals:
     cubeiso=b;
   }
   int breite, hoehe, tiefe,bh;
+  bool thisIsPDF;
   double iso_level;
   int lineNr;
   QList<double> data;
@@ -162,7 +164,7 @@ signals:
   void readXDGridHeader(QString fname,int &fileType);
   void readJanaHeader(QString fname);
   void createSurface(QString isoFileName, QString mapFileName, QString &storeFaceName,int fileType);
-  void createSurface(QString &storeFaceName, double proba,double iso99,bool mapping,bool minus99);
+  void createSurface(QString &storeFaceName, double proba,double iso99,bool mapping,bool minus99,double maxharm=1.0);
   void legende();
   void Farbverlauf (GLfloat wrt);
 };

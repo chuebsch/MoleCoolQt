@@ -4110,7 +4110,9 @@ if (!selectedAtoms.isEmpty()){
 
 	  for (int i=0;i<7;i++) {
 	    fw=(0.1666666666666667*i*(moliso->max-moliso->min)) + moliso->min;
-	    lab = QString::number(fw,'f',3) ;
+            if (moliso->thisIsPDF)
+	    lab = QString("%1%2").arg(fw,4,'f',0).arg("%");
+            else lab = QString("%1").arg(fw,7,'f',3);
 	    R= FM.boundingRect(lab);
 	    if (!monochrom)  moliso->Farbverlauf(fw); 
 	    else glColor4f(tCR,tCG,tCB,tCA);
