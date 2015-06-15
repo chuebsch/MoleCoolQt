@@ -1126,6 +1126,7 @@ void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &st
     QVector<double> rewerte(pmax);
     while (!isoF.atEnd () && (p>=0)) {
       QStringList numbers = QString(isoF.readLine()).split(" ",QString::SkipEmptyParts);
+      if ((!numbers.isEmpty())&&(!numbers.at(0).contains('.'))) continue;
       for (int i=0; i<numbers.size();i++) {rewerte[p--]=(numbers.at(i).toDouble());}
       b=38-37*p/pmax;
       if (b!=altb){
@@ -1179,6 +1180,7 @@ void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &st
       QVector<double> rewerte(pmax);
       while (!mapF.atEnd () && (p>=0)) {
         QStringList numbers = QString(mapF.readLine()).split(" ",QString::SkipEmptyParts);
+        if ((!numbers.isEmpty())&&(!numbers.at(0).contains('.'))) continue;
         for (int i=0; i<numbers.size();i++) {rewerte[p--]=(numbers.at(i).toDouble());}
         b=76-37*p/pmax;
         if (b!=altb){
