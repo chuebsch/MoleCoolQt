@@ -460,6 +460,7 @@ class molekul {
   int pseSize;
   QCheckBox *bondsBetweenSGs;
   bool polyShapColor;
+  void Farbverlauf (GLfloat wrt,GLfloat min,GLfloat max,GLfloat alpha=1.0f);
   bool decodeSymmCard(const QString symmCard);
   void countMols(QList<INP> & xdinp);
   bool applyLatticeCentro(const QChar latt,const bool centro);
@@ -668,7 +669,6 @@ class molekul {
   };
 
   knpf *Knopf;
-  void Farbverlauf (GLfloat wrt,GLfloat min,GLfloat max,GLfloat alpha=1.0f);
   V3* addToList(V3 *vL,QList<INP> xdinp ,int atom,int N,int rc);
   void highlightInv(QList<INP> xdinp ,int inv,GLfloat L);
   void make_bonds(QList<INP> xdinp );

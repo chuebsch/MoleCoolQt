@@ -162,6 +162,7 @@ public slots:
      void closeEvent(QCloseEvent *event);
      void setPackArt(int);
      void setPackArt2(int);
+     void rezi();
      void unFilter();
      void sortFilterDlg();
      void filterXD();

@@ -10,6 +10,7 @@
 #include "eacDlg.h"
 #include "gradDlg.h"
 #include "molisoStartDlg.h"
+#include "ewaldsphere.h"
 #include <locale.h>
 int rev=433;
 int atmax,smx,dummax,egal;
@@ -259,6 +260,7 @@ MyWindow::MyWindow( QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(pa
   xdMenu->addAction(xdlsmAct); 
   xdMenu->addAction(xdpropAct); 
   xdMenu->addAction(tidyCPSAct); 
+  xdMenu->addAction("Show Reciprocal Space",this,SLOT(rezi()));
   xdMenu->addSeparator();
   xdMenu->addAction("Find all uniq peaks in Fo-Fc map > iso surface value.",this,SLOT(addMoreQPeaks())) ;
 //  xdMenu->addAction("Calculate pdf of an atom.",this,SLOT(pdfDlg()));
@@ -2519,17 +2521,18 @@ void MyWindow::editXDmas(){
     mas.open(QIODevice::WriteOnly|QIODevice::Text);
     mas.write(editor->toPlainText().toLatin1(),editor->toPlainText().length());
     mas.close();
-    delete editor;
+//    delete editor;
   }else
     if (editor->document()->isModified()){
   if ((QMessageBox::question(this,"Save changes to xd.mas?","Save changes to xd.mas?",QMessageBox::Save|QMessageBox::Discard)==QMessageBox::Save)){
     mas.open(QIODevice::WriteOnly|QIODevice::Text);
     mas.write(editor->toPlainText().toLatin1(),editor->toPlainText().length());
     mas.close();
-    delete editor;
+  //  delete editor;
   }
   } 
   delete highlighter;
+  delete editor;
 }
 
 void MyWindow::findNext(){
@@ -2676,7 +2679,7 @@ void MyWindow::about(){
 		 "Please visit the following web sites: <a href=\"http://ewald.ac.chemie.uni-goettingen.de/index.html\">"
 		 "Dr. Birger Dittrich's Work Group</a> and "
 		 "<a href=\"http://www.molecoolqt.de\">MoleCoolQt site</a><p>"
-		 "If you find bugs, typos or have any suggestions then contact me under <a href=\"mailto:chuebsch@moliso.de\">chuebsc@moliso.de</a>"
+		 "If you find bugs, typos or have any suggestions then contact me under <a href=\"mailto:chuebsch@moliso.de\">chuebsch@moliso.de</a>"
                  "<p> This is Revision %1 from: %2 <br> The Version of Qt used is: %3.<br>%4<p>This program was build: %5").arg(rev).arg(date).arg(qVersion ()).arg(openGLVersion).arg(bau_datum));
 
 }
@@ -3192,6 +3195,12 @@ void MyWindow::editAtomColor(){
     cubeGL->updateGL();
     //reloadFiles();
 
+}
+
+void MyWindow::rezi(){
+  extern molekul mol;
+  EwaldSphereDlg e(dirName,&mol);
+  e.exec();
 }
 
 void MyWindow::load_fchk(QString fileName){
@@ -5422,7 +5431,9 @@ void MyWindow::makePDFGrid(INP atom, double proba,bool c2,bool c3,bool c4){
   piso=base*exp(piso);
   printf("Piso= %g\n",piso);
   QString fac("testpdf.face");
+  printf("b%9.4g%9.4g%9.4g%9.4g%9.4g%9.4g%9.4g%9.4g%9.4g%9.4g\n",atom.c111,atom.c112,atom.c113,atom.c122,atom.c123,atom.c133,atom.c222,atom.c223,atom.c233,atom.c333);
   tensmul(atom);
+  printf("a%9.4g%9.4g%9.4g%9.4g%9.4g%9.4g%9.4g%9.4g%9.4g%9.4g\n",atom.c111,atom.c112,atom.c113,atom.c122,atom.c123,atom.c133,atom.c222,atom.c223,atom.c233,atom.c333);
 
   if (cubeGL->moliso){
     glDeleteLists(cubeGL->moliso->mibas,6);

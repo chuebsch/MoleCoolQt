@@ -29,7 +29,7 @@ LIBS += -lGLU
 }}
 # Input
 HEADERS += MyWindow.h cubeGL.h molekul.h invariomDlg.h inames.h  XDDlg.h highlighter.h doxd.h eacDlg.h \
-moliso.h gradDlg.h molisoStartDlg.h fourmcq.h psewidget.h
+moliso.h gradDlg.h molisoStartDlg.h fourmcq.h psewidget.h ewaldsphere.h
 SOURCES += main.cpp MyWindow.cpp cubeGL.cpp molekul.cpp invariomDlg.cpp inames.cpp XDDlg.cpp  highlighter.cpp \
-doxd.cpp eacDlg.cpp moliso.cpp gradDlg.cpp molisoStartDlg.cpp fourmcq.cpp psewidget.cpp
+doxd.cpp eacDlg.cpp moliso.cpp gradDlg.cpp molisoStartDlg.cpp fourmcq.cpp psewidget.cpp ewaldsphere.cpp
 RESOURCES += icons.qrc

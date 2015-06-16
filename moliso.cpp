@@ -741,7 +741,7 @@ void MolIso::simpelGrad(void){
             (data[(i+1)+(j  )*breite+(k-1)*bh]-hier)+//5  
             -1*(data[(i-1)+(j+1)*breite+(k-1)*bh]-hier)+//6  
             (data[(i+1)+(j+1)*breite+(k-1)*bh]-hier)+//8  
-            -1*(data[(i-1)+(j-1)*breite+(k-1)*bh]-hier)+//9 
+            -1*(data[(i-1)+(j-1)*breite+(k  )*bh]-hier)+//9 
             (data[(i+1)+(j-1)*breite+(k  )*bh]-hier)+//11 
             -1*(data[(i-1)+(j  )*breite+(k  )*bh]-hier)+//12 	    					
             (data[(i+1)+(j  )*breite+(k  )*bh]-hier)+//14 
@@ -761,7 +761,7 @@ void MolIso::simpelGrad(void){
             (data[(i-1)+(j+1)*breite+(k-1)*bh]-hier)+//6  
             (data[(i  )+(j+1)*breite+(k-1)*bh]-hier)+//7  
             (data[(i+1)+(j+1)*breite+(k-1)*bh]-hier)+//8  
-            -1*(data[(i-1)+(j-1)*breite+(k-1)*bh]-hier)+//9  
+            -1*(data[(i-1)+(j-1)*breite+(k  )*bh]-hier)+//9  
             -1*(data[(i  )+(j-1)*breite+(k  )*bh]-hier)+//10 
             -1*(data[(i+1)+(j-1)*breite+(k  )*bh]-hier)+//11
             (data[(i-1)+(j+1)*breite+(k  )*bh]-hier)+//15 
