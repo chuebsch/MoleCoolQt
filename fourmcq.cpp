@@ -977,11 +977,19 @@ void FourMCQ::PDFbyFFT(int i, int options,double proba){
           B[mm][0]= B[m][0];
           B[mm][1]=-B[m][1];
         }
-
         Harm[m][0]=FA*tharm/N5;
         Harm[m][1]=FB*tharm/N5;
         Harm[mm][0]= Harm[m][0];
         Harm[mm][1]=-Harm[m][1];
+        if ((h==k)&&(h==l)&&(h==0)) {
+          printf("%4d%4d%4d A%12g B%12g m%d mm%d %g\n",h,k,l,B[m][0]*N5,B[m][1]*N5,m,mm,p);
+          B[m][0]=1000.0/N5;
+          B[m][1]=0.0;
+          printf("%4d%4d%4d A%12g B%12g m%d mm%d\n",h,k,l,B[m][0]*N5,B[m][1]*N5,m,mm);
+          Harm[m][0]=1000.0/N5;
+          Harm[m][1]=0.0;
+        }
+
 
         //          if ((h==0)&&(k==0)&&(l==0)) printf("000 FA %g FB %g ph %g TA %g TB %g  A %g B %g p %g\n",FA,FB,stph,TA,TB,a,b ,p);
         //   }

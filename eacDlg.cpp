@@ -672,6 +672,13 @@ eacGLW->mol->qPeakRad=mol->qPeakRad=d;
 update();	
 }
 
+void EacDlg::CPRadChanged(double d){
+eacGLW->mol->CPRad=mol->CPRad=d;
+  mol->einstellung->setValue("CPRadius",mol->CPRad);
+//settings...
+update();	
+}
+
 void EacDlg::lodChanged(int d){
   eacGLW->mol->LOD=d;
   mol->einstellung->setValue("LevelOfDetail",mol->LOD);
@@ -951,9 +958,23 @@ EacDlg::EacDlg(molekul *externMole){
   glt4->addWidget(qPeakSizeSBx);
   glt4->addWidget(qradl);
 
+  QLabel *cpradl = new QLabel("CP-size");
+  QDoubleSpinBox* CPSizeSBx = new QDoubleSpinBox();
+  CPSizeSBx->setValue(mol->CPRad);
+  CPSizeSBx->setDecimals(3);
+  CPSizeSBx->setMinimum(0.005);
+  CPSizeSBx->setMaximum(0.5);
+  CPSizeSBx->setSingleStep(0.003);
+  CPSizeSBx->setToolTip("QPeak-size");
+  connect(CPSizeSBx,SIGNAL(valueChanged(double)),this,SLOT(CPRadChanged(double)) );
+  QHBoxLayout *gltCP= new QHBoxLayout();
+  gltCP->addWidget(CPSizeSBx);
+  gltCP->addWidget(cpradl);
+
   glt->addLayout(glt2);
   glt->addLayout(glt3);
   glt->addLayout(glt4);
+  glt->addLayout(gltCP);
   globalStuff->setLayout(glt);
   walbx = new QCheckBox("Draw intersecting planes");
 //  walbx->setTristate();

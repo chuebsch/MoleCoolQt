@@ -1104,7 +1104,7 @@ void molekul::atoms(QList<INP> xdinp,const int proba){//ADP Schwingungsellipsoid
 	    Erg[3]=(xdinp[j].uf.m12-xdinp[j].uf.m21)/(2.0*sin(Erg[0]));
 	    Erg[0]*=180.0/M_PI;
 	  } */
-	  glScaled(0.20,0.20,0.20);
+//	  glScaled(0.20,0.20,0.20);
 
 // */
     }//else glScaled(1.0,1.0,1.0);
@@ -1124,16 +1124,21 @@ void molekul::atoms(QList<INP> xdinp,const int proba){//ADP Schwingungsellipsoid
 	if (xdinp[j].atomname[0]=='D') printf("%s %f \n",xdinp[j].atomname,rad);
       }
       else {
+	if (xdinp[j].atomname[0]=='C') {
+          glColor3f(0.0,0.3,0.1);
+//    qDebug()<<__LINE__<<xdinp[j].peakHeight<<pmin,pmax;;
+          ikosa(CPRad);
+        }else{
 	if (xdinp[j].atomname[0]=='D') glColor3f(0.5,0.0,0.5);
 	if (xdinp[j].atomname[0]=='H') glColor3f(0.5,0.0,0.0);
 	if (xdinp[j].atomname[0]=='P') glColor3f(0.0,0.0,0.6);
-	if (xdinp[j].atomname[0]=='C') glColor3f(0.0,0.3,0.1);
 	if (xdinp[j].atomname[0]=='O') glColor3f(0.0,0.3,0.1);
 	if (xdinp[j].atomname[0]=='Q') {
 	 Farbverlauf(xdinp[j].peakHeight,pmin,pmax);
 //    qDebug()<<__LINE__<<xdinp[j].OrdZahl;
 	 }
         ikosa(qPeakRad);
+        }
       }
 
       glPopMatrix(); 
@@ -1782,10 +1787,12 @@ void molekul::loadSettings(){
     tubifiedAtoms=einstellung.value("tubes").toBool();
     bondColorStyle=einstellung.value("singleColorBonds").toBool();
     QVariant variant;
-    if (einstellung.contains("bondColor")){
-    variant = einstellung.value("bondColor");
-    bondColor=variant.value<QColor>();
-    }else{bondColor=QColor("silver");}
+    qPeakRad=einstellung.value("QPeaksRadius",qPeakRad).toDouble();
+    CPRad=einstellung.value("CPRadius",CPRad).toDouble();  
+      if (einstellung.contains("bondColor")){
+        variant = einstellung.value("bondColor");
+        bondColor=variant.value<QColor>();
+      }else{bondColor=QColor("silver");}
     if ((einstellung.value("bondStrength").toDouble())>0.001)
         bondStrength=einstellung.value("bondStrength").toDouble();
 

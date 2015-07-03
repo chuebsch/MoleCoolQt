@@ -457,6 +457,7 @@ class molekul {
   double HAMax;
   double HAWink;
   double qPeakRad;
+  double CPRad;
   int pseSize;
   QCheckBox *bondsBetweenSGs;
   bool polyShapColor;
@@ -471,6 +472,7 @@ class molekul {
   molekul(void) {
     dratom=false;
     qPeakRad=0.05;
+    CPRad=0.025;
     pseSize=10;
     LOD=2;
     VZ.x=0;VZ.y=0;VZ.z=1;

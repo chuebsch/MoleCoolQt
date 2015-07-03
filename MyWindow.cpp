@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=435;
+int rev=436;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -1367,6 +1367,7 @@ statusBar()->addPermanentWidget(balken);
       (QCoreApplication::arguments().at(i).contains(".pdb")) ||
       (QCoreApplication::arguments().at(i).contains(".ent")) ||
       (QCoreApplication::arguments().at(i).contains(".mas")) ||
+      (QCoreApplication::arguments().at(i).contains(".BayMEM")) ||
       (QCoreApplication::arguments().at(i).contains(".inp")) ||
       (QCoreApplication::arguments().at(i).contains(QRegExp(".\\d\\d$"))) ||
       (QCoreApplication::arguments().at(i).contains(QRegExp(".m\\d\\d$"))) ||
@@ -4122,6 +4123,492 @@ void MyWindow::replyFinished2(QNetworkReply* antwort){
 }
 //$filename="/user/birger/NEUE_Datenbank/ToolZ/DABA.txt";
 //
+void MyWindow::load_BayMEM(QString fileName) {
+  INP newAtom;
+  george=true;
+  mol.pmin=10000;
+  mol.pmax=-10000;
+  printf("load BayMEM  %d\n",__LINE__);
+  newAtom.part=0;
+  newAtom.sg=0;
+  someThingToRestore();
+  mol.zelle.symmops.clear();
+  mol.zelle.trans.clear();
+  V3 nl(0,0,0);
+  mol.initDir();
+  QString coo; 
+  cubeGL->drawAx=false;
+  hatlokale=0;
+ 
+//  printf("loadxd %d\n",__LINE__);fflush(stdout);
+    QFile bm(fileName);
+    bm.open(QIODevice::ReadOnly|QIODevice::Text);
+    QStringList bml=QString(bm.readAll()).split('\n');
+    bm.close();
+    qDebug()<<fileName;
+    bool bmat=false;
+    bool symo=false;
+    for (int i=0; i<bml.size();i++){
+    if (bml.at(i).startsWith("endprioratoms"))bmat=false;
+    if (bmat){
+      asymmUnit.append(newAtom); 
+      int k=asymmUnit.size()-1;
+      char typ[3];
+      sscanf(bml.at(i).toStdString().c_str(),"%s%s%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf",
+	     asymmUnit[k].atomname,
+	     typ,
+             &asymmUnit[k].amul,
+	     &asymmUnit[k].frac.x,
+	     &asymmUnit[k].frac.y,
+             &asymmUnit[k].frac.z,
+             &asymmUnit[k].uf.m11,
+             &asymmUnit[k].uf.m22,
+             &asymmUnit[k].uf.m33,
+             &asymmUnit[k].uf.m21,//21 == 12
+             &asymmUnit[k].uf.m31,//31 == 13
+             &asymmUnit[k].uf.m32);//32 == 23 
+      asymmUnit[k].uf.m23=asymmUnit[k].uf.m32;
+      asymmUnit[k].uf.m13=asymmUnit[k].uf.m31;
+      asymmUnit[k].uf.m12=asymmUnit[k].uf.m21;
+      asymmUnit[k].OrdZahl=(asymmUnit[k].amul==0.0)?-1:mol.Get_OZ(typ);
+
+      asymmUnit[k].sg=0;
+      printf("%-10s[%d] %d %9.6f%9.6f%9.6f %9.6f%9.6f%9.6f%9.6f%9.6f%9.6f\n",asymmUnit[k].atomname,k,asymmUnit[k].OrdZahl,asymmUnit[k].frac.x,asymmUnit[k].frac.y,asymmUnit[k].frac.z,
+             asymmUnit[k].uf.m11,
+             asymmUnit[k].uf.m22,
+             asymmUnit[k].uf.m33,
+             asymmUnit[k].uf.m21,//21 == 12
+             asymmUnit[k].uf.m31,//31 == 13
+             asymmUnit[k].uf.m32);//32 == 23 
+    }
+    if (bml.at(i).startsWith("prioratoms"))bmat=true;
+    if (bml.at(i).startsWith("outputbase")){
+      coo=bml.at(i).section(' ',1,1);
+    }
+    if (bml.at(i).startsWith("cell")){
+      sscanf(bml.at(i).toStdString().c_str(),"cell %lf%lf%lf%lf%lf%lf",&mol.zelle.a,&mol.zelle.b,&mol.zelle.c,&mol.zelle.al,&mol.zelle.be,&mol.zelle.ga);
+      setup_zelle();
+    }
+    if (bml.at(i).startsWith("title")) sscanf(bml.at(i).toStdString().c_str(),"title %s",CID);
+    if (bml.at(i).startsWith("endsymmetry")){
+      symo=false;
+      mol.applyLatticeCentro('P',false);
+      for (int si=0; si<mol.zelle.symmops.size(); si++){
+        printf("\n%9g%9g%9g  %9g\n%9g%9g%9g  %9g\n%9g%9g%9g  %9g\n",
+            mol.zelle.symmops.at(si).m11,
+            mol.zelle.symmops.at(si).m12,
+            mol.zelle.symmops.at(si).m13, mol.zelle.trans.at(si).x,
+            mol.zelle.symmops.at(si).m21,
+            mol.zelle.symmops.at(si).m22,
+            mol.zelle.symmops.at(si).m23, mol.zelle.trans.at(si).y,
+            mol.zelle.symmops.at(si).m31,
+            mol.zelle.symmops.at(si).m32,
+            mol.zelle.symmops.at(si).m33, mol.zelle.trans.at(si).z
+
+            );
+      }
+    }
+    if (symo){
+        QString s=bml.at(i).toUpper();
+        s=s.trimmed();
+        s.replace(' ',',');
+        if (!s.contains("Y")){
+		s.replace("X1","X"); 
+		s.replace("X2","Y"); 
+		s.replace("X3","Z"); 
+		s.replace("X4","R"); 
+		s.replace("X5","S"); 
+		s.replace("X6","T"); 
+        qDebug()<<s;
+        }
+        mol.decodeSymmCard(s);
+    }
+    if (bml.at(i).startsWith("symmetry"))symo=true;
+    }
+    qDebug()<<CID<<asymmUnit.size()<<mol.zelle.trans.size()<<mol.zelle.symmops.size()<<mol.zelle.a<<mol.zelle.b<<mol.zelle.c<<mol.zelle.al<<mol.zelle.be<<mol.zelle.ga;
+    if (!coo.isEmpty()){
+      coo.append(".coo");
+      QFile coof(coo);
+      coof.open(QIODevice::ReadOnly|QIODevice::Text);
+      QStringList all=QString(coof.readAll()).split('\n');
+      coof.close();
+      QStringList tok;
+      int maxi=1;
+      for (int ci=0; ci<all.size();ci++){
+        if (all.at(ci).startsWith('#')) continue;
+        tok=all.at(ci).split(QRegExp("\\s+"),QString::SkipEmptyParts);
+        if (tok.size()==9){
+        sprintf(newAtom.atomname,"Q%d",maxi++);
+        newAtom.frac.x=tok.at(0).toDouble();
+        newAtom.frac.y=tok.at(1).toDouble();
+        newAtom.frac.z=tok.at(2).toDouble();
+	newAtom.OrdZahl=-3;
+	newAtom.peakHeight=tok.at(7).toDouble();
+
+        mol.pmin=fmin(mol.pmin,newAtom.peakHeight);
+        mol.pmax=fmax(mol.pmax,newAtom.peakHeight);
+        mol.frac2kart(newAtom.frac,newAtom.kart);
+        asymmUnit.append(newAtom);
+        int k=asymmUnit.size()-1;
+        printf("%-10s[%d] %d %9.6f%9.6f%9.6f\n",asymmUnit[k].atomname,k,asymmUnit[k].OrdZahl,asymmUnit[k].frac.x,asymmUnit[k].frac.y,asymmUnit[k].frac.z);
+        }else
+        if (tok.size()==8){
+        //0.835532    0.209343   -0.004174    (3,-1)       0.0321       -0.5782       -0.4247        0.4156
+        sprintf(newAtom.atomname,"CP%d",maxi++);
+        newAtom.frac.x=tok.at(0).toDouble();
+        newAtom.frac.y=tok.at(1).toDouble();
+        newAtom.frac.z=tok.at(2).toDouble();
+	newAtom.OrdZahl=-2;
+	newAtom.peakHeight=tok.at(4).toDouble();
+        mol.frac2kart(newAtom.frac,newAtom.kart);
+        asymmUnit.append(newAtom);
+        int k=asymmUnit.size()-1;
+        printf("%-10s[%d] %d %9.6f%9.6f%9.6f\n",asymmUnit[k].atomname,k,asymmUnit[k].OrdZahl,asymmUnit[k].frac.x,asymmUnit[k].frac.y,asymmUnit[k].frac.z);
+        }
+      }
+    }
+    /*
+ // printf("loadxd %d\n",__LINE__);fflush(stdout);
+  FILE *adp;
+  double XDVERS=0;
+  {//RES  
+  char line[85]="",dv[20],*dvv;
+  int i=0;
+  mol.initDir();
+  if ((adp=fopen(fileName.toLocal8Bit(),"r"))==NULL) {QMessageBox::critical(this,"Read Error!",QString("read error %1!").arg(fileName),QMessageBox::Ok);exit(2);}  
+  i=0;
+  if (!fastrun) {
+    cubeGL->drawAx=true;
+    hatlokale=1;
+  }
+  while ((!feof(adp))&&(NULL==strstr(line,"Revision"))) {
+    egal=fscanf(adp,"%[^\n\r]\n\r",line);
+ }
+  if (NULL!=strstr(line,"Revision"))
+  sscanf(line,"! <<< X D PARAMETER FILE >>> $Revision: %lf",&XDVERS); 
+  printf("REV:=%g\n",XDVERS);
+  rewind(adp);
+  while ((line[0]!='U')||(line[1]!='S')||(line[2]!='A')||(line[3]!='G')) {
+    egal=fscanf(adp,"%[^\n\r]\n\r",line);
+ } 
+  ;
+  sscanf(line,"%[^0123456789]%d",dv,&atmax);
+  dvv=strrchr(line,' ');
+  sscanf(dvv,"%d",&dummax);
+      while ((i<atmax)&&(!feof(adp))) {
+    egal=fscanf(adp,"%[^\n\r]\n\r",line ); 
+    if ((line[0]>='A')&&(!((line[0]=='N')&&(line[1]=='a')&&(line[2]=='N'))))  {
+      asymmUnit.append(newAtom);
+      sscanf(line,"%s %d%d%d%d%d%d%d%d%d%d%d%lf%lf%lf%lf",
+	     asymmUnit[i].atomname,
+	     &asymmUnit[i].icor1,
+	     &asymmUnit[i].icor2,
+	     &asymmUnit[i].nax,
+	     &asymmUnit[i].nay1,
+	     &asymmUnit[i].nay2,
+	     &asymmUnit[i].jtf,
+	     &asymmUnit[i].atomtype,
+	     &asymmUnit[i].noofkappa,
+	     &asymmUnit[i].lmax,
+	     &asymmUnit[i].isym,
+	     &asymmUnit[i].ichcon,
+	     &asymmUnit[i].frac.x,
+	     &asymmUnit[i].frac.y,
+             &asymmUnit[i].frac.z,
+	     &asymmUnit[i].amul);
+      asymmUnit[i].lflag =(0>asymmUnit[i].nax)?-1:1;
+      asymmUnit[i].nax =(0>asymmUnit[i].nax)?-asymmUnit[i].nax :asymmUnit[i].nax ;
+//      strcpy(dv,asymmUnit[i].atomname);
+//      strtok(dv,"(1234567890+- ");
+      asymmUnit[i].OrdZahl=mol.Get_OZ(atypen.at(asymmUnit[i].atomtype-1));
+      egal=fscanf(adp,"%lf%lf%lf%lf%lf%lf\n\r",&asymmUnit[i].uf.m11,&asymmUnit[i].uf.m22,&asymmUnit[i].uf.m33,
+		      &asymmUnit[i].uf.m21,//21 == 12
+		      &asymmUnit[i].uf.m31,//31 == 13
+		      &asymmUnit[i].uf.m32);//32 == 23 
+      asymmUnit[i].uf.m23=asymmUnit[i].uf.m32;
+      asymmUnit[i].uf.m13=asymmUnit[i].uf.m31;
+      asymmUnit[i].uf.m12=asymmUnit[i].uf.m21;
+      if (asymmUnit[i].jtf>2){ //      printf("%-8s %d\n",asymmUnit[i].atomname,i);
+      egal=fscanf(adp,"%lf%lf%lf%lf%lf\n\r",
+      &asymmUnit[i].c111,
+      &asymmUnit[i].c222,
+      &asymmUnit[i].c333,
+      &asymmUnit[i].c112,
+      &asymmUnit[i].c122);
+      egal=fscanf(adp,"%lf%lf%lf%lf%lf\n\r",
+      &asymmUnit[i].c113,
+      &asymmUnit[i].c133,
+      &asymmUnit[i].c223,
+      &asymmUnit[i].c233,
+      &asymmUnit[i].c123);
+      if (XDVERS < 4.105){
+	
+	asymmUnit[i].c111*=mol.zelle.as*mol.zelle.as*mol.zelle.as;//Ujkl ->cjkl
+	asymmUnit[i].c222*=mol.zelle.bs*mol.zelle.bs*mol.zelle.bs;
+	asymmUnit[i].c333*=mol.zelle.cs*mol.zelle.cs*mol.zelle.cs;
+	asymmUnit[i].c112*=mol.zelle.as*mol.zelle.as*mol.zelle.bs;
+	asymmUnit[i].c122*=mol.zelle.as*mol.zelle.bs*mol.zelle.bs;
+	asymmUnit[i].c113*=mol.zelle.as*mol.zelle.as*mol.zelle.cs;
+	asymmUnit[i].c133*=mol.zelle.as*mol.zelle.cs*mol.zelle.cs;
+	asymmUnit[i].c223*=mol.zelle.bs*mol.zelle.bs*mol.zelle.cs;
+	asymmUnit[i].c233*=mol.zelle.bs*mol.zelle.cs*mol.zelle.cs;
+	asymmUnit[i].c123*=mol.zelle.as*mol.zelle.bs*mol.zelle.cs;
+      } else{
+	asymmUnit[i].c111/=cfac;//
+	asymmUnit[i].c222/=cfac;//
+	asymmUnit[i].c333/=cfac;//
+	asymmUnit[i].c112/=cfac;//
+	asymmUnit[i].c122/=cfac;//
+	asymmUnit[i].c113/=cfac;//
+	asymmUnit[i].c133/=cfac;//
+	asymmUnit[i].c223/=cfac;//
+	asymmUnit[i].c233/=cfac;//
+	asymmUnit[i].c123/=cfac;//
+      }
+
+      }
+   if (asymmUnit[i].jtf>3){ 
+      egal=fscanf(adp,"%lf%lf%lf%lf%lf\n\r",
+      &asymmUnit[i].d1111,
+      &asymmUnit[i].d2222,
+      &asymmUnit[i].d3333,
+      &asymmUnit[i].d1112,
+      &asymmUnit[i].d1222);
+      egal=fscanf(adp,"%lf%lf%lf%lf%lf\n\r",
+      &asymmUnit[i].d1113,
+      &asymmUnit[i].d1333,
+      &asymmUnit[i].d2223,
+      &asymmUnit[i].d2333,
+      &asymmUnit[i].d1122);
+      egal=fscanf(adp,"%lf%lf%lf%lf%lf\n\r",
+      &asymmUnit[i].d1133,
+      &asymmUnit[i].d2233,
+      &asymmUnit[i].d1123,
+      &asymmUnit[i].d1223,
+      &asymmUnit[i].d1233);
+      if (XDVERS < 4.105){
+          asymmUnit[i].d1111*=mol.zelle.as * mol.zelle.as * mol.zelle.as * mol.zelle.as *dfac;////Djklm's whanted
+          asymmUnit[i].d2222*=mol.zelle.bs * mol.zelle.bs * mol.zelle.bs * mol.zelle.bs *dfac;//
+          asymmUnit[i].d3333*=mol.zelle.cs * mol.zelle.cs * mol.zelle.cs * mol.zelle.cs *dfac;//
+          asymmUnit[i].d1112*=mol.zelle.as * mol.zelle.as * mol.zelle.as * mol.zelle.bs *dfac;//
+          asymmUnit[i].d1222*=mol.zelle.as * mol.zelle.bs * mol.zelle.bs * mol.zelle.bs *dfac;//
+          asymmUnit[i].d1113*=mol.zelle.as * mol.zelle.as * mol.zelle.as * mol.zelle.cs *dfac;//
+          asymmUnit[i].d1333*=mol.zelle.as * mol.zelle.cs * mol.zelle.cs * mol.zelle.cs *dfac;//
+          asymmUnit[i].d2223*=mol.zelle.bs * mol.zelle.bs * mol.zelle.bs * mol.zelle.cs *dfac;//
+          asymmUnit[i].d2333*=mol.zelle.bs * mol.zelle.cs * mol.zelle.cs * mol.zelle.cs *dfac;//
+          asymmUnit[i].d1122*=mol.zelle.as * mol.zelle.as * mol.zelle.bs * mol.zelle.bs *dfac;//
+          asymmUnit[i].d1133*=mol.zelle.as * mol.zelle.as * mol.zelle.cs * mol.zelle.cs *dfac;//
+          asymmUnit[i].d2233*=mol.zelle.bs * mol.zelle.bs * mol.zelle.cs * mol.zelle.cs *dfac;//
+          asymmUnit[i].d1123*=mol.zelle.as * mol.zelle.as * mol.zelle.bs * mol.zelle.cs *dfac;//
+          asymmUnit[i].d1223*=mol.zelle.as * mol.zelle.bs * mol.zelle.bs * mol.zelle.cs *dfac;//
+          asymmUnit[i].d1233*=mol.zelle.as * mol.zelle.bs * mol.zelle.cs * mol.zelle.cs *dfac;//
+      } else{
+    asymmUnit[i].d1111/=  dfac;////Djklm's whanted
+    asymmUnit[i].d2222/=  dfac;//
+    asymmUnit[i].d3333/=  dfac;//
+    asymmUnit[i].d1112/=  dfac;//
+    asymmUnit[i].d1222/=  dfac;//
+    asymmUnit[i].d1113/=  dfac;//
+    asymmUnit[i].d1333/=  dfac;//
+    asymmUnit[i].d2223/=  dfac;//
+    asymmUnit[i].d2333/=  dfac;//
+    asymmUnit[i].d1122/=  dfac;//
+    asymmUnit[i].d1133/=  dfac;//
+    asymmUnit[i].d2233/=  dfac;//
+    asymmUnit[i].d1123/=  dfac;//
+    asymmUnit[i].d1223/=  dfac;//
+    asymmUnit[i].d1233/=  dfac;//
+      }
+   }
+   asymmUnit[i].sg=0;
+      i++;
+    }
+  }
+  
+  rewind(adp);
+  while (line[0]!='U') {egal=fscanf(adp,"%[^\n\r]\n\r",line); };
+  egal=fscanf(adp,"%[^\n\r]\n\r",line);
+  egal=fscanf(adp,"%[^\n\r]\n\r",line);
+  for (int j=i;j<dummax+i;j++){
+    asymmUnit.append(newAtom);
+    sprintf(asymmUnit[j].atomname,"DUM%d",j-i);
+    asymmUnit[j].OrdZahl=-1;
+    egal=fscanf(adp,"%lf%lf%lf\n\r",
+	   &asymmUnit[j].frac.x,
+	   &asymmUnit[j].frac.y,
+	   &asymmUnit[j].frac.z);
+   asymmUnit[j].sg=0;
+  }
+  fclose(adp);
+ 
+  smx=atmax+dummax;
+  }
+  {//xd_fft.out
+    QString fftName=masName;
+    fftName.chop(6);
+    fftName.append("xd_fft.out");
+  FILE *fft;
+  char _line[120],_an[15];
+  int ffix=0;
+  int maxxp=0,mima=0;
+  if (NULL!=(fft=fopen(fftName.toLocal8Bit(),"r"))){
+    while ((!feof(fft))&&(NULL==strstr(_line,"HEIGHT"))&&(NULL==strstr(_line,"height"))) {
+      egal=fscanf(fft,"%[^\n\r]\n\r",_line);
+      if (strstr(_line,"THE PROGRAM WILL LOOK FOR")||strstr(_line,"The program will look for")){
+	int maps;
+      egal=sscanf(_line,"%*s %*s %*s %*s %*s %d %*s",&maps);
+      maxxp+=maps;
+      if (mima>0){
+      }
+      mima++;
+      }     
+    }
+    if (!feof(fft)) {
+      egal=fscanf(fft,"%[^\n\r]\n\r",_line);
+      egal=fscanf(fft,"%[^\n\r]\n\r",_line);
+      while ((!feof(fft))&&(NULL==strstr(_line,"----------")) &&(ffix<maxxp)&&((5==sscanf(_line,"%s %*s %*s %*s %*s %*s %lf %lf %lf %lf"
+			,_an
+			,&newAtom.frac.x 
+			,&newAtom.frac.y 
+			,&newAtom.frac.z
+			,&newAtom.peakHeight))||
+	     (5==sscanf(_line,"%*s %s %*s %lf %lf %lf %lf"
+			,_an
+			,&newAtom.frac.x
+			,&newAtom.frac.y
+			,&newAtom.frac.z
+                        ,&newAtom.peakHeight)))) {
+	strncpy(newAtom.atomname,_an,12);
+	newAtom.OrdZahl=-3;
+	asymmUnit.append(newAtom);
+	ffix++;
+	if (!feof(fft))egal=fscanf(fft,"%[^\n\r]\n\r",_line);
+      }      
+    }
+infoKanal->setHtml(QString("%1<font color=green>reading of xd_fft.out is done.</font>").arg(infoKanal->toHtml()));
+  }
+  smx+=ffix;
+  if (fft) fclose(fft);
+  }
+  {//xd_bubble.spf
+    QString spfName=masName;
+    spfName.chop(6);
+    spfName.append("xd_bubble.spf");
+    QFile spff(spfName);
+    spff.open(QIODevice::ReadOnly|QIODevice::Text);
+    QStringList spfs=qstring(spff.readall()).split('\n');
+    for (int i=0; i<spfs.size(); i++){
+      if (spfs.at(i).startsWith("Or")){
+	QStringList ss=spfs.at(i).split(QRegExp("\\s+"));
+	if (ss.size()>3){
+	  newAtom.kart.x = ss.at(1).toDouble();
+	  newAtom.kart.y = ss.at(2).toDouble();
+	  newAtom.kart.z = ss.at(3).toDouble();
+	  strcpy(newAtom.atomname,ss.at(0).toLatin1());
+	  newAtom.OrdZahl=-2;
+	  mol.kart2frac(newAtom.kart,newAtom.frac);
+	  asymmUnit.append(newAtom);
+	}
+      }
+
+    }
+
+
+  
+  }
+  {//xd_rho.cps   
+    QString cpsName=masName;
+    cpsName.chop(6);
+    cpsName.append("xd_rho.cps");
+    char cptp[10],_line[120]="Rho",dummystr[18];
+    FILE *cps;
+    int idxx=0,idx;
+    if (NULL!=(cps=fopen(cpsName.toLocal8Bit(),"r"))){
+      while ((strstr(_line,"Rho"))&&(!feof(cps))) {egals=fgets(_line,92,cps);idxx++;}
+     idxx--;
+      rewind(cps);
+      for (int i=0;i<idxx;i++){
+        egals=fgets(_line,92,cps);
+	if ((6==sscanf(_line,"%d %s %*19c %lf  %lf  %lf  %lf",&idx,cptp,
+		      &newAtom.kart.x,  
+		      &newAtom.kart.y,
+		      &newAtom.kart.z,
+		      &newAtom.peakHeight))||
+	    (5==(sscanf(_line,"%d %s %*19c %lf  %lf  %lf",&idx,cptp,
+				&newAtom.kart.x,  
+				&newAtom.kart.y,
+				&newAtom.kart.z)))){
+	 
+	sprintf(dummystr,"CP%d",idx);
+	strncpy(newAtom.atomname,dummystr,18);
+	newAtom.OrdZahl=-2;
+        mol.kart2frac(newAtom.kart,newAtom.frac);
+	asymmUnit.append(newAtom);
+        }
+      }
+      egals=fgets(_line,92,cps);
+if (!feof(cps)) 
+  for (int i=0; i <idxx;i++) {
+    egals=fgets(_line,92,cps);
+    sscanf(_line,"%*d %*s %*s %lf %lf %lf",
+		    &asymmUnit[smx+i].uf.m21,&asymmUnit[smx+i].uf.m22,&asymmUnit[smx+i].uf.m23);
+    egals=fgets(_line,92,cps);                                                       
+    sscanf(_line,"%*s %lf %lf %lf",                                                  
+		    &asymmUnit[smx+i].uf.m31,&asymmUnit[smx+i].uf.m32,&asymmUnit[smx+i].uf.m33);
+    egals=fgets(_line,92,cps);                                                       
+    sscanf(_line,"%*s %lf %lf %lf",                                                  
+		    &asymmUnit[smx+i].uf.m11,&asymmUnit[smx+i].uf.m12,&asymmUnit[smx+i].uf.m13);
+    asymmUnit[smx+i].uf.m11-=asymmUnit[smx+i].kart.x;
+    asymmUnit[smx+i].uf.m12-=asymmUnit[smx+i].kart.y;
+    asymmUnit[smx+i].uf.m13-=asymmUnit[smx+i].kart.z;
+    asymmUnit[smx+i].uf.m21-=asymmUnit[smx+i].kart.x;
+    asymmUnit[smx+i].uf.m22-=asymmUnit[smx+i].kart.y;
+    asymmUnit[smx+i].uf.m23-=asymmUnit[smx+i].kart.z;
+    asymmUnit[smx+i].uf.m31-=asymmUnit[smx+i].kart.x;
+    asymmUnit[smx+i].uf.m32-=asymmUnit[smx+i].kart.y;
+    asymmUnit[smx+i].uf.m33-=asymmUnit[smx+i].kart.z;
+  }
+smx+=idxx;
+infoKanal->setHtml(QString("%1<font color=green>reading of xd_rho.cps is done.</font>").arg(infoKanal->toHtml()));
+    }
+    if (cps) fclose(cps);
+  }
+  */
+dummax=0;
+smx=atmax=asymmUnit.size();
+  for (int i=0;i<asymmUnit.size();i++) {
+    if (asymmUnit[i].OrdZahl<0) continue;
+    if ((asymmUnit[i].uf.m22==0.0)&&(asymmUnit[i].uf.m33==0.0)){
+      printf("%-8s \n",asymmUnit[i].atomname);
+      asymmUnit[i].u.m11=asymmUnit[i].u.m22=asymmUnit[i].u.m33=asymmUnit[i].uf.m11;
+      asymmUnit[i].u.m12=asymmUnit[i].u.m13=asymmUnit[i].u.m23=asymmUnit[i].u.m21=asymmUnit[i].u.m31=asymmUnit[i].u.m32=0.0;
+    }
+    else {
+
+      Uf2Uo(asymmUnit[i].uf,asymmUnit[i].u);
+/*
+  printf("%-8s %8.5g %8.5g %8.5g %8.5g %8.5g %8.5g\n",asymmUnit[i].atomname,
+		asymmUnit[i].uf.m11,
+		asymmUnit[i].uf.m22,
+		asymmUnit[i].uf.m33,
+		asymmUnit[i].uf.m12,
+		asymmUnit[i].uf.m13,
+		asymmUnit[i].uf.m23); 
+  printf("%-8s %8.5g %8.5g %8.5g %8.5g %8.5g %8.5g\n",asymmUnit[i].atomname,
+		asymmUnit[i].u.m11,
+		asymmUnit[i].u.m22,
+		asymmUnit[i].u.m33,
+		asymmUnit[i].u.m12,
+		asymmUnit[i].u.m13,
+		asymmUnit[i].u.m23);// */
+    }
+  }
+
+  growSymm(donTGrow->isChecked()?0:6);
+//  */
+}
+
+
 void MyWindow::load_xdres(QString fileName) {
   INP newAtom;
 //  printf("loadxd %d\n",__LINE__);
@@ -6708,6 +7195,7 @@ void MyWindow::openFile() {
   QString selectedFilter;
   fileName = QFileDialog::getOpenFileName(this, tr("Open stucture file "), dirName,
 		  "XD-Files (*.res *.inp *.mas);;"
+                  "BayMEM-Input-Files (*.BayMEM);;"
 		  "SHELX-Files (*.res *.ins);;"
                   "MoPro-Files (*.0* *.1* *.2*);;"
 		  "Gaussian COM-Files (*.com);;"
@@ -7233,7 +7721,7 @@ void MyWindow::showPackDlg(){
 }
 
 void MyWindow::loadFile(QString fileName,double GD){//empty
-//  printf("loadFILe %d\n",__LINE__);
+  printf("loadFILe %d\n",__LINE__);
   cubeGL->pause=true;
   cubeGL->rename=false;
   hatlokale=0;
@@ -7279,7 +7767,7 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
   mol.zelle.x4sym.clear();
   mol.zelle.x4.clear();
   mol.zelle.x4tr.clear();
-//  printf("loadFILe %d\n",__LINE__);
+  printf("loadFILe %d\n",__LINE__);
   george=false;
   if (!same) seReAct->setEnabled(false);
   if (!same) seReAct->setVisible(false);
@@ -7290,6 +7778,10 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
   if (!same) togUnit->setEnabled (true );
   QDir::setCurrent ( fileName.left(fileName.lastIndexOf("/") ))  ;
   statusBar()->showMessage(QString(tr("Loading %1").arg(fileName)) );
+  if (fileName.endsWith(".BayMEM", Qt::CaseInsensitive)) {
+    qDebug()<<fileName<<fileName.endsWith(".BayMEM");
+    load_BayMEM(fileName);
+  }
   if (((fileName.endsWith(".ini",Qt::CaseInsensitive)))||((fileName.endsWith(".dat",Qt::CaseInsensitive)))) return;
   if (fileName.endsWith(".mas", Qt::CaseInsensitive)){
     fileName.chop(4);

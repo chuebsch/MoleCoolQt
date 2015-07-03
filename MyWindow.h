@@ -244,6 +244,7 @@ protected:
      void someThingToRestore();
      void load_pdb(QString fileName);
      void load_sheldrick(QString fileName);
+     void load_BayMEM(QString fileName);
      void load_xdres(QString fileName);
      void load_MoPro(QString fileName);
      //void load_Jana(QString fileName);

@@ -109,6 +109,7 @@ Q_OBJECT
   void probaChanged(int ix);//!< The ellipsoid probability is changed to ix.
   void strengthChanged(double d);//!< the bond thicknes is changed to d.
   void QPeakRadChanged(double d);//!< QPeak size is changed to d.
+  void CPRadChanged(double d);//!< CP size is changed to d.
   void lodChanged(int d);//!< the level of detail is changed to d.
   void kradChanged(double d);//!< the colvalent radius is changed to d.   
   void radChanged(double d);//!< the ball radius used in ball stick mode is changed to d.
