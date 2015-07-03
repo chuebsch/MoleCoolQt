@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=436;
+int rev=437;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -4145,7 +4145,7 @@ void MyWindow::load_BayMEM(QString fileName) {
     bm.open(QIODevice::ReadOnly|QIODevice::Text);
     QStringList bml=QString(bm.readAll()).split('\n');
     bm.close();
-    qDebug()<<fileName;
+   // qDebug()<<fileName;
     bool bmat=false;
     bool symo=false;
     for (int i=0; i<bml.size();i++){
@@ -4211,7 +4211,7 @@ void MyWindow::load_BayMEM(QString fileName) {
     if (symo){
         QString s=bml.at(i).toUpper();
         s=s.trimmed();
-        s.replace(' ',',');
+        s.replace(QRegExp("\\s+"),",");
         if (!s.contains("Y")){
 		s.replace("X1","X"); 
 		s.replace("X2","Y"); 
@@ -4219,13 +4219,13 @@ void MyWindow::load_BayMEM(QString fileName) {
 		s.replace("X4","R"); 
 		s.replace("X5","S"); 
 		s.replace("X6","T"); 
-        qDebug()<<s;
+     //   qDebug()<<"symm"<<s;
         }
         mol.decodeSymmCard(s);
     }
     if (bml.at(i).startsWith("symmetry"))symo=true;
     }
-    qDebug()<<CID<<asymmUnit.size()<<mol.zelle.trans.size()<<mol.zelle.symmops.size()<<mol.zelle.a<<mol.zelle.b<<mol.zelle.c<<mol.zelle.al<<mol.zelle.be<<mol.zelle.ga;
+//    qDebug()<<CID<<asymmUnit.size()<<mol.zelle.trans.size()<<mol.zelle.symmops.size()<<mol.zelle.a<<mol.zelle.b<<mol.zelle.c<<mol.zelle.al<<mol.zelle.be<<mol.zelle.ga;
     if (!coo.isEmpty()){
       coo.append(".coo");
       QFile coof(coo);
@@ -7779,7 +7779,7 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
   QDir::setCurrent ( fileName.left(fileName.lastIndexOf("/") ))  ;
   statusBar()->showMessage(QString(tr("Loading %1").arg(fileName)) );
   if (fileName.endsWith(".BayMEM", Qt::CaseInsensitive)) {
-    qDebug()<<fileName<<fileName.endsWith(".BayMEM");
+   // qDebug()<<fileName<<fileName.endsWith(".BayMEM");
     load_BayMEM(fileName);
   }
   if (((fileName.endsWith(".ini",Qt::CaseInsensitive)))||((fileName.endsWith(".dat",Qt::CaseInsensitive)))) return;
