@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=437;
+int rev=438;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -4954,16 +4954,24 @@ infoKanal->setHtml(QString("%1<font color=green>reading of xd_fft.out is done.</
     QString cpsName=masName;
     cpsName.chop(6);
     cpsName.append("xd_rho.cps");
-    char cptp[10],_line[120]="Rho",dummystr[18];
+    char cptp[10],_line[170]="Rho",dummystr[18];
     FILE *cps;
     int idxx=0,idx;
     if (NULL!=(cps=fopen(cpsName.toLocal8Bit(),"r"))){
-      while ((strstr(_line,"Rho"))&&(!feof(cps))) {egals=fgets(_line,92,cps);idxx++;}
+      while ((strstr(_line,"Rho"))&&(!feof(cps))) {egals=fgets(_line,160,cps);idxx++;}
      idxx--;
+     //printf("idx!! %d\n",idxx);
       rewind(cps);
       for (int i=0;i<idxx;i++){
-        egals=fgets(_line,92,cps);
-	if ((6==sscanf(_line,"%d %s %*19c %lf  %lf  %lf  %lf",&idx,cptp,
+        egals=fgets(_line,160,cps);
+//1   (3,-1)   O(1) -C(1)      Rho     -0.799877   6.307969  13.264604           2.888
+//2   (3,-1)   C(1) -N(1)      Rho      3.109743   4.772340   4.761444         2.26238      -19.10129      -16.07322       14.61587        0.59290  2  3
+	if ((6==sscanf(_line,"%d %s %*19c %lf  %lf  %lf  %lf %*f %*f %*f %*f %*d %*d",&idx,cptp,
+		      &newAtom.kart.x,  
+		      &newAtom.kart.y,
+		      &newAtom.kart.z,
+		      &newAtom.peakHeight))||
+            (6==sscanf(_line,"%d %s %*19c %lf  %lf  %lf  %lf",&idx,cptp,
 		      &newAtom.kart.x,  
 		      &newAtom.kart.y,
 		      &newAtom.kart.z,
@@ -4972,7 +4980,7 @@ infoKanal->setHtml(QString("%1<font color=green>reading of xd_fft.out is done.</
 				&newAtom.kart.x,  
 				&newAtom.kart.y,
 				&newAtom.kart.z)))){
-	 
+//	printf("line:%s",_line); 
 	sprintf(dummystr,"CP%d",idx);
 	strncpy(newAtom.atomname,dummystr,18);
 	newAtom.OrdZahl=-2;
@@ -4980,16 +4988,16 @@ infoKanal->setHtml(QString("%1<font color=green>reading of xd_fft.out is done.</
 	asymmUnit.append(newAtom);
         }
       }
-      egals=fgets(_line,92,cps);
+      egals=fgets(_line,160,cps);
 if (!feof(cps)) 
   for (int i=0; i <idxx;i++) {
-    egals=fgets(_line,92,cps);
+    egals=fgets(_line,160,cps);
     sscanf(_line,"%*d %*s %*s %lf %lf %lf",
 		    &asymmUnit[smx+i].uf.m21,&asymmUnit[smx+i].uf.m22,&asymmUnit[smx+i].uf.m23);
-    egals=fgets(_line,92,cps);                                                       
+    egals=fgets(_line,160,cps);                                                       
     sscanf(_line,"%*s %lf %lf %lf",                                                  
 		    &asymmUnit[smx+i].uf.m31,&asymmUnit[smx+i].uf.m32,&asymmUnit[smx+i].uf.m33);
-    egals=fgets(_line,92,cps);                                                       
+    egals=fgets(_line,160,cps);                                                       
     sscanf(_line,"%*s %lf %lf %lf",                                                  
 		    &asymmUnit[smx+i].uf.m11,&asymmUnit[smx+i].uf.m12,&asymmUnit[smx+i].uf.m13);
     asymmUnit[smx+i].uf.m11-=asymmUnit[smx+i].kart.x;
