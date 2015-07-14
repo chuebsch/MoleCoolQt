@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=440;
+int rev=441;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -41,7 +41,7 @@ double fl(double x,double y,double z){
 void MyWindow::setup_zelle(){
 
   packAct->setVisible(true);
-
+/*
   double
           cs_al=(mol.zelle.al==90)?0:cos(mol.zelle.al/g2r),
           cs_be=(mol.zelle.be==90)?0:cos(mol.zelle.be/g2r),
@@ -74,7 +74,8 @@ void MyWindow::setup_zelle(){
   mol.zelle.f2c.m32 = 0.0;
   mol.zelle.f2c.m13 = mol.zelle.c * cs_be;
   mol.zelle.f2c.m23 = tau;
-  mol.zelle.f2c.m33 = mol.zelle.c * mol.zelle.phi / sn_ga;
+  mol.zelle.f2c.m33 = mol.zelle.c * mol.zelle.phi / sn_ga;*/
+  mol.setup_zelle();
  // qDebug()<< mol.zelle.o1.m11<<mol.zelle.o1.m12<<mol.zelle.o1.m13<<"\n"<<mol.zelle.o1.m21<< mol.zelle.o1.m22<<mol.zelle.o1.m23<<"\n"<<mol.zelle.o1.m31<< mol.zelle.o1.m32<<mol.zelle.o1.m33;
 }
 char *egals;

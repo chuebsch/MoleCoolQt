@@ -253,7 +253,7 @@ void MolIso::loadMI(QString fname, bool om, bool mima){
     }
   }  
   }//orte is Empty
-  printf("%d orte.size %d \n",orte.size(),pgns.size());
+  printf("%d orte.size %d  L%g\n",orte.size(),pgns.size(),L);
   balken->setValue(1);
   glNewList(mibas, GL_COMPILE );{                       //Isooberfl"ache ::Perspektive 1     
     glPushMatrix();{
@@ -410,6 +410,8 @@ void MolIso::readJanaHeader(QString fname){
   hoehe=t.nx[1];
   tiefe=t.nx[2];
   bh =t.nxny;
+  printf("%7d %7d %7d %7d %7d %7d %7d %7d \n",    t.nx[0],t.nx[1],t.nx[2],t.nx[3],t.nx[4],t.nx[5],t.nxny,t.nmap);
+  printf("%6.4f %6.4f %6.4f %6.4f %6.4f %6.4f \n",t.dx[0],t.dx[1],t.dx[2],t.dx[3],t.dx[4],t.dx[5]);
   QString M50Name=fname;
   M50Name=M50Name.replace(QRegExp(".m81$"),".m50");
   QFile m50(M50Name);
@@ -491,13 +493,13 @@ void MolIso::readJanaHeader(QString fname){
   x_dim=Vector3(xdk.x,xdk.y,xdk.z);
   y_dim=Vector3(ydk.x,ydk.y,ydk.z);
   z_dim=Vector3(zdk.x,zdk.y,zdk.z);
-  printf("%9.6f %9.6f %9.6f\n",x_dim.x,x_dim.y,x_dim.z);
-  printf("%9.6f %9.6f %9.6f\n",y_dim.x,y_dim.y,y_dim.z);
-  printf("%9.6f %9.6f %9.6f\n\n",z_dim.x,z_dim.y,z_dim.z);
+  printf("first voxel vector  %9.6f %9.6f %9.6f\n",x_dim.x,x_dim.y,x_dim.z);
+  printf("second voxel vector %9.6f %9.6f %9.6f\n",y_dim.x,y_dim.y,y_dim.z);
+  printf("third voxel vector  %9.6f %9.6f %9.6f\n\n",z_dim.x,z_dim.y,z_dim.z);
   printf("%9.6f %9.6f %9.6f\n",x_dim.x*breite,x_dim.y*breite,x_dim.z*breite);
   printf("%9.6f %9.6f %9.6f\n",y_dim.x*hoehe,y_dim.y*hoehe,y_dim.z*hoehe);
-  printf("%9.6f %9.6f %9.6f %9.6f %9.6f %9.6f %9.6f\n", mol.zelle.a ,mol.zelle.b , mol.zelle.c, mol.zelle.al, mol.zelle.be, mol.zelle.ga, mol.zelle.V);
   printf("%9.6f %9.6f %9.6f\n",z_dim.x*tiefe,z_dim.y*tiefe,z_dim.z*tiefe);
+  printf("%9.6f %9.6f %9.6f %9.6f %9.6f %9.6f %9.6f\n", mol.zelle.a ,mol.zelle.b , mol.zelle.c, mol.zelle.al, mol.zelle.be, mol.zelle.ga, mol.zelle.V);
   QString M40Name=fname;
   if (habenatome){
     M40Name=M40Name.replace(QRegExp(".m81$"),".m40");
@@ -868,7 +870,10 @@ void MolIso::CalcVertex( int ix, int iy, int iz ) {
 }
 
 void MolIso::CalcVertexes( void ) {
-//  printf("ooo %g %g %g\n",orig.x,orig.y,orig.z);
+/*  printf("ooo %g %g %g\n",orig.x,orig.y,orig.z);
+  printf("x_dim %g %g %g\n", x_dim.x,  x_dim.y,  x_dim.z);
+  printf("y_dim %g %g %g\n", y_dim.x,  y_dim.y,  y_dim.z);
+  printf("z_dim %g %g %g\n", z_dim.x,  z_dim.y,  z_dim.z);*/
   test3= ((breite-1)/-2.0) *  x_dim + ((hoehe-1)/-2.0) * y_dim + ((tiefe-1)/-2.0) * z_dim + orig;
 //  Vector3 test4 = ((breite-1)) *  x_dim + ((hoehe-1)) * y_dim + ((tiefe-1)) * z_dim + orig;
 
@@ -1238,9 +1243,9 @@ void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &st
     CalcNormals();
     std::cout<<iso_level;
     tf->open(QIODevice::WriteOnly);
-
     tf->write(QString("%1\n").arg(orte.size()).toLatin1());
-    for (int i=0;i<orte.size();i++)
+    for (int i=0;i<orte.size();i++){
+      orte[i].normal=Normalize(orte.at(i).normal);
       tf->write(QString("%1  %2 %3 %4   %5 %6 %7  %8\n")
           .arg(i,-6)
           .arg(orte.at(i).vertex.x,9,'f',6)
@@ -1250,6 +1255,7 @@ void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &st
           .arg(orte.at(i).normal.y,9,'f',6)
           .arg(orte.at(i).normal.z,9,'f',6)
           .arg(orte.at(i).color,12,'f',7).toLatin1());
+    }
     for( int ix=0; ix<breite-1; ix++ )
       for( int iy=0; iy<hoehe-1; iy++ )
         for( int iz=0; iz<tiefe-1; iz++ )

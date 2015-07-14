@@ -81,7 +81,7 @@ inline GLfloat Distance( const Vector3& v1, const Vector3& v2 ) {
   return Norm(v1 - v2);
 }
 inline Vector3& Normalize( Vector3 v ) {
-  if (Norm(v))  return v *= 1.0/sqrt(Norm(v));
+  if (Norm(v)!=0.0)  return v *= 1.0/sqrt(Norm(v));
   else return v*=1.0;
 }
 struct Polygn {

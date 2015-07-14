@@ -92,7 +92,7 @@ void MolisoStartDlg::sfchange(const QString &s){
 void MolisoStartDlg::brwsIso(){
   iedit->setText(QFileDialog::getOpenFileName(this, tr("Open iso-grid file "), iso_grid_name,
 					     "XD-3D-Grid-Files (*.grd);;"
-                         "Jana2006 m81-Files (*.m81);;"
+                                             "Jana2006 m81-Files (*.m81);;"
 					     "GAUSSIAN Cube-Files (*.cube *.cub *.rho_r_3);;" ,&selectedFilter,QFileDialog::DontUseNativeDialog ));
 
   iso_grid_name  = iedit->text();
@@ -100,6 +100,7 @@ void MolisoStartDlg::brwsIso(){
 void MolisoStartDlg::brwsMap(){
   medit->setText(QFileDialog::getOpenFileName(this, tr("Open map-grid file "), map_grid_name,
 					     "XD-3D-Grid-Files (*.grd);;"
+                                             "Jana2006 m81-Files (*.m81);;"
 					     "GAUSSIAN Cube-Files (*.cube *.cub *.rho_r_3);;",&selectedFilter,QFileDialog::DontUseNativeDialog  ));
   map_grid_name  = medit->text();
 }
@@ -121,6 +122,9 @@ void MolisoStartDlg::brwsADP(){
 					      "XD-Files (*.res *.inp *.mas);;"
 					      "SHELX-Files (*.res *.ins);;"
 					      "CIF-Files (*.cif);;"
+                                              "Jana2006-Files (*.m*);;"
+                                              "BayMEM-Input-Files (*.BayMEM);;"
+                                              "MoPro-Files (*.0* *.1* *.2*);;"
 					      "Protein Data Base file (*.pdb *.ent);;" ,&selectedFilter,QFileDialog::DontUseNativeDialog ));
   adp_struct_name= aedit->text();
 }

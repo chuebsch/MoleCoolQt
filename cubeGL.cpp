@@ -3849,6 +3849,16 @@ void CubeGL::draw() {
     ori.y=gmat[1] * sumse.x + gmat[5] * sumse.y + gmat[9] *  sumse.z;
     ori.z=gmat[2] * sumse.x + gmat[6] * sumse.y + gmat[10] * sumse.z;    
   }
+  if ((matoms.isEmpty())&&xdinp.isEmpty()){
+    V3 mittemang=V3(0.5,0.5,0.5);
+    mol.frac2kart(mittemang,sumse);
+    double gmat[16];
+    glGetDoublev( GL_MODELVIEW_MATRIX, (double*)gmat );
+    ori.x=gmat[0] * sumse.x + gmat[4] * sumse.y + gmat[8] *  sumse.z;
+    ori.y=gmat[1] * sumse.x + gmat[5] * sumse.y + gmat[9] *  sumse.z;
+    ori.z=gmat[2] * sumse.x + gmat[6] * sumse.y + gmat[10] * sumse.z;    
+
+  }
 
   QFont nonAtomFont=QFont(myFont);
   nonAtomFont.setPointSize(myFont.pointSize()/2);
@@ -4014,6 +4024,7 @@ void CubeGL::draw() {
     glEnable(GL_BLEND);
   }else{
   glPushMatrix();
+  glEnable(GL_LIGHTING);
   glScaled( L, L, L );
   if (!matoms.isEmpty()) mol.modulated(tvalue,matoms,drawopt,tstep);
 //if (drawBo) mol.modulated

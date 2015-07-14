@@ -1414,7 +1414,7 @@ void molekul::make_bonds(QList<Modulat> xdinp,double t){
     for (int j=0;j<xdinp.size();j++) {
       if (i==j) continue;
       if((xdinp[i].OrdZahl<0)||(xdinp[j].OrdZahl<0)) continue;
-      if ((bondsBetweenSGs->isChecked())&&(xdinp[i].sg!=xdinp[j].sg))continue;
+      if ((!bondsBetweenSGs->isChecked())&&(xdinp[i].sg!=xdinp[j].sg))continue;
 //      if (((xdinp[i].part<0)||(xdinp[j].part<0))&&((xdinp[i].sg!=xdinp[j].sg)||((xdinp[i].part*xdinp[j].part)&&(xdinp[i].part!=xdinp[j].part)))) continue; //part negative
 //      if ((xdinp[i].part>0)&&(xdinp[j].part>0)&&(xdinp[i].part!=xdinp[j].part)) continue; //different part
       if ((xdinp[i].OrdZahl<83)&&(xdinp[j].OrdZahl<83)&&(xdinp[i].OrdZahl>=0)&&(xdinp[j].OrdZahl>=0)){
@@ -3367,23 +3367,39 @@ bool molekul::applyLatticeCentro(const QChar latt,const bool centro){
 
 void molekul::setup_zelle(){  
   const double g2r=180.0/M_PI;
-  zelle.phi=  sqrt(1-(cos(zelle.al/g2r)*cos(zelle.al/g2r))-
-		  (cos(zelle.be/g2r)*cos(zelle.be/g2r))-(cos(zelle.ga/g2r)*cos(zelle.ga/g2r))
-		  +2*cos(zelle.al/g2r)*cos(zelle.be/g2r)*cos(zelle.ga/g2r));
+  double        
+    cs_al = (zelle.al==90)?0:cos(zelle.al/g2r),
+          cs_be = (zelle.be==90)?0:cos(zelle.be/g2r),
+          cs_ga = (zelle.ga==90)?0:cos(zelle.ga/g2r),
+
+          sn_al = (zelle.al==90)?1:sin(zelle.al/g2r),
+          sn_be = (zelle.be==90)?1:sin(zelle.be/g2r),
+          sn_ga = (zelle.ga==90)?1:sin(zelle.ga/g2r);
+
+  zelle.phi=  sqrt(1-(cs_al*cs_al)-(cs_be*cs_be)-(cs_ga*cs_ga) + 2*cs_al*cs_be*cs_ga);
   zelle.V = zelle.a*zelle.b*zelle.c*zelle.phi;
-  zelle.as=zelle.c*zelle.b*sin(zelle.al/g2r)/zelle.V;
-  zelle.bs=zelle.c*zelle.a*sin(zelle.be/g2r)/zelle.V;
-  zelle.cs=zelle.a*zelle.b*sin(zelle.ga/g2r)/zelle.V;
-  const double tau=zelle.c*((cos(zelle.al/g2r)-cos(zelle.be/g2r)*cos(zelle.ga/g2r))/sin(zelle.ga/g2r));
-  zelle.o1.m11=zelle.o[0][0] =zelle.as*zelle.a;
+  zelle.as= zelle.c*zelle.b*sn_al/zelle.V;
+  zelle.bs= zelle.c*zelle.a*sn_be/zelle.V;
+  zelle.cs= zelle.a*zelle.b*sn_ga/zelle.V;
+  const double tau=zelle.c*((cs_al-cs_be*cs_ga)/sn_ga);
+  zelle.o1.m11=zelle.o[0][0] = zelle.as*zelle.a;
   zelle.o1.m12=zelle.o[0][1] = 0.0;
   zelle.o1.m13=zelle.o[0][2] = 0.0;
-  zelle.o1.m21=zelle.o[1][0] = zelle.bs*zelle.b*cos(zelle.ga/g2r);
-  zelle.o1.m22=zelle.o[1][1] = zelle.bs*zelle.b*sin(zelle.ga/g2r);
+  zelle.o1.m21=zelle.o[1][0] = zelle.bs*zelle.b*cs_ga;
+  zelle.o1.m22=zelle.o[1][1] = zelle.bs*zelle.b*sn_ga;
   zelle.o1.m23=zelle.o[1][2] = 0.0;
-  zelle.o1.m31=zelle.o[2][0] = zelle.cs*zelle.c* cos(zelle.be/g2r);
+  zelle.o1.m31=zelle.o[2][0] = zelle.cs*zelle.c* cs_be;
   zelle.o1.m32=zelle.o[2][1] = zelle.cs*tau;
   zelle.o1.m33=zelle.o[2][2] = zelle.cs*zelle.c* zelle.phi / sin(zelle.ga /g2r);
+  zelle.f2c.m11 = zelle.a;
+  zelle.f2c.m21 = 0.0;
+  zelle.f2c.m31 = 0.0;
+  zelle.f2c.m12 = zelle.b * cs_ga;
+  zelle.f2c.m22 = zelle.b * sn_ga;
+  zelle.f2c.m32 = 0.0;
+  zelle.f2c.m13 = zelle.c * cs_be;
+  zelle.f2c.m23 = tau;
+  zelle.f2c.m33 = zelle.c * zelle.phi / sn_ga;
 }
 void molekul::Uf2Uo(const Matrix x, Matrix & y) {
  y=(zelle.o1*x)*transponse(zelle.o1);
