@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=443;
+int rev=444;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -4140,6 +4140,7 @@ void MyWindow::load_BayMEM(QString fileName) {
   QString coo; 
   cubeGL->drawAx=false;
   hatlokale=0;
+  QList<V3>lavec;
  
 //  printf("loadxd %d\n",__LINE__);fflush(stdout);
     QFile bm(fileName);
@@ -4149,12 +4150,14 @@ void MyWindow::load_BayMEM(QString fileName) {
    // qDebug()<<fileName;
     bool bmat=false;
     bool symo=false;
+    bool centr=false;
     for (int i=0; i<bml.size();i++){
     if (bml.at(i).startsWith("endprioratoms"))bmat=false;
     if (bmat){
       asymmUnit.append(newAtom); 
       int k=asymmUnit.size()-1;
       char typ[3];
+      int succ=
       sscanf(bml.at(i).toStdString().c_str(),"%s%s%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf",
 	     asymmUnit[k].atomname,
 	     typ,
@@ -4168,6 +4171,14 @@ void MyWindow::load_BayMEM(QString fileName) {
              &asymmUnit[k].uf.m21,//21 == 12
              &asymmUnit[k].uf.m31,//31 == 13
              &asymmUnit[k].uf.m32);//32 == 23 
+  //    printf("successfully read items: %d\n",succ);
+      if (succ!=12) {
+             asymmUnit[k].uf.m22=
+             asymmUnit[k].uf.m33=
+             asymmUnit[k].uf.m21=//21 == 12
+             asymmUnit[k].uf.m31=//31 == 13
+             asymmUnit[k].uf.m32=0.0;//32 == 23 
+      }
       asymmUnit[k].uf.m23=asymmUnit[k].uf.m32;
       asymmUnit[k].uf.m13=asymmUnit[k].uf.m31;
       asymmUnit[k].uf.m12=asymmUnit[k].uf.m21;
@@ -4191,6 +4202,9 @@ void MyWindow::load_BayMEM(QString fileName) {
       setup_zelle();
     }
     if (bml.at(i).startsWith("title")) sscanf(bml.at(i).toStdString().c_str(),"title %s",CID);
+    if (bml.at(i).startsWith("endcenters")){
+      centr=false;
+    }
     if (bml.at(i).startsWith("endsymmetry")){
       symo=false;
       mol.applyLatticeCentro('P',false);
@@ -4224,7 +4238,17 @@ void MyWindow::load_BayMEM(QString fileName) {
         }
         mol.decodeSymmCard(s);
     }
+    if (centr){
+    QStringList tok=bml.at(i).split(" ",QString::SkipEmptyParts);
+       V3 v=V3(0,0,0);
+        v.x  = tok.at(0).toDouble();
+        v.y  = tok.at(1).toDouble();
+        v.z  = tok.at(2).toDouble();
+        lavec.append(v);
+
+    }
     if (bml.at(i).startsWith("symmetry"))symo=true;
+    if (bml.at(i).startsWith("centers"))centr=true;
     }
 //    qDebug()<<CID<<asymmUnit.size()<<mol.zelle.trans.size()<<mol.zelle.symmops.size()<<mol.zelle.a<<mol.zelle.b<<mol.zelle.c<<mol.zelle.al<<mol.zelle.be<<mol.zelle.ga;
     if (!coo.isEmpty()){
@@ -4238,6 +4262,21 @@ void MyWindow::load_BayMEM(QString fileName) {
       for (int ci=0; ci<all.size();ci++){
         if (all.at(ci).startsWith('#')) continue;
         tok=all.at(ci).split(QRegExp("\\s+"),QString::SkipEmptyParts);
+        if (tok.size()==4){
+        sprintf(newAtom.atomname,"Q%d",maxi++);
+        newAtom.frac.x=tok.at(0).toDouble();
+        newAtom.frac.y=tok.at(1).toDouble();
+        newAtom.frac.z=tok.at(2).toDouble();
+	newAtom.OrdZahl=-3;
+	newAtom.peakHeight=tok.at(3).toDouble();
+
+        mol.pmin=fmin(mol.pmin,newAtom.peakHeight);
+        mol.pmax=fmax(mol.pmax,newAtom.peakHeight);
+        mol.frac2kart(newAtom.frac,newAtom.kart);
+        asymmUnit.append(newAtom);
+        int k=asymmUnit.size()-1;
+        printf("%-10s[%d] %d %9.6f%9.6f%9.6f\n",asymmUnit[k].atomname,k,asymmUnit[k].OrdZahl,asymmUnit[k].frac.x,asymmUnit[k].frac.y,asymmUnit[k].frac.z);
+        }
         if (tok.size()==9){
         sprintf(newAtom.atomname,"Q%d",maxi++);
         newAtom.frac.x=tok.at(0).toDouble();
@@ -4577,6 +4616,20 @@ infoKanal->setHtml(QString("%1<font color=green>reading of xd_rho.cps is done.</
   */
 dummax=0;
 smx=atmax=asymmUnit.size();
+  if (lavec.size()>1){
+    int z=mol.zelle.symuncent=mol.zelle.symmops.size();
+    for (int i=0; i<z;i++){
+      for (int j=0;j<lavec.size();j++){
+        if (fabs(Norm(lavec.at(j)))<0.01) continue;
+        V3 tt = mol.zelle.trans.at(i)+lavec.at(j);
+        tt.x=(tt.x>1)?tt.x-1:tt.x;
+        tt.y=(tt.y>1)?tt.y-1:tt.y;
+        tt.z=(tt.z>1)?tt.z-1:tt.z;
+        mol.zelle.symmops.append(mol.zelle.symmops.at(i));
+        mol.zelle.trans.append(tt);
+        }
+      }
+    }
   for (int i=0;i<asymmUnit.size();i++) {
     if (asymmUnit[i].OrdZahl<0) continue;
     if ((asymmUnit[i].uf.m22==0.0)&&(asymmUnit[i].uf.m33==0.0)){

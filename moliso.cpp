@@ -412,6 +412,7 @@ void MolIso::readJanaHeader(QString fname){
   bh =t.nxny;
   printf("%7d %7d %7d %7d %7d %7d %7d %7d \n",    t.nx[0],t.nx[1],t.nx[2],t.nx[3],t.nx[4],t.nx[5],t.nxny,t.nmap);
   printf("%6.4f %6.4f %6.4f %6.4f %6.4f %6.4f \n",t.dx[0],t.dx[1],t.dx[2],t.dx[3],t.dx[4],t.dx[5]);
+  printf("%7d %7d %7d %7d %7d %7d %7d %7d \n",    t.iorien[0],t.iorien[1],t.iorien[2],t.iorien[3],t.iorien[4],t.iorien[5],t.mapa,t.nsubs);
   QString M50Name=fname;
   M50Name=M50Name.replace(QRegExp(".m81$"),".m50");
   QFile m50(M50Name);
