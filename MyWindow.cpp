@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=444;
+int rev=446;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -3613,7 +3613,7 @@ void MyWindow::load_Jana(QString fileName){
   mol.zelle.trans.clear();
   QString fileBase,m40n,m50n,m80n;
   fileBase=fileName;
-  
+ mol.dimensions=3; 
   if  (fileBase.contains(QRegExp(".m\\d\\d$"))) fileBase.chop(4);
   m40n=fileBase+(".m40");
   m50n=fileBase+(".m50");

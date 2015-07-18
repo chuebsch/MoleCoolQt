@@ -404,15 +404,30 @@ void MolIso::readJanaHeader(QString fname){
   };
   T t;
   jh.read((char*)&t,sizeof(T));
+  int idim=0,ups=0,aua=-1;
+    for (int i=0; i<6; i++) {
+    idim+=ups=t.iorien[i];
+    if (aua>ups) {
+      qDebug()<<"m81 file axis order must be 1 2 3, x y z!";
+    exit(0);  
+    }
+  }
+  if (idim!=6) {
+  qDebug()<<".m81 file suport only for 3 Dimensions, sorry";
+  exit(0);
+  }
+  
   //qDebug()<<t.nx[0]<<t.nx[1]<<t.nx[2]<<t.nxny;
   jh.close();
-  breite=t.nx[0];
-  hoehe=t.nx[1];
-  tiefe=t.nx[2];
+  breite=(t.iorien[0]==1)?t.nx[0]:(t.iorien[1])==1?t.nx[1]:t.nx[2];
+  hoehe =(t.iorien[0]==2)?t.nx[0]:(t.iorien[1])==2?t.nx[1]:t.nx[2];
+  tiefe =(t.iorien[0]==3)?t.nx[0]:(t.iorien[1])==3?t.nx[1]:t.nx[2];
   bh =t.nxny;
   printf("%7d %7d %7d %7d %7d %7d %7d %7d \n",    t.nx[0],t.nx[1],t.nx[2],t.nx[3],t.nx[4],t.nx[5],t.nxny,t.nmap);
   printf("%6.4f %6.4f %6.4f %6.4f %6.4f %6.4f \n",t.dx[0],t.dx[1],t.dx[2],t.dx[3],t.dx[4],t.dx[5]);
-  printf("%7d %7d %7d %7d %7d %7d %7d %7d \n",    t.iorien[0],t.iorien[1],t.iorien[2],t.iorien[3],t.iorien[4],t.iorien[5],t.mapa,t.nsubs);
+  printf("%7d %7d %7d %7d %7d %7d mapa%7d nsubs%7d \n",    t.iorien[0],t.iorien[1],t.iorien[2],t.iorien[3],t.iorien[4],t.iorien[5],t.mapa,t.nsubs);
+  printf("%6.4f %6.4f %6.4f %6.4f %6.4f %6.4f \n",t.xymin[0],t.xymin[1],t.xymin[2],t.xymin[3],t.xymin[4],t.xymin[5]);
+  printf("%6.4f %6.4f %6.4f %6.4f %6.4f %6.4f \n",t.xymin[6],t.xymin[7],t.xymin[8],t.xymin[9],t.xymin[10],t.xymin[11]);
   QString M50Name=fname;
   M50Name=M50Name.replace(QRegExp(".m81$"),".m50");
   QFile m50(M50Name);
@@ -485,12 +500,18 @@ void MolIso::readJanaHeader(QString fname){
     }
   }
   V3 xd,yd,zd,xdk,ydk,zdk;
-  xd=V3(t.dx[0],0,0);
-  yd=V3(0,t.dx[1],0);
-  zd=V3(0,0,t.dx[2]);
-  mol.frac2kart(xd,xdk);
-  mol.frac2kart(yd,ydk);
-  mol.frac2kart(zd,zdk);
+  double 
+    jdx=t.dx[0],
+    jdy=t.dx[1], 
+    jdz=t.dx[2];
+  xd=V3(jdx ,0,0);
+  yd=V3(0, jdy,0);
+  zd=V3(0,0, jdz);
+  int ic1=t.iorien[0],ic2=t.iorien[1];
+  printf("%d %d %d\n",ic1,ic2,6-ic1-ic2);
+  mol.frac2kart((ic1==1)?xd:(ic2==1)?yd:zd,xdk);
+  mol.frac2kart((ic1==2)?xd:(ic2==2)?yd:zd,ydk);
+  mol.frac2kart((ic1==3)?xd:(ic2==3)?yd:zd,zdk);
   x_dim=Vector3(xdk.x,xdk.y,xdk.z);
   y_dim=Vector3(ydk.x,ydk.y,ydk.z);
   z_dim=Vector3(zdk.x,zdk.y,zdk.z);

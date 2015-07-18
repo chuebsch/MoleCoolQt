@@ -2800,10 +2800,13 @@ bool molekul::decodeSymmCard(const QString symmCard){
   for (int i=0; i<3; i++){
     sx[i]=0;sy[i]=0;sz[i]=0;t[i]=0;
     if (axe.at(i).contains("-X")) {sx[i]=-1.0;axe[i].remove("-X");}
+    else if (axe.at(i).contains("+X")) {sx[i]=1.0;axe[i].remove("+X");}
     else if (axe.at(i).contains("X")) {sx[i]=1.0;axe[i].remove("X");}
     if (axe.at(i).contains("-Y")) {sy[i]=-1.0;axe[i].remove("-Y");}
+    else if (axe.at(i).contains("+Y")) {sy[i]=1.0;axe[i].remove("+Y");}
     else if (axe.at(i).contains("Y")) {sy[i]=1.0;axe[i].remove("Y");}
     if (axe.at(i).contains("-Z")) {sz[i]=-1.0;axe[i].remove("-Z");}
+    else if (axe.at(i).contains("+Z")) {sz[i]=1.0;axe[i].remove("+Z");}
     else if (axe.at(i).contains("Z")) {sz[i]=1.0;axe[i].remove("Z");}
     if (axe.at(i).endsWith("+")) axe[i].remove("+");
     if (axe.at(i).contains("/")) {
