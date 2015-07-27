@@ -92,7 +92,8 @@ void MolisoStartDlg::sfchange(const QString &s){
 void MolisoStartDlg::brwsIso(){
   iedit->setText(QFileDialog::getOpenFileName(this, tr("Open iso-grid file "), iso_grid_name,
 					     "XD-3D-Grid-Files (*.grd);;"
-                                             "Jana2006 m81-Files (*.m81);;"
+                         "Jana2006 m81-Files (*.m81);;"
+                         "BayMEM binary file (*.raw);;"
 					     "GAUSSIAN Cube-Files (*.cube *.cub *.rho_r_3);;" ,&selectedFilter,QFileDialog::DontUseNativeDialog ));
 
   iso_grid_name  = iedit->text();

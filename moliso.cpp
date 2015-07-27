@@ -387,7 +387,69 @@ void MolIso::DrawPlys(){
     default : printf("wrong polygonshape! %d\n",pgns.at(i).n);glEnd();break;
     }
   }		
-}	
+}
+
+void MolIso::readBMBinaryHeader(QString fname){
+    QFile bmb(fname);
+    bmb.open(QIODevice::ReadOnly);
+    // OPEN (81, ERR=900, FILE=rhofile, FORM='UNFORMATTED', STATUS='OLD')
+    //READ (81, ERR=17) SDim, RDim, (nNVox(Cnt1), Cnt1=1,ndim), (Cell(Cnt1), Cnt1=1,CellCon)!everything must be read in one read
+    //!                                                                   command so we have to try unil we get the right answer
+    //write (*,*) SDim, RDim, nNVox(1:SDim),Cell
+    //int maxdim=8;
+    int ndim=7;
+    int sdim;
+    //int cellcon=7;
+    //int nvox[8];
+    int xxx;
+    double cell[7];
+    bmb.read((char*)&xxx,sizeof(int));
+    if (xxx!=76) {qDebug()<<"Unsuported Format (only 3D!)"; exit(0);}
+    //qDebug()<<xxx<<5*sizeof(int)+7*sizeof(double);
+    bmb.read((char*)&sdim,sizeof(int));
+
+    if (sdim!=3) {qDebug()<<"Unsuported Format (only 3D!)"; exit(0);}
+    //qDebug()<<sdim;
+    bmb.read((char*)&ndim,sizeof(int));
+    bmb.read((char*)&breite,sizeof(int));
+    bmb.read((char*)&hoehe,sizeof(int));
+    bmb.read((char*)&tiefe,sizeof(int));
+
+    for (int i=0; i<7; i++)
+        bmb.read((char*)&cell[i],sizeof(double));
+
+    extern molekul mol;
+    mol.zelle.a=cell[0];
+    mol.zelle.b=cell[1];
+    mol.zelle.c=cell[2];
+    mol.zelle.al=cell[3];
+    mol.zelle.be=cell[4];
+    mol.zelle.ga=cell[5];
+    mol.setup_zelle();
+    if( fabs(cell[6]-mol.zelle.V)>0.001) {
+
+        qDebug()<< "File reports Volume "<<cell[6]<<"A^3 which is differnt from expected value "<< mol.zelle.V;
+    }
+    bh=breite*hoehe;
+    capVx=mol.zelle.V/(bh*tiefe);
+    V3 xd,yd,zd,xdk,ydk,zdk;
+    double
+      jdx=1.0/breite,
+      jdy=1.0/hoehe,
+      jdz=1.0/tiefe;
+
+    xd=V3(jdx ,0,0);
+    yd=V3(0, jdy,0);
+    zd=V3(0,0, jdz);
+    mol.frac2kart(xd,xdk);
+    mol.frac2kart(yd,ydk);
+    mol.frac2kart(zd,zdk);
+    x_dim=Vector3(xdk.x,xdk.y,xdk.z);
+    y_dim=Vector3(ydk.x,ydk.y,ydk.z);
+    z_dim=Vector3(zdk.x,zdk.y,zdk.z);
+
+}
+
 
 void MolIso::readJanaHeader(QString fname){
   QFile jh(fname);
@@ -594,6 +656,12 @@ void MolIso::readXDGridHeader(QString fname,int &fileType){
     fileType=81;
     return;
   }
+    if (fname.endsWith(".raw",Qt::CaseInsensitive)) {
+      readBMBinaryHeader(fname);
+      GHName=fname;
+      fileType=7202;//my room number in BT
+      return;
+    }
   QFile gh(fname);
 
   printf("%s\n",fname.toStdString().c_str());
@@ -1180,6 +1248,25 @@ void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &st
     }
     cubeiso=true;
     isoF.close(); 
+  }else if(fileType==7202){
+      isoF.open(QIODevice::ReadOnly);
+      int head;
+
+      cubeiso=true;
+      char *headdummy;
+      isoF.read((char*) &head,sizeof(int));
+      headdummy=(char*) malloc(head);
+      isoF.read((char*) headdummy, head);
+      isoF.read((char*) &head,sizeof(int));
+      isoF.read((char*) &head,sizeof(int));
+      double *doubdat=(double*)malloc(head);
+      isoF.read((char*) doubdat,head);
+      isoF.close();
+      head/=sizeof(double);
+
+      //qDebug()<<head<<bh*tiefe;
+      for (int i = 0; i<head; i++)
+      data.append(doubdat[i]/capVx);
   }
   if (mapFileName==isoFileName) {
     mdata=data;
@@ -1234,6 +1321,25 @@ void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &st
     }
     cubeiso=true;
     mapF.close(); 
+    }if(fileType==7202){
+        mapF.open(QIODevice::ReadOnly);
+        int head;
+
+        //cubeiso=true;
+        char *headdummy;
+        mapF.read((char*) &head,sizeof(int));
+        headdummy=(char*) malloc(head);
+        mapF.read((char*) headdummy, head);
+        mapF.read((char*) &head,sizeof(int));
+        mapF.read((char*) &head,sizeof(int));
+        double *doubdat=(double*)malloc(head);
+        mapF.read((char*) doubdat,head);
+        mapF.close();
+        head/=sizeof(double);
+
+        //qDebug()<<head<<bh*tiefe;
+        for (int i = 0; i<head; i++)
+        mdata.append(doubdat[i]/capVx);
     }
   }
   if (data.size()!=mdata.size()) {
