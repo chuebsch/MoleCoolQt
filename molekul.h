@@ -125,9 +125,16 @@ inline Matrix inverse (Matrix A){
   if (D==0) return A;
   D=1.0/D;
   return Matrix(
-          D*(A.m22*A.m33-A.m23*A.m32),D*(A.m13*A.m32-A.m12*A.m33),D*(A.m21*A.m23-A.m13*A.m22),
-          D*(A.m23*A.m31-A.m21*A.m33),D*(A.m11*A.m33-A.m13*A.m31),D*(A.m13*A.m21-A.m11*A.m23),
-          D*(A.m21*A.m32-A.m22*A.m31),D*(A.m12*A.m31-A.m11*A.m32),D*(A.m11*A.m22-A.m12*A.m21));
+          D*(A.m22*A.m33-A.m23*A.m32),//x11
+          D*(A.m13*A.m32-A.m12*A.m33),//x21
+          D*(A.m21*A.m23-A.m13*A.m22),//x31
+          D*(A.m23*A.m31-A.m21*A.m33),//x12
+          D*(A.m11*A.m33-A.m13*A.m31),//x22
+          D*(A.m13*A.m21-A.m11*A.m23),//x32
+          D*(A.m21*A.m32-A.m22*A.m31),//x13
+          D*(A.m12*A.m31-A.m11*A.m32),//x23
+          D*(A.m11*A.m22-A.m12*A.m21)//x33
+          );
 }
 
 
@@ -384,7 +391,7 @@ inline bool operator < (const INP &a1, const INP &a2){
 }
 struct Cell {
   double a,b,c,al,be,ga;
-  double phi,V,as,bs,cs,lambda;
+  double phi,V,as,bs,cs,als,bes,gas,lambda;
   bool centro;
   QChar lattis;
   int symuncent;
@@ -395,6 +402,7 @@ struct Cell {
   double o[3][3];
   Matrix o1;
   Matrix f2c;
+  Matrix G,Gi;
   V3 qr,qi,qvec;//real, imaginary and q-vector
 };
 struct bindi{

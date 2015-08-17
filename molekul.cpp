@@ -3384,6 +3384,14 @@ void molekul::setup_zelle(){
   zelle.as= zelle.c*zelle.b*sn_al/zelle.V;
   zelle.bs= zelle.c*zelle.a*sn_be/zelle.V;
   zelle.cs= zelle.a*zelle.b*sn_ga/zelle.V;
+  double
+  cosra=(cs_be*cs_ga-cs_al)/(sn_be*sn_ga),
+  cosrb=(cs_al*cs_ga-cs_be)/(sn_al*sn_ga),
+  cosrg=(cs_al*cs_be-cs_ga)/(sn_al*sn_be);
+
+  zelle.als=acos(cosra)*g2r;
+  zelle.bes=acos(cosrb)*g2r;
+  zelle.gas=acos(cosrg)*g2r; 
   const double tau=zelle.c*((cs_al-cs_be*cs_ga)/sn_ga);
   zelle.o1.m11=zelle.o[0][0] = zelle.as*zelle.a;
   zelle.o1.m12=zelle.o[0][1] = 0.0;
@@ -3403,6 +3411,23 @@ void molekul::setup_zelle(){
   zelle.f2c.m13 = zelle.c * cs_be;
   zelle.f2c.m23 = tau;
   zelle.f2c.m33 = zelle.c * zelle.phi / sn_ga;
+  zelle.G.m11=zelle.a*zelle.a;
+  zelle.G.m22=zelle.b*zelle.b;
+  zelle.G.m33=zelle.c*zelle.c;
+  zelle.G.m12=zelle.G.m21=zelle.a*zelle.b*cs_ga;
+  zelle.G.m13=zelle.G.m31=zelle.a*zelle.c*cs_be;
+  zelle.G.m23=zelle.G.m32=zelle.b*zelle.c*cs_al;
+
+  zelle.Gi.m11=zelle.as*zelle.as;
+  zelle.Gi.m22=zelle.bs*zelle.bs;
+  zelle.Gi.m33=zelle.cs*zelle.cs;
+  zelle.Gi.m12=zelle.Gi.m21=zelle.as*zelle.bs*cosrg;
+  zelle.Gi.m13=zelle.Gi.m31=zelle.as*zelle.cs*cosrb;
+  zelle.Gi.m23=zelle.Gi.m32=zelle.bs*zelle.cs*cosra;
+  Matrix test=zelle.G*zelle.Gi;
+  printf("G   \n%12.6f %12.6f %12.6f\n%12.6f %12.6f %12.6f\n%12.6f %12.6f %12.6f\n",zelle.G.m11,zelle.G.m12,zelle.G.m13,zelle.G.m12,zelle.G.m22,zelle.G.m23,zelle.G.m13,zelle.G.m23,zelle.G.m33 );
+  printf("Gi  \n%12.6f %12.6f %12.6f\n%12.6f %12.6f %12.6f\n%12.6f %12.6f %12.6f\n",zelle.Gi.m11,zelle.Gi.m12,zelle.Gi.m13,zelle.Gi.m12,zelle.Gi.m22,zelle.Gi.m23,zelle.Gi.m13,zelle.Gi.m23,zelle.Gi.m33 );
+  printf("G*Gi\n%12.6f %12.6f %12.6f\n%12.6f %12.6f %12.6f\n%12.6f %12.6f %12.6f\n",test.m11,test.m12,test.m13,test.m12,test.m22,test.m23,test.m13,test.m23,test.m33 );//*/
 }
 void molekul::Uf2Uo(const Matrix x, Matrix & y) {
  y=(zelle.o1*x)*transponse(zelle.o1);

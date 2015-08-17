@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=446;
+int rev=447;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -74,7 +74,7 @@ void MyWindow::setup_zelle(){
   mol.zelle.f2c.m32 = 0.0;
   mol.zelle.f2c.m13 = mol.zelle.c * cs_be;
   mol.zelle.f2c.m23 = tau;
-  mol.zelle.f2c.m33 = mol.zelle.c * mol.zelle.phi / sn_ga;*/
+  mol.zelle.f2c.m33 = mol.zelle.c * mol.zelle.phi / sn_ga;// */
   mol.setup_zelle();
  // qDebug()<< mol.zelle.o1.m11<<mol.zelle.o1.m12<<mol.zelle.o1.m13<<"\n"<<mol.zelle.o1.m21<< mol.zelle.o1.m22<<mol.zelle.o1.m23<<"\n"<<mol.zelle.o1.m31<< mol.zelle.o1.m32<<mol.zelle.o1.m33;
 }
@@ -1357,9 +1357,11 @@ statusBar()->addPermanentWidget(balken);
     for (int i=argui;i<argc;i++){
         if ((isonam.isEmpty())&&((QCoreApplication::arguments().at(i).contains(".grd")) ||
           (QCoreApplication::arguments().at(i).contains(".cube")) ||
+          (QCoreApplication::arguments().at(i).contains(".raw")) ||
           (QCoreApplication::arguments().at(i).contains(".m81")))) {isonam=QCoreApplication::arguments().at(i);}
         if ((!isonam.isEmpty())&&((QCoreApplication::arguments().at(i).contains(".grd")) ||
           (QCoreApplication::arguments().at(i).contains(".cube")) ||
+          (QCoreApplication::arguments().at(i).contains(".raw")) ||
           (QCoreApplication::arguments().at(i).contains(".m81")))) {mapnam=QCoreApplication::arguments().at(i);
         if (mapnam==isonam)mapnam="";
         }
@@ -2105,8 +2107,9 @@ void MyWindow::genMoliso(QString isoname, QString mapname, QString lfcename, QSt
   atom1Pos=asymmUnit[0].kart;
   atom2Pos=asymmUnit[1].kart;
   atom3Pos=asymmUnit[2].kart;
+  //printf("%s %s %s \n",asymmUnit[0].atomname, asymmUnit[1].atomname, asymmUnit[2].atomname);
   }
-//  printf("%10g %10g %10g   %10g %10g %10g   %10g %10g %10g\n",atom1Pos.x,atom1Pos.y,atom1Pos.z,atom2Pos.x,atom2Pos.y,atom2Pos.z,atom3Pos.x,atom3Pos.y,atom3Pos.z);
+  //printf("%10g %10g %10g   %10g %10g %10g   %10g %10g %10g\n",atom1Pos.x,atom1Pos.y,atom1Pos.z,atom2Pos.x,atom2Pos.y,atom2Pos.z,atom3Pos.x,atom3Pos.y,atom3Pos.z);
 
 
   if ((adpName.isEmpty())||(adpName.contains('!'))){
@@ -5014,7 +5017,7 @@ infoKanal->setHtml(QString("%1<font color=green>reading of xd_fft.out is done.</
     if (NULL!=(cps=fopen(cpsName.toLocal8Bit(),"r"))){
       while ((strstr(_line,"Rho"))&&(!feof(cps))) {egals=fgets(_line,160,cps);idxx++;}
      idxx--;
-     //printf("idx!! %d\n",idxx);
+    printf("idx!! %d\n",idxx);
       rewind(cps);
       for (int i=0;i<idxx;i++){
         egals=fgets(_line,160,cps);
@@ -9558,13 +9561,13 @@ void MyWindow::growSymm(int packart,int packatom){
       qDebug()<<kl1<<"Can not find the first three atoms of the grid-file in file. Please check that these files have to be from the same refinement.";
       exit(0);
     }
-    while (((kl2=fabs(l2-Norm(xdinp[idx2].kart-xdinp[idx3].kart)))>0.002)&&(idx3<atmax)) {
+    while (((kl2=fabs(l2-Norm(xdinp[idx2].kart-xdinp[idx3].kart)))>0.002)&&(idx3<atmax-1)) {
       kl2min=(kl2<kl2min)?kl2:kl2min;
       idx3++;
       idx3%=atmax;
     }
     if ((kl1>0.002)||(kl2>0.002)) {
-      qDebug()<<kl1<<kl2<<"Can not find the first three atoms of the grid-file in file. Please check that these files have to be from the same refinement.";
+      qDebug()<<kl1<<kl2<<"Can not find the first three atoms of the grid-file in file. Please check that these files have to be from the same refinement."<<idx1<<idx2;
       exit(0);
     }
     t1=xdinp[idx1].kart-xdinp[idx2].kart;
@@ -9636,11 +9639,11 @@ void MyWindow::growSymm(int packart,int packatom){
     //mol.uz7k=mol.uz7k+cubeGL->moliso->orig;
   }
 
- // printf("growSymm line %d\n",__LINE__);
   double dim=dimension(xdinp);
   if ((asymmUnit.isEmpty())&&(!masymmUnit.isEmpty()))  dim=mdimension(matoms);
-  if ((Norm(atom1Pos)==0)&&(Norm(atom2Pos)==0)) cubeGL->L=100.0/dim;
-//  qDebug()<<dim<<cubeGL->L;
+//  if ((Norm(atom1Pos)==0)&&(Norm(atom2Pos)==0)) cubeGL->L=100.0/dim;
+  if (cubeGL->moliso==NULL) cubeGL->L=100.0/dim; 
+  qDebug()<<dim<<cubeGL->L;
   /*if (mol.nListe>2) {
     free(mol.vL);
     mol.vL=NULL;
