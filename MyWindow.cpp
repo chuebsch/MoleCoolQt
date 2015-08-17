@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=447;
+int rev=448;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -9643,7 +9643,7 @@ void MyWindow::growSymm(int packart,int packatom){
   if ((asymmUnit.isEmpty())&&(!masymmUnit.isEmpty()))  dim=mdimension(matoms);
 //  if ((Norm(atom1Pos)==0)&&(Norm(atom2Pos)==0)) cubeGL->L=100.0/dim;
   if (cubeGL->moliso==NULL) cubeGL->L=100.0/dim; 
-  qDebug()<<dim<<cubeGL->L;
+  //qDebug()<<dim<<cubeGL->L;
   /*if (mol.nListe>2) {
     free(mol.vL);
     mol.vL=NULL;

@@ -404,11 +404,11 @@ void MolIso::readBMBinaryHeader(QString fname){
     int xxx;
     double cell[7];
     bmb.read((char*)&xxx,sizeof(int));
-    if (xxx!=76) {qDebug()<<"Unsuported Format (only 3D!)"; exit(0);}
+    if (xxx!=76) {qDebug()<<"Unsuported Format "<<xxx; exit(0);}
     //qDebug()<<xxx<<5*sizeof(int)+7*sizeof(double);
     bmb.read((char*)&sdim,sizeof(int));
 
-    if (sdim!=3) {qDebug()<<"Unsuported Format (only 3D!)"; exit(0);}
+    if (sdim!=3) {qDebug()<<"Unsuported Format (only 3D!)"<<sdim; exit(0);}
     //qDebug()<<sdim;
     bmb.read((char*)&ndim,sizeof(int));
     bmb.read((char*)&breite,sizeof(int));
