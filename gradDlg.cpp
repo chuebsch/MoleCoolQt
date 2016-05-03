@@ -24,22 +24,24 @@ GradDlg::GradDlg(MolIso *_mi){
   isola->addWidget(ivL);
   isola->addWidget(isoValuesEdit);
   mmcb = new QCheckBox("Fix Min/Max");
-  mmcb->setCheckState(Qt::Unchecked);
+  mmcb->setCheckState((mi->fixmax==mi->fixmin)?Qt::Unchecked:Qt::Checked);
   
   mxedit = new QDoubleSpinBox();
   mxedit->setSingleStep(0.1);
   mxedit->setDecimals(5);
   mxedit->setMaximum(1e99);
   mxedit->setMinimum(-1e99);
-  mxedit->setValue(0.0001);
+  mxedit->setValue((mi->fixmax==mi->fixmin)?0.0001:mi->fixmax);
 
   miedit = new QDoubleSpinBox();
   miedit->setSingleStep(0.1);
   miedit->setDecimals(5);
   miedit->setRange(-1e99, 1e99);
-  miedit->setValue(-0.0001);
-  mxedit->setEnabled(false);
-  miedit->setEnabled(false);
+  miedit->setValue((mi->fixmax==mi->fixmin)?-0.0001:mi->fixmin);
+  if (mi->fixmax==mi->fixmin){
+    mxedit->setEnabled(false);
+    miedit->setEnabled(false);
+  }
   QHBoxLayout *mimala = new QHBoxLayout();
   mimala->addWidget(mmcb);
   mimala->addWidget(miedit);

@@ -378,7 +378,8 @@ struct INP {
   int resiNr;
   char ami3[5];
   char shortname[strgl];
-  double peakHeight;
+  double peakHeight,lap,eps;
+  int cptype;
   int molindex;
   int sg;
   double screenX,screenY;
@@ -475,7 +476,8 @@ class molekul {
   bool applyLatticeCentro(const QChar latt,const bool centro);
   QString symmcode2human(QStringList brachSymm);
   QString encodeSymm(int s);
-  bool tubifiedAtoms,bondColorStyle,dratom;
+  bool tubifiedAtoms,bondColorStyle;
+  int dratom;
   void loadSettings();
   molekul(void) {
     dratom=false;

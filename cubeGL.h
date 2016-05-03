@@ -173,7 +173,6 @@ protected:
 
 private:  
   int imFokus;
-
   QString selectedFilter;
   double mlsc;
   int labToMove;

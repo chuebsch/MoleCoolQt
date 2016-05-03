@@ -469,13 +469,14 @@ void MolIso::readJanaHeader(QString fname){
   int idim=0,ups=0,aua=-1;
     for (int i=0; i<6; i++) {
     idim+=ups=t.iorien[i];
+  //  printf("%d\n",ups);
     if (aua>ups) {
       qDebug()<<"m81 file axis order must be 1 2 3, x y z!";
     exit(0);  
     }
   }
-  if (idim!=6) {
-  qDebug()<<".m81 file suport only for 3 Dimensions, sorry";
+  if (idim!=21) {
+  qDebug()<<".m81 file suport only for 3 Dimensions, sorry"<<idim;
   exit(0);
   }
   

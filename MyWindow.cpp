@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=448;
+int rev=449;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -910,7 +910,7 @@ createRenameWgd();
   sLabel = new QLabel;
   sLabel->setFrameStyle(QFrame::Panel  );
   sLabel->setLineWidth(2);
-  sLabel->setText("MolecoolQt a viewing program for molecular strutures");
+  sLabel->setText("MolecoolQt a viewing program for molecular structures");
   balken = new QProgressBar(this);
   balken->hide();
 statusBar()->addPermanentWidget(balken);
@@ -1314,6 +1314,7 @@ statusBar()->addPermanentWidget(balken);
   }
   mol.einstellung->endGroup();
   move( pos);
+  isomax=isomin=666.666;
   if( size.isNull() )
     resize(640, 480);
   else
@@ -1383,6 +1384,12 @@ statusBar()->addPermanentWidget(balken);
       if (QCoreApplication::arguments().at(i).contains("-GrowDist")) {
 	i++;	
 	if (i<=argc) gd=QCoreApplication::arguments().at(i).toDouble(); else gd=-1;
+      }
+      if (QCoreApplication::arguments().at(i).contains("-ifix")) {
+        i++;
+        if (i<=argc) isomin = QCoreApplication::arguments().at(i).toDouble(); else isomin = 666.666; 
+        i++;
+        if (i<=argc) isomax = QCoreApplication::arguments().at(i).toDouble(); else isomax = 666.666; 
       }
       if (QCoreApplication::arguments().at(i).contains("-f")){
 //	**33##
@@ -1978,6 +1985,8 @@ void MyWindow::genMoliso(QString isoname, QString mapname, QString lfcename, QSt
     cubeGL->moliso=NULL;
   }
   cubeGL->moliso = new MolIso();
+  cubeGL->moliso->fixmax=isomax;
+  cubeGL->moliso->fixmin=isomin;
   connect(cubeGL->moliso,SIGNAL(bigmessage(const QString &)),this,SLOT(infoKanalNews(const QString&)));
   cubeGL->moliso->L=cubeGL->L;
   cubeGL->moliso->orig=Vector3(0.0,0.0,0.0);
@@ -4127,6 +4136,10 @@ void MyWindow::replyFinished2(QNetworkReply* antwort){
 }
 //$filename="/user/birger/NEUE_Datenbank/ToolZ/DABA.txt";
 //
+//void MyWindow::listCP(){
+
+//}
+
 void MyWindow::load_BayMEM(QString fileName) {
   INP newAtom;
   george=true;
@@ -4302,11 +4315,14 @@ void MyWindow::load_BayMEM(QString fileName) {
         newAtom.frac.y=tok.at(1).toDouble();
         newAtom.frac.z=tok.at(2).toDouble();
 	newAtom.OrdZahl=-2;
+        
+        newAtom.cptype=tok.at(3).section(QRegExp("[)(,]+"),2,2).toInt()+3;
+        newAtom.lap=tok.at(5).toDouble()+tok.at(6).toDouble()+tok.at(7).toDouble();
 	newAtom.peakHeight=tok.at(4).toDouble();
         mol.frac2kart(newAtom.frac,newAtom.kart);
         asymmUnit.append(newAtom);
         int k=asymmUnit.size()-1;
-        printf("%-10s[%d] %d %9.6f%9.6f%9.6f\n",asymmUnit[k].atomname,k,asymmUnit[k].OrdZahl,asymmUnit[k].frac.x,asymmUnit[k].frac.y,asymmUnit[k].frac.z);
+        printf("%-10s[%d] %d %9.6f%9.6f%9.6f %12.8f\n",asymmUnit[k].atomname,k,asymmUnit[k].OrdZahl,asymmUnit[k].frac.x,asymmUnit[k].frac.y,asymmUnit[k].frac.z,asymmUnit[k].peakHeight);
         }
       }
     }
@@ -7930,11 +7946,13 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
     if (!same) togElli->setVisible ( true );
     if (!same) cubeGL->drawUz=true;
     if ((xxx=fopen(fileName.toLocal8Bit().data(),"r"))==NULL) {fprintf(stderr,"Can't open %s!!!\n",fileName.toLocal8Bit().data());exit(2);}      
+    do{
     egal=fscanf(xxx,"%[^\n\r]\n\r",test);
+    printf("test %s\n",test);
+    } while (test[0]=='!');
     fclose(xxx);
 //  printf("loadFILe %d\n",__LINE__);
-    if (strcmp(test,"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")) 
-    { 
+    if (strstr(test,"XDPARFILE")==NULL){ 
       load_sheldrick(fileName);}
     else    
       load_xdres(fileName);    
@@ -8841,7 +8859,26 @@ void MyWindow::SDM(QStringList &brauchSymm,int packart){
   }
 
   qSort(sdm.begin(),sdm.end());
+  for (int i=0; i<sdm.size(); i++){
+   if ((asymmUnit[sdm.at(i).a1].OrdZahl==-2)&&(asymmUnit[sdm.at(i).a2].OrdZahl>-1)&&(sdm.at(i).d<1.5)&&(asymmUnit[sdm.at(i).a1].cptype==2)){
+     bool done=false;
+     for (int j=0; j<sdm.size(); j++){
+       if ((!done)&&(sdm.at(i).a1==sdm.at(j).a1)&&(sdm.at(j).a2!=sdm.at(i).a2)&&(asymmUnit[sdm.at(j).a2].OrdZahl>-1)&&(sdm.at(j).d<1.5)){
+         printf("%-6s=%-6s %-5s (3,%d) %9.6f %6.2f d1=%9.6fAng d2=%9.6fAng\n",
+             asymmUnit[sdm.at(i).a2].atomname,
+             asymmUnit[sdm.at(j).a2].atomname,
 
+             asymmUnit[sdm.at(i).a1].atomname,
+             asymmUnit[sdm.at(i).a1].cptype-3,
+             asymmUnit[sdm.at(i).a1].peakHeight,
+             asymmUnit[sdm.at(i).a1].lap,
+             sdm.at(i).d,
+             sdm.at(j).d); 
+         done=true;
+       }
+     }
+   }
+  }
   QList<int> flags;
   for (int i=0; i<asymmUnit.size(); i++) flags.append((asymmUnit.at(i).OrdZahl==-3)?-1:1);
   for (int i=0; i<sdm.size(); i++)

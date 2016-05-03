@@ -232,6 +232,7 @@ protected:
      QDialog *packdlg;
      int maxResi,filtered;
      char CID[80];
+     double isomax,isomin;
      double scalePic;
      QString dirName;
      QString saveName;
