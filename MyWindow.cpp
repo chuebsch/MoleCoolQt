@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=449;
+int rev=451;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -4775,7 +4775,7 @@ void MyWindow::load_xdres(QString fileName) {
   }
   fclose(mas);
   }
- // printf("loadxd %d\n",__LINE__);fflush(stdout);
+//  printf("loadxd %d\n",__LINE__);fflush(stdout);
   FILE *adp;
   double XDVERS=0;
   {//RES  
@@ -4791,6 +4791,7 @@ void MyWindow::load_xdres(QString fileName) {
   while ((!feof(adp))&&(NULL==strstr(line,"Revision"))) {
     egal=fscanf(adp,"%[^\n\r]\n\r",line);
  }
+//  printf("loadxd %d\n",__LINE__);fflush(stdout);
   if (NULL!=strstr(line,"Revision"))
   sscanf(line,"! <<< X D PARAMETER FILE >>> $Revision: %lf",&XDVERS); 
   printf("REV:=%g\n",XDVERS);
@@ -7802,7 +7803,7 @@ void MyWindow::showPackDlg(){
 }
 
 void MyWindow::loadFile(QString fileName,double GD){//empty
-  printf("loadFILe %d\n",__LINE__);
+//  printf("loadFILe %d\n",__LINE__);
   cubeGL->pause=true;
   cubeGL->rename=false;
   hatlokale=0;
@@ -7848,7 +7849,7 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
   mol.zelle.x4sym.clear();
   mol.zelle.x4.clear();
   mol.zelle.x4tr.clear();
-  printf("loadFILe %d\n",__LINE__);
+//  printf("loadFILe %d\n",__LINE__);
   george=false;
   if (!same) seReAct->setEnabled(false);
   if (!same) seReAct->setVisible(false);
@@ -7951,7 +7952,7 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
     printf("test %s\n",test);
     } while (test[0]=='!');
     fclose(xxx);
-//  printf("loadFILe %d\n",__LINE__);
+  //printf("loadFILe %d %d\n",__LINE__,strcmp(test,"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"));
     if (strstr(test,"XDPARFILE")==NULL){ 
       load_sheldrick(fileName);}
     else    
