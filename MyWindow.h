@@ -135,6 +135,7 @@ public slots:
      void zoomOut();
      void rotLeft();
      void rotRight();
+     void makeRotMovi();
      void moveR();
      void moveL();
      void moveU();

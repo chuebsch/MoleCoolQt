@@ -1622,7 +1622,11 @@ void molekul::make_knopf(QList<INP> xd){
   knopf_made=1;
   make_polyeder(xd);
 }
-
+void molekul::entknoten(){
+  if (knopf_made){
+    free(Knopf);
+  }
+}
 void molekul::countMols(QList<INP> & xdinp){
   for (int i=0; i<xdinp.size();i++)
     xdinp[i].molindex=0;

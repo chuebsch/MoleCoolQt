@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=451;
+int rev=452;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -836,7 +836,7 @@ createRenameWgd();
   workMenu->addAction(mveDownAct );
   workMenu->addAction(ydlStartAct);
   workMenu->addAction(ydlStopAct);  
-
+  workMenu->addAction("make a short rotation movie",this,SLOT(makeRotMovi()));
   tMovieStartAct=workMenu->addAction("Start t movie",this ,SLOT(tMovieStart())); 
   tMovieStopAct=workMenu->addAction("Stop t movie",this,SLOT(tMovieStop()));  
   tMovieStopAct->setShortcut(tr("t"));
@@ -2231,6 +2231,7 @@ void MyWindow::destroyMoliso(){
   smx=0;
   xdinp.clear();
   asymmUnit.clear();
+  mol.entknoten();
   glDeleteLists(cubeGL->moliso->mibas,6);
   if (cubeGL->bas) glDeleteLists(cubeGL->bas,10);
   if (cubeGL->moliso){
@@ -8013,6 +8014,71 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
   cubeGL->pause=false;
   cubeGL->updateGL();
 }
+
+void MyWindow::makeRotMovi(){
+//HD 1280×720;
+#ifndef _WIN32
+  QString selectedFilter;
+  QString fileName = QFileDialog::getSaveFileName(this,
+      QString(tr("Save a rotation movie")),saveName,"mp4-file (*.mp4)",&selectedFilter,QFileDialog::DontUseNativeDialog );
+  int rotation = 0,d,e,f,h;
+  d = cubeGL->_win_width;
+  e = cubeGL->_win_height;
+  f = cubeGL->myFont.pointSize ();
+  h = cubeGL->MLegendFont.pointSize ();
+  double MoviDegreeStepSize=1.0;
+  while (rotation<=(360/ MoviDegreeStepSize)){
+  if (rotation<(360/ MoviDegreeStepSize)) {
+    char fname[255] ;     
+    statusBar()->showMessage(tr("create pic #%1 of 360").arg(rotation+1) );	
+    sprintf(fname, "/tmp/molisoclip%5.3f.ppm", (rotation++)/1000.0 );
+    cubeGL->noWaitLabel=true;
+    cubeGL->paparazi=true;
+    glGetDoublev(GL_MODELVIEW_MATRIX,cubeGL->MM);
+    QPixmap   map = cubeGL->renderPixmap(1280,720);
+    cubeGL->paparazi=false;
+    map.save(fname);
+//    fprintf( stderr, "Saved the image in file %s\n", fname );
+    rotRight();
+    cubeGL->rotY(-MoviDegreeStepSize*-.05);
+    statusBar()->showMessage("please wait until video has been created...");
+  }
+  else{
+    {
+      if (!fileName.isEmpty()) {
+	  system("cat /tmp/molisoclip*.ppm | ppmtoy4m -v 0 >/tmp/MOLISO.MOVIE"); 
+	  system("echo y > /tmp/Y.antwort");
+	  char CONVERTBEFEHL[1500];
+	  sprintf (CONVERTBEFEHL, "ffmpeg -i /tmp/MOLISO.MOVIE -vcodec h264 -pix_fmt yuv420p %s </tmp/Y.antwort", fileName.toStdString().c_str());
+	  system(CONVERTBEFEHL);
+	  system("rm /tmp/molisoclip*.ppm");
+	  system("rm /tmp/Y.antwort");
+	  system("rm /tmp/MOLISO.MOVIE");
+      }
+    }
+//    printf("\n\n'rotation.avi' should be crated now please test it with xanim. Install mjpegtools if not!\n\n");
+   rotation+=3000; 
+  }
+  }
+    //  printf("____myIdle %d\n",rotation);
+  cubeGL->myFont.setPointSize(f);
+  cubeGL->MLegendFont.setPointSize(h);
+  cubeGL->_win_width=d;
+  cubeGL->_win_height=e;
+  cubeGL->noWaitLabel=false;
+  statusBar()->showMessage("Video created!");
+  cubeGL->updateGL();
+#else
+  qDebug()<<"Experimental functionality only on Linux at the moment, sorry.";
+#endif
+
+}
+
+
+
+
+
+
 
 void MyWindow::openDipoleFile() {
   QString fileName;

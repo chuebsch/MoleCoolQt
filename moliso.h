@@ -169,5 +169,6 @@ signals:
   void createSurface(QString &storeFaceName, double proba,double iso99,bool mapping,bool minus99,double maxharm=1.0);
   void legende();
   void Farbverlauf (GLfloat wrt);
+  void cleanUpMem();
 };
 #endif

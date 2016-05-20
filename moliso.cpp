@@ -42,7 +42,6 @@ void MolIso::Pzsort( void) {
 }
 
 
-
 MolIso::MolIso(){
   //Constructor
   cubeiso=false;
@@ -137,6 +136,7 @@ void MolIso::loadMI(QString fname, bool om, bool mima){
   QString all =sf.readAll();
   if (all.isEmpty()) {qDebug()<<"Can not read  "<<fname<<". may be it is empty or corrupt!"; exit(0);}
   QStringList lines = all.split(QRegExp("[\n\r]{1,2}")); 
+  all.clear();
   if (mima){
   min=1e99;
   max=-1e99;
@@ -669,6 +669,7 @@ void MolIso::readXDGridHeader(QString fname,int &fileType){
   gh.open(QIODevice::ReadOnly);
   QString all =gh.readAll();
   QStringList lines = all.split(QRegExp("[\n\r]+"));
+  all.clear();
   if ((lines.size())&&(lines.at(0).contains("3DGRDFIL "))) {
     fileType=0;
     extern molekul mol;
@@ -1207,6 +1208,7 @@ void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &st
       QStringList numbers = QString(isoF.readLine()).split(" ",QString::SkipEmptyParts);
       for (int i=0; i<numbers.size();i++) data.append(numbers.at(i).toDouble());
       p+=numbers.size();
+      numbers.clear();
       b=37*p/pmax;
       if (b!=altb){
         balken->setValue(b);
@@ -1247,6 +1249,7 @@ void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &st
       for (int j=0;j<bh;j++)
           data.append(floatdat[j]);// */
     }
+    free(floatdat);
     cubeiso=true;
     isoF.close(); 
   }else if(fileType==7202){
@@ -1268,6 +1271,8 @@ void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &st
       //qDebug()<<head<<bh*tiefe;
       for (int i = 0; i<head; i++)
       data.append(doubdat[i]/capVx);
+      free(headdummy);
+      free(doubdat);
   }
   if (mapFileName==isoFileName) {
     mdata=data;
@@ -1280,6 +1285,7 @@ void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &st
         QStringList numbers = QString(mapF.readLine()).split(" ",QString::SkipEmptyParts);
         for (int i=0; i<numbers.size();i++) mdata.append(numbers.at(i).toDouble());
         p+=numbers.size();
+        numbers.clear();
         b=38+37*p/pmax;
         if (b!=altb){
           balken->setValue(b);
@@ -1322,6 +1328,7 @@ void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &st
     }
     cubeiso=true;
     mapF.close(); 
+    free(floatdat);
     }if(fileType==7202){
         mapF.open(QIODevice::ReadOnly);
         int head;
@@ -1341,6 +1348,8 @@ void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &st
         //qDebug()<<head<<bh*tiefe;
         for (int i = 0; i<head; i++)
         mdata.append(doubdat[i]/capVx);
+        free(headdummy);
+        free(doubdat);
     }
   }
   if (data.size()!=mdata.size()) {
@@ -1348,20 +1357,19 @@ void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &st
     qApp->quit();
   }
   if (( grad =(Vector3*)malloc(sizeof(Vector3)*bh*tiefe))==NULL) {
-    fprintf(stderr ,"Less Memory(grad)%d !!\n",bh*tiefe);
+    qDebug()<<"Less Memory(grad)";
     exit(1);
   }
-
   if (( nodex =(Node*)malloc(sizeof(Node)*bh*tiefe*2))==NULL) {
-    fprintf(stderr ,"Less Memory(X) %d!!\n",bh*tiefe*2);
+    qDebug()<<"Less Memory(X) ";
     exit(1);  
   } 
   if (( nodey =(Node*)malloc(sizeof(Node)*bh*tiefe*2))==NULL) { 
-    fprintf(stderr ,"Less Memory(Y)!!\n");
+    qDebug()<<"Less Memory(Y)!!";
     exit(1); 
   }
   if (( nodez =(Node*)malloc(sizeof(Node)*bh*tiefe*2))==NULL) {
-    fprintf(stderr ,"Less Memory(Z)!!\n");
+    qDebug()<<"Less Memory(Z)!!";
     exit(1); 
   }
   simpelGrad();	
@@ -1406,15 +1414,16 @@ void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &st
     tf->close();
   }
   balken->setValue(100);
-  free(grad);
-  free(nodex);
-  free(nodey);
-  free(nodez);
+
+  free(grad);grad=NULL;
+  free(nodex);nodex=NULL;
+  free(nodey);nodey=NULL;
+  free(nodez);nodez=NULL;
   mdata.clear();
   data.clear();
   pgns.clear();
   orte.clear();
-}
+  }
 
 
 double MolIso::aborp(double max,double v){
@@ -1523,20 +1532,20 @@ void MolIso::createSurface(QString &storeFaceName, double proba,double iso99,boo
   balken->show();
   balken->setValue(0);
   if (( grad =(Vector3*)malloc(sizeof(Vector3)*bh*tiefe))==NULL) {
-    fprintf(stderr ,"Less Memory(grad)%d !!\n",bh*tiefe);
+    qDebug()<<"Less Memory(grad)";
     exit(1);
   }
 
   if (( nodex =(Node*)malloc(sizeof(Node)*bh*tiefe*2))==NULL) {
-    fprintf(stderr ,"Less Memory(X) %d!!\n",bh*tiefe*2);
+    qDebug()<<"Less Memory(X) ";
     exit(1);  
   } 
   if (( nodey =(Node*)malloc(sizeof(Node)*bh*tiefe*2))==NULL) { 
-    fprintf(stderr ,"Less Memory(Y)!!\n");
+    qDebug()<<"Less Memory(Y)!!";
     exit(1); 
   }
   if (( nodez =(Node*)malloc(sizeof(Node)*bh*tiefe*2))==NULL) {
-    fprintf(stderr ,"Less Memory(Z)!!\n");
+    qDebug()<<"Less Memory(Z)!!";
     exit(1); 
   }
   simpelGrad();
@@ -1630,10 +1639,10 @@ void MolIso::createSurface(QString &storeFaceName, double proba,double iso99,boo
     }
     tf->close();
   }
-  free(grad);
-  free(nodex);
-  free(nodey);
-  free(nodez);
+  free(grad);grad=NULL;
+  free(nodex);nodex=NULL;
+  free(nodey);nodey=NULL;
+  free(nodez);nodez=NULL;
   mdata.clear();
   data.clear();
   pgns.clear();

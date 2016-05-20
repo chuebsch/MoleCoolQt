@@ -645,6 +645,7 @@ class molekul {
   int Get_OZ(const char * S1);
   int Get_OZ(QString S1);
   void setup_zelle();
+  void entknoten();
   void Uf2Uo(const Matrix x, Matrix & y);
   void copyAcol(GLfloat _Acol[108][4],GLfloat _arad[108],int _aStyle[108]);
   void atoms(QList<INP> xdinp,const int proba);
