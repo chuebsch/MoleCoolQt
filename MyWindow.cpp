@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=455;
+int rev=457;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -7849,7 +7849,7 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
   atmax=0;
   smx=0;
   xdinp.clear();
-  QList<INP> miat=asymmunit;
+  QList<INP> miat=asymmUnit;
   asymmUnit.clear();
   masymmUnit.clear();
   matoms.clear();
@@ -7904,16 +7904,18 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
     mol.zelle.ga=90.0;
     mol.adp=0;
     V3 shift=V3(0.,0.,0.);
-    if ((!miat.isEmpty())&&(moliso!=NULL)) {
-    for (int miii=0; miii<miat.siyze();miii++)
-      for (int piii=0; piii<asymmUnit.siyze(); piii++){
+    if ((!miat.isEmpty())&&(cubeGL->moliso!=NULL)) {
+    for (int miii=0; miii<miat.size();miii++)
+      for (int piii=0; piii<asymmUnit.size(); piii++){
       if (!strcmp(miat.at(miii).atomname,asymmUnit.at(piii).atomname)){
       shift=miat.at(miii).kart-asymmUnit.at(piii).kart;
       break;
       }
       }
     }
-    for (int pii=0; pii<asymmUnit.size();pii++) asymmUnit.at(i).kart+= shift;
+    for (int pii=0; pii<asymmUnit.size();pii++) asymmUnit[pii].kart+= shift;
+    for (int wb=0; wb<mol.wombats.size();wb++)
+      for (int pb=0; pb< mol.wombats.at(wb).pth.size(); pb++) mol.wombats[wb].pth[pb]+=shift;
     xdinp=asymmUnit;
     double dim=dimension(xdinp);
     if ((Norm(atom1Pos)==0)&&(Norm(atom2Pos)==0)) 
