@@ -100,13 +100,13 @@ struct Node {
   unsigned char flag; 
   inline operator unsigned char (){return flag;}
 };
+
 class MolIso:public QWidget{
 Q_OBJECT
 signals:
   void bigmessage(const QString &);
  private:
   double capVx;
-  bool cubeiso,cubemap;
   int atomanzahl;
   QVector<Ort> orte;
   QVector<Polygn> pgns;
@@ -143,6 +143,7 @@ signals:
   }
   int breite, hoehe, tiefe,bh;
   bool thisIsPDF;
+  bool cubeiso,cubemap;
   double iso_level;
   int lineNr;
   QList<double> data;

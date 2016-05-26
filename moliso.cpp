@@ -650,6 +650,7 @@ void MolIso::readJanaHeader(QString fname){
   // exit(0);
 }
 
+
 void MolIso::readXDGridHeader(QString fname,int &fileType){
   if (fname.endsWith(".m81",Qt::CaseInsensitive)) {
     readJanaHeader(fname);
@@ -1182,6 +1183,7 @@ void MolIso::MakeElement( int ix, int iy, int iz ,int s1, int s2) {//das ist der
 
 void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &storeFaceName,int fileType){
   thisIsPDF=false;
+
   if (storeFaceName.isEmpty()){
     QTemporaryFile *tf = new  QTemporaryFile();
     tf->open();

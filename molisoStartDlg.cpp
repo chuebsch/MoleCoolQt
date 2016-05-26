@@ -122,10 +122,11 @@ void MolisoStartDlg::brwssFace(){
 void MolisoStartDlg::brwsADP(){
   aedit->setText(QFileDialog::getOpenFileName(this, tr("Open structure-file for ADP's"), adp_struct_name,
 					      "XD-Files (*.res *.inp *.mas);;"
+                                              "XD-Path-Files (*.pth);;"
+                                              "BayMEM-Input-Files (*.BayMEM);;"
 					      "SHELX-Files (*.res *.ins);;"
 					      "CIF-Files (*.cif);;"
                                               "Jana2006-Files (*.m*);;"
-                                              "BayMEM-Input-Files (*.BayMEM);;"
                                               "MoPro-Files (*.0* *.1* *.2*);;"
 					      "Protein Data Base file (*.pdb *.ent);;" ,&selectedFilter,QFileDialog::DontUseNativeDialog ));
   adp_struct_name= aedit->text();

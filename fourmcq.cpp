@@ -636,8 +636,7 @@ void FourMCQ::temp(INP atom, int h, int k,int  l, double &eij, double &TA, doubl
 double prob(double p){
 int ip=(int)p;
 double fp=(p)-ip;
-const double piso[100]={
-  0.0,
+const double piso[100]={0.0,
     9.441911868E-01,//  1
     9.117339937E-01,//  2
     8.846510505E-01,//  3

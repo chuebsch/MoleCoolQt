@@ -1924,6 +1924,114 @@ void molekul::modulated(double t,QList<Modulat> mato,int draw,double steps) {
   }
 }
 
+void molekul::readXDPath(QString fname){
+  QFile gh(fname);
+
+  printf("%s\n",fname.toStdString().c_str());
+  gh.open(QIODevice::ReadOnly);
+  QString all =gh.readAll();
+  QStringList lines = all.split(QRegExp("[\n\r]+"));
+  all.clear();
+  int i=0;
+    extern molekul mol;
+    extern int atmax;
+    extern QList<INP> asymmUnit;
+  if ((lines.size())&&(lines.at(0).contains("PATHFILE "))) {
+    INP newAtom;
+    newAtom.part=0;
+    extern int smx;
+    /*    while (!lines.at(i).contains("Gridpoints")) i++;
+          QStringList tok = lines[i+1].split(' ',QString::SkipEmptyParts);
+          breite= tok.at(0).toInt();
+          hoehe=  tok.at(1).toInt();
+          tiefe=  tok.at(2).toInt();
+          bh = hoehe*breite;
+          tok = lines[i+3].split(' ',QString::SkipEmptyParts);
+          x_dim = Vector3(tok.at(0).toFloat()/breite,0,0);
+          y_dim = Vector3(0,tok.at(1).toFloat()/hoehe,0);
+          z_dim = Vector3(0,0,tok.at(2).toFloat()/tiefe);// */ //lets ignore that
+    while (!lines.at(i).contains("Objects")) i++;
+    {
+      i++;
+      smx=atmax=lines[i].toInt();
+      i++;
+      for (int j=0 ; j<atmax; j++){
+        QStringList tok = lines[i+j].split(' ',QString::SkipEmptyParts);
+        strncpy(newAtom.atomname,tok.at(0).toLatin1(),38);
+        newAtom.kart.x=tok.at(1).toDouble();
+        newAtom.kart.y=tok.at(2).toDouble();
+        newAtom.kart.z=tok.at(3).toDouble();
+        if (tok.contains("ATOM")){
+          char *dv=NULL,dm[80];
+          dv=strcpy(dm,newAtom.atomname);
+          if (dv[0]=='X') dv+=3;
+          strtok(dv,"(1234567890+- ");
+          newAtom.OrdZahl=mol.Get_OZ(dv);
+        } else	
+          newAtom.OrdZahl=-1;
+        asymmUnit.append(newAtom);
+      }
+    }
+
+    /*  if (!smx) {
+        smx=8;    
+        for (int iz=0; iz <2;iz++)
+        for (int iy=0; iy <2;iy++)
+        for (int ix=0; ix <2;ix++) {
+        Vector3 ppp =  ((ix*breite)*x_dim);
+        ppp += ((iy*hoehe)*y_dim);
+        ppp += ((iz*tiefe)*z_dim);
+        newAtom.kart=V3(ppp.x,ppp.y,ppp.z);
+        newAtom.OrdZahl=-1;
+        strcpy(newAtom.atomname,"x");
+        asymmUnit.append(newAtom);
+        }
+        } // */ 
+  }
+  while (!lines.at(i).contains("Curves")) {i++;}
+  {
+    i++;
+    Bpth bpath;
+    int ncurves=lines[i].toInt();
+    int steps=0;
+    printf("number of curves %d\n",ncurves);
+    i++;
+    for (int j=0; j<ncurves; j++){
+      bpath.pth.clear();
+      QStringList tok = lines[i].split(' ',QString::SkipEmptyParts);
+      bpath.start=tok.at(0).toInt();
+      steps= tok.at(1).toInt();
+      printf("j %d start %d steps %d i %d\n",j,bpath.start,steps,i);
+      qDebug()<<lines[i];
+      V3 pos;
+      int end= i+steps+1;
+      for (int k=i+1; k<end; k++){
+        tok = lines[k].split(' ',QString::SkipEmptyParts);
+        pos.x=tok.at(0).toDouble();
+        pos.y=tok.at(1).toDouble();
+        pos.z=tok.at(2).toDouble();
+        bpath.pth.append(pos);
+      }
+    wombats.append(bpath);
+    i+=steps+1;
+    }
+  }
+  gh.close();
+  for (int k=0; k<wombats.size(); k++){
+  printf("start %f %f %f %s\n"
+      ,asymmUnit.at(wombats.at(k).start-1).kart.x 
+      ,asymmUnit.at(wombats.at(k).start-1).kart.y 
+      ,asymmUnit.at(wombats.at(k).start-1).kart.z
+     ,asymmUnit.at(wombats.at(k).start-1).atomname);
+  for (int m=0; m<wombats.at(k).pth.size();m++){
+  printf("%f %f %f #%d\n"
+      ,wombats.at(k).pth.at(m).x
+      ,wombats.at(k).pth.at(m).y
+      ,wombats.at(k).pth.at(m).z,m);
+  }
+  }
+  printf("fine\n");
+}
 void molekul::atoms(CEnvironment atom,int proba){
   /*! Draws atoms as spheres or as ellipses cubes or icosahedrons.
    * @params atoms list of atoms to be drawn .

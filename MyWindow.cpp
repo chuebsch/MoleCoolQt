@@ -2118,7 +2118,7 @@ void MyWindow::genMoliso(QString isoname, QString mapname, QString lfcename, QSt
   atom3Pos=asymmUnit[2].kart;
   //printf("%s %s %s \n",asymmUnit[0].atomname, asymmUnit[1].atomname, asymmUnit[2].atomname);
   }
-  //printf("%10g %10g %10g   %10g %10g %10g   %10g %10g %10g\n",atom1Pos.x,atom1Pos.y,atom1Pos.z,atom2Pos.x,atom2Pos.y,atom2Pos.z,atom3Pos.x,atom3Pos.y,atom3Pos.z);
+//  printf("%10g %10g %10g   %10g %10g %10g   %10g %10g %10g\n",atom1Pos.x,atom1Pos.y,atom1Pos.z,atom2Pos.x,atom2Pos.y,atom2Pos.z,atom3Pos.x,atom3Pos.y,atom3Pos.z);
 
 
   if ((adpName.isEmpty())||(adpName.contains('!'))){
@@ -2146,20 +2146,26 @@ void MyWindow::genMoliso(QString isoname, QString mapname, QString lfcename, QSt
     xdinp=asymmUnit;
     cubeGL->resetENV();
     initLists(xdinp);
+    printf("orig %d %f %f %f\n",cubeGL->moliso->cubeiso,cubeGL->moliso->orig.x,cubeGL->moliso->orig.y,cubeGL->moliso->orig.z);
   }
   else {
     statusBar()->showMessage(tr("loading sructure coordinates...") );
     updateStatusBar();
     setCursor(Qt::BusyCursor);
+    printf("A\n");
     loadFile(adpName);
     cubeGL->moliso->L=cubeGL->L;
+    printf("B\n");
+    printf("orig %d %f %f %f\n",cubeGL->moliso->cubeiso,cubeGL->moliso->orig.x,cubeGL->moliso->orig.y,cubeGL->moliso->orig.z);
 
   }
   if ((lfaceFile.isEmpty())||(lfaceFile.contains('!'))) {
     if (sfaceFile.contains('!'))sfaceFile.clear();
     setCursor(Qt::BusyCursor);
     statusBar()->showMessage(tr("calculating surfaces") );
+    printf("C\n");
     cubeGL->moliso->createSurface(isof,mapf,sfaceFile,fileType);
+    printf("D\n");
     statusBar()->showMessage(tr("surfaces calculatied" ) );
     lfaceFile=sfaceFile;
   }
@@ -7278,6 +7284,7 @@ void MyWindow::openFile() {
   QString selectedFilter;
   fileName = QFileDialog::getOpenFileName(this, tr("Open stucture file "), dirName,
 		  "XD-Files (*.res *.inp *.mas);;"
+		  "XD-Path-Files (*.pth);;"
                   "BayMEM-Input-Files (*.BayMEM);;"
 		  "SHELX-Files (*.res *.ins);;"
                   "MoPro-Files (*.0* *.1* *.2*);;"
@@ -7842,6 +7849,7 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
   atmax=0;
   smx=0;
   xdinp.clear();
+  QList<INP> miat=asymmunit;
   asymmUnit.clear();
   masymmUnit.clear();
   matoms.clear();
@@ -7878,6 +7886,47 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
   if (fileName.endsWith(".fchk", Qt::CaseInsensitive)) {
     load_fchk(fileName);
     fck=true;  
+    cubeGL->drawAx=false;
+    cubeGL->drawUz=false;
+    mol.adp=0;
+    togAxen->setEnabled (false );
+    togUnit->setEnabled (false );
+  }
+  if (fileName.endsWith(".pth", Qt::CaseInsensitive)) {
+    
+    mol.readXDPath(fileName);
+    packAct->setVisible(false);
+    mol.zelle.a=1.0;
+    mol.zelle.b=1.0;
+    mol.zelle.c=1.0;
+    mol.zelle.al=90.0;
+    mol.zelle.be=90.0;
+    mol.zelle.ga=90.0;
+    mol.adp=0;
+    V3 shift=V3(0.,0.,0.);
+    if ((!miat.isEmpty())&&(moliso!=NULL)) {
+    for (int miii=0; miii<miat.siyze();miii++)
+      for (int piii=0; piii<asymmUnit.siyze(); piii++){
+      if (!strcmp(miat.at(miii).atomname,asymmUnit.at(piii).atomname)){
+      shift=miat.at(miii).kart-asymmUnit.at(piii).kart;
+      break;
+      }
+      }
+    }
+    for (int pii=0; pii<asymmUnit.size();pii++) asymmUnit.at(i).kart+= shift;
+    xdinp=asymmUnit;
+    double dim=dimension(xdinp);
+    if ((Norm(atom1Pos)==0)&&(Norm(atom2Pos)==0)) 
+      cubeGL->L=100.0/dim;
+    
+    /*if (mol.nListe>2) {
+      free(mol.vL);
+      mol.vL=NULL;
+      mol.nListe=0;
+      }*/
+    cubeGL->resetENV();
+    initLists(xdinp);
+    cubeGL->setVisible ( true );
     cubeGL->drawAx=false;
     cubeGL->drawUz=false;
     mol.adp=0;

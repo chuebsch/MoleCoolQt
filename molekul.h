@@ -205,6 +205,10 @@ int a1,a2;
 typedef QList<MyBond> Connection;
 typedef QList<MyAtom> CEnvironment;
 
+struct Bpth {
+ int start;
+ QList<V3> pth;  
+};
 #define strgl 40
 struct MAS  {
   int              Atomtyp;         // Zahl des Atomtyps nach Position in der scatteringtable in xd.mas
@@ -452,6 +456,7 @@ class molekul {
   bindi *bd;
   QList<bindi> cBonds;
   QList<PolyEder> polyeders;
+  QList<Bpth> wombats;
   QMap<int,bool> allowedPolyeders;
   QList<int> sfac;
   double maxvolpol,minvolpol;
@@ -479,6 +484,7 @@ class molekul {
   bool tubifiedAtoms,bondColorStyle;
   int dratom;
   void loadSettings();
+  void readXDPath(QString fname);
   molekul(void) {
     dratom=false;
     qPeakRad=0.05;

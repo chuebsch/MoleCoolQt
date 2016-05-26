@@ -4153,7 +4153,25 @@ if (!selectedAtoms.isEmpty()){
     dieDiPole(sumse);
 	glPopMatrix();
       }
-
+      if (!mol.wombats.isEmpty()){
+        glDisable(GL_LIGHTING);
+        glLineWidth(3.5);
+        glEnable(GL_BLEND);
+        glColor4f(tCR,tCG,tCB,tCA);
+        int cntwmbts=0;
+        glPushMatrix();glScaled( L, L, L );
+        for (int wb=0;wb<mol.wombats.size();wb++){
+          glBegin(GL_LINE_STRIP);
+          for (int bp=0; bp<mol.wombats.at(wb).pth.size(); bp++){
+            glVertex3d(mol.wombats.at(wb).pth.at(bp).x,mol.wombats.at(wb).pth.at(bp).y,mol.wombats.at(wb).pth.at(bp).z);
+            cntwmbts++;
+          }
+          glEnd();
+        }
+        glPopMatrix();
+        glEnable(GL_LIGHTING);
+        //printf("%d wombats\n",cntwmbts);
+      }
       if (foubas[0]|foubas[1]|foubas[2]|foubas[3]|foubas[4]) {
         if ((MIS)&&(moliso->mibas)) glClear( GL_DEPTH_BUFFER_BIT);
         glDisable(GL_CULL_FACE);
