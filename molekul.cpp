@@ -1128,6 +1128,12 @@ void molekul::atoms(QList<INP> xdinp,const int proba){//ADP Schwingungsellipsoid
 	if (xdinp[j].atomname[0]=='C') {
           glColor3f(0.0,0.3,0.1);
 //    qDebug()<<__LINE__<<xdinp[j].peakHeight<<pmin,pmax;;
+    switch (xdinp[j].cptype){
+      case 6:glColor3f(0.0,0.7,0.1);break;
+      case 4:glColor3f(0.9,0.8,0.1);break;
+      case 2:glColor3f(0.9,0.1,0.1);break;
+      case 0:break;
+    }
           ikosa(CPRad);
         }else{
 	if (xdinp[j].atomname[0]=='D') glColor3f(0.5,0.0,0.5);
@@ -1932,13 +1938,13 @@ void molekul::readXDPath(QString fname){
   QString all =gh.readAll();
   QStringList lines = all.split(QRegExp("[\n\r]+"));
   all.clear();
+    INP newAtom;
+    newAtom.part=0;
   int i=0;
     extern molekul mol;
     extern int atmax;
     extern QList<INP> asymmUnit;
   if ((lines.size())&&(lines.at(0).contains("PATHFILE "))) {
-    INP newAtom;
-    newAtom.part=0;
     extern int smx;
     /*    while (!lines.at(i).contains("Gridpoints")) i++;
           QStringList tok = lines[i+1].split(' ',QString::SkipEmptyParts);
@@ -1967,8 +1973,15 @@ void molekul::readXDPath(QString fname){
           if (dv[0]=='X') dv+=3;
           strtok(dv,"(1234567890+- ");
           newAtom.OrdZahl=mol.Get_OZ(dv);
-        } else	
-          newAtom.OrdZahl=-1;
+        } else{	
+          if (tok.contains("CP")) {
+            newAtom.OrdZahl=-2;
+            if (tok.size()>5)newAtom.cptype=tok.at(5).section(QRegExp("[)(,]+"),2,2).toInt()+3;
+          }
+          else 
+            newAtom.OrdZahl=-1;
+
+        }
         asymmUnit.append(newAtom);
       }
     }
@@ -1994,15 +2007,15 @@ void molekul::readXDPath(QString fname){
     Bpth bpath;
     int ncurves=lines[i].toInt();
     int steps=0;
-    printf("number of curves %d\n",ncurves);
+//    printf("number of curves %d\n",ncurves);
     i++;
     for (int j=0; j<ncurves; j++){
       bpath.pth.clear();
       QStringList tok = lines[i].split(' ',QString::SkipEmptyParts);
       bpath.start=tok.at(0).toInt();
       steps= tok.at(1).toInt();
-      printf("j %d start %d steps %d i %d\n",j,bpath.start,steps,i);
-      qDebug()<<lines[i];
+    //  printf("j %d start %d steps %d i %d\n",j,bpath.start,steps,i);
+//      qDebug()<<lines[i];
       V3 pos;
       int end= i+steps+1;
       for (int k=i+1; k<end; k++){
@@ -2017,7 +2030,7 @@ void molekul::readXDPath(QString fname){
     }
   }
   gh.close();
-  for (int k=0; k<wombats.size(); k++){
+/*  for (int k=0; k<wombats.size(); k++){
   printf("start %f %f %f %s\n"
       ,asymmUnit.at(wombats.at(k).start-1).kart.x 
       ,asymmUnit.at(wombats.at(k).start-1).kart.y 
@@ -2029,9 +2042,57 @@ void molekul::readXDPath(QString fname){
       ,wombats.at(k).pth.at(m).y
       ,wombats.at(k).pth.at(m).z,m);
   }
+  } //  */
+//  printf("fine\n");
+  {//xd_rho.cps   
+    QString cpsName=fname;
+    cpsName.chop(6);
+    cpsName.append("xd_rho.cps");
+    char cptp[10],_line[170]="Rho",dummystr[18];
+    FILE *cps;
+    int idxx=0,idx;
+    if (NULL!=(cps=fopen(cpsName.toLocal8Bit(),"r"))){
+      for (int aa=0; aa<asymmUnit.size(); aa++){
+      if ((asymmUnit.at(aa).OrdZahl==-2)) {asymmUnit.removeAt(aa);--aa; }
+      }
+      while ((strstr(_line,"Rho"))&&(!feof(cps))) {fgets(_line,160,cps);idxx++;}
+     idxx--;
+    printf("idx!! %d\n",idxx);
+      rewind(cps);
+      for (int i=0;i<idxx;i++){
+        fgets(_line,160,cps);
+//1   (3,-1)   O(1) -C(1)      Rho     -0.799877   6.307969  13.264604           2.888
+//2   (3,-1)   C(1) -N(1)      Rho      3.109743   4.772340   4.761444         2.26238      -19.10129      -16.07322       14.61587        0.59290  2  3
+	if ((6==sscanf(_line,"%d %s %*19c %lf  %lf  %lf  %lf %*f %*f %*f %*f %*d %*d",&idx,cptp,
+		      &newAtom.kart.x,  
+		      &newAtom.kart.y,
+		      &newAtom.kart.z,
+		      &newAtom.peakHeight))||
+            (6==sscanf(_line,"%d %s %*19c %lf  %lf  %lf  %lf",&idx,cptp,
+		      &newAtom.kart.x,  
+		      &newAtom.kart.y,
+		      &newAtom.kart.z,
+		      &newAtom.peakHeight))||
+	    (5==(sscanf(_line,"%d %s %*19c %lf  %lf  %lf",&idx,cptp,
+				&newAtom.kart.x,  
+				&newAtom.kart.y,
+				&newAtom.kart.z)))){
+//	printf("line:%s",_line); 
+	sprintf(dummystr,"CP%d",idx);
+	strncpy(newAtom.atomname,dummystr,18);
+	newAtom.OrdZahl=-2;
+        mol.kart2frac(newAtom.kart,newAtom.frac);
+        newAtom.cptype=QString(cptp).section(QRegExp("[)(,]+"),2,2).toInt()+3;
+	asymmUnit.append(newAtom);
+        }
+      }
+      fgets(_line,160,cps);
+    }
+    if (cps) fclose(cps);
   }
-  printf("fine\n");
 }
+
+
 void molekul::atoms(CEnvironment atom,int proba){
   /*! Draws atoms as spheres or as ellipses cubes or icosahedrons.
    * @params atoms list of atoms to be drawn .

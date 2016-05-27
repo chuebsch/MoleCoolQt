@@ -707,8 +707,9 @@ void MolIso::readXDGridHeader(QString fname,int &fileType){
           if (dv[0]=='X') dv+=3;
           strtok(dv,"(1234567890+- ");
           newAtom.OrdZahl=mol.Get_OZ(dv);
-        } else	
+        } else	{
           newAtom.OrdZahl=-1;
+        }
         asymmUnit.append(newAtom);
       }
     }

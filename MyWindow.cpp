@@ -1371,6 +1371,7 @@ statusBar()->addPermanentWidget(balken);
       (QCoreApplication::arguments().at(i).contains(".pdb")) ||
       (QCoreApplication::arguments().at(i).contains(".ent")) ||
       (QCoreApplication::arguments().at(i).contains(".mas")) ||
+      (QCoreApplication::arguments().at(i).contains(".pth")) ||
       (QCoreApplication::arguments().at(i).contains(".BayMEM")) ||
       (QCoreApplication::arguments().at(i).contains(".inp")) ||
       (QCoreApplication::arguments().at(i).contains(QRegExp(".\\d\\d$"))) ||
@@ -2236,6 +2237,7 @@ void MyWindow::destroyMoliso(){
   atmax=0;
   smx=0;
   xdinp.clear();
+  mol.wombats.clear();
   asymmUnit.clear();
   mol.entknoten();
   glDeleteLists(cubeGL->moliso->mibas,6);
@@ -5066,6 +5068,7 @@ infoKanal->setHtml(QString("%1<font color=green>reading of xd_fft.out is done.</
 	strncpy(newAtom.atomname,dummystr,18);
 	newAtom.OrdZahl=-2;
         mol.kart2frac(newAtom.kart,newAtom.frac);
+        newAtom.cptype=QString(cptp).section(QRegExp("[)(,]+"),2,2).toInt()+3;
 	asymmUnit.append(newAtom);
         }
       }
@@ -7816,7 +7819,8 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
   cubeGL->rename=false;
   hatlokale=0;
   tMovieStop();
-
+//  for (int i=0;  mol.ombats.size(); i++) mol.wombats[i].pth.clear();
+  mol.wombats.clear();
   mol.zelle.qr=mol.zelle.qi=mol.zelle.qvec=V3(0,0,0),
   exportShelxAtTvalueAct->setEnabled(false);
   tMovieStartAct->setEnabled(false);
