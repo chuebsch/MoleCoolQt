@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=461;
+int rev=462;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -377,17 +377,17 @@ MyWindow::MyWindow( QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(pa
   act1->setWhatsThis("Click here to <b>save a screenshot</b> of your stucture. Currently <b>MoleCoolQt</b> can save <b>JPG BMP PPM</b> and <b>PNG</b> files. "
 		     "You can scale the resolution of the stored images by a factor. This factor can be chaged in the 'Settings' menu. "
 		     "A scale factor of 1 result in a image in screen resulution. ");
-  printAct->setStatusTip("Print on the printer");
+/*  printAct->setStatusTip("Print on the printer");
   printAct->setShortcut(tr("Ctrl+P"));
   printAct->setIcon(QIcon(":/images/printer.png"));
   printAct->setWhatsThis("Click here to <b>print</b> your stucture on your printer. The printed picture is scaled to fit the page."
-			 "You can chage the orientation in the print dialog.");
+			 "You can chage the orientation in the print dialog.");*/
   wasistdasAct->setStatusTip("Shows some explanations to some buttons.");  
   wasistdasAct->setShortcut(tr("Shift+F1"));		   
   wasistdasAct->setIcon(QIcon(":/images/whatsthis.png"));
   wasistdasAct->setWhatsThis("Click here to get some <b>helping</b> hints about the functionality of some of the Buttons."
 			     " Please click again here and then on the Button you are interested in.");
-  fileMenu->addAction(printAct);
+  //fileMenu->addAction(printAct);
   helpMenu->addAction(wasistdasAct);
   fileMenu->addSeparator();
   for (int i = 0; i < MaxRecentFiles; ++i)
@@ -896,7 +896,7 @@ createRenameWgd();
   dialogMenu->addAction(unfilterAct);
   QAction *mapAct=dialogMenu->addAction(QIcon(":/images/mapcontrol.png"),"Open map control",this,SLOT(openMapControl()));
   dialogMenu->addSeparator();
-  dialogMenu->addAction("Save current toggel states",cubeGL,SLOT(saveMISettings()));
+  dialogMenu->addAction("Save current toggle states",cubeGL,SLOT(saveMISettings()));
   dialogMenu->addAction("Load toggle states",cubeGL,SLOT(loadMISettings()));
   dialogMenu->addAction(cubeGL->chicken);
   dialogMenu->addAction(cubeGL->quickRot);
@@ -2109,6 +2109,10 @@ void MyWindow::genMoliso(QString isoname, QString mapname, QString lfcename, QSt
   dock3->setFeatures(QDockWidget::DockWidgetMovable|QDockWidget::DockWidgetClosable);
   addDockWidget(Qt::LeftDockWidgetArea, dock3);
   cubeGL->moliso->readXDGridHeader(isof,fileType);
+  if (fileType==-666) {
+  destroyMoliso();
+  return;
+  }
   mol.adp=0;
   if (fileType==81) mol.adp=1;
   cubeGL->L = 100.0/dimension(asymmUnit);

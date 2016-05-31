@@ -671,7 +671,12 @@ void MolIso::readXDGridHeader(QString fname,int &fileType){
   QString all =gh.readAll();
   QStringList lines = all.split(QRegExp("[\n\r]+"));
   all.clear();
-  if ((lines.size())&&(lines.at(0).contains("3DGRDFIL "))) {
+  if ((lines.size())&&(lines.at(0).contains("2DGRDFIL"))) {
+    qDebug()<<"Currently only 3DGRDFILE are suported, sorry!";
+    fileType=-666;
+    return;
+  }
+  if ((lines.size())&&(lines.at(0).contains("3DGRDFIL"))) {
     fileType=0;
     extern molekul mol;
     extern int atmax;
