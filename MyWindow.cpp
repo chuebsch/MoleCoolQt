@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=462;
+int rev=463;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -318,7 +318,7 @@ MyWindow::MyWindow( QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(pa
   }
 
   QAction *wasistdasAct    = new QAction(tr("What is this?"),this);
-  QAction *printAct        = new QAction(tr("Print"),this);
+ // QAction *printAct        = new QAction(tr("Print"),this);
   QAction *zoomInAct       = new QAction(tr("Zoom in"), this);
   QAction *zoomOutAct      = new QAction(tr("Zoom out"), this);
   QAction *rotLeftAct      = new QAction(tr("Rotate left"), this);
@@ -810,8 +810,8 @@ createRenameWgd();
 	  this,SLOT(togglSt()));
   connect(wasistdasAct,SIGNAL(triggered()),
 	  this,SLOT(wasistdas()));
-  connect(printAct,SIGNAL(triggered()),
-	  this,SLOT(printScene()));
+//  connect(printAct,SIGNAL(triggered()),
+//	  this,SLOT(printScene()));
   connect(matrixAct, SIGNAL (triggered ()),
 	  cubeGL, SLOT(setMatrix()));
   connect(invExpAct, SIGNAL (triggered ()),
@@ -1017,7 +1017,7 @@ statusBar()->addPermanentWidget(balken);
   toolFile->addAction(createmoliso);
   toolFile->addAction(noMoliso);
   toolFile->addAction(act1);
-  toolFile->addAction(printAct);
+ // toolFile->addAction(printAct);
   toolFile->addAction(wasistdasAct);
   toolFile->addAction(act3);
   toolFile->addAction(ldipAct);
@@ -2033,7 +2033,7 @@ void MyWindow::genMoliso(QString isoname, QString mapname, QString lfcename, QSt
   swidthSldr->setMinimum(1);
   swidthSldr->setValue(1);
   zebraBox = new QCheckBox("Show contour belts");
-  zebraBox->setChecked(true);
+  zebraBox->setChecked(false);
   zebraBox->setShortcut(tr("F8"));
   QGroupBox *zebraZwinger= new QGroupBox();
   QVBoxLayout *zla= new QVBoxLayout();
@@ -7934,6 +7934,10 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
       mol.vL=NULL;
       mol.nListe=0;
       }*/
+
+    togElli->setVisible ( false );
+    toggleElli(false);
+    cubeGL->setEllipsoidNoUpdate(false);
     cubeGL->resetENV();
     initLists(xdinp);
     cubeGL->setVisible ( true );

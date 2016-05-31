@@ -1967,6 +1967,7 @@ void molekul::readXDPath(QString fname){
         newAtom.kart.x=tok.at(1).toDouble();
         newAtom.kart.y=tok.at(2).toDouble();
         newAtom.kart.z=tok.at(3).toDouble();
+        newAtom.u=Matrix(0.03, 0.0,0.0,0.0,0.03,0.0, 0.0,0.0,0.03);
         if (tok.contains("ATOM")){
           char *dv=NULL,dm[80];
           dv=strcpy(dm,newAtom.atomname);
