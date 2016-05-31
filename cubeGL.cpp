@@ -37,7 +37,8 @@ CubeGL::CubeGL(QWidget *parent,double vang) : QGLWidget(parent) {
    stereo_mode=0;
    awidth=cwid=1;
    milsize=0.03448275862068966*vangle;
-   molisoTransparence=zebra=true;
+   molisoTransparence=true;
+   zebra=false;
    drawAt=drawBo=drawLa=drawHb=true;
    drawAx=drawUz=false;
    moveLab=false;

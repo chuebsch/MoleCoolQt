@@ -16,7 +16,7 @@ SetCompressor /SOLID lzma
 ;General
 
   ;Name and file
-  Name "MoleCoolQt"
+  Name "MoleCoolQt64"
   OutFile "MoleCoolQt64_setup.exe"
 
   ;Default installation folder
@@ -51,7 +51,7 @@ SetCompressor /SOLID lzma
 
   ;Start Menu Folder Page Configuration
   !define MUI_STARTMENUPAGE_REGISTRY_ROOT "HKCU" 
-  !define MUI_STARTMENUPAGE_REGISTRY_KEY "Software\MoleCoolQt" 
+  !define MUI_STARTMENUPAGE_REGISTRY_KEY "Software\MoleCoolQt64" 
   !define MUI_STARTMENUPAGE_REGISTRY_VALUENAME "Start Menu Folder"
   
   !insertmacro MUI_PAGE_STARTMENU Application $StartMenuFolder
@@ -101,7 +101,7 @@ Section "MoleCoolQt" SecMoleCoolQt
 
   
   ;Store installation folder
-  WriteRegStr HKCU "Software\MoleCoolQt" "" $INSTDIR
+  WriteRegStr HKCU "Software\MoleCoolQt64" "" $INSTDIR
   
   ;Create uninstaller
   WriteUninstaller "$INSTDIR\Uninstall.exe"
@@ -110,9 +110,9 @@ Section "MoleCoolQt" SecMoleCoolQt
     
     ;Create shortcuts
     CreateDirectory "$SMPROGRAMS\$StartMenuFolder"
-    CreateShortCut "$SMPROGRAMS\$StartMenuFolder\MoleCoolQt.lnk" "$INSTDIR\molecoolQt.exe"
-    CreateShortCut "$DESKTOP\MoleCoolQt.lnk" "$INSTDIR\molecoolQt.exe"                     
-    CreateShortCut "$QUICKLAUNCH\MoleCoolQt.lnk" "$INSTDIR\molecoolQt.exe"
+    CreateShortCut "$SMPROGRAMS\$StartMenuFolder\MoleCoolQt64.lnk" "$INSTDIR\molecoolQt.exe"
+    CreateShortCut "$DESKTOP\MoleCoolQt64.lnk" "$INSTDIR\molecoolQt.exe"                     
+    CreateShortCut "$QUICKLAUNCH\MoleCoolQt64.lnk" "$INSTDIR\molecoolQt.exe"
     CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Uninstall.lnk" "$INSTDIR\Uninstall.exe"
   
   !insertmacro MUI_STARTMENU_WRITE_END
@@ -159,11 +159,11 @@ Section "Uninstall"
   RMDir "$INSTDIR"
   !insertmacro MUI_STARTMENU_GETFOLDER Application $StartMenuFolder
 
-  Delete "$SMPROGRAMS\$StartMenuFolder\MoleCoolQt.lnk"
-  Delete "$DESKTOP\MoleCoolQt.lnk"
-  Delete "$QUICKLAUNCH\MoleCoolQt.lnk"
+  Delete "$SMPROGRAMS\$StartMenuFolder\MoleCoolQt64.lnk"
+  Delete "$DESKTOP\MoleCoolQt64.lnk"
+  Delete "$QUICKLAUNCH\MoleCoolQt64.lnk"
   Delete "$SMPROGRAMS\$StartMenuFolder\Uninstall.lnk"
   RMDir "$SMPROGRAMS\$StartMenuFolder"
-  DeleteRegKey /ifempty HKCU "Software\MoleCoolQt"
+  DeleteRegKey /ifempty HKCU "Software\MoleCoolQt64"
 
 SectionEnd

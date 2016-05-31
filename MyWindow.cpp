@@ -2095,7 +2095,7 @@ void MyWindow::genMoliso(QString isoname, QString mapname, QString lfcename, QSt
   zla->addWidget(lodset);
   zla->addStretch(999);
   connect(cubeGL,SIGNAL(mconf()),this,SLOT(syncMconf()));
-  cubeGL->togglContours(true);
+  cubeGL->togglContours(false);
   cubeGL->scaleLegend(30);
   cubeGL->setContourCnt(496);
   cubeGL->setContourWidth(1);
@@ -5396,7 +5396,7 @@ void MyWindow::pdfDlg(){
     swidthSldr->setValue(1);
     swidthSldr->setVisible(false);
     zebraBox = new QCheckBox("Show contour belts");
-    zebraBox->setChecked(true);
+    zebraBox->setChecked(false);
   zebraBox->setShortcut(tr("F8"));
   zebraBox->setVisible(false);
   legendSize = new QSlider(Qt::Horizontal);
@@ -5790,7 +5790,7 @@ void MyWindow::makePDFGrids(double proba,bool c2,bool c3,bool c4){
   swidthSldr->setValue(1);
   swidthSldr->setVisible(false);
   zebraBox = new QCheckBox("Show contour belts");
-  zebraBox->setChecked(true);
+  zebraBox->setChecked(false);
   zebraBox->setShortcut(tr("F8"));
   zebraBox->setVisible(false);
   legendSize = new QSlider(Qt::Horizontal);
