@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=465;
+int rev=466;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -1345,7 +1345,13 @@ statusBar()->addPermanentWidget(balken);
   connect(cubeGL,SIGNAL(message(const QString&)),this,SLOT(updateStatusBar(const QString&)));
   connect(cubeGL,SIGNAL(bigmessage(const QString&)),this,SLOT(infoKanalNews(const QString&)));
   connect(fmcq,SIGNAL(bigmessage(const QString&)),this,SLOT(infoKanalNews(const QString&)));
-  setWindowTitle(QString("MoleCoolQt-Revision %1 ").arg(rev));
+#ifdef __x86_64__
+  QString bitvers=QString("64 bit version");
+#else
+  QString bitvers=QString("32 bit version");
+#endif
+
+  setWindowTitle(QString("MoleCoolQt-Revision %1 %2").arg(rev).arg(bitvers));
   fastrun=false;
   int argc=QCoreApplication::arguments().size();
   if (argc>1){
