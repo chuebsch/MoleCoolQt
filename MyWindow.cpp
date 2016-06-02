@@ -2705,6 +2705,11 @@ void MyWindow::about(){
   date.remove("LastChangedDate:");
   date.remove("$");
   QString bau_datum=QString(__TIME__ " " __DATE__);
+#ifdef __x86_64__
+  QString has64bit=QString("64 bit Version");
+#else
+  QString has64bit=QString("32 bit Version");
+#endif
   QString openGLVersion=QString("OpenGL Version %1").arg((char *)glGetString(GL_VERSION));
 
   QMessageBox::about(this,tr("About MoleCoolQt"),
@@ -2713,7 +2718,8 @@ void MyWindow::about(){
 		 "Dr. Birger Dittrich's Work Group</a> and "
 		 "<a href=\"http://www.molecoolqt.de\">MoleCoolQt site</a><p>"
 		 "If you find bugs, typos or have any suggestions then contact me under <a href=\"mailto:chuebsch@moliso.de\">chuebsch@moliso.de</a>"
-                 "<p> This is Revision %1 from: %2 <br> The Version of Qt used is: %3.<br>%4<p>This program was build: %5").arg(rev).arg(date).arg(qVersion ()).arg(openGLVersion).arg(bau_datum));
+                 "<p> This is Revision %1 from: %2 <br> The Version of Qt used is: %3.<br>%4<p>This program was build: %5<p>%6")
+                     .arg(rev).arg(date).arg(qVersion ()).arg(openGLVersion).arg(bau_datum).arg(has64bit));
 
 }
 

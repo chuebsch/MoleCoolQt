@@ -75,7 +75,7 @@ SetCompressor /SOLID lzma
 ;--------------------------------
 ;Installer Sections
 
-Section "MoleCoolQt" SecMoleCoolQt
+Section "MoleCoolQt64" SecMoleCoolQt
 
   SetOutPath "$INSTDIR"
   
