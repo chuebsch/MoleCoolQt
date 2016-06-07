@@ -36,6 +36,7 @@ public:
   bool molisoTransparence;
   bool zebra;
   bool noWaitLabel;
+  double scalePicNow;
   double tvalue,tstep;
   bool isModulated;
   double mixdim,miydim,mizdim;

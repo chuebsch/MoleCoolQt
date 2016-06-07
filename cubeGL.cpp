@@ -1030,7 +1030,7 @@ void CubeGL::paintGL() {
     glStencilFunc(GL_ALWAYS, 1, 1);
     glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
-    glLineWidth(1.0);
+    glLineWidth(1.0*scalePicNow);
     glBegin(GL_LINES);
     int h = viewport[3], w=viewport[2];
     int y;
@@ -4052,7 +4052,7 @@ if (!selectedAtoms.isEmpty()){
 
       if (!mol.wombats.isEmpty()){
         glDisable(GL_LIGHTING);
-        glLineWidth(3.5);
+        glLineWidth(3.5*scalePicNow);
         glEnable(GL_BLEND);
         glColor4f(tCR,tCG,tCB,tCA);
         int cntwmbts=0;
@@ -4067,6 +4067,7 @@ if (!selectedAtoms.isEmpty()){
         }
         glPopMatrix();
         glEnable(GL_LIGHTING);
+        glLineWidth(1.0*scalePicNow);
         //printf("%d wombats\n",cntwmbts);
       }
       if ((bas)&&(drawAx)) callList(bas+2);
@@ -4178,7 +4179,7 @@ if (!selectedAtoms.isEmpty()){
         glDisable(GL_CULL_FACE);
         glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
         glDisable(GL_LIGHTING);
-        glLineWidth(0.5);
+        glLineWidth(0.5*scalePicNow);
         glEnable(GL_BLEND);
         if (fofcact->isChecked()) {
             glCallList(foubas[0]);
@@ -4191,6 +4192,7 @@ if (!selectedAtoms.isEmpty()){
         }
         glEnable(GL_LIGHTING);
         glDisable(GL_BLEND);
+        glLineWidth(1.0*scalePicNow);
         glEnable(GL_CULL_FACE);
         glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
       }

@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=468;
+int rev=469;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -129,6 +129,7 @@ MyWindow::MyWindow( QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(pa
   cubeGL =new CubeGL(this,vang);
   cubeGL->bas=0;
   scalePic=1.0;
+  cubeGL->scalePicNow=1.0;
   cubeGL->setMinimumSize(200,100);
   createmoliso = new QAction(tr("Create isosurface"),this);
   createmoliso->setWhatsThis("<img src=\":/images/createmoliso.png\"> Creates one or\
@@ -2871,6 +2872,7 @@ void MyWindow::saveScene(){
     e = cubeGL->_win_height,
     f = cubeGL->myFont.pointSize (),
     h = cubeGL->MLegendFont.pointSize ();
+  cubeGL->scalePicNow=scalePic;
   if (!fileName.isEmpty()){
     QString endung=selectedFilter.section('*',1,1).section(')',0,0);
     if (!fileName.endsWith(endung)) fileName.append(endung);
@@ -2894,6 +2896,7 @@ void MyWindow::saveScene(){
   cubeGL->_win_height=e;
   cubeGL->noWaitLabel=false;
 
+  cubeGL->scalePicNow=1.0;
   cubeGL->updateGL();
 }
 
