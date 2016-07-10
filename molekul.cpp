@@ -3608,104 +3608,307 @@ void molekul::Uf2Uo(const Matrix x, Matrix & y) {
  y=(zelle.o1*x)*transponse(zelle.o1);
 }
 
+double molekul::fl(double x,double y,double z){
+	double a,b,c;
+  const double g2r=180.0/M_PI;
+	a=(zelle.ga==90.0)?0.0:2.0*x*y*zelle.a*zelle.b*cos(zelle.ga/g2r);
+	b=(zelle.be==90.0)?0.0:2.0*x*z*zelle.a*zelle.c*cos(zelle.be/g2r);
+	c=(zelle.al==90.0)?0.0:2.0*y*z*zelle.b*zelle.c*cos(zelle.al/g2r);
+  double erg=sqrt(x*x*zelle.a*zelle.a+
+		  y*y*zelle.b*zelle.b+
+		  z*z*zelle.c*zelle.c+
+		  a+b+c);
+  return erg;
+}
+struct Vert {
+  int faces[3];
+  V3 pos;
+};
+int commonFaces(Vert a,Vert b, int f[2]){
+  int matches=0; 
+  for (int i=0; i<3; i++)
+    for (int j=0; j<3; j++)
+      if (a.faces[i]==b.faces[j])f[matches++]=a.faces[i];
+  return matches;
+}
+void molekul::voronoij(QList<INP> au){
+  double dk,range=5.0;
+  vorobas=glGenLists(1);
+  V3 prime,dp,D,floorD;
+  QList<SdmItem> sdm;
+  SdmItem sdmItem;
+  sdmItem.a1=0;
+  sdmItem.a2=1;
+  sdmItem.sn=0;
+  //sdmItem.p1=sdmItem.p2=V3(0,0,0);
+  for (int i=0; i<au.size(); i++){ 
+    for (int j=0; j<au.size(); j++ ){
+      //  bool hma=false;
+      for (int n=0;n<zelle.symmops.size();  n++){
+        prime=zelle.symmops.at(n) * au.at(i).frac + zelle.trans.at(n);
+        D=prime - au.at(j).frac+ V3(0.5,0.5,0.5) ;
+        floorD=V3(floor(D.x),floor(D.y),floor(D.z));
+        for (int h=-1; h<2; h++){
+          for (int k=-1; k<2; k++){
+            for (int l=-1; l<2; l++){
+              V3 fD=floorD+V3(h,k,l);  
+              dp=D - fD - V3(0.5,0.5,0.5);
+              dk=fl(dp.x,dp.y,dp.z);
+              if ((dk>0.01)&&((range)>=dk)){
+                sdmItem.d=dk;
+                sdmItem.floorD=fD;
+                sdmItem.a1=i;
+                sdmItem.a2=j;
+                sdmItem.sn=n;
+                sdm.append(sdmItem);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  qSort(sdm.begin(),sdm.end());
+  QList<V3> n,m;
+  QList<int> nb;
+  QList<Vert> v;
+  Vert vert;
+  V3 pf,pc,mx,nx,of,oc;
+  Matrix mat;
+  double vol=0.0,avol,tvol;
+  glNewList(vorobas,GL_COMPILE);
+  glColor4f(0.0f,0.5,1.0,0.3);
+  glEnable(GL_BLEND);
+  //glDisable(GL_BLEND);
+  glEnable(GL_CULL_FACE);
+  for (int i=0; i<au.size(); i++){
+    if (au.at(i).OrdZahl<0) continue;
+    //find faces
+    n.clear();
+    m.clear();
+    nb.clear();
+    v.clear();
+    avol=0.0;
+    //int vcnt=0;
+    frac2kart(au.at(i).frac,oc);
+    double d,ddmax,ddmin;
+    int tris=0;
+    for (int j=0; j<sdm.size();j++){
+      if ((sdm.at(j).a2==i)&&(au[sdm.at(j).a1].OrdZahl>-1)) {
+        pf= zelle.symmops.at(sdm.at(j).sn) * au[sdm.at(j).a1].frac + zelle.trans.at(sdm.at(j).sn) - sdm.at(j).floorD;
+        frac2kart(pf,pc);
+        /*
+           printf("%9.5f %9.5f %9.5f  %9.5f %9.5f %9.5f\n"
+           ,oc.x
+           ,oc.y
+           ,oc.z
+           ,pc.x
+           ,pc.y
+           ,pc.z
+           );// */
+        mx=0.5*(oc+pc);
+        nx=Normalize(pc-oc);
+        bool bad=false;
+        d=-66;
+        ddmin=1000;
+        ddmax=-1000;
+        //d1=nx*(pc-mx);
+        //d2=nx*(oc-mx);
+        //printf("==> %f %f\n",d1,d2);
+        for (int ii=0; ii<n.size(); ii++){
+          d=n.at(ii)*(mx-m.at(ii));
+          ddmin=qMin(ddmin,d);
+          ddmax=qMax(ddmax,d);
+          //          printf("%18.9f %f %f\n",d,sqrt(Norm(mx-oc)),sqrt(Norm(m.at(ii)-oc)));
+          if (d>0.01) bad=true;
+        }
+        //printf("%s=%s %f %d %f %f\n",au.at(i).atomname,au.at(sdm.at(j).a1).atomname,sdm.at(j).d,bad,ddmax,ddmin);
+        if (!bad) {
+          m.append(mx);
+          n.append(nx);
+          nb.append(j);
+        }//is inside then keep
+        /* 
+           for (int ii=0; ii<n.size()-1;ii++){
+           d=nx*(m.at(ii)-mx);
+        //       printf("==> %f %f\n",d,d);
+        if (d<-0.1) {
+        m.removeAt(ii);
+        n.removeAt(ii);
+        nb.removeAt(ii);
+        ii--;
+        printf("remo\n");
+        ii=qMax(0,ii);
+        }//is outside 
+        }//remove outside old loop      //   */
+      }//is neighbour of i
+    }// j sdm
+    for (int h=0; h<n.size(); h++)
+      for (int k=h+1; k<n.size(); k++)
+        for (int l=k+1; l<n.size(); l++){
+          mat=Matrix(n.at(h),n.at(k),n.at(l));
+          double d=determinant(mat),dpl;
+          //printf("%d,%d,%d %9.5f\n",h,k,l,d);
+          if (fabs(d)<0.002) continue;
+
+          //p = (dot(p1,n1)*cross(n2,n3)-dot(p2,n2)*cross(n1,n3)+dot(p3,n3)*cross(n1,n2))/d 
+          bool out=false;
+          vert.pos=(
+              (m.at(h)*n.at(h))*(n.at(k)%n.at(l))+
+              (m.at(k)*n.at(k))*(n.at(l)%n.at(h))+
+              (m.at(l)*n.at(l))*(n.at(h)%n.at(k)))*(1.0/d);
+          vert.faces[0]=h;
+          vert.faces[1]=k;
+          vert.faces[2]=l;
+          for (int pli=0; pli<n.size(); pli++){//teste lage zu allen ebenen
+            dpl=n.at(pli)*(vert.pos-m.at(pli));
+            if (dpl>0.001) out=true;
+          }
+          if (!out) {
+            v.append(vert);
+           // printf("[%d,%d,%d] %9.5f%9.5f%9.5f  d=%f %f %f %d\n",h,k,l,vert.pos.x,vert.pos.y,vert.pos.z,d,1.0/d,sqrt(Norm(vert.pos-oc)),v.size());
+          }
+        }
+    //if (!strcmp(au.at(i).atomname,"C(6)")){
+      glBegin(GL_TRIANGLES);
+    for(int vi=0; vi<v.size()-1; vi++)
+      for(int vj=vi+1; vj<v.size(); vj++){
+        int fc[2];
+        if (commonFaces(v.at(vi),v.at(vj),fc)==2){
+          tvol=determinant(Matrix(m.at(fc[0])-oc, v.at(vi).pos-oc,v.at(vj).pos-oc));
+          int v1=(tvol<0)?vj:vi,v2=(tvol<0)?vi:vj;
+          glNormal3d(n.at(fc[0]).x,n.at(fc[0]).y,n.at(fc[0]).z);
+          glVertex3d(m.at(fc[0]).x,m.at(fc[0]).y,m.at(fc[0]).z);
+          glVertex3d(v.at(v1).pos.x,v.at(v1).pos.y,v.at(v1).pos.z);
+          glVertex3d(v.at(v2).pos.x,v.at(v2).pos.y,v.at(v2).pos.z);
+          tris++;
+          double tv=fabs(tvol)/6.0;
+          avol+=tv;
+          vol+=tv;
+          tvol=determinant(Matrix(m.at(fc[1])-oc, v.at(vi).pos-oc,v.at(vj).pos-oc));
+          v1=(tvol<0)?vj:vi;v2=(tvol<0)?vi:vj;
+          glNormal3d(n.at(fc[1]).x,n.at(fc[1]).y,n.at(fc[1]).z);
+          glVertex3d(m.at(fc[1]).x,m.at(fc[1]).y,m.at(fc[1]).z);
+          glVertex3d(v.at(v1).pos.x,v.at(v1).pos.y,v.at(v1).pos.z);
+          glVertex3d(v.at(v2).pos.x,v.at(v2).pos.y,v.at(v2).pos.z);
+          tris++;
+          tv=fabs(tvol)/6.0;
+          avol+=tv;
+          vol+=tv;
+        }  
+      }
+    glEnd();
+   // }
+    printf("%d neighbours found for %s. Voronoij polyeder has %d verices, %d edges and %d faces. Triangles %d Volume %f Total Volume= %f\n",
+        m.size(),au.at(i).atomname,v.size(),v.size()+m.size()-2,m.size(),tris,avol,vol);
+    for (int nn=0; nn<nb.size();nn++) printf("%s[%d_%d%d%d]-",au.at(sdm.at(nb.at(nn)).a1).atomname,
+        sdm.at(nb.at(nn)).sn+1,5-(int)sdm.at(nb.at(nn)).floorD.x,5-(int)sdm.at(nb.at(nn)).floorD.y,5-(int)sdm.at(nb.at(nn)).floorD.z        
+        );
+    printf("\n");
+  }//i atoms au
+  glEndList();
+}
+
+///////////////
+
 Modulat Modulat::applySymm(Matrix sym3d, V3 trans3d, V3 x4sym, int x4,double x4trans){
   Modulat that=*this;
   Modulat *newatom=new Modulat(that);
   newatom->frac0=(sym3d*frac0)+trans3d;
-//  printf("applySymm %d = %d %d = %d %d = %d\n",newatom->wo,newatom->os.size(),newatom->wp,newatom->possin.size(),newatom->wt,newatom->usin.size());
+  //  printf("applySymm %d = %d %d = %d %d = %d\n",newatom->wo,newatom->os.size(),newatom->wp,newatom->possin.size(),newatom->wt,newatom->usin.size());
   for (int i=0; i<wp;i++){
-  //  printf("%sfrac o sin %g %g %g cos %g %g %g\n",atomname,possin[i].x,possin[i].y,possin[i].z,poscos[i].x,poscos[i].y,poscos[i].z);
-  newatom->possin[i]=possin[i]*sym3d;
-  newatom->poscos[i]=poscos[i]*sym3d;
-//    printf("%sfrac wp%d sin %g %g %g cos %g %g %g %p\n",atomname,i,newatom->possin[i].x,newatom->possin[i].y,newatom->possin[i].z,newatom->poscos[i].x,newatom->poscos[i].y,newatom->poscos[i].z,newatom);
+    //  printf("%sfrac o sin %g %g %g cos %g %g %g\n",atomname,possin[i].x,possin[i].y,possin[i].z,poscos[i].x,poscos[i].y,poscos[i].z);
+    newatom->possin[i]=possin[i]*sym3d;
+    newatom->poscos[i]=poscos[i]*sym3d;
+    //    printf("%sfrac wp%d sin %g %g %g cos %g %g %g %p\n",atomname,i,newatom->possin[i].x,newatom->possin[i].y,newatom->possin[i].z,newatom->poscos[i].x,newatom->poscos[i].y,newatom->poscos[i].z,newatom);
   }
   newatom->uf0=(sym3d*uf0)*transponse(sym3d);
   for (int i=0; i<wt; i++){
-  newatom->usin[i]=(sym3d*usin[i])*transponse(sym3d);
-  newatom->ucos[i]=(sym3d*ucos[i])*transponse(sym3d);
+    newatom->usin[i]=(sym3d*usin[i])*transponse(sym3d);
+    newatom->ucos[i]=(sym3d*ucos[i])*transponse(sym3d);
   }
   newatom->x4sym=x4sym;
   newatom->x4=x4;
   newatom->x4trans=x4trans;
   return *newatom;
 }
-const V3 Modulat::kart(const double t){
-  V3 p=frac(t);
-  V3 y;
-  
-  y.x = p.x * mol->zelle.f2c.m11 + p.y * mol->zelle.f2c.m12 + p.z * mol->zelle.f2c.m13;
-  y.y = p.x * mol->zelle.f2c.m21 + p.y * mol->zelle.f2c.m22 + p.z * mol->zelle.f2c.m23;
-  y.z = p.x * mol->zelle.f2c.m31 + p.y * mol->zelle.f2c.m32 + p.z * mol->zelle.f2c.m33;
-  return y;
-}
-const V3 Modulat::frac(const double t){
-  V3 p=frac0;
-// printf("%sfrac x4sy %g %g %g x4 %d x4tr %g q %g %g %g \n",atomname,x4sym.x,x4sym.y,x4sym.z,x4,x4trans,mol->zelle.qvec.x,mol->zelle.qvec.y,mol->zelle.qvec.z);
-  double X4=t+(mol->zelle.qvec*frac0);
-//  printf("%sfrac X4 %g frac0 %g %g %g t%g\n",atomname,X4,frac0.x,frac0.y,frac0.z,t);
-  X4=(x4sym*frac0)+x4*X4+x4trans;
-//  printf("%sfrac X4 %g\n",atomname,X4);
-  switch (sp) {
-  case 0:
-  for (int i=0; i<wp;i++){
-  //  printf("%sfrac sin %g %g %g cos %g %g %g\n",atomname,possin[i].x,possin[i].y,possin[i].z,poscos[i].x,poscos[i].y,poscos[i].z);
-    p+=possin[i]*sin(2*M_PI*(i+1)*X4);
-    p+=poscos[i]*cos(2*M_PI*(i+1)*X4);
-  }
-  break;
-  case 1://sawtooth
-//not yet
-      break;
-  }
- // printf("%sfrac %g %g %g\n",atomname,p.x,p.y,p.z);
-  return p;
-}
+  const V3 Modulat::kart(const double t){
+    V3 p=frac(t);
+    V3 y;
 
-Matrix Modulat::uf(double t){
-  Matrix m=uf0;
-  if ((m.m22==0.0)&&(m.m33==0.0)) {
+    y.x = p.x * mol->zelle.f2c.m11 + p.y * mol->zelle.f2c.m12 + p.z * mol->zelle.f2c.m13;
+    y.y = p.x * mol->zelle.f2c.m21 + p.y * mol->zelle.f2c.m22 + p.z * mol->zelle.f2c.m23;
+    y.z = p.x * mol->zelle.f2c.m31 + p.y * mol->zelle.f2c.m32 + p.z * mol->zelle.f2c.m33;
+    return y;
+  }
+const V3 Modulat::frac(const double t){
+    V3 p=frac0;
+    // printf("%sfrac x4sy %g %g %g x4 %d x4tr %g q %g %g %g \n",atomname,x4sym.x,x4sym.y,x4sym.z,x4,x4trans,mol->zelle.qvec.x,mol->zelle.qvec.y,mol->zelle.qvec.z);
+    double X4=t+(mol->zelle.qvec*frac0);
+    //  printf("%sfrac X4 %g frac0 %g %g %g t%g\n",atomname,X4,frac0.x,frac0.y,frac0.z,t);
+    X4=(x4sym*frac0)+x4*X4+x4trans;
+    //  printf("%sfrac X4 %g\n",atomname,X4);
+    switch (sp) {
+      case 0:
+        for (int i=0; i<wp;i++){
+          //  printf("%sfrac sin %g %g %g cos %g %g %g\n",atomname,possin[i].x,possin[i].y,possin[i].z,poscos[i].x,poscos[i].y,poscos[i].z);
+          p+=possin[i]*sin(2*M_PI*(i+1)*X4);
+          p+=poscos[i]*cos(2*M_PI*(i+1)*X4);
+        }
+        break;
+      case 1://sawtooth
+        //not yet
+        break;
+    }
+    // printf("%sfrac %g %g %g\n",atomname,p.x,p.y,p.z);
+    return p;
+  }
+
+  Matrix Modulat::uf(double t){
+    Matrix m=uf0;
+    if ((m.m22==0.0)&&(m.m33==0.0)) {
       m.m33=m.m22=m.m11;
       m.m12=m.m13=m.m23=0.0;
+    }
+    //  if (OrdZahl==0){ printf("%-9s %g %g %g %g %g %g\n",atomname,m.m11, m.m22, m.m33, m.m12, m.m13, m.m23); }
+    double X4=t+(mol->zelle.qvec*frac0);
+    X4=(x4sym*frac0)+x4*X4+x4trans;
+    double cs,sn;
+    for (int i=0; i<wt;i++){
+      sn=sin(2*M_PI*(i+1)*X4);
+      cs=cos(2*M_PI*(i+1)*X4);
+
+      m.m11+=usin[i].m11*sn;
+      m.m22+=usin[i].m22*sn;
+      m.m33+=usin[i].m33*sn;
+      m.m12+=usin[i].m12*sn;
+      m.m13+=usin[i].m13*sn;
+      m.m23+=usin[i].m23*sn;
+
+      m.m11+=ucos[i].m11*cs;
+      m.m22+=ucos[i].m22*cs;
+      m.m33+=ucos[i].m33*cs;
+      m.m12+=ucos[i].m12*cs;
+      m.m13+=ucos[i].m13*cs;
+      m.m23+=ucos[i].m23*cs;
+    }
+    m.m21=m.m12;
+    m.m31=m.m13;
+    m.m32=m.m23;
+    return m;
   }
-//  if (OrdZahl==0){ printf("%-9s %g %g %g %g %g %g\n",atomname,m.m11, m.m22, m.m33, m.m12, m.m13, m.m23); }
-  double X4=t+(mol->zelle.qvec*frac0);
-  X4=(x4sym*frac0)+x4*X4+x4trans;
-  double cs,sn;
-  for (int i=0; i<wt;i++){
-    sn=sin(2*M_PI*(i+1)*X4);
-    cs=cos(2*M_PI*(i+1)*X4);
 
-    m.m11+=usin[i].m11*sn;
-    m.m22+=usin[i].m22*sn;
-    m.m33+=usin[i].m33*sn;
-    m.m12+=usin[i].m12*sn;
-    m.m13+=usin[i].m13*sn;
-    m.m23+=usin[i].m23*sn;
-
-    m.m11+=ucos[i].m11*cs;
-    m.m22+=ucos[i].m22*cs;
-    m.m33+=ucos[i].m33*cs;
-    m.m12+=ucos[i].m12*cs;
-    m.m13+=ucos[i].m13*cs;
-    m.m23+=ucos[i].m23*cs;
+  Matrix Modulat::u(double t){
+    Matrix m=uf(t);
+    //Matrix n=(mol->zelle.o1*m)*transponse(mol->zelle.o1);
+    Matrix n=(transponse(mol->zelle.o1)*m)*(mol->zelle.o1);
+    return n;
   }
-  m.m21=m.m12;
-  m.m31=m.m13;
-  m.m32=m.m23;
-  return m;
-}
 
-Matrix Modulat::u(double t){
-  Matrix m=uf(t);
-  //Matrix n=(mol->zelle.o1*m)*transponse(mol->zelle.o1);
-  Matrix n=(transponse(mol->zelle.o1)*m)*(mol->zelle.o1);
-  return n;
-}
-
-void Modulat::errorMsg(QString msg){
-  qDebug()<<msg;
-}
-    INP Modulat::toINP(double t){
+  void Modulat::errorMsg(QString msg){
+    qDebug()<<msg;
+  }
+  INP Modulat::toINP(double t){
     INP atom;
     strcpy(atom.atomname,atomname);
     atom.lflag=atom.icor1=atom.icor2=atom.nax=atom.nay1=atom.nay2=atom.na3=0;
@@ -3723,51 +3926,51 @@ void Modulat::errorMsg(QString msg){
     atom.screenX=screenX;
     atom.screenY=screenY;
     return atom;
-    }
+  }
 
-/*
- *
-struct INP {
-  char     atomname[strgl]; // Name of the Atom(s)   
-  int      lflag; //R-L
-  int      icor1;            // Erstes Achse des Koordinatensystems, meist 3, also Z  
-  int      icor2;            // Zweites Achse des Koordinatensystems, meist 2, also Y 
-  int      nax;              // Achse 1
-  int      nay1;             // Achse 2
-  int      nay2;             // Achse 3
-  int      na3;//3ZX
-  int      jtf;              // Ordnung des Verschiebungsparametertensors(ADP)
-  int      atomtype;         // Atomtyp als Integer 
-  int      noofkappa;        // Number des Kappas 
-  int      lmax;             // lmax 
-  int      isym;             // isym 
-  int      ichcon;           // chemical constraint
-  double   amul;
-  int   imul;
-  V3   frac;          // Fraktionelle Koordinaten in X-Richtung 
-  Matrix uf;           // Temperaturparameter 
-  Matrix u;
-  double c111, c222, c333, c112, c122, c113, c133, c223, c233, c123;
-  double d1111,  d2222,  d3333, d1112,  d1113,  d1122, 
-	 d1123,  d1133,  d1222, d1223,  d1233,  d1333,
-	 d2223,  d2233,  d2333;
-                        // Bis hier alles EintrÃÂ¤ge in xd.inp, danach berechnet   
-  V3   kart;          // Berechnete kart. Koordinaten in X-Richtung 
-  V3   ax1;           // Berechnete Achse 0 
-  V3   ax2;           // Berechnete Achse 1 
-  V3   ax3;           // Berechnete Achse 2 
-  int      OrdZahl;
-  int firstNeighbors;
-  int secondNeighbors;
-  char     invariomname[80];
-  V3 labPos;
-  int part;
-  int resiNr;
-  char ami3[5];
-  char shortname[strgl];
-  double peakHeight;
-  int molindex;
-  int sg;
-  double screenX,screenY;
-  uint GLname;
+  /*
+   *
+   struct INP {
+   char     atomname[strgl]; // Name of the Atom(s)   
+   int      lflag; //R-L
+   int      icor1;            // Erstes Achse des Koordinatensystems, meist 3, also Z  
+   int      icor2;            // Zweites Achse des Koordinatensystems, meist 2, also Y 
+   int      nax;              // Achse 1
+   int      nay1;             // Achse 2
+   int      nay2;             // Achse 3
+   int      na3;//3ZX
+   int      jtf;              // Ordnung des Verschiebungsparametertensors(ADP)
+   int      atomtype;         // Atomtyp als Integer 
+   int      noofkappa;        // Number des Kappas 
+   int      lmax;             // lmax 
+   int      isym;             // isym 
+   int      ichcon;           // chemical constraint
+   double   amul;
+   int   imul;
+   V3   frac;          // Fraktionelle Koordinaten in X-Richtung 
+   Matrix uf;           // Temperaturparameter 
+   Matrix u;
+   double c111, c222, c333, c112, c122, c113, c133, c223, c233, c123;
+   double d1111,  d2222,  d3333, d1112,  d1113,  d1122, 
+   d1123,  d1133,  d1222, d1223,  d1233,  d1333,
+   d2223,  d2233,  d2333;
+// Bis hier alles EintrÃÂ¤ge in xd.inp, danach berechnet   
+V3   kart;          // Berechnete kart. Koordinaten in X-Richtung 
+V3   ax1;           // Berechnete Achse 0 
+V3   ax2;           // Berechnete Achse 1 
+V3   ax3;           // Berechnete Achse 2 
+int      OrdZahl;
+int firstNeighbors;
+int secondNeighbors;
+char     invariomname[80];
+V3 labPos;
+int part;
+int resiNr;
+char ami3[5];
+char shortname[strgl];
+double peakHeight;
+int molindex;
+int sg;
+double screenX,screenY;
+uint GLname;
 };*/ 

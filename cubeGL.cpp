@@ -4174,6 +4174,12 @@ if (!selectedAtoms.isEmpty()){
     dieDiPole(sumse);
 	glPopMatrix();
       }
+      if (mol.vorobas){
+	glPushMatrix();
+        glScaled( L, L, L );
+        glCallList(mol.vorobas);
+	glPopMatrix();
+      }
       if (foubas[0]|foubas[1]|foubas[2]|foubas[3]|foubas[4]) {
         if ((MIS)&&(moliso->mibas)) glClear( GL_DEPTH_BUFFER_BIT);
         glDisable(GL_CULL_FACE);

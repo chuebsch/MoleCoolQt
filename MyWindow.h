@@ -184,6 +184,7 @@ public slots:
      void changeIndexofLabel(const int i);
      void changeSuffixofLabel(const QString &fix);
      void addNewScatteringFactor(int oz);
+     void makeVoro();
      void updateLabel();
 void setRO();
 protected:

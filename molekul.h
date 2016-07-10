@@ -640,6 +640,7 @@ class molekul {
     //ein Konstruktor
   void initDir();
   int fvl;
+  int vorobas;
   MAS scat[20];
   V3 uz0k,uz1k,uz2k,uz3k,uz4k,uz5k,uz6k,uz7k;  
   unsigned short Kovalenz_Radien[109];  
@@ -658,6 +659,8 @@ class molekul {
   void modulated(double t, QList<Modulat> mato, int draw, double steps);
   void bonds(QList<INP> xdinp);
   void bonds(Connection bond);
+  double fl(double x,double y, double z);
+  void voronoij(QList<INP> au);
   void draw_polyeders(QList<INP> xdinp);
   void atoms(CEnvironment atom,int proba);
   QString h_bonds(QList<INP> xdinp);

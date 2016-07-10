@@ -8065,6 +8065,7 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
       a->setChecked(mol.allowedPolyeders.value(mol.sfac.at(i),true));
       a->setData(mol.sfac.at(i));
   }
+  sfacMenu->addAction("voronoij",this,SLOT(makeVoro()));
   statusBar()->showMessage(tr("File succesfully loaded.") );
   // Zuletzt geffnete File setzen
   if (mol.einstellung->group()!="Version 0.1")mol.einstellung->beginGroup("Version 0.1");
@@ -9038,6 +9039,10 @@ void MyWindow::SDM(QStringList &brauchSymm,int packart){
     brauchSymm.removeAt(brauchSymm.indexOf(QRegExp("1_555:\\d+")));
   }
   printf("SDM time used: %d milliseconds.\n",speedTest.restart());
+}
+
+void MyWindow::makeVoro(){
+  mol.voronoij(asymmUnit); 
 }
 
 void MyWindow::mgrowSymm(int packart,int packatom){
