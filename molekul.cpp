@@ -3670,14 +3670,13 @@ void molekul::voronoij(QList<INP> au){
   }
   qSort(sdm.begin(),sdm.end());
   QList<V3> n,m;
-  QList<int> nb;
+  QList<int> nb,intra;
   QList<Vert> v;
   Vert vert;
   V3 pf,pc,mx,nx,of,oc;
   Matrix mat;
   double vol=0.0,avol,tvol;
   glNewList(vorobas,GL_COMPILE);
-  glColor4f(0.0f,0.5,1.0,0.3);
   glEnable(GL_BLEND);
   //glDisable(GL_BLEND);
   glEnable(GL_CULL_FACE);
@@ -3688,6 +3687,7 @@ void molekul::voronoij(QList<INP> au){
     m.clear();
     nb.clear();
     v.clear();
+    intra.clear();
     avol=0.0;
     //int vcnt=0;
     frac2kart(au.at(i).frac,oc);
@@ -3727,6 +3727,7 @@ void molekul::voronoij(QList<INP> au){
           m.append(mx);
           n.append(nx);
           nb.append(j);
+          intra.append((sdm.at(j).sn==0)&&(Norm(sdm.at(j).floorD)==0.0));
         }//is inside then keep
         /* 
            for (int ii=0; ii<n.size()-1;ii++){
@@ -3762,14 +3763,14 @@ void molekul::voronoij(QList<INP> au){
           vert.faces[2]=l;
           for (int pli=0; pli<n.size(); pli++){//teste lage zu allen ebenen
             dpl=n.at(pli)*(vert.pos-m.at(pli));
-            if (dpl>0.001) out=true;
+            if (dpl>0.1) out=true;
           }
           if (!out) {
             v.append(vert);
            // printf("[%d,%d,%d] %9.5f%9.5f%9.5f  d=%f %f %f %d\n",h,k,l,vert.pos.x,vert.pos.y,vert.pos.z,d,1.0/d,sqrt(Norm(vert.pos-oc)),v.size());
           }
         }
-    //if (!strcmp(au.at(i).atomname,"C(6)")){
+    if (au.at(i).OrdZahl>-1){
       glBegin(GL_TRIANGLES);
     for(int vi=0; vi<v.size()-1; vi++)
       for(int vj=vi+1; vj<v.size(); vj++){
@@ -3777,8 +3778,11 @@ void molekul::voronoij(QList<INP> au){
         if (commonFaces(v.at(vi),v.at(vj),fc)==2){
           tvol=determinant(Matrix(m.at(fc[0])-oc, v.at(vi).pos-oc,v.at(vj).pos-oc));
           int v1=(tvol<0)?vj:vi,v2=(tvol<0)?vi:vj;
+          if (au[i].OrdZahl>-1) glColor4fv(Acol[au[i].OrdZahl]); 
           glNormal3d(n.at(fc[0]).x,n.at(fc[0]).y,n.at(fc[0]).z);
           glVertex3d(m.at(fc[0]).x,m.at(fc[0]).y,m.at(fc[0]).z);
+          if (intra.at(fc[0])) glColor4f(0.0,0.5,1.0,0.7);
+          else glColor4f(0.3f,0.5,0.7,0.3);
           glVertex3d(v.at(v1).pos.x,v.at(v1).pos.y,v.at(v1).pos.z);
           glVertex3d(v.at(v2).pos.x,v.at(v2).pos.y,v.at(v2).pos.z);
           tris++;
@@ -3787,8 +3791,13 @@ void molekul::voronoij(QList<INP> au){
           vol+=tv;
           tvol=determinant(Matrix(m.at(fc[1])-oc, v.at(vi).pos-oc,v.at(vj).pos-oc));
           v1=(tvol<0)?vj:vi;v2=(tvol<0)?vi:vj;
+          if (intra.at(fc[1])) glColor4f(0.0,0.5,1.0,0.7);
+          else glColor4f(0.0f,0.5,1.0,0.3);
+          if (au[i].OrdZahl>-1) glColor4fv(Acol[au[i].OrdZahl]); 
           glNormal3d(n.at(fc[1]).x,n.at(fc[1]).y,n.at(fc[1]).z);
           glVertex3d(m.at(fc[1]).x,m.at(fc[1]).y,m.at(fc[1]).z);
+          if (intra.at(fc[1])) glColor4f(0.0,0.5,1.0,0.7);
+          else glColor4f(0.0f,0.5,1.0,0.3);
           glVertex3d(v.at(v1).pos.x,v.at(v1).pos.y,v.at(v1).pos.z);
           glVertex3d(v.at(v2).pos.x,v.at(v2).pos.y,v.at(v2).pos.z);
           tris++;
@@ -3798,7 +3807,7 @@ void molekul::voronoij(QList<INP> au){
         }  
       }
     glEnd();
-   // }
+    }
     printf("%d neighbours found for %s. Voronoij polyeder has %d verices, %d edges and %d faces. Triangles %d Volume %f Total Volume= %f\n",
         m.size(),au.at(i).atomname,v.size(),v.size()+m.size()-2,m.size(),tris,avol,vol);
     for (int nn=0; nn<nb.size();nn++) printf("%s[%d_%d%d%d]-",au.at(sdm.at(nb.at(nn)).a1).atomname,
@@ -3807,6 +3816,7 @@ void molekul::voronoij(QList<INP> au){
     printf("\n");
   }//i atoms au
   glEndList();
+  
 }
 
 ///////////////

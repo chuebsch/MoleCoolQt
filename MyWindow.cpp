@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=471;
+int rev=473;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -128,6 +128,7 @@ MyWindow::MyWindow( QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(pa
   }
   cubeGL =new CubeGL(this,vang);
   cubeGL->bas=0;
+  mol.vorobas=0;
   scalePic=1.0;
   cubeGL->scalePicNow=1.0;
   cubeGL->setMinimumSize(200,100);
@@ -8065,7 +8066,7 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
       a->setChecked(mol.allowedPolyeders.value(mol.sfac.at(i),true));
       a->setData(mol.sfac.at(i));
   }
-  sfacMenu->addAction("voronoij",this,SLOT(makeVoro()));
+  sfacMenu->addAction("voronoi",this,SLOT(makeVoro()));
   statusBar()->showMessage(tr("File succesfully loaded.") );
   // Zuletzt geffnete File setzen
   if (mol.einstellung->group()!="Version 0.1")mol.einstellung->beginGroup("Version 0.1");
@@ -9043,6 +9044,7 @@ void MyWindow::SDM(QStringList &brauchSymm,int packart){
 
 void MyWindow::makeVoro(){
   mol.voronoij(asymmUnit); 
+  cubeGL->updateGL();
 }
 
 void MyWindow::mgrowSymm(int packart,int packatom){
@@ -9272,6 +9274,8 @@ void MyWindow::growSymm(int packart,int packatom){
     return;
   }
   QTime speedTest;
+  if ((mol.vorobas)&&(glIsList(mol.vorobas))) glDeleteLists(mol.vorobas,1);
+  mol.vorobas=0;
   speedTest.start();
   cubeGL->setVisible(false);
   unFilter();
