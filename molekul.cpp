@@ -3624,6 +3624,16 @@ struct Vert {
   int faces[3];
   V3 pos;
 };
+struct VPoly{
+ V3 mid,nor,verts[2];
+ GLfloat col[4];
+};
+bool vor_x(VPoly a,VPoly b){return b.mid.x>a.mid.x;};
+bool vor_X(VPoly a,VPoly b){return b.mid.x<a.mid.x;};
+bool vor_y(VPoly a,VPoly b){return b.mid.y>a.mid.y;};
+bool vor_Y(VPoly a,VPoly b){return b.mid.y<a.mid.y;};
+bool vor_z(VPoly a,VPoly b){return b.mid.z>a.mid.z;};
+bool vor_Z(VPoly a,VPoly b){return b.mid.z<a.mid.z;};
 int commonFaces(Vert a,Vert b, int f[2]){
   int matches=0; 
   for (int i=0; i<3; i++)
@@ -3633,7 +3643,9 @@ int commonFaces(Vert a,Vert b, int f[2]){
 }
 void molekul::voronoij(QList<INP> au){
   double dk,range=5.0;
-  vorobas=glGenLists(1);
+  QList<VPoly> triangles;
+  VPoly triangle;
+  vorobas=glGenLists(7);
   V3 prime,dp,D,floorD;
   QList<SdmItem> sdm;
   SdmItem sdmItem;
@@ -3670,7 +3682,7 @@ void molekul::voronoij(QList<INP> au){
   }
   qSort(sdm.begin(),sdm.end());
   QList<V3> n,m;
-  QList<int> nb,intra;
+  QList<int> intra;
   QList<Vert> v;
   Vert vert;
   V3 pf,pc,mx,nx,of,oc;
@@ -3680,18 +3692,20 @@ void molekul::voronoij(QList<INP> au){
   glEnable(GL_BLEND);
   //glDisable(GL_BLEND);
   glEnable(GL_CULL_FACE);
+  glDisable(GL_LIGHTING);
+  //glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
+  glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+
   for (int i=0; i<au.size(); i++){
     if (au.at(i).OrdZahl<0) continue;
     //find faces
     n.clear();
     m.clear();
-    nb.clear();
     v.clear();
     intra.clear();
     avol=0.0;
     //int vcnt=0;
     frac2kart(au.at(i).frac,oc);
-    double d,ddmax,ddmin;
     int tris=0;
     for (int j=0; j<sdm.size();j++){
       if ((sdm.at(j).a2==i)&&(au[sdm.at(j).a1].OrdZahl>-1)) {
@@ -3708,40 +3722,9 @@ void molekul::voronoij(QList<INP> au){
            );// */
         mx=0.5*(oc+pc);
         nx=Normalize(pc-oc);
-        bool bad=false;
-        d=-66;
-        ddmin=1000;
-        ddmax=-1000;
-        //d1=nx*(pc-mx);
-        //d2=nx*(oc-mx);
-        //printf("==> %f %f\n",d1,d2);
-        for (int ii=0; ii<n.size(); ii++){
-          d=n.at(ii)*(mx-m.at(ii));
-          ddmin=qMin(ddmin,d);
-          ddmax=qMax(ddmax,d);
-          //          printf("%18.9f %f %f\n",d,sqrt(Norm(mx-oc)),sqrt(Norm(m.at(ii)-oc)));
-          if (d>0.01) bad=true;
-        }
-        //printf("%s=%s %f %d %f %f\n",au.at(i).atomname,au.at(sdm.at(j).a1).atomname,sdm.at(j).d,bad,ddmax,ddmin);
-        if (!bad) {
-          m.append(mx);
-          n.append(nx);
-          nb.append(j);
-          intra.append((sdm.at(j).sn==0)&&(Norm(sdm.at(j).floorD)==0.0));
-        }//is inside then keep
-        /* 
-           for (int ii=0; ii<n.size()-1;ii++){
-           d=nx*(m.at(ii)-mx);
-        //       printf("==> %f %f\n",d,d);
-        if (d<-0.1) {
-        m.removeAt(ii);
-        n.removeAt(ii);
-        nb.removeAt(ii);
-        ii--;
-        printf("remo\n");
-        ii=qMax(0,ii);
-        }//is outside 
-        }//remove outside old loop      //   */
+        m.append(mx);
+        n.append(nx);
+        intra.append((sdm.at(j).sn==0)&&(Norm(sdm.at(j).floorD)==0.0));
       }//is neighbour of i
     }// j sdm
     for (int h=0; h<n.size(); h++)
@@ -3763,60 +3746,194 @@ void molekul::voronoij(QList<INP> au){
           vert.faces[2]=l;
           for (int pli=0; pli<n.size(); pli++){//teste lage zu allen ebenen
             dpl=n.at(pli)*(vert.pos-m.at(pli));
-            if (dpl>0.1) out=true;
+            if (dpl>0.00001) out=true;
           }
           if (!out) {
             v.append(vert);
            // printf("[%d,%d,%d] %9.5f%9.5f%9.5f  d=%f %f %f %d\n",h,k,l,vert.pos.x,vert.pos.y,vert.pos.z,d,1.0/d,sqrt(Norm(vert.pos-oc)),v.size());
           }
         }
-    if (au.at(i).OrdZahl>-1){
-      glBegin(GL_TRIANGLES);
+    for (int mi=0; mi<m.size();mi++){// this is to get the midpoint of a face in its actual center
+      V3 mnew=V3(0,0,0);
+      int poli=0;
+      for (int vi=0; vi<v.size(); vi++){
+      if ((v.at(vi).faces[0]==mi)||(v.at(vi).faces[1]==mi)||(v.at(vi).faces[2]==mi)){
+      mnew+=v.at(vi).pos;
+      poli++;
+      }
+      }
+      mnew*=1.0/poli;
+//      printf("%dsoll 0=%f\n",poli,n.at(mi)*(mnew-m.at(mi)));
+      if (poli) m[mi]=mnew;
+    }
+/*    glBegin(GL_LINES);
+    for(int vi=0; vi<v.size()-1; vi++)
+      for(int vj=vi+1; vj<v.size(); vj++){
+        int fc[2];
+        if (commonFaces(v.at(vi),v.at(vj),fc)==2){
+          glColor4fv(Acol[au[i].OrdZahl]);
+          glVertex3d(v.at(vi).pos.x,v.at(vi).pos.y,v.at(vi).pos.z);
+          glVertex3d(v.at(vj).pos.x,v.at(vj).pos.y,v.at(vj).pos.z);
+        }  
+      }
+    glEnd();*/
+//      glBegin(GL_TRIANGLES);
+      //glBegin(GL_LINES);
     for(int vi=0; vi<v.size()-1; vi++)
       for(int vj=vi+1; vj<v.size(); vj++){
         int fc[2];
         if (commonFaces(v.at(vi),v.at(vj),fc)==2){
           tvol=determinant(Matrix(m.at(fc[0])-oc, v.at(vi).pos-oc,v.at(vj).pos-oc));
-          int v1=(tvol<0)?vj:vi,v2=(tvol<0)?vi:vj;
-          if (au[i].OrdZahl>-1) glColor4fv(Acol[au[i].OrdZahl]); 
+          int v1=(tvol<0)?vj:vi,
+              v2=(tvol<0)?vi:vj;
+          triangle.mid=m.at(fc[0]);
+          triangle.nor=n.at(fc[0]);
+          triangle.col[0]=Acol[au[i].OrdZahl][0];
+          triangle.col[1]=Acol[au[i].OrdZahl][1];
+          triangle.col[2]=Acol[au[i].OrdZahl][2];
+          triangle.col[3]=0.4;
+          triangle.verts[0]=v[v1].pos;
+          triangle.verts[1]=v[v2].pos;
+          
+          triangles.append(triangle);
+          /*
+          GLfloat colo[4]={ Acol[au[i].OrdZahl][0], Acol[au[i].OrdZahl][1], Acol[au[i].OrdZahl][2], 0.4};
+          //GLfloat colo[4]={ Acol[tris%100][0], Acol[tris%100][1], Acol[tris%100][2], 0.4};
+          colo[3]=intra.at(fc[0])?1.0:0.4;
+          glColor4fv(colo);
           glNormal3d(n.at(fc[0]).x,n.at(fc[0]).y,n.at(fc[0]).z);
           glVertex3d(m.at(fc[0]).x,m.at(fc[0]).y,m.at(fc[0]).z);
-          if (intra.at(fc[0])) glColor4f(0.0,0.5,1.0,0.7);
-          else glColor4f(0.3f,0.5,0.7,0.3);
           glVertex3d(v.at(v1).pos.x,v.at(v1).pos.y,v.at(v1).pos.z);
           glVertex3d(v.at(v2).pos.x,v.at(v2).pos.y,v.at(v2).pos.z);
+          */
           tris++;
           double tv=fabs(tvol)/6.0;
           avol+=tv;
           vol+=tv;
           tvol=determinant(Matrix(m.at(fc[1])-oc, v.at(vi).pos-oc,v.at(vj).pos-oc));
-          v1=(tvol<0)?vj:vi;v2=(tvol<0)?vi:vj;
-          if (intra.at(fc[1])) glColor4f(0.0,0.5,1.0,0.7);
-          else glColor4f(0.0f,0.5,1.0,0.3);
-          if (au[i].OrdZahl>-1) glColor4fv(Acol[au[i].OrdZahl]); 
+          v1=(tvol<0)?vj:vi;
+          v2=(tvol<0)?vi:vj;
+          triangle.mid=m.at(fc[1]);
+          triangle.nor=n.at(fc[1]);
+          triangle.col[0]=Acol[au[i].OrdZahl][0];
+          triangle.col[1]=Acol[au[i].OrdZahl][1];
+          triangle.col[2]=Acol[au[i].OrdZahl][2];
+          triangle.col[3]=0.4;
+          triangle.verts[0]=v[v1].pos;
+          triangle.verts[1]=v[v2].pos;
+          triangles.append(triangle);
+          /*
+          colo[3]=intra.at(fc[1])?1.0:0.4;
+          glColor4fv(colo);
+
           glNormal3d(n.at(fc[1]).x,n.at(fc[1]).y,n.at(fc[1]).z);
           glVertex3d(m.at(fc[1]).x,m.at(fc[1]).y,m.at(fc[1]).z);
-          if (intra.at(fc[1])) glColor4f(0.0,0.5,1.0,0.7);
-          else glColor4f(0.0f,0.5,1.0,0.3);
           glVertex3d(v.at(v1).pos.x,v.at(v1).pos.y,v.at(v1).pos.z);
           glVertex3d(v.at(v2).pos.x,v.at(v2).pos.y,v.at(v2).pos.z);
+          */
           tris++;
           tv=fabs(tvol)/6.0;
           avol+=tv;
           vol+=tv;
         }  
       }
+//    glEnd();
+    glBegin(GL_LINES);
+    for(int vi=0; vi<v.size()-1; vi++)
+      for(int vj=vi+1; vj<v.size(); vj++){
+        int fc[2];
+        if (commonFaces(v.at(vi),v.at(vj),fc)==2){
+          glColor4fv(Acol[au[i].OrdZahl]);
+          glVertex3d(v.at(vi).pos.x,v.at(vi).pos.y,v.at(vi).pos.z);
+          glVertex3d(v.at(vj).pos.x,v.at(vj).pos.y,v.at(vj).pos.z);
+        }  
+      }
     glEnd();
-    }
-    printf("%d neighbours found for %s. Voronoij polyeder has %d verices, %d edges and %d faces. Triangles %d Volume %f Total Volume= %f\n",
-        m.size(),au.at(i).atomname,v.size(),v.size()+m.size()-2,m.size(),tris,avol,vol);
-    for (int nn=0; nn<nb.size();nn++) printf("%s[%d_%d%d%d]-",au.at(sdm.at(nb.at(nn)).a1).atomname,
-        sdm.at(nb.at(nn)).sn+1,5-(int)sdm.at(nb.at(nn)).floorD.x,5-(int)sdm.at(nb.at(nn)).floorD.y,5-(int)sdm.at(nb.at(nn)).floorD.z        
-        );
-    printf("\n");
+//    printf("%d neighbours found for %s. Voronoij polyeder has %d verices, %d edges and %d faces. Triangles %d Volume %f Total Volume= %f cell volume %f\n",
+//        m.size(),au.at(i).atomname,v.size(),v.size()+m.size()-2,m.size(),
+        printf("%s: Triangles %d Volume %f Total Volume= %f cell volume %f\n",au.at(i).atomname,tris,avol,vol,zelle.V);
   }//i atoms au
+
+  glEnable(GL_LIGHTING);
+  glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
   glEndList();
-  
+
+  printf("triangles: %d %d\n", triangles.size(),GL_NO_ERROR==glGetError());
+  qSort(triangles.begin(),triangles.end(),vor_x);
+  glNewList(vorobas+1,GL_COMPILE);
+  glDisable(GL_CULL_FACE);
+  glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+  glBegin(GL_TRIANGLES);
+  for (int ti=0; ti<triangles.size(); ti++){
+    glColor4fv(triangles.at(ti).col);
+    glNormal3d(triangles.at(ti).nor.x,triangles.at(ti).nor.y,triangles.at(ti).nor.z);
+    glVertex3d(triangles.at(ti).mid.x,triangles.at(ti).mid.y,triangles.at(ti).mid.z);
+    glVertex3d(triangles.at(ti).verts[0].x,triangles.at(ti).verts[0].y,triangles.at(ti).verts[0].z);
+    glVertex3d(triangles.at(ti).verts[1].x,triangles.at(ti).verts[1].y,triangles.at(ti).verts[1].z);
+  }
+  glEnd();
+  glEndList();
+
+  qSort(triangles.begin(),triangles.end(),vor_X);
+  glNewList(vorobas+2,GL_COMPILE);
+  glBegin(GL_TRIANGLES);
+  for (int ti=0; ti<triangles.size(); ti++){
+    glColor4fv(triangles.at(ti).col);
+    glNormal3d(triangles.at(ti).nor.x,triangles.at(ti).nor.y,triangles.at(ti).nor.z);
+    glVertex3d(triangles.at(ti).mid.x,triangles.at(ti).mid.y,triangles.at(ti).mid.z);
+    glVertex3d(triangles.at(ti).verts[0].x,triangles.at(ti).verts[0].y,triangles.at(ti).verts[0].z);
+    glVertex3d(triangles.at(ti).verts[1].x,triangles.at(ti).verts[1].y,triangles.at(ti).verts[1].z);
+  }
+  glEnd();
+  glEndList();
+  qSort(triangles.begin(),triangles.end(),vor_y);
+  glNewList(vorobas+3,GL_COMPILE);
+  glBegin(GL_TRIANGLES);
+  for (int ti=0; ti<triangles.size(); ti++){
+    glColor4fv(triangles.at(ti).col);
+    glNormal3d(triangles.at(ti).nor.x,triangles.at(ti).nor.y,triangles.at(ti).nor.z);
+    glVertex3d(triangles.at(ti).mid.x,triangles.at(ti).mid.y,triangles.at(ti).mid.z);
+    glVertex3d(triangles.at(ti).verts[0].x,triangles.at(ti).verts[0].y,triangles.at(ti).verts[0].z);
+    glVertex3d(triangles.at(ti).verts[1].x,triangles.at(ti).verts[1].y,triangles.at(ti).verts[1].z);
+  }
+  glEnd();
+  glEndList();
+  qSort(triangles.begin(),triangles.end(),vor_Y);
+  glNewList(vorobas+4,GL_COMPILE);
+  glBegin(GL_TRIANGLES);
+  for (int ti=0; ti<triangles.size(); ti++){
+    glColor4fv(triangles.at(ti).col);
+    glNormal3d(triangles.at(ti).nor.x,triangles.at(ti).nor.y,triangles.at(ti).nor.z);
+    glVertex3d(triangles.at(ti).mid.x,triangles.at(ti).mid.y,triangles.at(ti).mid.z);
+    glVertex3d(triangles.at(ti).verts[0].x,triangles.at(ti).verts[0].y,triangles.at(ti).verts[0].z);
+    glVertex3d(triangles.at(ti).verts[1].x,triangles.at(ti).verts[1].y,triangles.at(ti).verts[1].z);
+  }
+  glEnd();
+  glEndList();
+  qSort(triangles.begin(),triangles.end(),vor_z);
+  glNewList(vorobas+5,GL_COMPILE);
+  glBegin(GL_TRIANGLES);
+  for (int ti=0; ti<triangles.size(); ti++){
+    glColor4fv(triangles.at(ti).col);
+    glNormal3d(triangles.at(ti).nor.x,triangles.at(ti).nor.y,triangles.at(ti).nor.z);
+    glVertex3d(triangles.at(ti).mid.x,triangles.at(ti).mid.y,triangles.at(ti).mid.z);
+    glVertex3d(triangles.at(ti).verts[0].x,triangles.at(ti).verts[0].y,triangles.at(ti).verts[0].z);
+    glVertex3d(triangles.at(ti).verts[1].x,triangles.at(ti).verts[1].y,triangles.at(ti).verts[1].z);
+  }
+  glEnd();
+  glEndList();
+  qSort(triangles.begin(),triangles.end(),vor_Z);
+  glNewList(vorobas+6,GL_COMPILE);
+  glBegin(GL_TRIANGLES);
+  for (int ti=0; ti<triangles.size(); ti++){
+    glColor4fv(triangles.at(ti).col);
+    glNormal3d(triangles.at(ti).nor.x,triangles.at(ti).nor.y,triangles.at(ti).nor.z);
+    glVertex3d(triangles.at(ti).mid.x,triangles.at(ti).mid.y,triangles.at(ti).mid.z);
+    glVertex3d(triangles.at(ti).verts[0].x,triangles.at(ti).verts[0].y,triangles.at(ti).verts[0].z);
+    glVertex3d(triangles.at(ti).verts[1].x,triangles.at(ti).verts[1].y,triangles.at(ti).verts[1].z);
+  }
+  glEnd();
+  glEndList();
 }
 
 ///////////////

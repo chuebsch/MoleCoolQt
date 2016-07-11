@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=473;
+int rev=474;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -9274,7 +9274,7 @@ void MyWindow::growSymm(int packart,int packatom){
     return;
   }
   QTime speedTest;
-  if ((mol.vorobas)&&(glIsList(mol.vorobas))) glDeleteLists(mol.vorobas,1);
+  if ((mol.vorobas)&&(glIsList(mol.vorobas))) glDeleteLists(mol.vorobas,7);
   mol.vorobas=0;
   speedTest.start();
   cubeGL->setVisible(false);

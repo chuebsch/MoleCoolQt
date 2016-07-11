@@ -3789,6 +3789,17 @@ void CubeGL::draw() {
 	    if ((max==gmat[10])&&(max>0.0)) Pers=5; else 
 	      if ((max==gmat[10])&&(max<0.0)) Pers=6;
   }
+  if (mol.vorobas){
+    glGetDoublev( GL_MODELVIEW_MATRIX, (double*)gmat );
+    max= (fabs(gmat[2])>fabs(gmat[6]))?gmat[2]:gmat[6];
+    max=(fabs(max)<fabs(gmat[10]))?gmat[10]:max; 
+    if ((max==gmat[2])&&(max>0.0)) Pers=1; else 
+      if ((max==gmat[2])&&(max<0.0)) Pers=2; else 
+	if ((max==gmat[6])&&(max>0.0)) Pers=3; else 
+	  if ((max==gmat[6])&&(max<0.0)) Pers=4; else 
+	    if ((max==gmat[10])&&(max>0.0)) Pers=5; else 
+	      if ((max==gmat[10])&&(max<0.0)) Pers=6;
+  }
   V3 sumse=V3(0,0,0);
   V3 ori=V3(0,0,0);///rotation origin
   if ((iSel)&&(ibas)){    
@@ -4174,12 +4185,18 @@ if (!selectedAtoms.isEmpty()){
     dieDiPole(sumse);
 	glPopMatrix();
       }
+
       if (mol.vorobas){
-	glPushMatrix();
+        glPushMatrix();
         glScaled( L, L, L );
+//        glCallList(mol.vorobas+1);
+        printf("%d Pers %d %d %d\n",Pers,mol.vorobas+Pers,glGetError(),GL_NO_ERROR);
         glCallList(mol.vorobas);
-	glPopMatrix();
+        glCallList(mol.vorobas+Pers);
+        glCallList(mol.vorobas);
+        glPopMatrix();
       }
+
       if (foubas[0]|foubas[1]|foubas[2]|foubas[3]|foubas[4]) {
         if ((MIS)&&(moliso->mibas)) glClear( GL_DEPTH_BUFFER_BIT);
         glDisable(GL_CULL_FACE);
@@ -4212,10 +4229,12 @@ if (!selectedAtoms.isEmpty()){
     glEnable(   GL_CULL_FACE);
     glEnable(GL_BLEND);
     }
+      
+
       if (((!moving->isActive())||(!chicken->isChecked()))&&(drawLa)) {
-	glClear( GL_DEPTH_BUFFER_BIT);
-	glPushMatrix();{
-	  glScaled(L,L,L);
+        glClear( GL_DEPTH_BUFFER_BIT);
+        glPushMatrix();{
+          glScaled(L,L,L);
 
 
 	  for (int j=0;j<xdinp.size();j++){
