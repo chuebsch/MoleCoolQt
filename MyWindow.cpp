@@ -86,7 +86,7 @@ MyWindow::MyWindow( QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(pa
 
   QMainWindow::setDockOptions(QMainWindow::AnimatedDocks|QMainWindow::AllowTabbedDocks|QMainWindow::ForceTabbedDocks|QMainWindow::VerticalTabs);
   //  DOCK
-
+ 
   printf("{%s}\n", setlocale(LC_ALL,"C"));//suse11.3 braucht das
   filtered=0;
   speedSldr = new QSlider (Qt::Horizontal);
@@ -865,6 +865,11 @@ createRenameWgd();
   viewMenu->addAction(togAxen);
   viewMenu->addAction(togUnit);
   viewMenu->addAction(togElli);
+  {
+    QAction *a=
+  viewMenu->addAction("Create voronoi polyeders of asymetric unit",this,SLOT(makeVoro()));
+    a->setData(-1);
+  }
   cubeGL->showPolys=viewMenu->addAction(QIcon(":/images/poly.png"),"toggle Polyeder",cubeGL,SLOT(updateGL()));
   cubeGL->showPolys->setCheckable(true);
   cubeGL->showPolys->setChecked(false);
@@ -6456,12 +6461,13 @@ void MyWindow::load_sheldrick(QString fileName){
 		    newAtom.uf.m22*newAtom.uf.m22+
 		    newAtom.uf.m33*newAtom.uf.m33);
 	}else {
-	  int pda=sscanf(line,"%s %d %lf %lf %lf %*f %lf %lf",
+	  int pda=sscanf(line,"%s %d %lf %lf %lf %lf %lf %lf",
 			 newAtom.atomname,
 			 &newAtom.atomtype,
 			 &newAtom.frac.x,
 			 &newAtom.frac.y,
 			 &newAtom.frac.z,
+                         &newAtom.amul,
 			 &newAtom.uf.m11,
                          &newAtom.peakHeight);
 	  if (pda==7){
@@ -6469,6 +6475,7 @@ void MyWindow::load_sheldrick(QString fileName){
 	    mol.pmax=fmax(mol.pmax,newAtom.peakHeight);
 	  }
           //printf("[%s] {%s}\n",line,newAtom.atomname);
+	  newAtom.amul=getNum(newAtom.amul,fvar,Uiso);
 
 	  newAtom.uf.m11=getNum(newAtom.uf.m11,fvar,Uiso);
 	  newAtom.uf.m33=newAtom.uf.m22=
@@ -8066,7 +8073,6 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
       a->setChecked(mol.allowedPolyeders.value(mol.sfac.at(i),true));
       a->setData(mol.sfac.at(i));
   }
-  sfacMenu->addAction("voronoi",this,SLOT(makeVoro()));
   statusBar()->showMessage(tr("File succesfully loaded.") );
   // Zuletzt geffnete File setzen
   if (mol.einstellung->group()!="Version 0.1")mol.einstellung->beginGroup("Version 0.1");
@@ -9043,7 +9049,15 @@ void MyWindow::SDM(QStringList &brauchSymm,int packart){
 }
 
 void MyWindow::makeVoro(){
-  mol.voronoij(asymmUnit); 
+  int ind=-1;
+  QAction *action = qobject_cast<QAction *>(sender());
+  if (action!=NULL){
+      ind=action->data().toInt();
+      ind=qMax(ind,-1);
+      ind=qMin(ind,xdinp.size()-1);
+  }
+  mol.voronoij(asymmUnit,ind); 
+  infoKanalNews(mol.voroMsg); 
   cubeGL->updateGL();
 }
 

@@ -1774,7 +1774,6 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
       }
   // OOOOOOOOOOOOOOO //
     }
-    printf("!\n");
 }
 
 /////////
@@ -3398,6 +3397,7 @@ void CubeGL::contextMenuEvent(QContextMenuEvent *event) {
     int nahdai=-1;
     extern QList<INP> xdinp;
     extern QList<Modulat> matoms;
+    extern QList<INP> asymmUnit;
     for (int j=0; j<xdinp.size();j++){
       da=(((xdinp.at(j).screenX-event->x())*( xdinp.at(j).screenX-event->x()))+ 
 		      ((xdinp.at(j).screenY-event->y())*( xdinp.at(j).screenY-event->y())));
@@ -3424,6 +3424,10 @@ void CubeGL::contextMenuEvent(QContextMenuEvent *event) {
     a->setData(expandatom);
     }
     {QAction *a = menu.addAction("Show ADP parameters",parent(),SLOT(showADPvalues()));
+    a->setData(expandatom);
+    }
+    if (expandatom<asymmUnit.size()){
+    QAction *a = menu.addAction("Draw voronoi polyeder of this atom",parent(),SLOT(makeVoro()));
     a->setData(expandatom);
     }
     menu.addSeparator();
@@ -4190,7 +4194,7 @@ if (!selectedAtoms.isEmpty()){
         glPushMatrix();
         glScaled( L, L, L );
 //        glCallList(mol.vorobas+1);
-        printf("%d Pers %d %d %d\n",Pers,mol.vorobas+Pers,glGetError(),GL_NO_ERROR);
+        //printf("%d Pers %d %d %d\n",Pers,mol.vorobas+Pers,glGetError(),GL_NO_ERROR);
         glCallList(mol.vorobas);
         glCallList(mol.vorobas+Pers);
         glCallList(mol.vorobas);

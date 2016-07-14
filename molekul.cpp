@@ -3641,8 +3641,12 @@ int commonFaces(Vert a,Vert b, int f[2]){
       if (a.faces[i]==b.faces[j])f[matches++]=a.faces[i];
   return matches;
 }
-void molekul::voronoij(QList<INP> au){
+void molekul::voronoij(QList<INP> au, int intat){
   double dk,range=5.0;
+  voroMsg.clear();
+  voroMsg.append("<b>Voronoi:</b><br>");
+  QTime speedTest;
+  speedTest.start();
   QList<VPoly> triangles;
   VPoly triangle;
   vorobas=glGenLists(7);
@@ -3655,6 +3659,7 @@ void molekul::voronoij(QList<INP> au){
   //sdmItem.p1=sdmItem.p2=V3(0,0,0);
   for (int i=0; i<au.size(); i++){ 
     for (int j=0; j<au.size(); j++ ){
+      if ((au.at(i).sg)||(au.at(j).sg)) continue;
       //  bool hma=false;
       for (int n=0;n<zelle.symmops.size();  n++){
         prime=zelle.symmops.at(n) * au.at(i).frac + zelle.trans.at(n);
@@ -3681,7 +3686,7 @@ void molekul::voronoij(QList<INP> au){
     }
   }
   qSort(sdm.begin(),sdm.end());
-  QList<V3> n,m;
+  QList<V3> n,m,doneLine;
   QList<int> intra;
   QList<Vert> v;
   Vert vert;
@@ -3695,19 +3700,21 @@ void molekul::voronoij(QList<INP> au){
   glDisable(GL_LIGHTING);
   //glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
   glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
-
-  for (int i=0; i<au.size(); i++){
+  for (int i=(intat>-1)?intat:0; i<au.size(); i++){
     if (au.at(i).OrdZahl<0) continue;
     //find faces
     n.clear();
     m.clear();
     v.clear();
+    doneLine.clear();
     intra.clear();
     avol=0.0;
+    int faci=0;
     //int vcnt=0;
     frac2kart(au.at(i).frac,oc);
     int tris=0;
     for (int j=0; j<sdm.size();j++){
+      if(sdm.at(j).d<0.1) continue;
       if ((sdm.at(j).a2==i)&&(au[sdm.at(j).a1].OrdZahl>-1)) {
         pf= zelle.symmops.at(sdm.at(j).sn) * au[sdm.at(j).a1].frac + zelle.trans.at(sdm.at(j).sn) - sdm.at(j).floorD;
         frac2kart(pf,pc);
@@ -3722,18 +3729,25 @@ void molekul::voronoij(QList<INP> au){
            );// */
         mx=0.5*(oc+pc);
         nx=Normalize(pc-oc);
+        bool exists=false;double dpl;
+        for (int tp=0; tp<m.size(); tp++){
+        dpl=n.at(tp)*(mx-m.at(tp));
+        if (fabs(dpl)<0.001){exists=true;break;}
+        }
+        if (!exists){
         m.append(mx);
         n.append(nx);
         intra.append((sdm.at(j).sn==0)&&(Norm(sdm.at(j).floorD)==0.0));
+        }
       }//is neighbour of i
     }// j sdm
-    for (int h=0; h<n.size(); h++)
-      for (int k=h+1; k<n.size(); k++)
+    for (int h=0; h<n.size()-2; h++)
+      for (int k=h+1; k<n.size()-1; k++)
         for (int l=k+1; l<n.size(); l++){
           mat=Matrix(n.at(h),n.at(k),n.at(l));
           double d=determinant(mat),dpl;
           //printf("%d,%d,%d %9.5f\n",h,k,l,d);
-          if (fabs(d)<0.002) continue;
+          if (fabs(d)<0.0002) continue;
 
           //p = (dot(p1,n1)*cross(n2,n3)-dot(p2,n2)*cross(n1,n3)+dot(p3,n3)*cross(n1,n2))/d 
           bool out=false;
@@ -3746,11 +3760,14 @@ void molekul::voronoij(QList<INP> au){
           vert.faces[2]=l;
           for (int pli=0; pli<n.size(); pli++){//teste lage zu allen ebenen
             dpl=n.at(pli)*(vert.pos-m.at(pli));
-            if (dpl>0.00001) out=true;
+            if (dpl>0.00001) {
+              out=true;
+              break;
+            }
           }
           if (!out) {
             v.append(vert);
-           // printf("[%d,%d,%d] %9.5f%9.5f%9.5f  d=%f %f %f %d\n",h,k,l,vert.pos.x,vert.pos.y,vert.pos.z,d,1.0/d,sqrt(Norm(vert.pos-oc)),v.size());
+          //  printf("[%d,%d,%d] %9.5f%9.5f%9.5f  \n",h,k,l,vert.pos.x,vert.pos.y,vert.pos.z);
           }
         }
     for (int mi=0; mi<m.size();mi++){// this is to get the midpoint of a face in its actual center
@@ -3764,7 +3781,7 @@ void molekul::voronoij(QList<INP> au){
       }
       mnew*=1.0/poli;
 //      printf("%dsoll 0=%f\n",poli,n.at(mi)*(mnew-m.at(mi)));
-      if (poli) m[mi]=mnew;
+      if (poli) {m[mi]=mnew;faci++;}
     }
 /*    glBegin(GL_LINES);
     for(int vi=0; vi<v.size()-1; vi++)
@@ -3779,10 +3796,20 @@ void molekul::voronoij(QList<INP> au){
     glEnd();*/
 //      glBegin(GL_TRIANGLES);
       //glBegin(GL_LINES);
+
     for(int vi=0; vi<v.size()-1; vi++)
       for(int vj=vi+1; vj<v.size(); vj++){
         int fc[2];
         if (commonFaces(v.at(vi),v.at(vj),fc)==2){
+          V3 lin=v.at(vi).pos+v.at(vj).pos;
+          double dis;
+          bool done=false;
+          for (int di=0; di<doneLine.size(); di++){
+            dis=Distance(lin,doneLine.at(di));
+            if (dis<0.000001) {done=true; break;}
+          }
+          if (done) continue;
+          doneLine.append(lin);
           tvol=determinant(Matrix(m.at(fc[0])-oc, v.at(vi).pos-oc,v.at(vj).pos-oc));
           int v1=(tvol<0)?vj:vi,
               v2=(tvol<0)?vi:vj;
@@ -3792,6 +3819,7 @@ void molekul::voronoij(QList<INP> au){
           triangle.col[1]=Acol[au[i].OrdZahl][1];
           triangle.col[2]=Acol[au[i].OrdZahl][2];
           triangle.col[3]=0.4;
+//          triangle.col[3]=((intat>-1)&&(intra.at(fc[0])))?0.8:0.4;
           triangle.verts[0]=v[v1].pos;
           triangle.verts[1]=v[v2].pos;
           
@@ -3809,7 +3837,7 @@ void molekul::voronoij(QList<INP> au){
           tris++;
           double tv=fabs(tvol)/6.0;
           avol+=tv;
-          vol+=tv;
+          vol+=tv*au[i].amul;
           tvol=determinant(Matrix(m.at(fc[1])-oc, v.at(vi).pos-oc,v.at(vj).pos-oc));
           v1=(tvol<0)?vj:vi;
           v2=(tvol<0)?vi:vj;
@@ -3819,6 +3847,7 @@ void molekul::voronoij(QList<INP> au){
           triangle.col[1]=Acol[au[i].OrdZahl][1];
           triangle.col[2]=Acol[au[i].OrdZahl][2];
           triangle.col[3]=0.4;
+ //         triangle.col[3]=((intat>-1)&&(intra.at(fc[1])))?0.8:0.4;
           triangle.verts[0]=v[v1].pos;
           triangle.verts[1]=v[v2].pos;
           triangles.append(triangle);
@@ -3834,9 +3863,9 @@ void molekul::voronoij(QList<INP> au){
           tris++;
           tv=fabs(tvol)/6.0;
           avol+=tv;
-          vol+=tv;
+          vol+=tv*au[i].amul;
         }  
-      }
+      } 
 //    glEnd();
     glBegin(GL_LINES);
     for(int vi=0; vi<v.size()-1; vi++)
@@ -3851,15 +3880,26 @@ void molekul::voronoij(QList<INP> au){
     glEnd();
 //    printf("%d neighbours found for %s. Voronoij polyeder has %d verices, %d edges and %d faces. Triangles %d Volume %f Total Volume= %f cell volume %f\n",
 //        m.size(),au.at(i).atomname,v.size(),v.size()+m.size()-2,m.size(),
-        printf("%s: Triangles %d Volume %f Total Volume= %f cell volume %f\n",au.at(i).atomname,tris,avol,vol,zelle.V);
-  }//i atoms au
+        printf("%-12s: Triangles %6d Volume %18.5f %d\n",au.at(i).atomname,tris,avol,-tris/2+faci+v.size());
+        voroMsg.append(QString("%1 : EulerTest: %2 Volume %3 &Aring;<sup>3</sup>.<br>").arg(au.at(i).atomname).arg(-tris/2+faci+v.size()).arg(avol));
 
+    if (intat>-1) break;
+  }//i atoms au
+  if (intat==-1) {
+  printf("Total Volume= %18.5f Total Volume * z = %18.5f cell volume %18.5f delta =%f%%\n",vol,vol*zelle.symmops.size(),zelle.V,
+      (vol*zelle.symmops.size()-zelle.V)/zelle.V*100.0
+      );
+  voroMsg.append(QString("Total Volume= %1 &Aring;<sup>3</sup> cell volume %2 &Aring;<sup>3</sup> &Delta;V %3%<br>").arg(vol*zelle.symmops.size()).arg(zelle.V).arg((vol*zelle.symmops.size()-zelle.V)/zelle.V*100.0));
+  }
   glEnable(GL_LIGHTING);
   glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
   glEndList();
 
-  printf("triangles: %d %d\n", triangles.size(),GL_NO_ERROR==glGetError());
+//  printf("voronoi = %dms\n",speedTest.restart());
+//  printf("triangles: %d %d\n", triangles.size(),GL_NO_ERROR==glGetError());
+//  printf(" %dms\n",speedTest.restart());
   qSort(triangles.begin(),triangles.end(),vor_x);
+//  printf("sorting %dms\n",speedTest.restart());
   glNewList(vorobas+1,GL_COMPILE);
   glDisable(GL_CULL_FACE);
   glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
@@ -3874,6 +3914,7 @@ void molekul::voronoij(QList<INP> au){
   glEnd();
   glEndList();
 
+//  printf("drawing %dms\n",speedTest.restart());
   qSort(triangles.begin(),triangles.end(),vor_X);
   glNewList(vorobas+2,GL_COMPILE);
   glBegin(GL_TRIANGLES);
@@ -3934,6 +3975,7 @@ void molekul::voronoij(QList<INP> au){
   }
   glEnd();
   glEndList();
+  printf("drawing %dms\n",speedTest.restart());
 }
 
 ///////////////
