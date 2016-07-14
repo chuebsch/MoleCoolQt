@@ -3818,7 +3818,7 @@ void molekul::voronoij(QList<INP> au, int intat){
           triangle.col[0]=Acol[au[i].OrdZahl][0];
           triangle.col[1]=Acol[au[i].OrdZahl][1];
           triangle.col[2]=Acol[au[i].OrdZahl][2];
-          triangle.col[3]=0.4;
+          triangle.col[3]=0.3;
 //          triangle.col[3]=((intat>-1)&&(intra.at(fc[0])))?0.8:0.4;
           triangle.verts[0]=v[v1].pos;
           triangle.verts[1]=v[v2].pos;
@@ -3846,7 +3846,7 @@ void molekul::voronoij(QList<INP> au, int intat){
           triangle.col[0]=Acol[au[i].OrdZahl][0];
           triangle.col[1]=Acol[au[i].OrdZahl][1];
           triangle.col[2]=Acol[au[i].OrdZahl][2];
-          triangle.col[3]=0.4;
+          triangle.col[3]=0.3;
  //         triangle.col[3]=((intat>-1)&&(intra.at(fc[1])))?0.8:0.4;
           triangle.verts[0]=v[v1].pos;
           triangle.verts[1]=v[v2].pos;
@@ -3906,6 +3906,7 @@ void molekul::voronoij(QList<INP> au, int intat){
   glBegin(GL_TRIANGLES);
   for (int ti=0; ti<triangles.size(); ti++){
     glColor4fv(triangles.at(ti).col);
+//    Farbverlauf(ti,0,triangles.size(),0.2);
     glNormal3d(triangles.at(ti).nor.x,triangles.at(ti).nor.y,triangles.at(ti).nor.z);
     glVertex3d(triangles.at(ti).mid.x,triangles.at(ti).mid.y,triangles.at(ti).mid.z);
     glVertex3d(triangles.at(ti).verts[0].x,triangles.at(ti).verts[0].y,triangles.at(ti).verts[0].z);
@@ -3920,6 +3921,7 @@ void molekul::voronoij(QList<INP> au, int intat){
   glBegin(GL_TRIANGLES);
   for (int ti=0; ti<triangles.size(); ti++){
     glColor4fv(triangles.at(ti).col);
+  //  Farbverlauf(ti,0,triangles.size(),0.2);
     glNormal3d(triangles.at(ti).nor.x,triangles.at(ti).nor.y,triangles.at(ti).nor.z);
     glVertex3d(triangles.at(ti).mid.x,triangles.at(ti).mid.y,triangles.at(ti).mid.z);
     glVertex3d(triangles.at(ti).verts[0].x,triangles.at(ti).verts[0].y,triangles.at(ti).verts[0].z);
@@ -3932,6 +3934,7 @@ void molekul::voronoij(QList<INP> au, int intat){
   glBegin(GL_TRIANGLES);
   for (int ti=0; ti<triangles.size(); ti++){
     glColor4fv(triangles.at(ti).col);
+   // Farbverlauf(ti,0,triangles.size(),0.2);
     glNormal3d(triangles.at(ti).nor.x,triangles.at(ti).nor.y,triangles.at(ti).nor.z);
     glVertex3d(triangles.at(ti).mid.x,triangles.at(ti).mid.y,triangles.at(ti).mid.z);
     glVertex3d(triangles.at(ti).verts[0].x,triangles.at(ti).verts[0].y,triangles.at(ti).verts[0].z);
@@ -3944,6 +3947,7 @@ void molekul::voronoij(QList<INP> au, int intat){
   glBegin(GL_TRIANGLES);
   for (int ti=0; ti<triangles.size(); ti++){
     glColor4fv(triangles.at(ti).col);
+   // Farbverlauf(ti,0,triangles.size(),0.2);
     glNormal3d(triangles.at(ti).nor.x,triangles.at(ti).nor.y,triangles.at(ti).nor.z);
     glVertex3d(triangles.at(ti).mid.x,triangles.at(ti).mid.y,triangles.at(ti).mid.z);
     glVertex3d(triangles.at(ti).verts[0].x,triangles.at(ti).verts[0].y,triangles.at(ti).verts[0].z);
@@ -3956,6 +3960,7 @@ void molekul::voronoij(QList<INP> au, int intat){
   glBegin(GL_TRIANGLES);
   for (int ti=0; ti<triangles.size(); ti++){
     glColor4fv(triangles.at(ti).col);
+   // Farbverlauf(ti,0,triangles.size(),0.2);
     glNormal3d(triangles.at(ti).nor.x,triangles.at(ti).nor.y,triangles.at(ti).nor.z);
     glVertex3d(triangles.at(ti).mid.x,triangles.at(ti).mid.y,triangles.at(ti).mid.z);
     glVertex3d(triangles.at(ti).verts[0].x,triangles.at(ti).verts[0].y,triangles.at(ti).verts[0].z);
@@ -3968,6 +3973,7 @@ void molekul::voronoij(QList<INP> au, int intat){
   glBegin(GL_TRIANGLES);
   for (int ti=0; ti<triangles.size(); ti++){
     glColor4fv(triangles.at(ti).col);
+  //  Farbverlauf(ti,0,triangles.size(),0.2);
     glNormal3d(triangles.at(ti).nor.x,triangles.at(ti).nor.y,triangles.at(ti).nor.z);
     glVertex3d(triangles.at(ti).mid.x,triangles.at(ti).mid.y,triangles.at(ti).mid.z);
     glVertex3d(triangles.at(ti).verts[0].x,triangles.at(ti).verts[0].y,triangles.at(ti).verts[0].z);
