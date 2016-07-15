@@ -3768,6 +3768,7 @@ void CubeGL::draw() {
     if (pause) return;
   if (depthCueing) glEnable(GL_FOG);
   else glDisable(GL_FOG);
+  V3 auge=V3(0,0,206);
   int drawopt=(drawAt&1)|(drawBo<<1)|(drawUz<<2)|(elli<<3)|(drawLa<<4);
   static int Pers;
   extern QList<INP> xdinp;
@@ -3795,6 +3796,8 @@ void CubeGL::draw() {
   }
   if (mol.vorobas){
     glGetDoublev( GL_MODELVIEW_MATRIX, (double*)gmat );
+    Matrix mvm=Matrix(gmat[0],gmat[1],gmat[2], gmat[4],gmat[5],gmat[6], gmat[8],gmat[9],gmat[10]);
+    auge=mvm*auge;
     max= (fabs(gmat[2])>fabs(gmat[6]))?gmat[2]:gmat[6];
     max=(fabs(max)<fabs(gmat[10]))?gmat[10]:max; 
     if ((max==gmat[2])&&(max>0.0)) Pers=1; else 
@@ -4190,16 +4193,6 @@ if (!selectedAtoms.isEmpty()){
 	glPopMatrix();
       }
 
-      if (mol.vorobas){
-        glPushMatrix();
-        glScaled( L, L, L );
-//        glCallList(mol.vorobas+1);
-        //printf("%d Pers %d %d %d\n",Pers,mol.vorobas+Pers,glGetError(),GL_NO_ERROR);
-        glCallList(mol.vorobas);
-        glCallList(mol.vorobas+Pers);
-        glCallList(mol.vorobas);
-        glPopMatrix();
-      }
 
       if (foubas[0]|foubas[1]|foubas[2]|foubas[3]|foubas[4]) {
         if ((MIS)&&(moliso->mibas)) glClear( GL_DEPTH_BUFFER_BIT);
@@ -4259,6 +4252,17 @@ if (!selectedAtoms.isEmpty()){
             }
           }
 	}glPopMatrix();
+      }
+      if (mol.vorobas){
+        glPushMatrix();
+        glScaled( L, L, L );
+//        glCallList(mol.vorobas+1);
+        //glCallList(mol.vorobas);
+        mol.drawVoronoi(auge);
+        //glCallList(mol.vorobas);
+    //    glCallList(mol.vorobas+Pers);
+    //    glCallList(mol.vorobas);
+        glPopMatrix();
       }
     {
         glPushMatrix();

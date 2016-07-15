@@ -3624,16 +3624,6 @@ struct Vert {
   int faces[3];
   V3 pos;
 };
-struct VPoly{
- V3 mid,nor,verts[2];
- GLfloat col[4];
-};
-bool vor_x(VPoly a,VPoly b){return b.mid.x>a.mid.x;};
-bool vor_X(VPoly a,VPoly b){return b.mid.x<a.mid.x;};
-bool vor_y(VPoly a,VPoly b){return b.mid.y>a.mid.y;};
-bool vor_Y(VPoly a,VPoly b){return b.mid.y<a.mid.y;};
-bool vor_z(VPoly a,VPoly b){return b.mid.z>a.mid.z;};
-bool vor_Z(VPoly a,VPoly b){return b.mid.z<a.mid.z;};
 int commonFaces(Vert a,Vert b, int f[2]){
   int matches=0; 
   for (int i=0; i<3; i++)
@@ -3647,9 +3637,9 @@ void molekul::voronoij(QList<INP> au, int intat){
   voroMsg.append("<b>Voronoi:</b><br>");
   QTime speedTest;
   speedTest.start();
-  QList<VPoly> triangles;
+  vtriangles.clear();
   VPoly triangle;
-  vorobas=glGenLists(7);
+  vorobas=1;
   V3 prime,dp,D,floorD;
   QList<SdmItem> sdm;
   SdmItem sdmItem;
@@ -3693,13 +3683,6 @@ void molekul::voronoij(QList<INP> au, int intat){
   V3 pf,pc,mx,nx,of,oc;
   Matrix mat;
   double vol=0.0,avol,tvol;
-  glNewList(vorobas,GL_COMPILE);
-  glEnable(GL_BLEND);
-  //glDisable(GL_BLEND);
-  glEnable(GL_CULL_FACE);
-  glDisable(GL_LIGHTING);
-  //glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
-  glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
   for (int i=(intat>-1)?intat:0; i<au.size(); i++){
     if (au.at(i).OrdZahl<0) continue;
     //find faces
@@ -3815,15 +3798,12 @@ void molekul::voronoij(QList<INP> au, int intat){
               v2=(tvol<0)?vi:vj;
           triangle.mid=m.at(fc[0]);
           triangle.nor=n.at(fc[0]);
-          triangle.col[0]=Acol[au[i].OrdZahl][0];
-          triangle.col[1]=Acol[au[i].OrdZahl][1];
-          triangle.col[2]=Acol[au[i].OrdZahl][2];
-          triangle.col[3]=0.3;
-//          triangle.col[3]=((intat>-1)&&(intra.at(fc[0])))?0.8:0.4;
-          triangle.verts[0]=v[v1].pos;
-          triangle.verts[1]=v[v2].pos;
+          triangle.acol=au[i].OrdZahl;
+          triangle.intra=intra.at(fc[0]);
+          triangle.verts0=v[v1].pos;
+          triangle.verts1=v[v2].pos;
           
-          triangles.append(triangle);
+          vtriangles.append(triangle);
           /*
           GLfloat colo[4]={ Acol[au[i].OrdZahl][0], Acol[au[i].OrdZahl][1], Acol[au[i].OrdZahl][2], 0.4};
           //GLfloat colo[4]={ Acol[tris%100][0], Acol[tris%100][1], Acol[tris%100][2], 0.4};
@@ -3843,14 +3823,12 @@ void molekul::voronoij(QList<INP> au, int intat){
           v2=(tvol<0)?vi:vj;
           triangle.mid=m.at(fc[1]);
           triangle.nor=n.at(fc[1]);
-          triangle.col[0]=Acol[au[i].OrdZahl][0];
-          triangle.col[1]=Acol[au[i].OrdZahl][1];
-          triangle.col[2]=Acol[au[i].OrdZahl][2];
-          triangle.col[3]=0.3;
+          triangle.acol=au[i].OrdZahl;
+          triangle.intra=intra.at(fc[1]);
  //         triangle.col[3]=((intat>-1)&&(intra.at(fc[1])))?0.8:0.4;
-          triangle.verts[0]=v[v1].pos;
-          triangle.verts[1]=v[v2].pos;
-          triangles.append(triangle);
+          triangle.verts0=v[v1].pos;
+          triangle.verts1=v[v2].pos;
+          vtriangles.append(triangle);
           /*
           colo[3]=intra.at(fc[1])?1.0:0.4;
           glColor4fv(colo);
@@ -3867,17 +3845,6 @@ void molekul::voronoij(QList<INP> au, int intat){
         }  
       } 
 //    glEnd();
-    glBegin(GL_LINES);
-    for(int vi=0; vi<v.size()-1; vi++)
-      for(int vj=vi+1; vj<v.size(); vj++){
-        int fc[2];
-        if (commonFaces(v.at(vi),v.at(vj),fc)==2){
-          glColor4fv(Acol[au[i].OrdZahl]);
-          glVertex3d(v.at(vi).pos.x,v.at(vi).pos.y,v.at(vi).pos.z);
-          glVertex3d(v.at(vj).pos.x,v.at(vj).pos.y,v.at(vj).pos.z);
-        }  
-      }
-    glEnd();
 //    printf("%d neighbours found for %s. Voronoij polyeder has %d verices, %d edges and %d faces. Triangles %d Volume %f Total Volume= %f cell volume %f\n",
 //        m.size(),au.at(i).atomname,v.size(),v.size()+m.size()-2,m.size(),
         printf("%-12s: Triangles %6d Volume %18.5f %d\n",au.at(i).atomname,tris,avol,-tris/2+faci+v.size());
@@ -3891,99 +3858,43 @@ void molekul::voronoij(QList<INP> au, int intat){
       );
   voroMsg.append(QString("Total Volume= %1 &Aring;<sup>3</sup> cell volume %2 &Aring;<sup>3</sup> &Delta;V %3%<br>").arg(vol*zelle.symmops.size()).arg(zelle.V).arg((vol*zelle.symmops.size()-zelle.V)/zelle.V*100.0));
   }
-  glEnable(GL_LIGHTING);
-  glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
-  glEndList();
-
-//  printf("voronoi = %dms\n",speedTest.restart());
-//  printf("triangles: %d %d\n", triangles.size(),GL_NO_ERROR==glGetError());
-//  printf(" %dms\n",speedTest.restart());
-  qSort(triangles.begin(),triangles.end(),vor_x);
-//  printf("sorting %dms\n",speedTest.restart());
-  glNewList(vorobas+1,GL_COMPILE);
-  glDisable(GL_CULL_FACE);
-  glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
-  glBegin(GL_TRIANGLES);
-  for (int ti=0; ti<triangles.size(); ti++){
-    glColor4fv(triangles.at(ti).col);
-//    Farbverlauf(ti,0,triangles.size(),0.2);
-    glNormal3d(triangles.at(ti).nor.x,triangles.at(ti).nor.y,triangles.at(ti).nor.z);
-    glVertex3d(triangles.at(ti).mid.x,triangles.at(ti).mid.y,triangles.at(ti).mid.z);
-    glVertex3d(triangles.at(ti).verts[0].x,triangles.at(ti).verts[0].y,triangles.at(ti).verts[0].z);
-    glVertex3d(triangles.at(ti).verts[1].x,triangles.at(ti).verts[1].y,triangles.at(ti).verts[1].z);
-  }
-  glEnd();
-  glEndList();
-
 //  printf("drawing %dms\n",speedTest.restart());
-  qSort(triangles.begin(),triangles.end(),vor_X);
-  glNewList(vorobas+2,GL_COMPILE);
-  glBegin(GL_TRIANGLES);
-  for (int ti=0; ti<triangles.size(); ti++){
-    glColor4fv(triangles.at(ti).col);
-  //  Farbverlauf(ti,0,triangles.size(),0.2);
-    glNormal3d(triangles.at(ti).nor.x,triangles.at(ti).nor.y,triangles.at(ti).nor.z);
-    glVertex3d(triangles.at(ti).mid.x,triangles.at(ti).mid.y,triangles.at(ti).mid.z);
-    glVertex3d(triangles.at(ti).verts[0].x,triangles.at(ti).verts[0].y,triangles.at(ti).verts[0].z);
-    glVertex3d(triangles.at(ti).verts[1].x,triangles.at(ti).verts[1].y,triangles.at(ti).verts[1].z);
-  }
-  glEnd();
-  glEndList();
-  qSort(triangles.begin(),triangles.end(),vor_y);
-  glNewList(vorobas+3,GL_COMPILE);
-  glBegin(GL_TRIANGLES);
-  for (int ti=0; ti<triangles.size(); ti++){
-    glColor4fv(triangles.at(ti).col);
-   // Farbverlauf(ti,0,triangles.size(),0.2);
-    glNormal3d(triangles.at(ti).nor.x,triangles.at(ti).nor.y,triangles.at(ti).nor.z);
-    glVertex3d(triangles.at(ti).mid.x,triangles.at(ti).mid.y,triangles.at(ti).mid.z);
-    glVertex3d(triangles.at(ti).verts[0].x,triangles.at(ti).verts[0].y,triangles.at(ti).verts[0].z);
-    glVertex3d(triangles.at(ti).verts[1].x,triangles.at(ti).verts[1].y,triangles.at(ti).verts[1].z);
-  }
-  glEnd();
-  glEndList();
-  qSort(triangles.begin(),triangles.end(),vor_Y);
-  glNewList(vorobas+4,GL_COMPILE);
-  glBegin(GL_TRIANGLES);
-  for (int ti=0; ti<triangles.size(); ti++){
-    glColor4fv(triangles.at(ti).col);
-   // Farbverlauf(ti,0,triangles.size(),0.2);
-    glNormal3d(triangles.at(ti).nor.x,triangles.at(ti).nor.y,triangles.at(ti).nor.z);
-    glVertex3d(triangles.at(ti).mid.x,triangles.at(ti).mid.y,triangles.at(ti).mid.z);
-    glVertex3d(triangles.at(ti).verts[0].x,triangles.at(ti).verts[0].y,triangles.at(ti).verts[0].z);
-    glVertex3d(triangles.at(ti).verts[1].x,triangles.at(ti).verts[1].y,triangles.at(ti).verts[1].z);
-  }
-  glEnd();
-  glEndList();
-  qSort(triangles.begin(),triangles.end(),vor_z);
-  glNewList(vorobas+5,GL_COMPILE);
-  glBegin(GL_TRIANGLES);
-  for (int ti=0; ti<triangles.size(); ti++){
-    glColor4fv(triangles.at(ti).col);
-   // Farbverlauf(ti,0,triangles.size(),0.2);
-    glNormal3d(triangles.at(ti).nor.x,triangles.at(ti).nor.y,triangles.at(ti).nor.z);
-    glVertex3d(triangles.at(ti).mid.x,triangles.at(ti).mid.y,triangles.at(ti).mid.z);
-    glVertex3d(triangles.at(ti).verts[0].x,triangles.at(ti).verts[0].y,triangles.at(ti).verts[0].z);
-    glVertex3d(triangles.at(ti).verts[1].x,triangles.at(ti).verts[1].y,triangles.at(ti).verts[1].z);
-  }
-  glEnd();
-  glEndList();
-  qSort(triangles.begin(),triangles.end(),vor_Z);
-  glNewList(vorobas+6,GL_COMPILE);
-  glBegin(GL_TRIANGLES);
-  for (int ti=0; ti<triangles.size(); ti++){
-    glColor4fv(triangles.at(ti).col);
-  //  Farbverlauf(ti,0,triangles.size(),0.2);
-    glNormal3d(triangles.at(ti).nor.x,triangles.at(ti).nor.y,triangles.at(ti).nor.z);
-    glVertex3d(triangles.at(ti).mid.x,triangles.at(ti).mid.y,triangles.at(ti).mid.z);
-    glVertex3d(triangles.at(ti).verts[0].x,triangles.at(ti).verts[0].y,triangles.at(ti).verts[0].z);
-    glVertex3d(triangles.at(ti).verts[1].x,triangles.at(ti).verts[1].y,triangles.at(ti).verts[1].z);
-  }
-  glEnd();
-  glEndList();
-  printf("drawing %dms\n",speedTest.restart());
 }
-
+V3 eye;
+bool vbyeye(VPoly a,VPoly b){
+return (Distance(a.mid,eye)>Distance(b.mid,eye));
+}
+void molekul::drawVoronoi(V3 auge){
+  eye=auge;
+  qSort(vtriangles.begin(),vtriangles.end(),vbyeye);
+  glDisable(GL_CULL_FACE);
+  glEnable(GL_BLEND);
+  glDisable(GL_LIGHTING);
+  glBegin(GL_LINES);
+  for (int ti=0; ti<vtriangles.size(); ti++){
+    glColor4fv(Acol[vtriangles.at(ti).acol]);
+    glVertex3d(vtriangles.at(ti).verts0.x,vtriangles.at(ti).verts0.y,vtriangles.at(ti).verts0.z);
+    glVertex3d(vtriangles.at(ti).verts1.x,vtriangles.at(ti).verts1.y,vtriangles.at(ti).verts1.z);
+  }  
+  glEnd();
+  glEnable(GL_LIGHTING);
+  glBegin(GL_TRIANGLES);
+  for (int ti=0; ti<vtriangles.size(); ti++){
+    glColor4f(
+        Acol[vtriangles.at(ti).acol][0],
+        Acol[vtriangles.at(ti).acol][1],
+        Acol[vtriangles.at(ti).acol][2],
+        (vtriangles.at(ti).intra)?0.1:0.4
+        );
+//    Farbverlauf(ti,0,vtriangles.size(),0.2);
+    glNormal3d(vtriangles.at(ti).nor.x,vtriangles.at(ti).nor.y,vtriangles.at(ti).nor.z);
+    glVertex3d(vtriangles.at(ti).mid.x,vtriangles.at(ti).mid.y,vtriangles.at(ti).mid.z);
+    glVertex3d(vtriangles.at(ti).verts0.x,vtriangles.at(ti).verts0.y,vtriangles.at(ti).verts0.z);
+    glVertex3d(vtriangles.at(ti).verts1.x,vtriangles.at(ti).verts1.y,vtriangles.at(ti).verts1.z);
+  }
+  glEnd();
+//  glEndList();
+}
 ///////////////
 
 Modulat Modulat::applySymm(Matrix sym3d, V3 trans3d, V3 x4sym, int x4,double x4trans){

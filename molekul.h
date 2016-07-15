@@ -204,6 +204,14 @@ int a1,a2;
 }MyBond;
 typedef QList<MyBond> Connection;
 typedef QList<MyAtom> CEnvironment;
+typedef struct VPoly{
+ V3 mid,nor,verts0,verts1;
+ int acol,intra;
+ inline VPoly& operator = (const VPoly& b){
+ mid=b.mid; nor=b.nor; verts0=b.verts0; verts1=b.verts1; acol=b.acol;intra=b.intra;
+ return *this;
+ }
+}VPoly;
 
 struct Bpth {
  int start;
@@ -458,6 +466,7 @@ class molekul {
   QList<PolyEder> polyeders;
   QList<Bpth> wombats;
   QMap<int,bool> allowedPolyeders;
+  QList<VPoly> vtriangles;
   QList<int> sfac;
   double maxvolpol,minvolpol;
   int bcnt;
@@ -642,6 +651,7 @@ class molekul {
   int fvl;
   int vorobas;
   QString voroMsg;
+
   MAS scat[20];
   V3 uz0k,uz1k,uz2k,uz3k,uz4k,uz5k,uz6k,uz7k;  
   unsigned short Kovalenz_Radien[109];  
@@ -661,6 +671,7 @@ class molekul {
   void bonds(QList<INP> xdinp);
   void bonds(Connection bond);
   double fl(double x,double y, double z);
+  void drawVoronoi(V3 auge);
   void voronoij(QList<INP> au, int intat=-1);
   void draw_polyeders(QList<INP> xdinp);
   void atoms(CEnvironment atom,int proba);
