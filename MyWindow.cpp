@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=481;
+int rev=482;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -6470,9 +6470,10 @@ void MyWindow::load_sheldrick(QString fileName){
                          &newAtom.amul,
 			 &newAtom.uf.m11,
                          &newAtom.peakHeight);
-	  if (pda==7){
+	  if (pda==8){
 	    mol.pmin=fmin(mol.pmin,newAtom.peakHeight);
 	    mol.pmax=fmax(mol.pmax,newAtom.peakHeight);
+            //printf("%s %f %f\n",line,mol.pmin,mol.pmax);
 	  }
           //printf("[%s] {%s}\n",line,newAtom.atomname);
 	  newAtom.amul=getNum(newAtom.amul,fvar,Uiso);
@@ -6541,6 +6542,7 @@ void MyWindow::load_sheldrick(QString fileName){
     else Uf2Uo(asymmUnit[i].uf,asymmUnit[i].u);
   }
   growSymm(6);
+  //printf(">>%f %f\n",mol.pmin,mol.pmax);
 }//shelx
 
 //--------------------------------------------------------------------------------------------
@@ -9288,7 +9290,6 @@ void MyWindow::growSymm(int packart,int packatom){
     return;
   }
   QTime speedTest;
-  if ((mol.vorobas)&&(glIsList(mol.vorobas))) glDeleteLists(mol.vorobas,7);
   mol.vorobas=0;
   speedTest.start();
   cubeGL->setVisible(false);

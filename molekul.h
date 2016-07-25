@@ -675,6 +675,10 @@ class molekul {
   void voronoij(QList<INP> au, int intat=-1);
   void draw_polyeders(QList<INP> xdinp);
   void atoms(CEnvironment atom,int proba);
+  void dodecaeder(GLfloat r);
+  void icosaeder(GLfloat r);
+  void triacontaeder(GLfloat r);
+  void cube(GLfloat r);
   QString h_bonds(QList<INP> xdinp);
   void cbonds(QList<INP> xdinp);
   void axes(QList<INP> xdinp);
