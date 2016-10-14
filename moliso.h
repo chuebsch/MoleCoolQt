@@ -168,6 +168,7 @@ signals:
   void readJanaHeader(QString fname);
   void createSurface(QString isoFileName, QString mapFileName, QString &storeFaceName,int fileType);
   void createSurface(QString &storeFaceName, double proba,double iso99,bool mapping,bool minus99,double maxharm=1.0);
+  void createSurface(QString &storeFaceName, bool mapping);
   void legende();
   void Farbverlauf (GLfloat wrt);
   void cleanUpMem();

@@ -253,6 +253,7 @@ void MolIso::loadMI(QString fname, bool om, bool mima){
     }
   }  
   }//orte is Empty
+  printf("minmax %f %f %f %f\n",min,max,fixmax,fixmin);
   printf("%d orte.size %d  L%g\n",orte.size(),pgns.size(),L);
   balken->setValue(1);
   glNewList(mibas, GL_COMPILE );{                       //Isooberfl"ache ::Perspektive 1     
@@ -327,7 +328,6 @@ if (!mima) glEnable( GL_DEPTH_TEST );
   balken->hide();
   faceFile=fname;
 }
-
 
 void MolIso::DrawPlys(){
   glLoadName((GLuint)-1);
@@ -433,6 +433,16 @@ void MolIso::readBMBinaryHeader(QString fname){
     bh=breite*hoehe;
     capVx=mol.zelle.V/(bh*tiefe);
     V3 xd,yd,zd,xdk,ydk,zdk;
+   /* qDebug()<<ndim<<breite<<hoehe<<tiefe
+      <<cell[0] 
+      <<cell[1] 
+      <<cell[2] 
+      <<cell[3] 
+      <<cell[4] 
+      <<cell[5] 
+      <<cell[6] 
+      
+      <<capVx;*/
     double
       jdx=1.0/breite,
       jdy=1.0/hoehe,
@@ -449,7 +459,6 @@ void MolIso::readBMBinaryHeader(QString fname){
     z_dim=Vector3(zdk.x,zdk.y,zdk.z);
 
 }
-
 
 void MolIso::readJanaHeader(QString fname){
   QFile jh(fname);
@@ -649,7 +658,6 @@ void MolIso::readJanaHeader(QString fname){
   }
   // exit(0);
 }
-
 
 void MolIso::readXDGridHeader(QString fname,int &fileType){
   if (fname.endsWith(".m81",Qt::CaseInsensitive)) {
@@ -1275,10 +1283,15 @@ void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &st
       isoF.read((char*) doubdat,head);
       isoF.close();
       head/=sizeof(double);
-
+      double min=9.0e99,max=-9.0e99;
       //qDebug()<<head<<bh*tiefe;
-      for (int i = 0; i<head; i++)
+      for (int i = 0; i<head; i++){
       data.append(doubdat[i]/capVx);
+      min=fmin(data.at(i),min);
+      max=fmax(data.at(i),max);
+
+      }
+      printf("mi%g ma%g\n",min,max);
       free(headdummy);
       free(doubdat);
   }
@@ -1647,6 +1660,123 @@ void MolIso::createSurface(QString &storeFaceName, double proba,double iso99,boo
     }
     tf->close();
   }
+  free(grad);grad=NULL;
+  free(nodex);nodex=NULL;
+  free(nodey);nodey=NULL;
+  free(nodez);nodez=NULL;
+  mdata.clear();
+  data.clear();
+  pgns.clear();
+  orte.clear();
+}
+
+void MolIso::createSurface(QString &storeFaceName, bool mapping){//4 hirshfeld surfaces
+  thisIsPDF=false;
+  if (mapping){
+    Farben=6;    
+    farbe[0][0]=0.6;    
+    farbe[0][1]=0.6;    
+    farbe[0][2]=0.6;    
+    farbe[0][3]=0.25;
+    farbe[1][0]=0.75;   
+    farbe[1][1]=0.2;   
+    farbe[1][2]=0.0;  
+    farbe[1][3]=0.25;
+    farbe[2][0]=0.8;  
+    farbe[2][1]=0.7;    
+    farbe[2][2]=0;    
+    farbe[2][3]=0.5;
+    farbe[3][0]=0;    
+    farbe[3][1]=0.5;    
+    farbe[3][2]=0;      
+    farbe[3][3]=0.5;
+    farbe[4][0]=0;    
+    farbe[4][1]=0;    
+    farbe[4][2]=0.9;    
+    farbe[4][3]=0.5;    
+    farbe[5][0]=0.6;    
+    farbe[5][1]=0;    
+    farbe[5][2]=0.9;    
+    farbe[5][3]=0.75;    
+    farbe[6][0]=0.6;    
+    farbe[6][1]=0;    
+    farbe[6][2]=0;    
+    farbe[6][3]=0.75;  
+  }else{
+    Farben=2;    
+
+    farbe[0][0]=0.3;    
+    farbe[0][1]=0.7;    
+    farbe[0][2]=0.3;    
+    farbe[0][3]=0.6;
+
+    farbe[1][0]=0.3;    
+    farbe[1][1]=0.7;    
+    farbe[1][2]=0.3;    
+    farbe[1][3]=0.6;
+
+    mdata=data;
+  }
+  QFile *tf = new QFile(storeFaceName);
+  bh=breite*hoehe;
+  extern QProgressBar *balken;
+  balken->setMinimum(0);
+  balken->setMaximum(100);
+  balken->show();
+  balken->setValue(0);
+  if (( grad =(Vector3*)malloc(sizeof(Vector3)*bh*tiefe))==NULL) {
+    qDebug()<<"Less Memory(grad)";
+    exit(1);
+  }
+
+  if (( nodex =(Node*)malloc(sizeof(Node)*bh*tiefe*2))==NULL) {
+    qDebug()<<"Less Memory(X) ";
+    exit(1);  
+  } 
+  if (( nodey =(Node*)malloc(sizeof(Node)*bh*tiefe*2))==NULL) { 
+    qDebug()<<"Less Memory(Y)!!";
+    exit(1); 
+  }
+  if (( nodez =(Node*)malloc(sizeof(Node)*bh*tiefe*2))==NULL) {
+    qDebug()<<"Less Memory(Z)!!";
+    exit(1); 
+  }
+  simpelGrad();
+  CalcVertexes();
+  CalcNormals();
+    for( int ix=0; ix<breite-1; ix++ )
+      for( int iy=0; iy<hoehe-1; iy++ )
+        for( int iz=0; iz<tiefe-1; iz++ )
+          MakeElement(ix,iy,iz,breite,bh);
+    tf->open(QIODevice::WriteOnly|QIODevice::Text);
+
+    tf->write(QString("%1\n").arg(orte.size()).toLatin1());
+    for (int i=0;i<orte.size();i++){
+      tf->write(QString("%1  %2 %3 %4   %5 %6 %7  %8\n")
+          .arg(lineNr,-6)
+          .arg(orte.at(i).vertex.x,9,'f',6)
+          .arg(orte.at(i).vertex.y,9,'f',6)
+          .arg(orte.at(i).vertex.z,9,'f',6)
+          .arg(orte.at(i).normal.x,9,'f',6)
+          .arg(orte.at(i).normal.y,9,'f',6)
+          .arg(orte.at(i).normal.z,9,'f',6)
+          .arg(orte.at(i).color).toLatin1());
+      lineNr++;
+    }
+    PXsort();
+    QString Line="";
+    for (int i=0; i<pgns.size();i++) {
+      for (int j=0; j<pgns.at(i).n;j++){
+        Line.append(QString("%1 ").arg(pgns.at(i).ii[j],6));
+      }
+      if (pgns.at(i).n>0) {
+        Line.append("\n");
+        tf->write(Line.toLatin1());
+        Line.clear();
+      }
+    }
+    tf->close();
+  
   free(grad);grad=NULL;
   free(nodex);nodex=NULL;
   free(nodey);nodey=NULL;

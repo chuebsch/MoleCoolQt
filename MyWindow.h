@@ -7,6 +7,7 @@
 #include "moliso.h"
 #include "fourmcq.h"
 #include "psewidget.h"
+#include "hirsh.h"
  class MySortFilterProxyModel : public QSortFilterProxyModel {
      Q_OBJECT
 
@@ -91,6 +92,7 @@ public slots:
      void toggleTubes(bool b);
      //void toggleOrtho(bool b);
      void jnk();
+     void directHirsh();
      void polyColorIng(bool b);
      void changeBondStrength();
      void syncBondActs();
@@ -112,6 +114,7 @@ public slots:
      void exportFMaps();
      void openFile();
      void openDipoleFile();
+     void openHirsh();
      void removeDipoleMoments();
      void openRecentFile();
      void saveScene();
@@ -172,6 +175,7 @@ public slots:
      void filterThisAtom();
      void filterGroup(int index);
      void filterThisFragment();
+     void selectThisFragment();
      void filterOtherFragments();
      void textFilterChanged();
      void valFilterChanged();
@@ -207,6 +211,7 @@ protected:
     QRadioButton *cullNone,*cullBack,*cullFront;
     QSpinBox *fos;
     QFontComboBox *mlf;
+    Hirshfeld *hirshfeld;
 //
      QSignalMapper *signalMapper;
      QMenu *xdMenu;

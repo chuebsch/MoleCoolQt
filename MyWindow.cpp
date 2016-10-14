@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=484;
+int rev=485;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -287,7 +287,7 @@ MyWindow::MyWindow( QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(pa
   seReAct->setChecked(false);
   connect(seReAct, SIGNAL (toggled(bool)),
 	  cubeGL, SLOT(togglReSe(bool)));
-
+  QAction *MIA;
   seReAct->setVisible(false);
   menuBar()->addMenu(fileMenu);
   menuBar()->addMenu(workMenu);   
@@ -295,7 +295,7 @@ MyWindow::MyWindow( QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(pa
   menuBar()->addMenu(dialogMenu);
   menuBar()->addMenu(invariomMenu);
   menuBar()->addMenu(xdMenu);
-  menuBar()->addMenu(MolIsoMenu);
+  MIA=menuBar()->addMenu(MolIsoMenu);
   menuBar()->addMenu(stereoMenu);
   menuBar()->addMenu(helpMenu);
 
@@ -1473,10 +1473,26 @@ statusBar()->addPermanentWidget(balken);
   Pfad=Pfad.section('/',0,-2);
   Pfad.append("/DABA.txt");
   if (QFileInfo(Pfad).exists()) cubeGL->loadDataBase(Pfad);
+  Pfad=mol.einstellung->fileName();
+  Pfad=Pfad.section('/',0,-2);
+  Pfad.append("/hirsh");
+  if (QFileInfo(Pfad).exists()) {
+  QMenu *hirshMenu = new QMenu("Hirshfeld");
+  hirshMenu->addAction("Hirshfeld", this, SLOT(openHirsh())); 
+  menuBar()->insertMenu(MIA,hirshMenu);
+  }
+
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void MyWindow::openHirsh(){
+  hirshfeld = new Hirshfeld(&mol, &asymmUnit, &cubeGL->selectedAtoms, &dirName);
+
+  connect(hirshfeld,SIGNAL(doface()), this ,SLOT(directHirsh()));
+  hirshfeld->exec();
+}
 
 void MyWindow::openMapControl(){
   weak->setValue(fmcq->rw);
@@ -3877,6 +3893,9 @@ void MyWindow::load_Jana(QString fileName){
               &newAtom.uf.m12,
               &newAtom.uf.m13,
               &newAtom.uf.m23);
+          newAtom.uf.m12=newAtom.uf.m21;
+          newAtom.uf.m13=newAtom.uf.m31;
+          newAtom.uf.m23=newAtom.uf.m32;
             
         }
 
@@ -4207,6 +4226,7 @@ void MyWindow::load_BayMEM(QString fileName) {
       asymmUnit.append(newAtom); 
       int k=asymmUnit.size()-1;
       char typ[3];
+      asymmUnit[k].jtf=2;
       int succ=
       sscanf(bml.at(i).toStdString().c_str(),"%s%s%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf",
 	     asymmUnit[k].atomname,
@@ -4228,6 +4248,7 @@ void MyWindow::load_BayMEM(QString fileName) {
              asymmUnit[k].uf.m21=//21 == 12
              asymmUnit[k].uf.m31=//31 == 13
              asymmUnit[k].uf.m32=0.0;//32 == 23 
+             asymmUnit[k].jtf=1;
       }
       asymmUnit[k].uf.m23=asymmUnit[k].uf.m32;
       asymmUnit[k].uf.m13=asymmUnit[k].uf.m31;
@@ -4962,6 +4983,7 @@ void MyWindow::load_xdres(QString fileName) {
     asymmUnit[i].d1233/=  dfac;//
       }
    }
+   egal=fscanf(adp,"%lf\n\r",&asymmUnit[i].monopol);
    asymmUnit[i].sg=0;
       i++;
     }
@@ -5519,6 +5541,134 @@ void MyWindow::pdfDlg2(){
 
   delete dlg;
 }
+
+void MyWindow::directHirsh(){
+  printf("MyWindow::directHirsh\n");
+  cubeGL->pause=true;
+  if (cubeGL->moliso){
+    glDeleteLists(cubeGL->moliso->mibas,6);
+    if (cubeGL->moliso){
+      delete cubeGL->moliso;
+      cubeGL->moliso=NULL;
+    }
+    delete dock3;
+    dock->show();
+    dock2->show();
+    createmoliso->setVisible(true);
+    noMoliso->setVisible(false);
+  }
+  cubeGL->moliso = new MolIso();
+  cubeGL->moliso->L=cubeGL->L;
+  printf("?\n");
+  cubeGL->moliso->fixmin=666.666;
+  cubeGL->moliso->fixmax=666.666;
+  printf("?\n");
+  hirshfeld->forMolIso(cubeGL->moliso);
+  cubeGL->MIS=true;
+  cubeGL->MILe=true;
+  showface->setChecked ( true );
+  showface->setVisible(true);
+  showLeg->setChecked ( true );
+  showLeg->setVisible(true);
+  movLeg->setChecked ( false );
+  movLeg->setVisible(true);
+  mildir->setChecked ( true  );
+  mildir->setVisible(true);
+  setCursor(Qt::ArrowCursor);
+  dock->hide();
+  dock2->hide();
+  cubeGL->setVisible ( true );
+  createmoliso->setVisible(false);
+  noMoliso->setVisible(true);  
+  cubeGL->pause=false;
+  cubeGL->updateGL();
+  dock3 = new QDockWidget("Moliso control area",this);
+  dock3->setAllowedAreas(Qt::AllDockWidgetAreas);
+  QGroupBox *zebraZwinger= new QGroupBox();
+  QVBoxLayout *zla= new QVBoxLayout();
+  mt = new QCheckBox("transparence");
+  mt->setChecked(true);
+  mt->setShortcut(tr("T"));
+  cubeGL->togglMolisoTransparence(true);
+  zla->addWidget(mt);
+  strikesSldr = new QSlider(Qt::Horizontal);
+  strikesSldr->setMaximum(510);
+  strikesSldr->setMinimum(127);
+  strikesSldr->setValue(496);
+  strikesSldr->setVisible(false);
+  swidthSldr = new QSlider(Qt::Horizontal);
+  swidthSldr->setMaximum(128);
+  swidthSldr->setMinimum(1);
+  swidthSldr->setValue(1);
+  swidthSldr->setVisible(false);
+  zebraBox = new QCheckBox("Show contour belts");
+  zebraBox->setChecked(false);
+  zebraBox->setShortcut(tr("F8"));
+  zebraBox->setVisible(false);
+  legendSize = new QSlider(Qt::Horizontal);
+  legendSize->setValue(30);
+  legendSize->setMaximum(100);
+  cullNone = new QRadioButton("No culling");
+  cullBack = new QRadioButton("Back face culling");
+  cullFront = new QRadioButton("Front face culling");
+  cullNone->setChecked(true);
+  cubeGL->noneCull(true);
+  connect(cullNone,SIGNAL(toggled(bool)),cubeGL,SLOT(noneCull(bool)));
+  connect(cullBack,SIGNAL(toggled(bool)),cubeGL,SLOT(backCull(bool)));
+  connect(cullFront,SIGNAL(toggled(bool)),cubeGL,SLOT(frontCull(bool)));
+  zla->addWidget(cullNone);
+  zla->addWidget(cullBack);
+  zla->addWidget(cullFront);
+  QToolBar *tb = new QToolBar("Moliso toolbar",zebraZwinger);
+  tb->setOrientation(Qt::Vertical);
+  tb->setIconSize(QSize(16,16));
+  tb->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+  tb->addAction(showface);
+  tb->addAction(showLeg);
+  tb->addAction(movLeg);
+  tb->addAction(mildir);
+  zla->addWidget(tb);
+  mclmox =new QCheckBox("Monochrome legend text");
+  mclmox->setChecked(false);
+  connect(mclmox,SIGNAL(toggled(bool)),cubeGL,SLOT(togglMonoChrom(bool)));
+
+  zla->addWidget(mclmox);
+  zla->addWidget(new QLabel("Scale legend"));
+  zla->addWidget(legendSize);
+  QPushButton *savset = new QPushButton("Save current settings");
+  connect(savset,SIGNAL(pressed()),cubeGL,SLOT(saveMISettings()));
+  QPushButton *lodset = new QPushButton("Load settings");
+  connect(lodset,SIGNAL(pressed()),cubeGL,SLOT(loadMISettings()));
+  mlf = new QFontComboBox();
+  mlf->setCurrentFont(cubeGL->MLegendFont);
+  connect(mlf,SIGNAL(currentFontChanged(QFont)),cubeGL,SLOT(setMLFont(QFont)));
+  fos = new QSpinBox();
+  fos->setMinimum(4);
+  fos->setMaximum(272);
+  fos->setValue(cubeGL->MLegendFont.pointSize());
+  connect(fos,SIGNAL(valueChanged(int)),cubeGL,SLOT(setMLFontSize(int)));
+  zla->addWidget(mlf);
+  zla->addWidget(fos);
+  zla->addWidget(savset);
+  zla->addWidget(lodset);
+  zla->addStretch(999);
+  connect(cubeGL,SIGNAL(mconf()),this,SLOT(syncMconf()));
+  cubeGL->togglContours(false);
+  cubeGL->scaleLegend(30);
+  cubeGL->setContourCnt(496);
+  cubeGL->setContourWidth(1);
+  cubeGL->selectedAtoms.clear();
+  connect(mt,SIGNAL(toggled(bool)),cubeGL,SLOT(togglMolisoTransparence(bool)));
+  connect(legendSize,SIGNAL(valueChanged(int)),cubeGL,SLOT(scaleLegend(int)));
+  zebraZwinger->setLayout(zla);
+  dock3->setWidget(zebraZwinger);
+  dock3->setFeatures(QDockWidget::DockWidgetMovable|QDockWidget::DockWidgetClosable);
+  addDockWidget(Qt::LeftDockWidgetArea, dock3);
+  QMainWindow::tabifyDockWidget (dock2,dock3);
+  QMainWindow::tabifyDockWidget (dock2,dock);
+///DIRECT HIRSH
+}
+
 void MyWindow::makePDFGrids(double proba,bool c2,bool c3,bool c4){
   QString afac("testpdf2.face");
   QString fac("testpdf1.face");
@@ -6460,7 +6610,9 @@ void MyWindow::load_sheldrick(QString fileName){
 	  Uiso=sqrt(newAtom.uf.m11*newAtom.uf.m11+
 		    newAtom.uf.m22*newAtom.uf.m22+
 		    newAtom.uf.m33*newAtom.uf.m33);
+          newAtom.jtf=2;
 	}else {
+          newAtom.jtf=1;
 	  int pda=sscanf(line,"%s %d %lf %lf %lf %lf %lf %lf",
 			 newAtom.atomname,
 			 &newAtom.atomtype,
@@ -7640,6 +7792,39 @@ void MyWindow::filterThisFragment(){
     mol.knopf_made=0;
     initLists( fltrXdinp);
     filtered=1;
+    update();
+    cubeGL->updateGL();
+  }
+}
+
+void MyWindow::selectThisFragment(){
+  if (cubeGL->expandatom>-1){
+    //double laen,SUCHRAD;
+    QList<int> mwi;
+    cubeGL->selectedAtoms.clear();
+    int fragment=xdinp[cubeGL->expandatom].molindex;
+    printf("Filter Wochen\n");
+    mwi.append(cubeGL->expandatom);
+    cubeGL->selectedAtoms.append(xdinp[cubeGL->expandatom]);
+      for (int i=0;i<xdinp.size();i++){
+	if (mwi.contains(i)) continue;
+/*	laen=fl( 
+			xdinp[i].frac.x-mussweg[j].frac.x, 
+			xdinp[i].frac.y-mussweg[j].frac.y, 
+			xdinp[i].frac.z-mussweg[j].frac.z);
+	SUCHRAD=((
+				mol.Kovalenz_Radien[xdinp[i].OrdZahl]+ 
+				mol.Kovalenz_Radien[mussweg[j].OrdZahl]) -
+			(0.08*fabs((double)mol.ElNeg[xdinp[i].OrdZahl] -mol.ElNeg[mussweg[j].OrdZahl])))*0.012;
+	if ((laen>0.2)&&(laen<SUCHRAD))*/
+	if (fragment==xdinp[i].molindex)
+	{
+
+	 // mussweg.append(xdinp[i]);
+	  mwi.append(i);
+          cubeGL->selectedAtoms.append(xdinp[i]);
+	}
+      }
     update();
     cubeGL->updateGL();
   }
@@ -9579,15 +9764,21 @@ void MyWindow::growSymm(int packart,int packatom){
 	    newAtom.frac=mol.zelle.symmops.at(s)*asymmUnit[i].frac+mol.zelle.trans.at(s)+V3(h,k,l);
 	    sprintf(newAtom.atomname,"%s_%d",asymmUnit[i].atomname,j+1);
 	    newAtom.sg=1+j;
-        newAtom.part=asymmUnit[i].part;
+            newAtom.atomtype=asymmUnit[i].atomtype;
+            newAtom.jtf=asymmUnit[i].jtf;
+            newAtom.part=asymmUnit[i].part;
 	    newAtom.OrdZahl=asymmUnit[i].OrdZahl;
 	    newAtom.molindex=asymmUnit[i].molindex;
-	    if ((asymmUnit[i].u.m12==0.0)&&(asymmUnit[i].u.m23==0.0)&&(asymmUnit[i].u.m13==0.0)){
+	    if (asymmUnit[i].jtf<2){
 	      newAtom.u.m11=newAtom.u.m22=newAtom.u.m33=asymmUnit[i].uf.m11;
 	      newAtom.u.m12=newAtom.u.m13=newAtom.u.m23=newAtom.u.m21=newAtom.u.m31=newAtom.u.m32=0.0;}
 	    else {
 	      Usym(asymmUnit[i].uf,mol.zelle.symmops[s],newAtom.uf);
 	      Uf2Uo(newAtom.uf,newAtom.u);}
+/*            qDebug()<<"~~~~~~(o-o)"<<asymmUnit[i].jtf
+              <<asymmUnit[i].uf.m11<<newAtom.uf.m11
+              <<asymmUnit[i].uf.m22<<newAtom.uf.m22
+              <<asymmUnit[i].uf.m33<<newAtom.uf.m33; // */
 	      gibscho=0;
 	      for(int gbt=0;gbt<xdinp.size();gbt++){
 		if (xdinp.at(gbt).OrdZahl<0) continue;
@@ -9633,11 +9824,16 @@ void MyWindow::growSymm(int packart,int packatom){
 	  if ((asymmUnit[i].molindex==symmgroup)&&(asymmUnit[i].OrdZahl>-1)){ 
 	    newAtom.frac=mol.zelle.symmops.at(s)*asymmUnit[i].frac+mol.zelle.trans.at(s)+V3(h,k,l);
 	    newAtom.part=asymmUnit[i].part;
+            newAtom.amul=asymmUnit[i].amul;
+            newAtom.atomtype=asymmUnit[i].atomtype;
+
+
 	    sprintf(newAtom.atomname,"%s_%d",asymmUnit[i].atomname,j+1);
 	  newAtom.sg=1+j;
 	    newAtom.OrdZahl=asymmUnit[i].OrdZahl;
 	    newAtom.molindex=asymmUnit[i].molindex;
 	    if ((asymmUnit[i].u.m12==0.0 )&&(asymmUnit[i].u.m23==0.0)&&(asymmUnit[i].u.m13==0.0)){
+              newAtom.uf=asymmUnit[i].uf;
 	      newAtom.u.m11=newAtom.u.m22=newAtom.u.m33=asymmUnit[i].uf.m11;
 	      newAtom.u.m12=newAtom.u.m13=newAtom.u.m23=newAtom.u.m21=newAtom.u.m31=newAtom.u.m32=0.0;}
 	    else { 

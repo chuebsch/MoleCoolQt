@@ -97,6 +97,28 @@ static V3 erg=V3(0,0,0);
   if (Norm(v))  erg= (v * (1.0/sqrt(Norm(v))));  
   return erg; 
 }
+inline V3& clamp3(V3 v){
+static V3 erg;
+  double ig=1;//...nore
+  erg.x=modf(v.x+99.0,&ig);
+  erg.y=modf(v.y+99.0,&ig);
+  erg.z=modf(v.z+99.0,&ig);
+  return erg;
+}
+inline V3& ceil3(V3 v){
+static V3 erg;
+  erg.x=ceil(v.x);
+  erg.y=ceil(v.y);
+  erg.z=ceil(v.z);
+  return erg;
+}
+inline V3& floor3(V3 v){
+static  V3 erg;
+  erg.x=floor(v.x);
+  erg.y=floor(v.y);
+  erg.z=floor(v.z);
+  return erg;
+}
 struct Matrix{
 double m11, m21, m31, m12, m22, m32, m13, m23, m33;
  inline Matrix(void){}
@@ -151,6 +173,36 @@ inline Matrix operator * (const Matrix &a,const Matrix &b){
   erg.m13 = a.m13 * b.m11 + a.m23 * b.m12 + a.m33 * b.m13;
   erg.m23 = a.m13 * b.m21 + a.m23 * b.m22 + a.m33 * b.m23;
   erg.m33 = a.m13 * b.m31 + a.m23 * b.m32 + a.m33 * b.m33;
+  return erg;
+}
+inline Matrix operator * (const Matrix &a,const double &b){
+  Matrix erg;
+  erg.m11 = a.m11*b;
+  erg.m21 = a.m21*b;
+  erg.m31 = a.m31*b;
+
+  erg.m12 = a.m12*b;
+  erg.m22 = a.m22*b;
+  erg.m32 = a.m32*b;
+
+  erg.m13 = a.m13*b;
+  erg.m23 = a.m23*b;
+  erg.m33 = a.m33*b;
+  return erg;
+}
+inline Matrix operator + (const Matrix &a, const Matrix &b){
+  Matrix erg;
+  erg.m11 = a.m11+b.m11;
+  erg.m21 = a.m21+b.m21;
+  erg.m31 = a.m31+b.m31;
+                       
+  erg.m12 = a.m12+b.m12;
+  erg.m22 = a.m22+b.m22;
+  erg.m32 = a.m32+b.m32;
+                   
+  erg.m13 = a.m13+b.m13;
+  erg.m23 = a.m23+b.m23;
+  erg.m33 = a.m33+b.m33;
   return erg;
 }
 inline V3 operator * (const Matrix &a, const V3 &b){
@@ -368,6 +420,7 @@ struct INP {
   int      isym;             // isym 
   int      ichcon;           // chemical constraint
   double   amul;
+  double monopol;
   int   imul;
   V3   frac;          // Fraktionelle Koordinaten in X-Richtung 
   Matrix uf;           // Temperaturparameter 
@@ -405,6 +458,7 @@ inline bool operator < (const INP &a1, const INP &a2){
 struct Cell {
   double a,b,c,al,be,ga;
   double phi,V,as,bs,cs,als,bes,gas,lambda;
+  double cosra,cosrb,cosrg;
   bool centro;
   QChar lattis;
   int symuncent;
@@ -699,6 +753,7 @@ class molekul {
  private:
   void ellipse(int style);
   void sphere(int adp);
+  void sp(GLfloat r=1.0f);
   struct knpf{
     int lz;
     int lig[30];

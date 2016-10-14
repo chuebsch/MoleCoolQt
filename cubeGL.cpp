@@ -6,9 +6,12 @@
 #include "invariomDlg.h"  
 #include "XDDlg.h"  
 #include "inames.h"
+#ifndef GL_MULTISAMPLE
+#define GL_MULTISAMPLE  0x809D
+#endif
 V3 mil;
 CubeGL::CubeGL(QWidget *parent,double vang) : QGLWidget(parent) {
-   setFormat(QGLFormat(QGL::DoubleBuffer | QGL::DepthBuffer) );
+   setFormat(QGLFormat(QGL::SampleBuffers) );
    atomsClickable=true;
    negpdf=true;
    faceCull=0;
@@ -600,6 +603,7 @@ void CubeGL::initializeGL() {
   glMaterialf(  GL_FRONT_AND_BACK, GL_SHININESS,           OBJ_SHIN );
   glShadeModel( GL_SMOOTH );
   glEnable(GL_NORMALIZE);
+  glEnable(GL_MULTISAMPLE);
   glClearColor(bgCR,bgCG,bgCB,bgCA);
 
    glEnable(GL_DEPTH_TEST );
@@ -3420,6 +3424,7 @@ void CubeGL::contextMenuEvent(QContextMenuEvent *event) {
 	menu.addAction(&hideThisAct);
 	menu.addAction(&hideThisFragment);
 	menu.addAction(&hideOtherFragments);
+	menu.addAction("Select this fragment",parent(),SLOT(selectThisFragment()));
     {QAction *a = menu.addAction("Calculate p.d.f. of an atom",parent(),SLOT(pdfDlg()));
     a->setData(expandatom);
     }
