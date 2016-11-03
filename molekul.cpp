@@ -4494,46 +4494,45 @@ bool molekul::applyLatticeCentro(const QChar latt,const bool centro){
 
 void molekul::setup_zelle(){  
   const double g2r=180.0/M_PI;
-  double        
-    cs_al = (zelle.al==90)?0:cos(zelle.al/g2r),
-          cs_be = (zelle.be==90)?0:cos(zelle.be/g2r),
-          cs_ga = (zelle.ga==90)?0:cos(zelle.ga/g2r),
-
-          sn_al = (zelle.al==90)?1:sin(zelle.al/g2r),
+  zelle.cs_al = (zelle.al==90)?0:cos(zelle.al/g2r);
+  zelle.cs_be = (zelle.be==90)?0:cos(zelle.be/g2r);
+  zelle.cs_ga = (zelle.ga==90)?0:cos(zelle.ga/g2r);
+  double
+    sn_al = (zelle.al==90)?1:sin(zelle.al/g2r),
           sn_be = (zelle.be==90)?1:sin(zelle.be/g2r),
           sn_ga = (zelle.ga==90)?1:sin(zelle.ga/g2r);
 
-  zelle.phi=  sqrt(1-(cs_al*cs_al)-(cs_be*cs_be)-(cs_ga*cs_ga) + 2*cs_al*cs_be*cs_ga);
+  zelle.phi=  sqrt(1-(zelle.cs_al*zelle.cs_al)-(zelle.cs_be*zelle.cs_be)-(zelle.cs_ga*zelle.cs_ga) + 2*zelle.cs_al*zelle.cs_be*zelle.cs_ga);
   zelle.V = zelle.a*zelle.b*zelle.c*zelle.phi;
   printf("%f %f %f %f %f %f V %f phi %f\n",zelle.a,zelle.b,zelle.c,zelle.al,zelle.be,zelle.ga,zelle.V,zelle.phi);
-  printf("%f %f %f %f %f %f \n",cs_al,cs_be ,cs_ga, sn_al, sn_be,sn_ga);
+  printf("%f %f %f %f %f %f \n",zelle.cs_al,zelle.cs_be ,zelle.cs_ga, sn_al, sn_be,sn_ga);
   zelle.as= zelle.c*zelle.b*sn_al/zelle.V;
   zelle.bs= zelle.c*zelle.a*sn_be/zelle.V;
   zelle.cs= zelle.a*zelle.b*sn_ga/zelle.V;
-  zelle.cosra=(cs_be*cs_ga-cs_al)/(sn_be*sn_ga),
-  zelle.cosrb=(cs_al*cs_ga-cs_be)/(sn_al*sn_ga),
-  zelle.cosrg=(cs_al*cs_be-cs_ga)/(sn_al*sn_be);
+  zelle.cosra=(zelle.cs_be*zelle.cs_ga-zelle.cs_al)/(sn_be*sn_ga),
+  zelle.cosrb=(zelle.cs_al*zelle.cs_ga-zelle.cs_be)/(sn_al*sn_ga),
+  zelle.cosrg=(zelle.cs_al*zelle.cs_be-zelle.cs_ga)/(sn_al*sn_be);
 
   zelle.als=acos(zelle.cosra)*g2r;
   zelle.bes=acos(zelle.cosrb)*g2r;
   zelle.gas=acos(zelle.cosrg)*g2r; 
-  const double tau=zelle.c*((cs_al-cs_be*cs_ga)/sn_ga);
+  const double tau=zelle.c*((zelle.cs_al-zelle.cs_be*zelle.cs_ga)/sn_ga);
   zelle.o1.m11=zelle.o[0][0] = zelle.as*zelle.a;
   zelle.o1.m12=zelle.o[0][1] = 0.0;
   zelle.o1.m13=zelle.o[0][2] = 0.0;
-  zelle.o1.m21=zelle.o[1][0] = zelle.bs*zelle.b*cs_ga;
+  zelle.o1.m21=zelle.o[1][0] = zelle.bs*zelle.b*zelle.cs_ga;
   zelle.o1.m22=zelle.o[1][1] = zelle.bs*zelle.b*sn_ga;
   zelle.o1.m23=zelle.o[1][2] = 0.0;
-  zelle.o1.m31=zelle.o[2][0] = zelle.cs*zelle.c* cs_be;
+  zelle.o1.m31=zelle.o[2][0] = zelle.cs*zelle.c* zelle.cs_be;
   zelle.o1.m32=zelle.o[2][1] = zelle.cs*tau;
   zelle.o1.m33=zelle.o[2][2] = zelle.cs*zelle.c* zelle.phi / sn_ga;
   zelle.f2c.m11 = zelle.a;
   zelle.f2c.m21 = 0.0;
   zelle.f2c.m31 = 0.0;
-  zelle.f2c.m12 = zelle.b * cs_ga;
+  zelle.f2c.m12 = zelle.b * zelle.cs_ga;
   zelle.f2c.m22 = zelle.b * sn_ga;
   zelle.f2c.m32 = 0.0;
-  zelle.f2c.m13 = zelle.c * cs_be;
+  zelle.f2c.m13 = zelle.c * zelle.cs_be;
   zelle.f2c.m23 = tau;
   zelle.f2c.m33 = zelle.c * zelle.phi / sn_ga;
 
@@ -4542,9 +4541,9 @@ void molekul::setup_zelle(){
   zelle.G.m11=zelle.a*zelle.a;
   zelle.G.m22=zelle.b*zelle.b;
   zelle.G.m33=zelle.c*zelle.c;
-  zelle.G.m12=zelle.G.m21=zelle.a*zelle.b*cs_ga;
-  zelle.G.m13=zelle.G.m31=zelle.a*zelle.c*cs_be;
-  zelle.G.m23=zelle.G.m32=zelle.b*zelle.c*cs_al;
+  zelle.G.m12=zelle.G.m21=zelle.a*zelle.b*zelle.cs_ga;
+  zelle.G.m13=zelle.G.m31=zelle.a*zelle.c*zelle.cs_be;
+  zelle.G.m23=zelle.G.m32=zelle.b*zelle.c*zelle.cs_al;
 
   zelle.Gi.m11=zelle.as*zelle.as;
   zelle.Gi.m22=zelle.bs*zelle.bs;
@@ -4557,22 +4556,62 @@ void molekul::setup_zelle(){
   printf("Gi  \n%12.6f %12.6f %12.6f\n%12.6f %12.6f %12.6f\n%12.6f %12.6f %12.6f\n",zelle.Gi.m11,zelle.Gi.m12,zelle.Gi.m13,zelle.Gi.m12,zelle.Gi.m22,zelle.Gi.m23,zelle.Gi.m13,zelle.Gi.m23,zelle.Gi.m33 );
   printf("G*Gi\n%12.6f %12.6f %12.6f\n%12.6f %12.6f %12.6f\n%12.6f %12.6f %12.6f\n",test.m11,test.m12,test.m13,test.m12,test.m22,test.m23,test.m13,test.m23,test.m33 );//*/
 }
+
+void molekul::multiplicity(QList<INP> &au){
+  V3 hier,da,dort;
+  double d;
+  for (int i=0; i<au.size(); i++){
+    if (au.at(i).OrdZahl<0) continue;
+    au[i].multiplicity=0.0;
+    hier=clamp3(au.at(i).frac);
+    for (int n=0; n<zelle.symmops.size(); n++){
+      da = clamp3(zelle.symmops.at(n) * au.at(i).frac + zelle.trans.at(n));
+      //da = clamp3(au.at(i).frac * zelle.symmops.at(n) + zelle.trans.at(n));
+      d=fl(hier-da);
+//      printf("%s %f\n",au.at(i).atomname,d); 
+      if (d<0.01) au[i].multiplicity+=1.0;
+      for (int j=0; j<au.size(); j++){
+        if (i==j) continue;
+        if (au.at(j).OrdZahl<0) continue;
+        if (au.at(j).OrdZahl!=au.at(i).OrdZahl) continue;
+        dort=clamp3(au.at(j).frac);
+        d=fl(dort-da);
+        //printf("!%s %f\n",au.at(i).atomname,d); 
+        if ((au.at(j).OrdZahl==au.at(i).OrdZahl)&&(d<0.01)) au[i].multiplicity+=1.0;//printf ("%s %s ui! %f\n",au.at(i).atomname,au.at(j).atomname,d);
+      }
+    }
+ //   printf("%-8s => multiplicity = %g real occupancy %f\n",au.at(i).atomname,au.at(i).multiplicity, au.at(i).amul*au.at(i).multiplicity);
+  }
+}
+
 void molekul::Uf2Uo(const Matrix x, Matrix & y) {
  y=(zelle.o1*x)*transponse(zelle.o1);
 }
 
 double molekul::fl(double x,double y,double z){
-	double a,b,c;
-  const double g2r=180.0/M_PI;
-	a=(zelle.ga==90.0)?0.0:2.0*x*y*zelle.a*zelle.b*cos(zelle.ga/g2r);
-	b=(zelle.be==90.0)?0.0:2.0*x*z*zelle.a*zelle.c*cos(zelle.be/g2r);
-	c=(zelle.al==90.0)?0.0:2.0*y*z*zelle.b*zelle.c*cos(zelle.al/g2r);
+  double a,b,c;
+  a=(zelle.ga==90.0)?0.0:2.0*x*y*zelle.a*zelle.b*zelle.cs_ga;
+  b=(zelle.be==90.0)?0.0:2.0*x*z*zelle.a*zelle.c*zelle.cs_be;
+  c=(zelle.al==90.0)?0.0:2.0*y*z*zelle.b*zelle.c*zelle.cs_al;
   double erg=sqrt(x*x*zelle.a*zelle.a+
-		  y*y*zelle.b*zelle.b+
-		  z*z*zelle.c*zelle.c+
-		  a+b+c);
+      y*y*zelle.b*zelle.b+
+      z*z*zelle.c*zelle.c+
+      a+b+c);
   return erg;
 }
+
+double molekul::fl(V3 v){
+  double a,b,c;
+  a=(zelle.ga==90.0)?0.0:2.0*v.x*v.y*zelle.a*zelle.b*zelle.cs_ga;
+  b=(zelle.be==90.0)?0.0:2.0*v.x*v.z*zelle.a*zelle.c*zelle.cs_be;
+  c=(zelle.al==90.0)?0.0:2.0*v.y*v.z*zelle.b*zelle.c*zelle.cs_al;
+  double erg=sqrt(v.x*v.x*zelle.a*zelle.a+
+      v.y*v.y*zelle.b*zelle.b+
+      v.z*v.z*zelle.c*zelle.c+
+      a+b+c);
+  return erg;
+}
+
 struct Vert {
   int faces[3];
   V3 pos;

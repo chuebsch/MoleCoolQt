@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=487;
+int rev=488;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -8260,6 +8260,7 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
       a->setChecked(mol.allowedPolyeders.value(mol.sfac.at(i),true));
       a->setData(mol.sfac.at(i));
   }
+  mol.multiplicity(asymmUnit);
   statusBar()->showMessage(tr("File succesfully loaded.") );
   // Zuletzt geffnete File setzen
   if (mol.einstellung->group()!="Version 0.1")mol.einstellung->beginGroup("Version 0.1");
@@ -9537,6 +9538,7 @@ void MyWindow::growSymm(int packart,int packatom){
 	  sprintf(newAtom.atomname,"%s_%d",asymmUnit[i].atomname,j+1);
 	  newAtom.sg=1+j;
 	  newAtom.OrdZahl = asymmUnit[i].OrdZahl;	  
+          newAtom.amul=asymmUnit[i].amul;
 	  newAtom.molindex = asymmUnit[i].molindex;
 	  if ((asymmUnit[i].u.m12==0.0)&&(asymmUnit[i].u.m23==0.0)&&(asymmUnit[i].u.m13==0.0)){
 	    newAtom.u.m11=newAtom.u.m22=newAtom.u.m33=asymmUnit[i].uf.m11;
@@ -9642,6 +9644,7 @@ void MyWindow::growSymm(int packart,int packatom){
 	    newAtom.frac=prime;
 	    newAtom.OrdZahl=asymmUnit[i].OrdZahl;
 	    newAtom.molindex=asymmUnit[i].molindex;
+            newAtom.amul=asymmUnit[i].amul;
 	    sprintf(newAtom.atomname,"%s'",asymmUnit[i].atomname);
 	    newAtom.sg=1;
 	    if ((asymmUnit[i].u.m12==0.0)&&(asymmUnit[i].u.m23==0.0)&&(asymmUnit[i].u.m13==0.0)){
@@ -9767,6 +9770,7 @@ void MyWindow::growSymm(int packart,int packatom){
             newAtom.atomtype=asymmUnit[i].atomtype;
             newAtom.jtf=asymmUnit[i].jtf;
             newAtom.part=asymmUnit[i].part;
+            newAtom.amul=asymmUnit[i].amul;
 	    newAtom.OrdZahl=asymmUnit[i].OrdZahl;
 	    newAtom.molindex=asymmUnit[i].molindex;
 	    if (asymmUnit[i].jtf<2){

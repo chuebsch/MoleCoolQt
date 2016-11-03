@@ -274,7 +274,7 @@ void Hirshfeld::fillmi(HiAtom &ha){
     double d=determinant(ha.Mi[i]);
     ha.pref[i]=sqrt(d)*ha.occ*formfactors[ha.iscat].ab6[i*2]*pisqrt3/mol->zelle.V;
     ha.Mi[i]=ha.Mi[i]*(-pi2);
-   // printf("pref%g %g %g \n",sf.pref[i],sqrt(d),sf.a[i]);
+    //printf("%spref%g %g  occ %g\n",formfactors[ha.iscat].lab,ha.pref[i],sqrt(d),ha.occ);
     if (ha.pref[i]<acc) ha.oros[i]=V3(0.02,0.02,0.02);// simply a small number that includes only the small surrounding of the atomic center
     else 
       ha.oros[i]=V3(
@@ -332,7 +332,7 @@ void Hirshfeld::browseIAMpriorname(){
         
         ,&selectedFilter,QFileDialog::DontUseNativeDialog );
 
-  qDebug()<<"ok"<<s<<IAMpriorname;
+//  qDebug()<<"ok"<<s<<IAMpriorname;
   iampre->setText(s); 
       
   IAMpriorname  = iampre->text();
@@ -692,7 +692,7 @@ void Hirshfeld::iamprior(){
   for (int i=0; i<atomsInCell.size(); i++){
     forts->setValue(i);
     aStatusBar->setText(QString("Atom %1 of %2").arg(i+1).arg(atomsInCell.size())); 
-  printf("Atom %d of %d \n",i+1,atomsInCell.size());
+//  printf("Atom %d of %d \n",i+1,atomsInCell.size());
     for (int iz=0; iz<nz; iz++){
       for (int iy=0; iy<ny; iy++){
         for (int ix=0; ix<nx; ix++){
@@ -816,14 +816,14 @@ void Hirshfeld::expandBox(){
     expandetrho2=NULL;
     density_out=NULL;
     if (!DensityOut.isEmpty()) {
-      qDebug()<<DensityOut<<"DensityOut";
+//      qDebug()<<DensityOut<<"DensityOut";
       density_out=(double*) malloc(sizeof(double)*entot);
     }
     if (!DensityIn.isEmpty()) {
       _C=C=(double*)malloc(sizeof(double)*ntot);
       readMap(C,DensityIn);
       if (C==NULL) free(_C);
-      qDebug()<<DensityIn<<"DensityIn"<<(C==NULL);
+//      qDebug()<<DensityIn<<"DensityIn"<<(C==NULL);
       expandetrho2=(double*) malloc(sizeof(double)*entot);
     }
     int *inteX=(int*)malloc(sizeof(int)*entot);
@@ -880,7 +880,6 @@ void Hirshfeld::expandBox(){
         ,isfac.toStdString().c_str()
         );
     HiAtom atm;
-    atm.occ=1.0;
     Matrix u;
     int molsize=anr;
     anr=0;
@@ -893,6 +892,7 @@ void Hirshfeld::expandBox(){
         aStatusBar->setText(QString("Computing IAM rho for atom %1 of %2").arg(anr).arg(molsize));
         update();
         atm.frac=V3((au->at(i).frac.x-midd.x)*nx/enx+0.5,(au->at(i).frac.y-midd.y)*ny/eny+0.5,(au->at(i).frac.z-midd.z)*nz/enz+0.5);
+        atm.occ=fmax(0.0,fmin(1.0,au->at(i).amul*au->at(i).multiplicity));
         if ((au->at(i).jtf<2)||(au->at(i).uf.m22==0.0)) { 
           fprintf(esx,"%-4s %4d %9.5f %9.5f %9.5f %9.5f %9.5f\n",
               au->at(i).atomname,
@@ -943,6 +943,7 @@ void Hirshfeld::expandBox(){
       }
     }
     else{
+      mol->multiplicity(*selectedAtoms);
     for (int i=0; i<selectedAtoms->size();i++){
       if (selectedAtoms->at(i).OrdZahl<0) continue;
 //      for (int icoo=0; icoo<entot; icoo++){atom_rho[icoo]=0.0;}
@@ -950,6 +951,7 @@ void Hirshfeld::expandBox(){
       aStatusBar->setText(QString("Computing IAM rho for atom %1 of %2").arg(anr).arg(molsize));
       update();
       atm.frac=V3((selectedAtoms->at(i).frac.x-midd.x)*nx/enx+0.5,(selectedAtoms->at(i).frac.y-midd.y)*ny/eny+0.5,(selectedAtoms->at(i).frac.z-midd.z)*nz/enz+0.5);
+      atm.occ=fmax(0.0,fmin(1.0,selectedAtoms->at(i).amul*selectedAtoms->at(i).multiplicity));
       if ((selectedAtoms->at(i).jtf<2)||(selectedAtoms->at(i).uf.m22==0.0)) { 
         fprintf(esx,"%-4s %4d %9.5f %9.5f %9.5f %9.5f %9.5f\n",
             selectedAtoms->at(i).atomname,
@@ -1539,7 +1541,7 @@ void Hirshfeld::setup_zelle(){
 void Hirshfeld::priorThere(const QString & text){
   iamp->setEnabled((!text.isEmpty())&&(text.contains(QRegExp("(.cube)|(.raw)|(.m81)$"))));
   if ((!text.isEmpty())&&(text.endsWith(".raw"))&&(QFile::exists(text))){
-    printf ("Testing '%s'\n",text.toStdString().c_str());
+//    printf ("Testing '%s'\n",text.toStdString().c_str());
     FILE *raw=fopen(text.toStdString().c_str(),"rt");
     BMhead bm;
     //fread(void *ptr, size_t size, size_t nmemb, FILE *stream); 
@@ -1550,7 +1552,7 @@ void Hirshfeld::priorThere(const QString & text){
       return;
     }
     fclose(raw);
-    printf("%d %d %d ok %d\n",bm.nn1,bm.nn2,bm.nn3,(nx==bm.nn1)&&(ny==bm.nn2)&&(nz==bm.nn3));
+//    printf("%d %d %d ok %d\n",bm.nn1,bm.nn2,bm.nn3,(nx==bm.nn1)&&(ny==bm.nn2)&&(nz==bm.nn3));
     loadIamp->setEnabled((nx==bm.nn1)&&(ny==bm.nn2)&&(nz==bm.nn3)); 
   }
 

@@ -420,6 +420,7 @@ struct INP {
   int      isym;             // isym 
   int      ichcon;           // chemical constraint
   double   amul;
+  double   multiplicity;
   double monopol;
   int   imul;
   V3   frac;          // Fraktionelle Koordinaten in X-Richtung 
@@ -459,6 +460,7 @@ struct Cell {
   double a,b,c,al,be,ga;
   double phi,V,as,bs,cs,als,bes,gas,lambda;
   double cosra,cosrb,cosrg;
+  double cs_al,cs_be,cs_ga;
   bool centro;
   QChar lattis;
   int symuncent;
@@ -718,6 +720,7 @@ class molekul {
   int Get_OZ(QString S1);
   void setup_zelle();
   void entknoten();
+  void multiplicity(QList<INP> &au);
   void Uf2Uo(const Matrix x, Matrix & y);
   void copyAcol(GLfloat _Acol[108][4],GLfloat _arad[108],int _aStyle[108]);
   void atoms(QList<INP> xdinp,const int proba);
@@ -725,6 +728,7 @@ class molekul {
   void bonds(QList<INP> xdinp);
   void bonds(Connection bond);
   double fl(double x,double y, double z);
+  double fl(V3 v);
   void drawVoronoi(V3 auge);
   void voronoij(QList<INP> au, int intat=-1);
   void draw_polyeders(QList<INP> xdinp);
