@@ -796,59 +796,59 @@ class Modulat{
     int molindex;
     int sg;
     double screenX,screenY;
-/*    Modulat(const Modulat &m):so(m.so),sp(m.sp),st(m.st),wo(m.wo),wp(m.wp),wt(m.wt){
-      mol=m.mol;
-      frac0=m.frac0;
-      uf0=m.uf0;
-      strcpy(atomname,m.atomname);
-      amul=m.amul;
-      OrdZahl=m.OrdZahl;
-      x4sym=m.x4sym;
-      x4=m.x4;
-      x4trans=m.x4trans;
-      if (wo>0) {
-        os=(double*)malloc(sizeof(double)*wo);
-        oc=(double*)malloc(sizeof(double)*wo);
-      }else{oc=os=NULL;}
-      if (wp>0) {
-        possin=(V3*)malloc(sizeof(V3)*wp);
-        poscos=(V3*)malloc(sizeof(V3)*wp);
-      }else{ possin=poscos=NULL;}
-      if (wt>0) {
-        usin=(Matrix*)malloc(sizeof(Matrix)*wt);
-        ucos=(Matrix*)malloc(sizeof(Matrix)*wt);
-      }else{ usin=ucos=NULL;}
-      for (int i=0; i<wo; i++) {os[i]=m.os[i];oc[i]=m.oc[i];}
-      for (int i=0; i<wp; i++) {possin[i]=m.possin[i]; poscos[i]=poscos[i];};
-      for (int i=0; i<wo; i++) {usin[i]=m.usin[i];ucos[i]=m.ucos[i];}
-   //   qDebug()<<"const"<<__LINE__<<atomname;
+    /*    Modulat(const Modulat &m):so(m.so),sp(m.sp),st(m.st),wo(m.wo),wp(m.wp),wt(m.wt){
+          mol=m.mol;
+          frac0=m.frac0;
+          uf0=m.uf0;
+          strcpy(atomname,m.atomname);
+          amul=m.amul;
+          OrdZahl=m.OrdZahl;
+          x4sym=m.x4sym;
+          x4=m.x4;
+          x4trans=m.x4trans;
+          if (wo>0) {
+          os=(double*)malloc(sizeof(double)*wo);
+          oc=(double*)malloc(sizeof(double)*wo);
+          }else{oc=os=NULL;}
+          if (wp>0) {
+          possin=(V3*)malloc(sizeof(V3)*wp);
+          poscos=(V3*)malloc(sizeof(V3)*wp);
+          }else{ possin=poscos=NULL;}
+          if (wt>0) {
+          usin=(Matrix*)malloc(sizeof(Matrix)*wt);
+          ucos=(Matrix*)malloc(sizeof(Matrix)*wt);
+          }else{ usin=ucos=NULL;}
+          for (int i=0; i<wo; i++) {os[i]=m.os[i];oc[i]=m.oc[i];}
+          for (int i=0; i<wp; i++) {possin[i]=m.possin[i]; poscos[i]=poscos[i];};
+          for (int i=0; i<wo; i++) {usin[i]=m.usin[i];ucos[i]=m.ucos[i];}
+    //   qDebug()<<"const"<<__LINE__<<atomname;
     }
     Modulat(Modulat &m):so(m.so),sp(m.sp),st(m.st),wo(m.wo),wp(m.wp),wt(m.wt){
-      mol=m.mol;
-      frac0=V3(m.frac0.x,m.frac0.y,m.frac0.z);
-      uf0=m.uf0;
-      strcpy(atomname,m.atomname);
-      amul=m.amul;
-      OrdZahl=m.OrdZahl;
-      x4sym=m.x4sym;
-      x4=m.x4;
-      x4trans=m.x4trans;
-      if (wo>0) {
-        os=(double*)malloc(sizeof(double)*wo);
-        oc=(double*)malloc(sizeof(double)*wo);
-      }else{oc=os=NULL;}
-      if (wp>0) {
-        possin=(V3*)malloc(sizeof(V3)*wp);
-        poscos=(V3*)malloc(sizeof(V3)*wp);
-      }else{ possin=poscos=NULL;}
-      if (wt>0) {
-        usin=(Matrix*)malloc(sizeof(Matrix)*wt);
-        ucos=(Matrix*)malloc(sizeof(Matrix)*wt);
-      }else{ usin=ucos=NULL;}
-      for (int i=0; i<wo; i++) {os[i]=m.os[i];oc[i]=m.oc[i];}
-      for (int i=0; i<wp; i++) {possin[i]=m.possin[i]; poscos[i]=poscos[i];};
-      for (int i=0; i<wo; i++) {usin[i]=m.usin[i];ucos[i]=m.ucos[i];}
-      qDebug()<<"non"<<__LINE__<<atomname<<this;
+    mol=m.mol;
+    frac0=V3(m.frac0.x,m.frac0.y,m.frac0.z);
+    uf0=m.uf0;
+    strcpy(atomname,m.atomname);
+    amul=m.amul;
+    OrdZahl=m.OrdZahl;
+    x4sym=m.x4sym;
+    x4=m.x4;
+    x4trans=m.x4trans;
+    if (wo>0) {
+    os=(double*)malloc(sizeof(double)*wo);
+    oc=(double*)malloc(sizeof(double)*wo);
+    }else{oc=os=NULL;}
+    if (wp>0) {
+    possin=(V3*)malloc(sizeof(V3)*wp);
+    poscos=(V3*)malloc(sizeof(V3)*wp);
+    }else{ possin=poscos=NULL;}
+    if (wt>0) {
+    usin=(Matrix*)malloc(sizeof(Matrix)*wt);
+    ucos=(Matrix*)malloc(sizeof(Matrix)*wt);
+    }else{ usin=ucos=NULL;}
+    for (int i=0; i<wo; i++) {os[i]=m.os[i];oc[i]=m.oc[i];}
+    for (int i=0; i<wp; i++) {possin[i]=m.possin[i]; poscos[i]=poscos[i];};
+    for (int i=0; i<wo; i++) {usin[i]=m.usin[i];ucos[i]=m.ucos[i];}
+    qDebug()<<"non"<<__LINE__<<atomname<<this;
     }*/
     Modulat(int _wo, int _wp, int _wt, int _so, int _sp, int _st):so(_so),sp(_sp),st(_st),wo(_wo),wp(_wp),wt(_wt){
       os.clear();
@@ -867,7 +867,7 @@ class Modulat{
     };
     void setWaveOccPar(int w, double _o,double s, double c){
       o=_o;
-//      qDebug()<<"Occ"<<w<<wo<<os.size();
+      //      qDebug()<<"Occ"<<w<<wo<<os.size();
       if (w>=wo) {
         errorMsg("Error in filling occupation waves!");
         exit(33);
@@ -876,7 +876,7 @@ class Modulat{
       oc[w]=c;
     }
     void setWavePosPar(int w, double _xs, double _ys, double _zs, double _xc, double _yc, double _zc){
-  //    qDebug()<<"Pos"<<w<<wp<<possin.size();
+      //    qDebug()<<"Pos"<<w<<wp<<possin.size();
       if (w>=wp) {
         errorMsg("Error in filling position waves!");
         exit(33);
@@ -884,26 +884,42 @@ class Modulat{
       possin[w]=V3(_xs,_ys,_zs);
       poscos[w]=V3(_xc,_yc,_zc);
     }
+    void setPolyType(int type){
+      polytype=type;
+      printf("polynome type %d\n",type);
+    }
     QString debugme(){
-    QString s=QString("so %1 sp %2 st %3 wo %4 wp %5 wt %6").arg(so).arg(sp).arg(st).arg(wo).arg(wp).arg(wt);
-    return s;
+      QString s=QString("so %1 sp %2 st %3 wo %4 wp %5 wt %6").arg(so).arg(sp).arg(st).arg(wo).arg(wp).arg(wt);
+      return s;
     }
     QString debugwp(){
       QString s=QString("%8frac xsin %1, ysin %2, zsin %3, xcos %4, ycos %5, zcos %6 x4= %7")
 
-         .arg(possin[0].x)
-         .arg(possin[0].y)
-         .arg(possin[0].z)
-         .arg(poscos[0].x)
-         .arg(poscos[0].y)
-         .arg(poscos[0].z).arg(x4).arg(atomname);
+        .arg(possin[0].x)
+        .arg(possin[0].y)
+        .arg(possin[0].z)
+        .arg(poscos[0].x)
+        .arg(poscos[0].y)
+        .arg(poscos[0].z).arg(x4).arg(atomname);
       return s;
+    }
+    void plotT(){
+      double t=0.0;
+      V3 p,fr;
+      printf("\n%-6s\n",atomname);
+      for (int i=0; i<101; i++){
+        p=kart(t);
+        fr=frac(t);
+        printf("%5.2f%10.6f%10.6f%10.6f  %10.6f%10.6f%10.6f\n",t,fr.x,fr.y,fr.z,p.x,p.y,p.z);
+        t+=0.01;
+      }
+
     }
     INP toINP(double t);
     void setWaveTemPar(int w, 
         double _u11s,  double _u22s,  double _u33s,  double _u12s,  double _u13s,  double _u23s,  
         double _u11c,  double _u22c,  double _u33c,  double _u12c,  double _u13c,  double _u23c){
-     // qDebug()<<"temp"<<w<<wt<<usin.size();
+      // qDebug()<<"temp"<<w<<wt<<usin.size();
       if (w>=wt) {
         errorMsg("Error in filling adp waves!");
         exit(33);
@@ -912,14 +928,60 @@ class Modulat{
       ucos[w]=Matrix(_u11c,_u12c,_u13c, _u12c,_u22c,_u23c, _u13c,_u23c,_u33c);
     } 
     Modulat applySymm(Matrix sym3d, V3 trans3d, V3 x4sym, int x4,double x4trans);
+    double occupancy(double t);
   private:
     void errorMsg(QString msg);
-//    const int id;//id of xdinp or assym
+    //    const int id;//id of xdinp or assym
     int so,sp,st;//kind of mod functions of occupancy position and temperature parameters
     int wo,wp,wt;//number of mod functions of occupancy position and temperature parameters
     QList<V3> possin,poscos;//pos
     double o;
     QList<double> os,oc;//occ
     QList<Matrix> usin,ucos;//uij
+
+    int xyn(int x, int y, int n){
+      return (y-1)*n+x-1;
+    }
+    int xyn0(int x, int y, int n){
+      return (y)*n+x;
+    }
+    double scProdXHarm0(int n0, int m0){
+      int mp, np;
+      if ((n0*m0)==0){
+        if (n0==m0) return 2.0/3.0;
+        else {if (!n0) {
+          mp=m0+1;
+          np=(m0+1)/2;
+        }else{
+          mp=n0+1;
+          np=(n0+1)/2;
+        }
+        if ((mp%2)==1){
+          if ((np%2)==0) return -2.0/(np*M_PI);
+          else return 2.0/(np*M_PI);
+        }else return 0.0;
+        }
+      }else return (m0==n0)?1.0:0.0;
+    } 
+    void fLegendre(double x, double *fpol, int npol){
+      double d,f1,f2,x2;
+      fpol[1]=1.0;
+      fpol[2]=x;
+      if (npol>2) {
+        x2=2.0*x;
+        f2=x;
+        d=1.0;
+        for (int j=3; j<=npol; j++){
+          f1=d;
+          f2+=x2;
+          d+=1.0;
+          fpol[j]=(f2*fpol[j-1]-f1*fpol[j-2])/d;
+        }
+      }
+    }
+    void makeXHarmOrtho0(double *xmat, int nd);
+    double xHarmOrtho(double x, int n, double *xmat, int nd); 
+    void getFPol(double x, double *fpol, int npol, int type);
+    int polytype;
 };
 #endif

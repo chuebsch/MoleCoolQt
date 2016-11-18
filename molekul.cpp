@@ -2371,6 +2371,8 @@ void molekul::make_bonds(QList<Modulat> xdinp,double t){
       if ((!bondsBetweenSGs->isChecked())&&(xdinp[i].sg!=xdinp[j].sg))continue;
 //      if (((xdinp[i].part<0)||(xdinp[j].part<0))&&((xdinp[i].sg!=xdinp[j].sg)||((xdinp[i].part*xdinp[j].part)&&(xdinp[i].part!=xdinp[j].part)))) continue; //part negative
 //      if ((xdinp[i].part>0)&&(xdinp[j].part>0)&&(xdinp[i].part!=xdinp[j].part)) continue; //different part
+      double o2=xdinp[i].occupancy(t)*xdinp[i].occupancy(t);
+      if (o2<0.1) continue;
       if ((xdinp[i].OrdZahl<83)&&(xdinp[j].OrdZahl<83)&&(xdinp[i].OrdZahl>=0)&&(xdinp[j].OrdZahl>=0)){
 	soll_abst=((Kovalenz_Radien[xdinp[i].OrdZahl]+
 		    Kovalenz_Radien[xdinp[j].OrdZahl])
@@ -2795,6 +2797,8 @@ void molekul::modulated(double t,QList<Modulat> mato,int draw,double steps) {
 
   if (draw&dr_atoms) {
     for  (int i=0; i<mato.size();i++){
+      double occ=mato[i].occupancy(t);
+      if (occ<0.1) continue; 
       int myStyle=aStyle[mato[i].OrdZahl];
       int myAdp=(myStyle&ATOM_STYLE_NOADP)?0:(draw&dr_adp);
       glPushMatrix();
@@ -4422,31 +4426,41 @@ bool molekul::applyLatticeCentro(const QChar latt,const bool centro){
 		  }
 		  break;
 	  case 'F' :
-		  for (int i=0; i<z;i++){
-		    V3 tt = zelle.trans.at(i)+V3(0.0, 0.5, 0.5);
-		    tt.x=(tt.x>1)?tt.x-1:tt.x;
-		    tt.y=(tt.y>1)?tt.y-1:tt.y;
-		    tt.z=(tt.z>1)?tt.z-1:tt.z;
-		    zelle.symmops.append(zelle.symmops.at(i));
-		    zelle.trans.append(tt);
-		    tt = zelle.trans.at(i)+V3(0.5, 0.0, 0.5);
-		    tt.x=(tt.x>1)?tt.x-1:tt.x;
-		    tt.y=(tt.y>1)?tt.y-1:tt.y;
-		    tt.z=(tt.z>1)?tt.z-1:tt.z;
-		    zelle.symmops.append(zelle.symmops.at(i));
-		    zelle.trans.append(tt);
-		    tt = zelle.trans.at(i)+V3(0.5, 0.5, 0.0);
-		    tt.x=(tt.x>1)?tt.x-1:tt.x;
-		    tt.y=(tt.y>1)?tt.y-1:tt.y;
-		    tt.z=(tt.z>1)?tt.z-1:tt.z;
-		    zelle.symmops.append(zelle.symmops.at(i));
-		    zelle.trans.append(tt);
+                  for (int i=0; i<z;i++){
+                    V3 tt = zelle.trans.at(i)+V3(0.0, 0.5, 0.5);
+                    tt.x=(tt.x>1)?tt.x-1:tt.x;
+                    tt.y=(tt.y>1)?tt.y-1:tt.y;
+                    tt.z=(tt.z>1)?tt.z-1:tt.z;
+                    zelle.symmops.append(zelle.symmops.at(i));
+                    zelle.trans.append(tt);
                     if (!zelle.x4sym.isEmpty()){
-                    zelle.x4sym.append(zelle.x4sym.at(i));
-                    zelle.x4.append(zelle.x4.at(i));
-                    zelle.x4tr.append(zelle.x4tr.at(i));
+                      zelle.x4sym.append(zelle.x4sym.at(i));
+                      zelle.x4.append(zelle.x4.at(i));
+                      zelle.x4tr.append(zelle.x4tr.at(i));
                     }
-		  }
+                    tt = zelle.trans.at(i)+V3(0.5, 0.0, 0.5);
+                    tt.x=(tt.x>1)?tt.x-1:tt.x;
+                    tt.y=(tt.y>1)?tt.y-1:tt.y;
+                    tt.z=(tt.z>1)?tt.z-1:tt.z;
+                    zelle.symmops.append(zelle.symmops.at(i));
+                    zelle.trans.append(tt);
+                    if (!zelle.x4sym.isEmpty()){
+                      zelle.x4sym.append(zelle.x4sym.at(i));
+                      zelle.x4.append(zelle.x4.at(i));
+                      zelle.x4tr.append(zelle.x4tr.at(i));
+                    }
+                    tt = zelle.trans.at(i)+V3(0.5, 0.5, 0.0);
+                    tt.x=(tt.x>1)?tt.x-1:tt.x;
+                    tt.y=(tt.y>1)?tt.y-1:tt.y;
+                    tt.z=(tt.z>1)?tt.z-1:tt.z;
+                    zelle.symmops.append(zelle.symmops.at(i));
+                    zelle.trans.append(tt);
+                    if (!zelle.x4sym.isEmpty()){
+                      zelle.x4sym.append(zelle.x4sym.at(i));
+                      zelle.x4.append(zelle.x4.at(i));
+                      zelle.x4tr.append(zelle.x4tr.at(i));
+                    }
+                  }
 		  break;
 	  case 'I' :
 		  for (int i=0; i<z;i++){
@@ -4925,24 +4939,58 @@ const V3 Modulat::frac(const double t){
     double X4=t+(mol->zelle.qvec*frac0);
     //  printf("%sfrac X4 %g frac0 %g %g %g t%g\n",atomname,X4,frac0.x,frac0.y,frac0.z,t);
     X4=(x4sym*frac0)+x4*X4+x4trans;
-    //  printf("%sfrac X4 %g\n",atomname,X4);
+    double ig=1;
+    X4=modf(X4+99.0,&ig);
+  //    printf("%s frac X4 %g %d %d \n",atomname,X4,so,sp);
     switch (sp) {
       case 0:
         for (int i=0; i<wp;i++){
-          //  printf("%sfrac sin %g %g %g cos %g %g %g\n",atomname,possin[i].x,possin[i].y,possin[i].z,poscos[i].x,poscos[i].y,poscos[i].z);
+      //    printf("%s frac sin %g %g %g cos %g %g %g\n",atomname,possin[i].x,possin[i].y,possin[i].z,poscos[i].x,poscos[i].y,poscos[i].z);
           p+=possin[i]*sin(2*M_PI*(i+1)*X4);
           p+=poscos[i]*cos(2*M_PI*(i+1)*X4);
         }
         break;
       case 1://sawtooth
         //not yet
+        for (int i=0; i<wp-1;i++){
+      //    printf("%s frac sin %g %g %g cos %g %g %g\n",atomname,possin[i].x,possin[i].y,possin[i].z,poscos[i].x,poscos[i].y,poscos[i].z);
+          p+=possin[i]*sin(2*M_PI*(i+1)*X4);
+          p+=poscos[i]*cos(2*M_PI*(i+1)*X4);
+        }
+        double x4s=poscos[wp-1].x;
+        double delta=poscos[wp-1].y*0.5,ig=1.0;
+        x4s=modf((X4-x4s)+99.0,&ig)/delta;
+        p+=possin[wp-1]*x4s;
         break;
     }
     // printf("%sfrac %g %g %g\n",atomname,p.x,p.y,p.z);
     return p;
+}
+double Modulat::occupancy(double t){
+  double X4=t+(mol->zelle.qvec*frac0);
+  //  printf("%sfrac X4 %g frac0 %g %g %g t%g\n",atomname,X4,frac0.x,frac0.y,frac0.z,t);
+  X4=(x4sym*frac0)+x4*X4+x4trans;
+  double ig=1;
+  X4=modf(X4+99.0,&ig);
+  if (wo==0) return 1.0;
+  double occup=0.0;
+  switch (so){
+    case 0: //harmonic occupancy function
+      occup = o;
+      for (int i=0; i<wo;i++){
+        occup+=os[i]*sin(2*M_PI*(i+1)*X4);
+        occup+=oc[i]*cos(2*M_PI*(i+1)*X4);
+      }
+      break;
+    case 1: //crenel function
+      occup = ((X4>(os[0]-o/2.0)) && (X4<(os[0]+o/2.0)))?1.0:0.0;
+   //   printf("crenel function wo%d so%d  %f <%f< %f o=%f %f %f -->>%f\n",wo,so,(os[0]-o/2.0),X4,(os[0]+o/2.0),o,os[0],oc[0],occup );
+      break;
   }
+  return occup;
+}
 
-  Matrix Modulat::uf(double t){
+Matrix Modulat::uf(double t){
     Matrix m=uf0;
     if ((m.m22==0.0)&&(m.m33==0.0)) {
       m.m33=m.m22=m.m11;
@@ -4951,6 +4999,8 @@ const V3 Modulat::frac(const double t){
     //  if (OrdZahl==0){ printf("%-9s %g %g %g %g %g %g\n",atomname,m.m11, m.m22, m.m33, m.m12, m.m13, m.m23); }
     double X4=t+(mol->zelle.qvec*frac0);
     X4=(x4sym*frac0)+x4*X4+x4trans;
+    double ig=1;
+    X4=modf(X4+99.0,&ig);
     double cs,sn;
     for (int i=0; i<wt;i++){
       sn=sin(2*M_PI*(i+1)*X4);
@@ -4986,14 +5036,15 @@ const V3 Modulat::frac(const double t){
   void Modulat::errorMsg(QString msg){
     qDebug()<<msg;
   }
-  INP Modulat::toINP(double t){
+
+INP Modulat::toINP(double t){
     INP atom;
     strcpy(atom.atomname,atomname);
     atom.lflag=atom.icor1=atom.icor2=atom.nax=atom.nay1=atom.nay2=atom.na3=0;
     atom.jtf=2;
     atom.atomtype=1;
     atom.noofkappa=atom.lmax=atom.isym=atom.ichcon=0;
-    atom.amul=amul;
+    atom.amul=occupancy(t)*amul;
     atom.imul=imul;
     atom.frac=frac(t);
     atom.kart=kart(t);
@@ -5005,6 +5056,80 @@ const V3 Modulat::frac(const double t){
     atom.screenY=screenY;
     return atom;
   }
+
+
+void Modulat::makeXHarmOrtho0(double *xmat, int nd){
+  int nd2=nd*nd;
+  int n2=nd*(nd+1)/2;
+  double *gmat=(double*) malloc(sizeof(double)*nd2);
+  double harm;
+  for (int i=0; i<nd; i++)
+    for (int j=0; j<=i; j++){
+      harm=scProdXHarm0(i,j);
+//      printf("C %d %d %f ===>> %f %d\n",i+1,j+1,harm,scProdXHarm(i+1,j+1),xyn0(i,j,nd));
+      if (i!=j) gmat[xyn0(j,i,nd)]=harm;
+      gmat[xyn0(i,j,nd)]=harm;
+    }
+  double aj,pom;
+  for (int n=0; n<nd; n++){
+   // printf("y %d\n", n);
+    for (int i=0; i<nd; i++) xmat[xyn0(n,i,nd)]=0.0;
+    for (int j=0; j<n; j++) {
+      aj=0.0;
+      for (int k=0; k<=j; k++) aj-=xmat[xyn0(j,k,nd)]*gmat[xyn0(k,n,nd)];
+     // printf("aj%f n%d j%d\n",aj,n,j);
+      for (int k=0; k<=j; k++) xmat[xyn0(n,k,nd)]+=aj*xmat[xyn0(j,k,nd)];
+
+    }
+    xmat[xyn0(n,n,nd)]=1.0;
+    pom=0.0;
+    for (int i=0; i<=n; i++) 
+      for (int j=0; j<=n; j++) {
+        pom+=xmat[xyn0(n,i,nd)]*xmat[xyn0(n,j,nd)]*gmat[xyn0(i,j,nd)];
+      }
+   // printf("pom%d: %f\n",n,pom);
+    pom=(pom>0.0)?1.0/sqrt(pom):0.0;
+    for (int i=0; i<=n; i++) {
+      xmat[xyn0(n,i,nd)]=((i!=n)||(pom!=0.0))?xmat[xyn0(n,i,nd)]*pom:1.0;
+//      if (!(i%2)&&!(n%2)) printf("(%2d_%2d %10.7f) ",n+1,i+1,xmat[xyn0(n,i,nd)]);
+    }
+//    if (!(n%2)) printf("\n");
+  }
+  free(gmat);
+}
+double Modulat::xHarmOrtho(double x, int n, double *xmat, int nd){ 
+  double res=0.0;
+  for (int i=1; i<=n; i++){
+    if (fabs(xmat[xyn(n,i,nd)])<0.000001) continue;
+    if (i==1) res+=xmat[xyn(n,i,nd)]*x;
+    else{
+      int j=(i)/2;
+      res+=(i%2)?
+        xmat[xyn(n,i,nd)]*sin(M_PI*j*x):
+        xmat[xyn(n,i,nd)]*cos(M_PI*j*x);
+    }
+  } return res;
+}
+
+void Modulat::getFPol(double x, double *fpol, int npol, int type){
+  static int nalloc=0;
+  static double *xmat=NULL;
+  if (type==2){
+    fLegendre(x,fpol,npol);
+  }
+  else if (type==3){
+    fpol[1]=1.0;
+    if ((npol-1) >nalloc){
+      if (xmat!=NULL) free(xmat);
+      xmat=(double*) malloc(sizeof(double)*(npol-1)*(npol-1));
+      nalloc=npol-1;
+      makeXHarmOrtho0(xmat,nalloc);
+      //makeXHarmOrtho(xmat,nalloc);
+    }
+    for (int i=2; i<=npol; i++) fpol[i]=xHarmOrtho(x,i-1,xmat,nalloc);
+  } 
+}
+
 
   /*
    *

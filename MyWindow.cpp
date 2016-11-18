@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=490;
+int rev=491;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -3816,9 +3816,9 @@ void MyWindow::load_Jana(QString fileName){
           cubeGL->isModulated=rad2_->isChecked();
       }
     if (cubeGL->isModulated){
-    mol.zelle.qvec.x=sqrt(mol.zelle.qr.x*mol.zelle.qr.x+mol.zelle.qi.x*mol.zelle.qi.x);
-    mol.zelle.qvec.y=sqrt(mol.zelle.qr.y*mol.zelle.qr.y+mol.zelle.qi.y*mol.zelle.qi.y);
-    mol.zelle.qvec.z=sqrt(mol.zelle.qr.z*mol.zelle.qr.z+mol.zelle.qi.z*mol.zelle.qi.z);
+    mol.zelle.qvec.x=mol.zelle.qr.x+mol.zelle.qi.x;
+    mol.zelle.qvec.y=mol.zelle.qr.y+mol.zelle.qi.y;
+    mol.zelle.qvec.z=mol.zelle.qr.z+mol.zelle.qi.z;
     printf("\nQr%g %g %g\nQi%g %g %g\nQv%g %g %g\n",
         mol.zelle.qr.x,
         mol.zelle.qr.y,
@@ -3853,18 +3853,24 @@ void MyWindow::load_Jana(QString fileName){
   QMap<int,QString> atox;
   QMap<int,int> axtokcnt;
   QMap<QString,int> atloc;
-  int skip=0;
+  int skip=0,cmdli=0;
+  bool commands=false;
   for (int li=0; li<all.size();li++){
+    
+    if (all.at(li).contains("commands")) commands=true;
+    if (all.at(li).contains("end")) {li++;commands=false;cmdli=li;}
+    if (commands) continue;
+   // qDebug()<<li<<all.at(li); 
     tok.clear();
     tok=all.at(li).split(" ",QString::SkipEmptyParts);
     if (tok.size()){
-      if (li<(curentPhase-1)) {
+      if ((li-cmdli)<(curentPhase-1)) {
         skip+=tok.at(0).toInt();
         printf("I will skip the first %d atoms\n",skip);
       }
-      if (li==(curentPhase-1)) {
+      if ((li-cmdli)==(curentPhase-1)) {
         na = tok.at(0).toInt();
-       //qDebug()<< "I will read in "<<na;
+       qDebug()<< "I will read in "<<na;
       }
 //      if ((li)&&(!na)) return;
 //      qDebug()<<all.at(li).contains(QRegExp("^[A-z]+"))<<all.at(li)<<na<<asymmUnit.size();
@@ -3982,7 +3988,11 @@ void MyWindow::load_Jana(QString fileName){
         if (wo){
           li++;
           double o,os,oc;
-          sscanf(all.at(li).toStdString().c_str(),"%9lf",&o);
+          char polynomString[60];
+          sscanf(all.at(li).toStdString().c_str(),"%9lf%s",&o,polynomString);
+          printf("Polynom String:'%s'\n",polynomString);
+          if (0==strncmp(polynomString,"Legendre",20)) modat->setPolyType(2);
+          if (0==strncmp(polynomString,"XHarm",20)) modat->setPolyType(3);
           for (int ok=0; ok<wo;ok++){
           li++;
           sscanf(all.at(li).toStdString().c_str(),"%9lf%9lf",&os,&oc);
@@ -3996,8 +4006,8 @@ void MyWindow::load_Jana(QString fileName){
                  xc,yc,zc;
           sscanf(all.at(li).toStdString().c_str(),"%9lf%9lf%9lf%9lf%9lf%9lf",
               &xs,&ys,&zs,&xc,&yc,&zc);
-//          printf("%d %f %f %f %f %f %f\n",pk,xs,ys,zs,xc,yc,zc);
-//          qDebug()<<modat->debugme();
+          printf("pk %d %f %f %f %f %f %f\n",pk,xs,ys,zs,xc,yc,zc);
+          //qDebug()<<modat->debugme();
           modat->setWavePosPar(pk,xs,ys,zs,xc,yc,zc);
           }
         }
@@ -4029,6 +4039,7 @@ void MyWindow::load_Jana(QString fileName){
         if (newAtom.amul==0) modat->OrdZahl=-1;
         atloc[modat->atomname]=masymmUnit.size();
         masymmUnit.append(*modat);
+        masymmUnit.last().plotT();
         }
 // H2 ^ H3                    H3                          xz  m
 //1234567890123456789012345678901234567890123456789012345678901234567890
@@ -9401,6 +9412,12 @@ void MyWindow::mgrowSymm(int packart,int packatom){
     }  
   
   if (packart==6){ 
+/*    qDebug()<<"hi"<<brauchSymm
+      <<mol.zelle.symmops.size()
+      <<mol.zelle.trans.size()
+      <<mol.zelle.x4sym.size()
+      <<mol.zelle.x4.size()
+      <<mol.zelle.x4tr.size();// */
     int s,h,k,l,gibscho=0,symmgroup;
     infoKanalNews(QString("Used Symmetry:<br>%1").arg(mol.symmcode2human(brauchSymm)));
     for (int j=0;j<brauchSymm.size();j++){
