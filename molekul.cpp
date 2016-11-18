@@ -4934,37 +4934,58 @@ Modulat Modulat::applySymm(Matrix sym3d, V3 trans3d, V3 x4sym, int x4,double x4t
     return y;
   }
 const V3 Modulat::frac(const double t){
-    V3 p=frac0;
-    // printf("%sfrac x4sy %g %g %g x4 %d x4tr %g q %g %g %g \n",atomname,x4sym.x,x4sym.y,x4sym.z,x4,x4trans,mol->zelle.qvec.x,mol->zelle.qvec.y,mol->zelle.qvec.z);
-    double X4=t+(mol->zelle.qvec*frac0);
-    //  printf("%sfrac X4 %g frac0 %g %g %g t%g\n",atomname,X4,frac0.x,frac0.y,frac0.z,t);
-    X4=(x4sym*frac0)+x4*X4+x4trans;
-    double ig=1;
-    X4=modf(X4+99.0,&ig);
+  V3 p=frac0;
+  // printf("%sfrac x4sy %g %g %g x4 %d x4tr %g q %g %g %g \n",atomname,x4sym.x,x4sym.y,x4sym.z,x4,x4trans,mol->zelle.qvec.x,mol->zelle.qvec.y,mol->zelle.qvec.z);
+  double X4=t+(mol->zelle.qvec*frac0);
+  //  printf("%sfrac X4 %g frac0 %g %g %g t%g\n",atomname,X4,frac0.x,frac0.y,frac0.z,t);
+  X4=(x4sym*frac0)+x4*X4+x4trans;
+  double ig=1;
+  X4=modf(X4+99,&ig);
   //    printf("%s frac X4 %g %d %d \n",atomname,X4,so,sp);
-    switch (sp) {
-      case 0:
+  switch (polytype){
+    case 0:
+    default:
+      switch (sp) {
+        case 0:
+          for (int i=0; i<wp;i++){
+            //    printf("%s frac sin %g %g %g cos %g %g %g\n",atomname,possin[i].x,possin[i].y,possin[i].z,poscos[i].x,poscos[i].y,poscos[i].z);
+            p+=possin[i]*sin(2*M_PI*(i+1)*X4);
+            p+=poscos[i]*cos(2*M_PI*(i+1)*X4);
+          }
+          break;
+        case 1://sawtooth
+          //not yet
+          for (int i=0; i<wp-1;i++){
+            //    printf("%s frac sin %g %g %g cos %g %g %g\n",atomname,possin[i].x,possin[i].y,possin[i].z,poscos[i].x,poscos[i].y,poscos[i].z);
+            p+=possin[i]*sin(2*M_PI*(i+1)*X4);
+            p+=poscos[i]*cos(2*M_PI*(i+1)*X4);
+          }
+          double x4s=poscos[wp-1].x;
+          double delta=poscos[wp-1].y*0.5,ig=1.0;
+          x4s=modf((X4-x4s)+99.0,&ig)/delta;
+          p+=possin[wp-1]*x4s;
+          break;
+      }
+      break;
+    case 2://Legendre
+    case 3://XHarm
+      {
+        double delta=0.5*o;
+        double pom=(X4-os[0])/delta;
+        getFPol(pom,wp*2+1,polytype);
         for (int i=0; i<wp;i++){
-      //    printf("%s frac sin %g %g %g cos %g %g %g\n",atomname,possin[i].x,possin[i].y,possin[i].z,poscos[i].x,poscos[i].y,poscos[i].z);
-          p+=possin[i]*sin(2*M_PI*(i+1)*X4);
-          p+=poscos[i]*cos(2*M_PI*(i+1)*X4);
+          /*printf("i%3d xort%d%10.6f yort%d%10.6f zort%d%10.6f xort%d%10.6f yort%d%10.6f zort%d%10.6f\n",i,
+              i+1,possin[i].x,i+1,possin[i].y,i+1,possin[i].z,i+2,poscos[i].x,i+2,poscos[i].y,i+2,poscos[i].z);*/
+//          printf("x4=%f %f i=%d %d %f %f\n",X4,pom,i,2*i+2,fpol[2*i+2],fpol[2*i+3]);// */
+          //    printf("%s frac sin %g %g %g cos %g %g %g\n",atomname,possin[i].x,possin[i].y,possin[i].z,poscos[i].x,poscos[i].y,poscos[i].z);
+          p+=possin[i]*fpol[2*i+2];
+          p+=poscos[i]*fpol[2*i+3];
         }
-        break;
-      case 1://sawtooth
-        //not yet
-        for (int i=0; i<wp-1;i++){
-      //    printf("%s frac sin %g %g %g cos %g %g %g\n",atomname,possin[i].x,possin[i].y,possin[i].z,poscos[i].x,poscos[i].y,poscos[i].z);
-          p+=possin[i]*sin(2*M_PI*(i+1)*X4);
-          p+=poscos[i]*cos(2*M_PI*(i+1)*X4);
-        }
-        double x4s=poscos[wp-1].x;
-        double delta=poscos[wp-1].y*0.5,ig=1.0;
-        x4s=modf((X4-x4s)+99.0,&ig)/delta;
-        p+=possin[wp-1]*x4s;
-        break;
-    }
-    // printf("%sfrac %g %g %g\n",atomname,p.x,p.y,p.z);
-    return p;
+      } 
+      break;
+  }
+  // printf("%sfrac %g %g %g\n",atomname,p.x,p.y,p.z);
+  return p;
 }
 double Modulat::occupancy(double t){
   double X4=t+(mol->zelle.qvec*frac0);
@@ -5060,7 +5081,7 @@ INP Modulat::toINP(double t){
 
 void Modulat::makeXHarmOrtho0(double *xmat, int nd){
   int nd2=nd*nd;
-  int n2=nd*(nd+1)/2;
+//  int n2=nd*(nd+1)/2;
   double *gmat=(double*) malloc(sizeof(double)*nd2);
   double harm;
   for (int i=0; i<nd; i++)
@@ -5111,11 +5132,11 @@ double Modulat::xHarmOrtho(double x, int n, double *xmat, int nd){
   } return res;
 }
 
-void Modulat::getFPol(double x, double *fpol, int npol, int type){
+void Modulat::getFPol(double x, int npol, int type){
   static int nalloc=0;
   static double *xmat=NULL;
   if (type==2){
-    fLegendre(x,fpol,npol);
+    fLegendre(x,npol);
   }
   else if (type==3){
     fpol[1]=1.0;

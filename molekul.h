@@ -863,6 +863,7 @@ class Modulat{
       x4sym=V3(0,0,0);
       x4=1;
       x4trans=0.0;
+      polytype=0;
       //printf("modulat konstr\n");
     };
     void setWaveOccPar(int w, double _o,double s, double c){
@@ -907,10 +908,16 @@ class Modulat{
       double t=0.0;
       V3 p,fr;
       printf("\n%-6s\n",atomname);
+      double occ=0.0;
       for (int i=0; i<101; i++){
+        occ=occupancy(t);
+        if (occ<0.1) {
+          t+=0.01;
+          continue;
+        }
         p=kart(t);
         fr=frac(t);
-        printf("%5.2f%10.6f%10.6f%10.6f  %10.6f%10.6f%10.6f\n",t,fr.x,fr.y,fr.z,p.x,p.y,p.z);
+        printf("%5.2f (%10.6f) %10.6f%10.6f%10.6f  %10.6f%10.6f%10.6f\n",t,occ,fr.x,fr.y,fr.z,p.x,p.y,p.z);
         t+=0.01;
       }
 
@@ -963,7 +970,7 @@ class Modulat{
         }
       }else return (m0==n0)?1.0:0.0;
     } 
-    void fLegendre(double x, double *fpol, int npol){
+    void fLegendre(double x, int npol){
       double d,f1,f2,x2;
       fpol[1]=1.0;
       fpol[2]=x;
@@ -981,7 +988,8 @@ class Modulat{
     }
     void makeXHarmOrtho0(double *xmat, int nd);
     double xHarmOrtho(double x, int n, double *xmat, int nd); 
-    void getFPol(double x, double *fpol, int npol, int type);
+    void getFPol(double x, int npol, int type);
     int polytype;
+    double fpol[101];//2*50+1
 };
 #endif
