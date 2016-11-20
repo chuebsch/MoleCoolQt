@@ -121,6 +121,7 @@ public slots:
   void setLegendMovable(bool on);
   void setIsosurface(bool on);
   void setLegend(bool on);
+  void setRotCenter();
   void toggleMolisoLegendDirection();
   void togglMonoChrom(bool);
   void toggInvEdit(bool on);

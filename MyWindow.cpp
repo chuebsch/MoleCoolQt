@@ -3870,7 +3870,7 @@ void MyWindow::load_Jana(QString fileName){
       }
       if ((li-cmdli)==(curentPhase-1)) {
         na = tok.at(0).toInt();
-       qDebug()<< "I will read in "<<na;
+   //   qDebug()<< "I will read in "<<na;
       }
 //      if ((li)&&(!na)) return;
 //      qDebug()<<all.at(li).contains(QRegExp("^[A-z]+"))<<all.at(li)<<na<<asymmUnit.size();
@@ -9325,7 +9325,7 @@ void MyWindow::mgrowSymm(int packart,int packatom){
     int s,h,k,l,gibscho=0,symmgroup;
 
     for (int j=0;j<brauchSymm.size();j++){
-      if (5!=sscanf(brauchSymm[j].toLatin1(),"%d_%1d%1d%1d:%d",&s,&h,&k,&l,&symmgroup))qDebug()<<"katastrfe";
+      if (5!=sscanf(brauchSymm[j].toLatin1(),"%d_%1d%1d%1d:%d",&s,&h,&k,&l,&symmgroup))qDebug()<<"Katastrophe, o je!";
       h-=5;
       k-=5;
       l-=5;
@@ -9473,7 +9473,7 @@ void MyWindow::mgrowSymm(int packart,int packatom){
   mol.frac2kart(uz7f,mol.uz7k);
   double dim=mdimension(matoms);
   cubeGL->L=100.0/dim;
-  qDebug()<<dim<<cubeGL->L;
+  //qDebug()<<dim<<cubeGL->L;
   cubeGL->bas=0;
 
 //  cubeGL->resetENV();

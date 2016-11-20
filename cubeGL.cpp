@@ -1292,6 +1292,13 @@ void CubeGL::rotCenter(){
   rCenter->setVisible(false);
 }
 
+void CubeGL::setRotCenter(){
+  rotze = expandatom;
+  homeXY();
+  updateGL();
+  rCenter->setVisible(true);
+}
+
 void CubeGL::mousePressEvent(QMouseEvent *event) {
   double nahda=200.0,da=0;
   int nahdai=-1;
@@ -3449,6 +3456,7 @@ void CubeGL::contextMenuEvent(QContextMenuEvent *event) {
 	if (expandatom<0) {expandatom=-1;return;}
 	expandAct.setText(tr("Expand %1 Ang. arround %2.").arg(mol.gd).arg(matoms.at(expandatom).atomname));
 	menu.addAction(&expandAct);
+    menu.addAction("center this atom",this,SLOT(setRotCenter()));
         menu.addSeparator();
 	menu.addAction(dntpck);
 	menu.addAction(molpck);

@@ -368,7 +368,7 @@ void Hirshfeld::browseDensityIn (){
     //fread(void *ptr, size_t size, size_t nmemb, FILE *stream); 
     size_t siz=fread(&bm,sizeof(BMhead),1,raw);
     if ((siz!=sizeof(BMhead))&&(bm.h!=bm.f)&&(bm.h!=76)){
-      fprintf(stderr,"siz %ld==%ld %d==%d (should be 76)\n",siz,sizeof(BMhead),bm.h,bm.f);
+      //fprintf(stderr,"siz %ld==%ld %d==%d (should be 76)\n",siz,sizeof(BMhead),bm.h,bm.f);
       fclose(raw);
       s="";
       densin->setText(s); 
@@ -1366,7 +1366,7 @@ void Hirshfeld::writeM81(double *data, QString fileName){
 }
 
 void Hirshfeld::writeM812(double *data, QString fileName){
-  printf("allocate %ld\n",ntot*sizeof(float));
+ // printf("allocate %ld\n",ntot*sizeof(float));
   float *dat=(float*) malloc(entot*sizeof(float));
   for(int i=0; i<entot; i++){
     dat[i]=data[i];   
@@ -1398,12 +1398,12 @@ void Hirshfeld::writeM812(double *data, QString fileName){
   }
   float *dummyHeader=(float*) malloc(sizeof(float)*t.nxny);
   for (int i=0; i<t.nxny;i++) dummyHeader[i]=0.0f;
-  printf("write dummy header of %ld %d %p\n",sizeof(float)*t.nxny,t.nxny,raw);
+//  printf("write dummy header of %ld %d %p\n",sizeof(float)*t.nxny,t.nxny,raw);
   int wb=fwrite((void*)dummyHeader,sizeof(float)*t.nxny,1,raw);
-  printf("(%d) write data %ld\n",wb,entot*sizeof(float));
+//  printf("(%d) write data %ld\n",wb,entot*sizeof(float));
   fwrite((void*)dat,entot*sizeof(float),1,raw);
   rewind(raw);
-  printf("write header of %ld\n",sizeof(T));
+//  printf("write header of %ld\n",sizeof(T));
   fwrite((void*)&t,sizeof(T),1,raw);
   printf("free dat\n");
   free(dat);
@@ -1419,12 +1419,12 @@ void Hirshfeld::readRaw(double *dat, QString fileName){
   //fread(void *ptr, size_t size, size_t nmemb, FILE *stream); 
   size_t siz=fread(&bm,sizeof(BMhead),1,raw);
   if ((siz!=sizeof(BMhead))&&(bm.h!=bm.f)&&(bm.h!=76)){
-    fprintf(stderr,"siz %ld==%ld %d==%d (should be 76)\n",siz,sizeof(BMhead),bm.h,bm.f);
+//    fprintf(stderr,"siz %ld==%ld %d==%d (should be 76)\n",siz,sizeof(BMhead),bm.h,bm.f);
     dat=NULL;
     return;
   }
   printf("rdim = %d sdim = %d\n n1 = %d; n2 = %d; n3 = %d\n %f %f %f %f %f %f %f\n",bm.d,bm.sd,bm.nn1,bm.nn2,bm.nn3,bm.cel[0],bm.cel[1],bm.cel[2],bm.cel[3],bm.cel[4],bm.cel[5],bm.cel[6]);
-  printf("sid %d %ld %d\n",bm.sid,bm.sid/sizeof(double),ntot);
+//  printf("sid %d %ld %d\n",bm.sid,bm.sid/sizeof(double),ntot);
   fread((double*)dat,bm.sid,1,raw);
   double capvx=1.0/ntot*mol->zelle.V;
   for(int i=0; i<ntot; i++){
@@ -1547,7 +1547,7 @@ void Hirshfeld::priorThere(const QString & text){
     //fread(void *ptr, size_t size, size_t nmemb, FILE *stream); 
     size_t siz=fread(&bm,sizeof(BMhead),1,raw);
     if ((siz!=sizeof(BMhead))&&(bm.h!=bm.f)&&(bm.h!=76)){
-      fprintf(stderr,"siz %ld==%ld %d==%d (should be 76)\n",siz,sizeof(BMhead),bm.h,bm.f);
+ //     fprintf(stderr,"siz %ld==%ld %d==%d (should be 76)\n",siz,sizeof(BMhead),bm.h,bm.f);
       fclose(raw);
       return;
     }
