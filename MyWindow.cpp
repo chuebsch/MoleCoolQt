@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=492;
+int rev=493;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -3889,7 +3889,7 @@ void MyWindow::load_Jana(QString fileName){
         printf("so%d sp%d st%d wo%d wp%d wt%d\n",so,sp,st,wo,wp,wt);
    //     qDebug()<<all.at(li)<<all.at(li)[16];
    //     printf("'11111111222333444 555555555666666666777777777888888888'\n");
-        printf("%3d%3d%3d %-10s %4d %12.6f%12.6f%12.6f%12.6f\n",iread,newAtom.jtf,newAtom.lmax,newAtom.atomname,newAtom.atomtype,newAtom.frac.x,newAtom.frac.y,newAtom.frac.z,newAtom.amul);
+        printf("%3ditems read. jtf:%3d lmx:%3d %-10s %4d %12.6f%12.6f%12.6f%12.6f\n",iread,newAtom.jtf,newAtom.lmax,newAtom.atomname,newAtom.atomtype,newAtom.frac.x,newAtom.frac.y,newAtom.frac.z,newAtom.amul);
         if (newAtom.jtf>0) {
           li++;
           sscanf(all.at(li).toStdString().c_str(),"%9lf%9lf%9lf%9lf%9lf%9lf",
@@ -4006,7 +4006,7 @@ void MyWindow::load_Jana(QString fileName){
                  xc,yc,zc;
           sscanf(all.at(li).toStdString().c_str(),"%9lf%9lf%9lf%9lf%9lf%9lf",
               &xs,&ys,&zs,&xc,&yc,&zc);
-          printf("pk %d %f %f %f %f %f %f\n",pk,xs,ys,zs,xc,yc,zc);
+          //printf("pk %d %f %f %f %f %f %f\n",pk,xs,ys,zs,xc,yc,zc);
           //qDebug()<<modat->debugme();
           modat->setWavePosPar(pk,xs,ys,zs,xc,yc,zc);
           }
@@ -4039,7 +4039,7 @@ void MyWindow::load_Jana(QString fileName){
         if (newAtom.amul==0) modat->OrdZahl=-1;
         atloc[modat->atomname]=masymmUnit.size();
         masymmUnit.append(*modat);
-        masymmUnit.last().plotT();
+        //masymmUnit.last().plotT();
         }
 // H2 ^ H3                    H3                          xz  m
 //1234567890123456789012345678901234567890123456789012345678901234567890
@@ -9419,6 +9419,7 @@ void MyWindow::mgrowSymm(int packart,int packatom){
       <<mol.zelle.x4.size()
       <<mol.zelle.x4tr.size();// */
     int s,h,k,l,gibscho=0,symmgroup;
+    matoms=masymmUnit;
     infoKanalNews(QString("Used Symmetry:<br>%1").arg(mol.symmcode2human(brauchSymm)));
     for (int j=0;j<brauchSymm.size();j++){
       balken->setValue(j);
@@ -9472,10 +9473,10 @@ void MyWindow::mgrowSymm(int packart,int packatom){
   mol.frac2kart(uz7f,mol.uz7k);
   double dim=mdimension(matoms);
   cubeGL->L=100.0/dim;
-//  qDebug()<<dim<<cubeGL->L;
+  qDebug()<<dim<<cubeGL->L;
   cubeGL->bas=0;
 
-  cubeGL->resetENV();
+//  cubeGL->resetENV();
   dock->hide();
   dock2->hide();
   cubeGL->setVisible(true);

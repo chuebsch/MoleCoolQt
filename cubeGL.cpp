@@ -3626,6 +3626,7 @@ void CubeGL::setMatrix(){
 	  MM[0]*MM[5]*MM[10] - MM[8]*MM[5]*MM[2]+
 	  MM[1]*MM[6]*MM[8]  - MM[9]*MM[6]*MM[0]+
 	  MM[2]*MM[4]*MM[9]  - MM[10]*MM[4]*MM[1];
+    printf("det %f\n",det);
   if ((det>=0)&&(det<9990000.0)) glLoadMatrixd(MM);
   else {
     MM[0]=1;
@@ -4064,6 +4065,11 @@ if (!selectedAtoms.isEmpty()){
       mol.intern=1;
       mol.adp=0;
       mol.dratom=1;
+      if (!matoms.isEmpty()){
+        for (int isea=0; isea<selectedAtoms.size(); isea++){
+          selectedAtoms[isea].kart=matoms[selectedAtoms.at(isea).GLname].kart(tvalue);
+        }
+      }
       mol.atoms(selectedAtoms,50);
       mol.dratom=0;
     }glPopMatrix();
@@ -4253,7 +4259,8 @@ if (!selectedAtoms.isEmpty()){
 	    if (imFokus==j) qglColor(Qt::yellow); else  glColor4f(tCR,tCG,tCB,tCA);
             if ((imFokus==j)||(!(mol.aStyle[matoms[j].OrdZahl]&ATOM_STYLE_NOLABEL))){
               V3 lpos=matoms[j].kart(tvalue);
-              renderText( lpos.x,lpos.y,lpos.z, matoms[j].atomname,myFont);
+              double o=matoms[j].occupancy(tvalue);
+              if (o>0.1) renderText( lpos.x,lpos.y,lpos.z, matoms[j].atomname,myFont);
             }
           }
 	}glPopMatrix();

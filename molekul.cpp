@@ -2368,10 +2368,12 @@ void molekul::make_bonds(QList<Modulat> xdinp,double t){
     for (int j=0;j<xdinp.size();j++) {
       if (i==j) continue;
       if((xdinp[i].OrdZahl<0)||(xdinp[j].OrdZahl<0)) continue;
+      if((xdinp[i].OrdZahl==0)&&(xdinp[j].OrdZahl==0)) continue;
+
       if ((!bondsBetweenSGs->isChecked())&&(xdinp[i].sg!=xdinp[j].sg))continue;
 //      if (((xdinp[i].part<0)||(xdinp[j].part<0))&&((xdinp[i].sg!=xdinp[j].sg)||((xdinp[i].part*xdinp[j].part)&&(xdinp[i].part!=xdinp[j].part)))) continue; //part negative
 //      if ((xdinp[i].part>0)&&(xdinp[j].part>0)&&(xdinp[i].part!=xdinp[j].part)) continue; //different part
-      double o2=xdinp[i].occupancy(t)*xdinp[i].occupancy(t);
+      double o2=xdinp[i].occupancy(t)*xdinp[j].occupancy(t);
       if (o2<0.1) continue;
       if ((xdinp[i].OrdZahl<83)&&(xdinp[j].OrdZahl<83)&&(xdinp[i].OrdZahl>=0)&&(xdinp[j].OrdZahl>=0)){
 	soll_abst=((Kovalenz_Radien[xdinp[i].OrdZahl]+
@@ -2832,7 +2834,7 @@ void molekul::modulated(double t,QList<Modulat> mato,int draw,double steps) {
       gluQuadricNormals(q, GL_SMOOTH);   
       glColor4fv(Acol[mato[i].OrdZahl]); 
       if (!nonPositiveDefinite) sphere(0);
-      else cube(rad);
+      else cube(rad*.25);
 
       glPopMatrix();
     }
@@ -2845,7 +2847,8 @@ void molekul::modulated(double t,QList<Modulat> mato,int draw,double steps) {
     glBegin(GL_LINES);
     glColor3f(0.5,0.3,0.3);
 //    printf("bonds_made %d t-mbonds_last_t %g t= %g\n",bonds_made,t-mbonds_last_t,t);
-    if ((!bonds_made)||(fabs(t-mbonds_last_t)>(steps*10)))make_bonds(mato,t);
+    if ((!bonds_made)||(fabs(t-mbonds_last_t)>=(steps)))
+      make_bonds(mato,t);
 /*    V3 beg,end;
     double soll_abst;
     for  (int i=0; i<mato.size();i++)
@@ -4935,56 +4938,38 @@ Modulat Modulat::applySymm(Matrix sym3d, V3 trans3d, V3 x4sym, int x4,double x4t
   }
 const V3 Modulat::frac(const double t){
   V3 p=frac0;
-  // printf("%sfrac x4sy %g %g %g x4 %d x4tr %g q %g %g %g \n",atomname,x4sym.x,x4sym.y,x4sym.z,x4,x4trans,mol->zelle.qvec.x,mol->zelle.qvec.y,mol->zelle.qvec.z);
   double X4=t+(mol->zelle.qvec*frac0);
-  //  printf("%sfrac X4 %g frac0 %g %g %g t%g\n",atomname,X4,frac0.x,frac0.y,frac0.z,t);
   X4=(x4sym*frac0)+x4*X4+x4trans;
   double ig=1;
   X4=modf(X4+99,&ig);
-  //    printf("%s frac X4 %g %d %d \n",atomname,X4,so,sp);
-  switch (polytype){
-    case 0:
-    default:
-      switch (sp) {
-        case 0:
-          for (int i=0; i<wp;i++){
-            //    printf("%s frac sin %g %g %g cos %g %g %g\n",atomname,possin[i].x,possin[i].y,possin[i].z,poscos[i].x,poscos[i].y,poscos[i].z);
-            p+=possin[i]*sin(2*M_PI*(i+1)*X4);
-            p+=poscos[i]*cos(2*M_PI*(i+1)*X4);
-          }
-          break;
-        case 1://sawtooth
-          //not yet
-          for (int i=0; i<wp-1;i++){
-            //    printf("%s frac sin %g %g %g cos %g %g %g\n",atomname,possin[i].x,possin[i].y,possin[i].z,poscos[i].x,poscos[i].y,poscos[i].z);
-            p+=possin[i]*sin(2*M_PI*(i+1)*X4);
-            p+=poscos[i]*cos(2*M_PI*(i+1)*X4);
-          }
-          double x4s=poscos[wp-1].x;
-          double delta=poscos[wp-1].y*0.5,ig=1.0;
-          x4s=modf((X4-x4s)+99.0,&ig)/delta;
-          p+=possin[wp-1]*x4s;
-          break;
-      }
-      break;
-    case 2://Legendre
-    case 3://XHarm
-      {
-        double delta=0.5*o;
-        double pom=(X4-os[0])/delta;
-        getFPol(pom,wp*2+1,polytype);
+  if (polytype<2){
+    switch (sp) {
+      case 0:
         for (int i=0; i<wp;i++){
-          /*printf("i%3d xort%d%10.6f yort%d%10.6f zort%d%10.6f xort%d%10.6f yort%d%10.6f zort%d%10.6f\n",i,
-              i+1,possin[i].x,i+1,possin[i].y,i+1,possin[i].z,i+2,poscos[i].x,i+2,poscos[i].y,i+2,poscos[i].z);*/
-//          printf("x4=%f %f i=%d %d %f %f\n",X4,pom,i,2*i+2,fpol[2*i+2],fpol[2*i+3]);// */
-          //    printf("%s frac sin %g %g %g cos %g %g %g\n",atomname,possin[i].x,possin[i].y,possin[i].z,poscos[i].x,poscos[i].y,poscos[i].z);
-          p+=possin[i]*fpol[2*i+2];
-          p+=poscos[i]*fpol[2*i+3];
+          p+=possin[i]*sin(2*M_PI*(i+1)*X4);
+          p+=poscos[i]*cos(2*M_PI*(i+1)*X4);
         }
-      } 
-      break;
-  }
-  // printf("%sfrac %g %g %g\n",atomname,p.x,p.y,p.z);
+        break;
+      case 1://sawtooth
+        for (int i=0; i<wp-1;i++){
+          p+=possin[i]*sin(2*M_PI*(i+1)*X4);
+          p+=poscos[i]*cos(2*M_PI*(i+1)*X4);
+        }
+        double x4s=poscos[wp-1].x;
+        double delta=poscos[wp-1].y*0.5,ig=1.0;
+        x4s=modf((X4-x4s)+99.0,&ig)/delta;
+        p+=possin[wp-1]*x4s;
+        break;
+    }
+  } else {
+    double delta=0.5*o;
+    double pom=(X4-os[0])/delta;
+    getFPol(pom,wp*2+1,polytype);
+    for (int i=0; i<wp;i++){
+      p+=possin[i]*fpol[2*i+2];
+      p+=poscos[i]*fpol[2*i+3];
+    }
+  } 
   return p;
 }
 double Modulat::occupancy(double t){
@@ -5012,17 +4997,18 @@ double Modulat::occupancy(double t){
 }
 
 Matrix Modulat::uf(double t){
-    Matrix m=uf0;
-    if ((m.m22==0.0)&&(m.m33==0.0)) {
-      m.m33=m.m22=m.m11;
-      m.m12=m.m13=m.m23=0.0;
-    }
-    //  if (OrdZahl==0){ printf("%-9s %g %g %g %g %g %g\n",atomname,m.m11, m.m22, m.m33, m.m12, m.m13, m.m23); }
-    double X4=t+(mol->zelle.qvec*frac0);
-    X4=(x4sym*frac0)+x4*X4+x4trans;
-    double ig=1;
-    X4=modf(X4+99.0,&ig);
-    double cs,sn;
+  Matrix m=uf0;
+  if ((m.m22==0.0)&&(m.m33==0.0)) {
+    m.m33=m.m22=m.m11;
+    m.m12=m.m13=m.m23=0.0;
+  }
+  //  if (OrdZahl==0){ printf("%-9s %g %g %g %g %g %g\n",atomname,m.m11, m.m22, m.m33, m.m12, m.m13, m.m23); }
+  double X4=t+(mol->zelle.qvec*frac0);
+  X4=(x4sym*frac0)+x4*X4+x4trans;
+  double ig=1;
+  X4=modf(X4+99.0,&ig);
+  double cs,sn;
+  if (polytype<2){
     for (int i=0; i<wt;i++){
       sn=sin(2*M_PI*(i+1)*X4);
       cs=cos(2*M_PI*(i+1)*X4);
@@ -5041,11 +5027,33 @@ Matrix Modulat::uf(double t){
       m.m13+=ucos[i].m13*cs;
       m.m23+=ucos[i].m23*cs;
     }
-    m.m21=m.m12;
-    m.m31=m.m13;
-    m.m32=m.m23;
-    return m;
-  }
+  } else {
+    double delta=0.5*o;
+    double pom=(X4-os[0])/delta;
+    getFPol(pom,wt*2+1,polytype);
+    for (int i=0; i<wt;i++){
+      sn=fpol[2*i+2];
+      cs=fpol[2*i+3];
+      m.m11+=usin[i].m11*sn;
+      m.m22+=usin[i].m22*sn;
+      m.m33+=usin[i].m33*sn;
+      m.m12+=usin[i].m12*sn;
+      m.m13+=usin[i].m13*sn;
+      m.m23+=usin[i].m23*sn;
+
+      m.m11+=ucos[i].m11*cs;
+      m.m22+=ucos[i].m22*cs;
+      m.m33+=ucos[i].m33*cs;
+      m.m12+=ucos[i].m12*cs;
+      m.m13+=ucos[i].m13*cs;
+      m.m23+=ucos[i].m23*cs;
+    }
+  } 
+  m.m21=m.m12;
+  m.m31=m.m13;
+  m.m32=m.m23;
+  return m;
+}
 
   Matrix Modulat::u(double t){
     Matrix m=uf(t);
