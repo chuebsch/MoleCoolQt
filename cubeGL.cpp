@@ -1302,6 +1302,7 @@ void CubeGL::tplot(){
     font.setPointSize(10);  
     QDialog *tp=new QDialog(this);
     QTextBrowser *tb = new QTextBrowser(tp);
+    tp->setMinimumWidth(590);
     tb->setLineWrapMode(QTextEdit::FixedColumnWidth);
     tb->setLineWrapColumnOrWidth(90);
     tb->setPlainText(text);

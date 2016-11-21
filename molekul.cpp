@@ -5205,12 +5205,15 @@ void Modulat::getFPol(double x, int npol, int type){
 QString Modulat::plotT(int steps){
       double t=0.0,stepwidth=1.0/steps;
       V3 p,fr;
-      QString text=QString("#%1 %2 %3 %4 %5 %6 %7 steps\n#t      occupancy  xfract.    yfract.    zfract.    displacements\n").arg(atomname).arg(steps)
+      QString text=QString("#%1 %2 steps (%3 %4 %5) %6 %7 %8 %9 %10\n#t      occupancy  xfract.    yfract.    zfract.    displacements\n").arg(atomname).arg(steps)
         .arg(x4sym.x)
         .arg(x4sym.y)
         .arg(x4sym.z)
         .arg(x4) 
         .arg(x4trans)
+        .arg((so==1)?"crenel function":"")
+        .arg((sp==0)?"":(sp==1)?"sawtooth fuction":"zig-zag")
+        .arg((polytype==0)?"":(polytype==2)?"Legendre polynoms":(polytype==3)?"XHarmonic":"unknown polynom")
         ;
       double occ=0.0;
       for (int i=0; i<steps; i++){

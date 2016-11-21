@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=493;
+int rev=496;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -9022,10 +9022,10 @@ void MyWindow::mSDM(QStringList &brauchSymm,int packart){
 
       if (sdmItem.d<dddd){
 	sdmItem.covalent=true;
-	if  (sdmItem.sn) printf("%s==%s %g (%g) \n",
+	if  (sdmItem.sn) printf("%s==%s %g (%g) %d\n",
 			masymmUnit[sdmItem.a1].atomname, 
 			masymmUnit[sdmItem.a2].atomname ,
-			sdmItem.d,dddd );// */
+			sdmItem.d,dddd,sdmItem.sn );// */
       }else sdmItem.covalent=false;
 
       sdm.append(sdmItem);
