@@ -1291,6 +1291,26 @@ void CubeGL::rotCenter(){
   updateGL();
   rCenter->setVisible(false);
 }
+void CubeGL::tplot(){
+  extern QList<Modulat> matoms;
+  if ((expandatom>-1)&&(expandatom<<matoms.size())){
+    int steps=int(1.0/tstep);
+    QString text=matoms[expandatom].plotT(steps);
+    QFont font;
+    font.setFamily("Courier");
+    font.setFixedPitch(true);
+    font.setPointSize(10);  
+    QDialog *tp=new QDialog(this);
+    QTextBrowser *tb = new QTextBrowser(tp);
+    tb->setLineWrapMode(QTextEdit::FixedColumnWidth);
+    tb->setLineWrapColumnOrWidth(90);
+    tb->setPlainText(text);
+    tb->setFont(font);
+    QGridLayout *l = new QGridLayout(tp);
+    l->addWidget(tb);
+    tp->show();
+  }
+}
 
 void CubeGL::setRotCenter(){
   rotze = expandatom;
@@ -3456,7 +3476,8 @@ void CubeGL::contextMenuEvent(QContextMenuEvent *event) {
 	if (expandatom<0) {expandatom=-1;return;}
 	expandAct.setText(tr("Expand %1 Ang. arround %2.").arg(mol.gd).arg(matoms.at(expandatom).atomname));
 	menu.addAction(&expandAct);
-    menu.addAction("center this atom",this,SLOT(setRotCenter()));
+        menu.addAction("center this atom",this,SLOT(setRotCenter()));
+        menu.addAction(tr("t-Plot of %1 ").arg(matoms.at(expandatom).atomname),this,SLOT(tplot()));
         menu.addSeparator();
 	menu.addAction(dntpck);
 	menu.addAction(molpck);

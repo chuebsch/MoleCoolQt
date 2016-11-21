@@ -1533,9 +1533,10 @@ void MyWindow::exportShelxAtTvalue(){
     QMap<int,int> sft;
     int j=1;
     for (int i=0; i<masymmUnit.size(); i++){
-      s=mol.pse(masymmUnit.at(i).OrdZahl);
+      s=QString("%1 ").arg(mol.pse(masymmUnit.at(i).OrdZahl));
+
       if (!aty.contains(s)){
-      aty.append(QString("%1 ").arg(s));
+      aty.append(s);
       anu.append("1 ");
       sft[masymmUnit.at(i).OrdZahl]=j++;
       }
@@ -1543,22 +1544,25 @@ void MyWindow::exportShelxAtTvalue(){
     res.write(QString("SFAC %1\nUNIT %2\nFVAR 1.0\n").arg(aty).arg(anu).toLatin1());
     Matrix u;//,uc;
     V3 p;
+    double occ;
     for (int i=0; i<matoms.size(); i++){
+      occ=matoms[i].occupancy(t);
+      if (occ<0.1) continue;
       p=matoms[i].frac(t);
       u=matoms[i].uf(t);
-      res.write(QString("%1 %2 %3 %4 %5 1%6 %7 %8 =\n    %9 %10 %11 %12\n")
+      res.write(QString("%1 %2 %3 %4 %5 %6 %7 %8 =\n    %9 %10 %11 %12\n")
           .arg(matoms[i].atomname)
           .arg(sft.value(matoms[i].OrdZahl))
-          .arg(p.x)
-          .arg(p.y)
-          .arg(p.z)
-          .arg(matoms[i].amul)
-          .arg(u.m11)
-          .arg(u.m22)
-          .arg(u.m33)
-          .arg(u.m23)
-          .arg(u.m13)
-          .arg(u.m12).toLatin1());
+          .arg(p.x,10,'f')
+          .arg(p.y,10,'f')
+          .arg(p.z,10,'f')
+          .arg(matoms[i].amul*occ,10,'f')
+          .arg(u.m11,10,'f')
+          .arg(u.m22,10,'f')
+          .arg(u.m33,10,'f')
+          .arg(u.m23,10,'f')
+          .arg(u.m13,10,'f')
+          .arg(u.m12,10,'f').toLatin1());
      // res.write(QString("rem x4=%1 \n").arg(matoms[i].x4).toLatin1()); 
     //  uc=matoms[i].u(t);
      /* res.write(QString("rem %1 %2 %3 %4 %5 %6 !uc\n")
@@ -3858,7 +3862,7 @@ void MyWindow::load_Jana(QString fileName){
   for (int li=0; li<all.size();li++){
     
     if (all.at(li).contains("commands")) commands=true;
-    if (all.at(li).contains("end")) {li++;commands=false;cmdli=li;}
+    if (all.at(li).startsWith("end")) {li++;commands=false;cmdli=li;}
     if (commands) continue;
    // qDebug()<<li<<all.at(li); 
     tok.clear();
@@ -3870,11 +3874,13 @@ void MyWindow::load_Jana(QString fileName){
       }
       if ((li-cmdli)==(curentPhase-1)) {
         na = tok.at(0).toInt();
-   //   qDebug()<< "I will read in "<<na;
+//      qDebug()<< "I will read in "<<na<<li<<cmdli<<curentPhase-1<<all.at(li);
       }
 //      if ((li)&&(!na)) return;
 //      qDebug()<<all.at(li).contains(QRegExp("^[A-z]+"))<<all.at(li)<<na<<asymmUnit.size();
+      //if (all.at(li).contains(QRegExp("^[A-z]+")))qDebug()<<(masymmUnit.size()<na)<<(asymmUnit.size()<na)<<na<<asymmUnit.size()<<masymmUnit.size();
       if ((masymmUnit.size()<na)&&(asymmUnit.size()<na)&&(all.at(li).contains(QRegExp("^[A-z]+")))){
+        //qDebug()<<all.at(li)<<skip<<na; 
         if (skip>0) skip--;
         else{
         //C1        1  1     1.000000 0.199051 0.122184 0.071881    

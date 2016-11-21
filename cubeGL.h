@@ -122,6 +122,7 @@ public slots:
   void setIsosurface(bool on);
   void setLegend(bool on);
   void setRotCenter();
+  void tplot();
   void toggleMolisoLegendDirection();
   void togglMonoChrom(bool);
   void toggInvEdit(bool on);

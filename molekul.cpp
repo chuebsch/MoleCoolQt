@@ -4917,6 +4917,11 @@ Modulat Modulat::applySymm(Matrix sym3d, V3 trans3d, V3 x4sym, int x4,double x4t
     newatom->poscos[i]=poscos[i]*sym3d;
     //    printf("%sfrac wp%d sin %g %g %g cos %g %g %g %p\n",atomname,i,newatom->possin[i].x,newatom->possin[i].y,newatom->possin[i].z,newatom->poscos[i].x,newatom->poscos[i].y,newatom->poscos[i].z,newatom);
   }
+  if (sp){
+    int i=wp-1;
+    //newatom->possin[i]=possin[i];
+    newatom->poscos[i]=poscos[i];
+  }
   newatom->uf0=(sym3d*uf0)*transponse(sym3d);
   for (int i=0; i<wt; i++){
     newatom->usin[i]=(sym3d*usin[i])*transponse(sym3d);
@@ -4957,7 +4962,45 @@ const V3 Modulat::frac(const double t){
         }
         double x4s=poscos[wp-1].x;
         double delta=poscos[wp-1].y*0.5,ig=1.0;
-        x4s=modf((X4-x4s)+99.0,&ig)/delta;
+        x4s=modf((X4-x4s)+99.5,&ig)-0.5;
+        x4s/=delta;
+        p+=possin[wp-1]*x4s;
+        break;
+    }
+  } else {
+    double delta=0.5*o;
+    double pom=(X4-os[0])/delta;
+    getFPol(pom,wp*2+1,polytype);
+    for (int i=0; i<wp;i++){
+      p+=possin[i]*fpol[2*i+2];
+      p+=poscos[i]*fpol[2*i+3];
+    }
+  } 
+  return p;
+}
+const V3 Modulat::displacement(const double t){
+  V3 p=V3(0,0,0);
+  double X4=t+(mol->zelle.qvec*frac0);
+  X4=(x4sym*frac0)+x4*X4+x4trans;
+  double ig=1;
+  X4=modf(X4+99,&ig);
+  if (polytype<2){
+    switch (sp) {
+      case 0:
+        for (int i=0; i<wp;i++){
+          p+=possin[i]*sin(2*M_PI*(i+1)*X4);
+          p+=poscos[i]*cos(2*M_PI*(i+1)*X4);
+        }
+        break;
+      case 1://sawtooth
+        for (int i=0; i<wp-1;i++){
+          p+=possin[i]*sin(2*M_PI*(i+1)*X4);
+          p+=poscos[i]*cos(2*M_PI*(i+1)*X4);
+        }
+        double x4s=poscos[wp-1].x;
+        double delta=poscos[wp-1].y*0.5,ig=1.0;
+        x4s=modf((X4-x4s)+99.5,&ig)-0.5;
+        x4s/=delta;
         p+=possin[wp-1]*x4s;
         break;
     }
@@ -5159,6 +5202,39 @@ void Modulat::getFPol(double x, int npol, int type){
   } 
 }
 
+QString Modulat::plotT(int steps){
+      double t=0.0,stepwidth=1.0/steps;
+      V3 p,fr;
+      QString text=QString("#%1 %2 %3 %4 %5 %6 %7 steps\n#t      occupancy  xfract.    yfract.    zfract.    displacements\n").arg(atomname).arg(steps)
+        .arg(x4sym.x)
+        .arg(x4sym.y)
+        .arg(x4sym.z)
+        .arg(x4) 
+        .arg(x4trans)
+        ;
+      double occ=0.0;
+      for (int i=0; i<steps; i++){
+        occ=occupancy(t);
+        if (occ<0.1) {
+          t+=stepwidth;
+          continue;
+        }
+        fr=frac(t);
+        p=displacement(t);
+        text.append(QString("%1 %2 %3 %4 %5 %6 %7 %8\n")
+            .arg(t,5,'f',2)
+            .arg(occ,10,'f',6)
+            .arg(fr.x,10,'f',6)
+            .arg(fr.y,10,'f',6)
+            .arg(fr.z,10,'f',6)
+            .arg(p.x*mol->zelle.a,10,'f',6)
+            .arg(p.y*mol->zelle.b,10,'f',6)
+            .arg(p.z*mol->zelle.c,10,'f',6));
+//        printf("%5.2f (%10.6f) %10.6f%10.6f%10.6f  %10.6f%10.6f%10.6f\n",t,occ,fr.x,fr.y,fr.z,p.x,p.y,p.z);
+        t+=stepwidth;
+      }
+      return text;
+    }
 
   /*
    *

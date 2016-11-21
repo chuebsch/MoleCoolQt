@@ -784,6 +784,7 @@ class Modulat{
     V3       frac0;          // Fraktionelle Koordinaten  
     const V3       kart(const double t);          // Berechnete kartesische Koordinaten  
     const V3       frac(const double t);          // Berechnete fractionelle Koordinaten  
+    const V3       displacement(const double t);  // Berechnete fractionelle Auslenkung  
     Matrix   uf0;           // Temperaturparameter 
     Matrix   uf(double t);
     Matrix   u(double t);
@@ -904,24 +905,7 @@ class Modulat{
         .arg(poscos[0].z).arg(x4).arg(atomname);
       return s;
     }
-    void plotT(){
-      double t=0.0;
-      V3 p,fr;
-      printf("\n%-6s\n",atomname);
-      double occ=0.0;
-      for (int i=0; i<101; i++){
-        occ=occupancy(t);
-        if (occ<0.1) {
-          t+=0.01;
-          continue;
-        }
-        p=kart(t);
-        fr=frac(t);
-        printf("%5.2f (%10.6f) %10.6f%10.6f%10.6f  %10.6f%10.6f%10.6f\n",t,occ,fr.x,fr.y,fr.z,p.x,p.y,p.z);
-        t+=0.01;
-      }
-
-    }
+    QString plotT(int steps);
     INP toINP(double t);
     void setWaveTemPar(int w, 
         double _u11s,  double _u22s,  double _u33s,  double _u12s,  double _u13s,  double _u23s,  
