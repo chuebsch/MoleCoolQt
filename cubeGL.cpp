@@ -1291,6 +1291,7 @@ void CubeGL::rotCenter(){
   updateGL();
   rCenter->setVisible(false);
 }
+
 void CubeGL::tplot(){
   extern QList<Modulat> matoms;
   if ((expandatom>-1)&&(expandatom<<matoms.size())){

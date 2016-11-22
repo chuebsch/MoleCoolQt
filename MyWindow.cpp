@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=496;
+int rev=497;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -9272,7 +9272,7 @@ void MyWindow::mgrowSymm(int packart,int packatom){
   QString  bs;
   mol.bonds_made=0;
   mol.knopf_made=0;
-  if ((packart==5) && (packatom>-1) && (packatom<matoms.size())) expander=matoms[packatom].frac0;
+  if ((packart==5) && (packatom>-1) && (packatom<matoms.size())) expander=matoms[packatom].frac(cubeGL->tvalue);
   xdinp.clear();
   matoms.clear();
   QString blob=infoKanal->toPlainText();
@@ -9364,7 +9364,7 @@ void MyWindow::mgrowSymm(int packart,int packatom){
       double dk;
       for (int n=0; n<mol.zelle.symmops.size();n++){
 	for (int i=0; i<masymmUnit.size();i++){
-	  prime=mol.zelle.symmops.at(n) * masymmUnit.at(i).frac0 + mol.zelle.trans.at(n);
+	  prime=mol.zelle.symmops.at(n) * masymmUnit[i].frac(cubeGL->tvalue) + mol.zelle.trans.at(n);
 	  D=prime - expander + V3(0.5,0.5,0.5) ;
 	  floorD=V3(floor(D.x),floor(D.y),floor(D.z));
 	  if ((n==0)&&(floorD==V3(0,0,0))) {continue;}
