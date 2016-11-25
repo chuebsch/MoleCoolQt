@@ -4533,16 +4533,8 @@ void molekul::setup_zelle(){
   zelle.als=acos(zelle.cosra)*g2r;
   zelle.bes=acos(zelle.cosrb)*g2r;
   zelle.gas=acos(zelle.cosrg)*g2r; 
+  printf("%f %f %f %f %f %f \n",zelle.cosra,zelle.cosrb,zelle.cosrg,zelle.als,zelle.bes,zelle.gas);
   const double tau=zelle.c*((zelle.cs_al-zelle.cs_be*zelle.cs_ga)/sn_ga);
-  zelle.o1.m11=zelle.o[0][0] = zelle.as*zelle.a;
-  zelle.o1.m12=zelle.o[0][1] = 0.0;
-  zelle.o1.m13=zelle.o[0][2] = 0.0;
-  zelle.o1.m21=zelle.o[1][0] = zelle.bs*zelle.b*zelle.cs_ga;
-  zelle.o1.m22=zelle.o[1][1] = zelle.bs*zelle.b*sn_ga;
-  zelle.o1.m23=zelle.o[1][2] = 0.0;
-  zelle.o1.m31=zelle.o[2][0] = zelle.cs*zelle.c* zelle.cs_be;
-  zelle.o1.m32=zelle.o[2][1] = zelle.cs*tau;
-  zelle.o1.m33=zelle.o[2][2] = zelle.cs*zelle.c* zelle.phi / sn_ga;
   zelle.f2c.m11 = zelle.a;
   zelle.f2c.m21 = 0.0;
   zelle.f2c.m31 = 0.0;
@@ -4602,7 +4594,9 @@ void molekul::multiplicity(QList<INP> &au){
 }
 
 void molekul::Uf2Uo(const Matrix x, Matrix & y) {
- y=(zelle.o1*x)*transponse(zelle.o1);
+  Matrix n=Matrix(zelle.as,0,0,0,zelle.bs,0,0,0,zelle.cs);
+  Matrix m=(n*x)*n;
+  y=(transponse(zelle.f2c)*m)*(zelle.f2c);
 }
 
 double molekul::fl(double x,double y,double z){
@@ -4941,6 +4935,11 @@ Modulat Modulat::applySymm(Matrix sym3d, V3 trans3d, V3 x4sym, int x4,double x4t
     y.z = p.x * mol->zelle.f2c.m31 + p.y * mol->zelle.f2c.m32 + p.z * mol->zelle.f2c.m33;
     return y;
   }
+double clamp2(double x){
+  double xx=x+99.5;
+int i=(int)(xx);
+return (xx-i)-0.5;
+}
 const V3 Modulat::frac(const double t){
   V3 p=frac0;
   double X4=t+(mol->zelle.qvec*frac0);
@@ -4956,15 +4955,31 @@ const V3 Modulat::frac(const double t){
         }
         break;
       case 1://sawtooth
+        {
         for (int i=0; i<wp-1;i++){
           p+=possin[i]*sin(2*M_PI*(i+1)*X4);
           p+=poscos[i]*cos(2*M_PI*(i+1)*X4);
         }
         double x4s=poscos[wp-1].x;
-        double delta=poscos[wp-1].y*0.5,ig=1.0;
-        x4s=modf((X4-x4s)+99.5,&ig)-0.5;
+        double delta=poscos[wp-1].y*0.5;
+        x4s=clamp2(X4-x4s);
         x4s/=delta;
         p+=possin[wp-1]*x4s;
+        }
+        break;
+      case 2://zigzag
+        {
+        for (int i=0; i<wp-1;i++){
+          p+=possin[i]*sin(2*M_PI*(i+1)*X4);
+          p+=poscos[i]*cos(2*M_PI*(i+1)*X4);
+        }
+        double x4s=poscos[wp-1].x;
+        double delta=poscos[wp-1].y*0.5;
+        x4s=clamp2(X4-x4s);
+        x4s=((x4s>-delta)&&(x4s<delta))?x4s:-clamp2(x4s+0.5);
+        x4s/=delta;
+        p+=possin[wp-1]*x4s;
+        }
         break;
     }
   } else {
@@ -4993,15 +5008,31 @@ const V3 Modulat::displacement(const double t){
         }
         break;
       case 1://sawtooth
+        {
         for (int i=0; i<wp-1;i++){
           p+=possin[i]*sin(2*M_PI*(i+1)*X4);
           p+=poscos[i]*cos(2*M_PI*(i+1)*X4);
         }
         double x4s=poscos[wp-1].x;
-        double delta=poscos[wp-1].y*0.5,ig=1.0;
-        x4s=modf((X4-x4s)+99.5,&ig)-0.5;
+        double delta=poscos[wp-1].y*0.5;
+        x4s=clamp2(X4-x4s);
         x4s/=delta;
         p+=possin[wp-1]*x4s;
+        }
+        break;
+      case 2://zigzag
+        {
+        for (int i=0; i<wp-1;i++){
+          p+=possin[i]*sin(2*M_PI*(i+1)*X4);
+          p+=poscos[i]*cos(2*M_PI*(i+1)*X4);
+        }
+        double x4s=poscos[wp-1].x;
+        double delta=poscos[wp-1].y*0.5;
+        x4s=clamp2(X4-x4s);
+        x4s=((x4s>-delta)&&(x4s<delta))?x4s:-clamp2(x4s+0.5);
+        x4s/=delta;
+        p+=possin[wp-1]*x4s;
+        }
         break;
     }
   } else {
@@ -5041,9 +5072,11 @@ double Modulat::occupancy(double t){
 
 Matrix Modulat::uf(double t){
   Matrix m=uf0;
-  if ((m.m22==0.0)&&(m.m33==0.0)) {
+  if (jtf==1) {
     m.m33=m.m22=m.m11;
-    m.m12=m.m13=m.m23=0.0;
+    m.m12=m.m11*mol->zelle.cosrg;
+    m.m13=m.m11*mol->zelle.cosrb;
+    m.m23=m.m11*mol->zelle.cosra;
   }
   //  if (OrdZahl==0){ printf("%-9s %g %g %g %g %g %g\n",atomname,m.m11, m.m22, m.m33, m.m12, m.m13, m.m23); }
   double X4=t+(mol->zelle.qvec*frac0);
@@ -5098,12 +5131,15 @@ Matrix Modulat::uf(double t){
   return m;
 }
 
-  Matrix Modulat::u(double t){
-    Matrix m=uf(t);
-    //Matrix n=(mol->zelle.o1*m)*transponse(mol->zelle.o1);
-    Matrix n=(transponse(mol->zelle.o1)*m)*(mol->zelle.o1);
-    return n;
-  }
+Matrix Modulat::u(double t){
+  Matrix x=uf(t);
+  Matrix n=Matrix(mol->zelle.as,0,0,0,mol->zelle.bs,0,0,0,mol->zelle.cs);
+  Matrix m=(n*x)*n;
+ // Matrix y=(mol->zelle.f2c*m)*transponse(mol->zelle.f2c);
+  Matrix y=(transponse(mol->zelle.f2c)*m)*(mol->zelle.f2c);
+//  printf("Uc? jtf%d %f %f %f %f %f %f\n",jtf,y.m11,y.m22,y.m33,y.m12,y.m13,y.m23);
+  return y;
+}
 
   void Modulat::errorMsg(QString msg){
     qDebug()<<msg;

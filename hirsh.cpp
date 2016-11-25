@@ -1399,7 +1399,8 @@ void Hirshfeld::writeM812(double *data, QString fileName){
   float *dummyHeader=(float*) malloc(sizeof(float)*t.nxny);
   for (int i=0; i<t.nxny;i++) dummyHeader[i]=0.0f;
 //  printf("write dummy header of %ld %d %p\n",sizeof(float)*t.nxny,t.nxny,raw);
-  int wb=fwrite((void*)dummyHeader,sizeof(float)*t.nxny,1,raw);
+//  int wb=
+    fwrite((void*)dummyHeader,sizeof(float)*t.nxny,1,raw);
 //  printf("(%d) write data %ld\n",wb,entot*sizeof(float));
   fwrite((void*)dat,entot*sizeof(float),1,raw);
   rewind(raw);
@@ -1505,15 +1506,6 @@ void Hirshfeld::setup_zelle(){
   expandedCell.bes=acos(cosrb)*g2r;
   expandedCell.gas=acos(cosrg)*g2r; 
   const double tau=expandedCell.c*((cs_al-cs_be*cs_ga)/sn_ga);
-  expandedCell.o1.m11=expandedCell.o[0][0] = expandedCell.as*expandedCell.a;
-  expandedCell.o1.m12=expandedCell.o[0][1] = 0.0;
-  expandedCell.o1.m13=expandedCell.o[0][2] = 0.0;
-  expandedCell.o1.m21=expandedCell.o[1][0] = expandedCell.bs*expandedCell.b*cs_ga;
-  expandedCell.o1.m22=expandedCell.o[1][1] = expandedCell.bs*expandedCell.b*sn_ga;
-  expandedCell.o1.m23=expandedCell.o[1][2] = 0.0;
-  expandedCell.o1.m31=expandedCell.o[2][0] = expandedCell.cs*expandedCell.c* cs_be;
-  expandedCell.o1.m32=expandedCell.o[2][1] = expandedCell.cs*tau;
-  expandedCell.o1.m33=expandedCell.o[2][2] = expandedCell.cs*expandedCell.c* expandedCell.phi / sn_ga;
   expandedCell.f2c.m11 = expandedCell.a;
   expandedCell.f2c.m21 = 0.0;
   expandedCell.f2c.m31 = 0.0;

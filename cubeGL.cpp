@@ -1294,16 +1294,19 @@ void CubeGL::rotCenter(){
 
 void CubeGL::tplot(){
   extern QList<Modulat> matoms;
-  if ((expandatom>-1)&&(expandatom<<matoms.size())){
+  if ((expandatom>-1)&&(expandatom<matoms.size())){
     int steps=int(1.0/tstep);
     QString text=matoms[expandatom].plotT(steps);
     QFont font;
     font.setFamily("Courier");
     font.setFixedPitch(true);
     font.setPointSize(10);  
+    QFontMetrics fm(font);
+
     QDialog *tp=new QDialog(this);
     QTextBrowser *tb = new QTextBrowser(tp);
-    tp->setMinimumWidth(590);
+
+    tp->setMinimumWidth(99*fm.maxWidth());
     tb->setLineWrapMode(QTextEdit::FixedColumnWidth);
     tb->setLineWrapColumnOrWidth(90);
     tb->setPlainText(text);

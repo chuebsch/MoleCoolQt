@@ -3184,11 +3184,13 @@ void tensmul(INP &atom,Matrix om){
     }
   }
 }
-
+/*
 void Uf2Uo(const Matrix x, Matrix & y) {
- y=(mol.zelle.o1*x)*transponse(mol.zelle.o1);
+  Matrix n=Matrix(mol.zelle.as,0,0,0,mol.zelle.bs,0,0,0,mol.zelle.cs);
+  Matrix m=(n*x)*n;
+  y=(mol.zelle.f2c*m)*transponse(mol.zelle.f2c);
 }
-
+*/
 double MyWindow::pdf2(INP atom, V3 pos){
   double p=0;
   Matrix U=atom.u;
@@ -3494,7 +3496,7 @@ void MyWindow::load_MoPro(QString fileName) {
                             newAtom.uf.m13=newAtom.uf.m31=tok.at(5).toDouble();
                             newAtom.uf.m23=newAtom.uf.m32=tok.at(6).toDouble();
 
-                            Uf2Uo(newAtom.uf,newAtom.u);/*
+                            mol.Uf2Uo(newAtom.uf,newAtom.u);/*
                             printf("%9f %9f %9f %9f %9f %9f\n",
                                    newAtom.u.m11,
                                    newAtom.u.m22,
@@ -3990,6 +3992,7 @@ void MyWindow::load_Jana(QString fileName){
           modat->frac0=newAtom.frac;
           modat->amul=newAtom.amul;
           modat->uf0=newAtom.uf;
+          modat->jtf=newAtom.jtf;
           modat->sg=0;
         if (wo){
           li++;
@@ -4152,7 +4155,7 @@ void MyWindow::load_Jana(QString fileName){
     if ((asymmUnit[i].uf.m22==0.0)&&(asymmUnit[i].uf.m33==0.0)){
       asymmUnit[i].u.m11=asymmUnit[i].u.m22=asymmUnit[i].u.m33=asymmUnit[i].uf.m11;
       asymmUnit[i].u.m12=asymmUnit[i].u.m13=asymmUnit[i].u.m23=asymmUnit[i].u.m21=asymmUnit[i].u.m31=asymmUnit[i].u.m32=0.0;}
-    else Uf2Uo(asymmUnit[i].uf,asymmUnit[i].u);
+    else mol.Uf2Uo(asymmUnit[i].uf,asymmUnit[i].u);
   printf("%12.6f%12.6f%12.6f%12.6f%12.6f%12.6f\n",asymmUnit[i].u.m11,asymmUnit[i].u.m22,asymmUnit[i].u.m33, asymmUnit[i].u.m12, asymmUnit[i].u.m13,asymmUnit[i].u.m23);
   }
   growSymm(6);
@@ -4730,7 +4733,7 @@ smx=atmax=asymmUnit.size();
     }
     else {
 
-      Uf2Uo(asymmUnit[i].uf,asymmUnit[i].u);
+      mol.Uf2Uo(asymmUnit[i].uf,asymmUnit[i].u);
 /*
   printf("%-8s %8.5g %8.5g %8.5g %8.5g %8.5g %8.5g\n",asymmUnit[i].atomname,
 		asymmUnit[i].uf.m11,
@@ -5172,7 +5175,7 @@ dummax=smx-atmax;
     }
     else {
 
-      Uf2Uo(asymmUnit[i].uf,asymmUnit[i].u);
+      mol.Uf2Uo(asymmUnit[i].uf,asymmUnit[i].u);
 /*printf("%-8s %8.5g %8.5g %8.5g %8.5g %8.5g %8.5g\n",asymmUnit[i].atomname,
 		asymmUnit[i].u.m11,
 		asymmUnit[i].u.m22,
@@ -6708,7 +6711,7 @@ void MyWindow::load_sheldrick(QString fileName){
     if ((asymmUnit[i].uf.m22==0.0)&&(asymmUnit[i].uf.m33==0.0)){
       asymmUnit[i].u.m11=asymmUnit[i].u.m22=asymmUnit[i].u.m33=asymmUnit[i].uf.m11;
       asymmUnit[i].u.m12=asymmUnit[i].u.m13=asymmUnit[i].u.m23=asymmUnit[i].u.m21=asymmUnit[i].u.m31=asymmUnit[i].u.m32=0.0;}
-    else Uf2Uo(asymmUnit[i].uf,asymmUnit[i].u);
+    else mol.Uf2Uo(asymmUnit[i].uf,asymmUnit[i].u);
   }
   growSymm(6);
   //printf(">>%f %f\n",mol.pmin,mol.pmax);
@@ -6861,7 +6864,7 @@ void MyWindow::load_cif(QString fileName) {
     if ((asymmUnit[i].uf.m22==0.0)&&(asymmUnit[i].uf.m33==0.0)){
       asymmUnit[i].u.m11=asymmUnit[i].u.m22=asymmUnit[i].u.m33=asymmUnit[i].uf.m11;
       asymmUnit[i].u.m12=asymmUnit[i].u.m13=asymmUnit[i].u.m23=asymmUnit[i].u.m21=asymmUnit[i].u.m31=asymmUnit[i].u.m32=0.0;}
-    else Uf2Uo(asymmUnit[i].uf,asymmUnit[i].u);
+    else mol.Uf2Uo(asymmUnit[i].uf,asymmUnit[i].u);
   }
  if (hatlokale) {
    cubeGL->drawAx=true;
@@ -9569,7 +9572,7 @@ void MyWindow::growSymm(int packart,int packatom){
 	    newAtom.u.m12=newAtom.u.m13=newAtom.u.m23=newAtom.u.m21=newAtom.u.m31=newAtom.u.m32=0.0;}
 	  else {
 	    Usym(asymmUnit[i].uf,mol.zelle.symmops[s],newAtom.uf);
-	    Uf2Uo(newAtom.uf,newAtom.u);}
+	    mol.Uf2Uo(newAtom.uf,newAtom.u);}
 	    gibscho=0;
 	    for(int gbt=0;gbt<xdinp.size();gbt++){
 	      if (xdinp.at(gbt).OrdZahl<0) continue;
@@ -9677,7 +9680,7 @@ void MyWindow::growSymm(int packart,int packatom){
 	    }
 	    else {
 	      Usym(asymmUnit[i].uf,mol.zelle.symmops[n],newAtom.uf);
-	      Uf2Uo(newAtom.uf,newAtom.u);
+	      mol.Uf2Uo(newAtom.uf,newAtom.u);
 	    }
         //printf("%-10s %9.5f %9.5f %9.5f\n",newAtom.atomname,newAtom.frac.x,newAtom.frac.y,newAtom.frac.z);
 	    xdinp.append(newAtom);
@@ -9802,7 +9805,7 @@ void MyWindow::growSymm(int packart,int packatom){
 	      newAtom.u.m12=newAtom.u.m13=newAtom.u.m23=newAtom.u.m21=newAtom.u.m31=newAtom.u.m32=0.0;}
 	    else {
 	      Usym(asymmUnit[i].uf,mol.zelle.symmops[s],newAtom.uf);
-	      Uf2Uo(newAtom.uf,newAtom.u);}
+	      mol.Uf2Uo(newAtom.uf,newAtom.u);}
 /*            qDebug()<<"~~~~~~(o-o)"<<asymmUnit[i].jtf
               <<asymmUnit[i].uf.m11<<newAtom.uf.m11
               <<asymmUnit[i].uf.m22<<newAtom.uf.m22
@@ -9866,7 +9869,7 @@ void MyWindow::growSymm(int packart,int packatom){
 	      newAtom.u.m12=newAtom.u.m13=newAtom.u.m23=newAtom.u.m21=newAtom.u.m31=newAtom.u.m32=0.0;}
 	    else { 
 	      Usym(asymmUnit[i].uf,mol.zelle.symmops[s],newAtom.uf);
-	      Uf2Uo(newAtom.uf,newAtom.u);}
+	      mol.Uf2Uo(newAtom.uf,newAtom.u);}
 	      gibscho=0;
 	      for(int gbt=0;gbt<xdinp.size();gbt++){
 		if (xdinp.at(gbt).OrdZahl<0) continue;

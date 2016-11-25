@@ -469,7 +469,7 @@ struct Cell {
   QList<V3> x4sym;
   QList<double> x4, x4tr;
   double o[3][3];
-  Matrix o1;
+ // Matrix o1;
   Matrix f2c;
   Matrix G,Gi;
   V3 qr,qi,qvec;//real, imaginary and q-vector
@@ -794,6 +794,7 @@ class Modulat{
     int x4;
     double x4trans;
     int   imul;
+    int jtf;
     int molindex;
     int sg;
     double screenX,screenY;
