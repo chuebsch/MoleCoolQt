@@ -37,7 +37,7 @@ public:
   bool zebra;
   bool noWaitLabel;
   double scalePicNow;
-  double tvalue,tstep;
+  double tvalue,tstep,twait;
   bool isModulated;
   double mixdim,miydim,mizdim;
   int wirbas,cbas, bas, ibas, iSel, foubas[5];

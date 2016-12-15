@@ -42,6 +42,7 @@ public:
      QTextBrowser *infoKanal,*hbKanal ;
      CubeGL *cubeGL;
      QMenu *sfacMenu;
+     QMenu *ModulationMenu;
      QSlider *speedSldr;
      QAction *noMessBox;
      QAction *act1, *act2, *act3, *act4, *ldipAct, *nodipAct, *enterRenameMode;

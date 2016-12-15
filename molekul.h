@@ -92,6 +92,9 @@ inline double Distance( const V3& v1, const V3& v2 ) {
 inline bool operator == (const V3& v1, const V3& v2 ) {
   return (Distance(v1,v2)<0.001);
 }
+inline bool operator != (const V3& v1, const V3& v2 ) {
+  return (Distance(v1,v2)>0.001);
+}
 inline V3& Normalize( V3 v ) {
 static V3 erg=V3(0,0,0);
   if (Norm(v))  erg= (v * (1.0/sqrt(Norm(v))));  
@@ -133,6 +136,7 @@ double m11, m21, m31, m12, m22, m32, m13, m23, m33;
      m12(x12), m22(x22), m32(x32),
      m13(x13), m23(x23), m33(x33){;}
 };
+const Matrix identity= Matrix(1,0,0, 0,1,0, 0,0,1);
  inline Matrix transponse (Matrix a){//transponse
     return Matrix(
           a.m11, a.m12, a.m13,
@@ -159,6 +163,24 @@ inline Matrix inverse (Matrix A){
           );
 }
 
+inline Matrix dyadic(V3 a,V3 b){
+  Matrix erg;
+  erg.m11 = a.x * b.x;
+  erg.m21 = a.x * b.y;
+  erg.m31 = a.x * b.z;
+          
+  erg.m12 = a.y * b.x;
+  erg.m22 = a.y * b.y;
+  erg.m32 = a.y * b.z;
+
+  erg.m13 = a.z * b.x;
+  erg.m23 = a.z * b.y;
+  erg.m33 = a.z * b.z;
+
+
+  return erg;
+
+}
 
 inline Matrix operator * (const Matrix &a,const Matrix &b){
   Matrix erg;
@@ -461,7 +483,7 @@ struct Cell {
   double phi,V,as,bs,cs,als,bes,gas,lambda;
   double cosra,cosrb,cosrg;
   double cs_al,cs_be,cs_ga;
-  bool centro;
+  bool centro,commensurate;
   QChar lattis;
   int symuncent;
   QList<Matrix> symmops;
@@ -472,7 +494,7 @@ struct Cell {
  // Matrix o1;
   Matrix f2c;
   Matrix G,Gi;
-  V3 qr,qi,qvec;//real, imaginary and q-vector
+  V3 qr,qi,qvec,commen;//real, imaginary and q-vector
 };
 struct bindi{
   int a;
@@ -502,6 +524,7 @@ struct PolyEder{
 //}
 #include <QtGui>
 class Modulat;
+class Composite;
 class molekul {
  public:
   QSettings *einstellung;
@@ -524,6 +547,7 @@ class molekul {
   QMap<int,bool> allowedPolyeders;
   QList<VPoly> vtriangles;
   QList<int> sfac;
+  QList<Composite> ccc;
   double maxvolpol,minvolpol;
   int bcnt;
   int firstHL;
@@ -532,6 +556,7 @@ class molekul {
   int bonds_made;
   int knopf_made;
   int dimensions;
+  int ncomp;
   double gd;
   double HAMax;
   double HAWink;
@@ -740,7 +765,7 @@ class molekul {
   QString h_bonds(QList<INP> xdinp);
   void cbonds(QList<INP> xdinp);
   void axes(QList<INP> xdinp);
-  void UnitZell(void);
+  void UnitZell(double t=0.0);
   static double winkel(V3 a,V3 b);//vector3...
   double dieder(V3 a,V3 b, V3 c);
   static V3 kreuzX(double x1,double y1,double z1,double x2,double y2,double z2) ; 
@@ -777,12 +802,69 @@ class molekul {
   double * jacobi(double a[3][3], double d[3]); 
   double mbonds_last_t;
 };
+class Composite{
+  public:
+  QMatrix4x4 Wnu,Wnuinv;
+  Cell nuCell;
+  Matrix toCommon;
+  double tfactor;
+  double wnudd(){return Wnu.data()[15]; }
+  V3 wnu3d(){return V3(Wnu.data()[12],Wnu.data()[13],Wnu.data()[14]);}
+  V3 wnud3(){return V3(Wnu.data()[3],Wnu.data()[7],Wnu.data()[11]);}
+  Matrix wnu3x3(){return Matrix(
+      Wnu.data()[0],Wnu.data()[4],Wnu.data()[8],
+      Wnu.data()[1],Wnu.data()[5],Wnu.data()[9],
+      Wnu.data()[2],Wnu.data()[6],Wnu.data()[10]);}
+  Matrix m3x3(QMatrix4x4 u){return Matrix(
+      u.data()[0],u.data()[4],u.data()[8],
+      u.data()[1],u.data()[5],u.data()[9],
+      u.data()[2],u.data()[6],u.data()[10]);}
+  const V3 oschi(const double t){
+    return wnu3d()*t;
+    //return clamp3(wnu3d()*t);
+  }
+  //constructor
+Composite(double w11,double w12,double w13,double w14,double w21,double w22,double w23,double w24,double w31,double w32,double w33,double w34,double w41,double w42,double w43,double w44,
+    Cell commonCell){
+  Wnu = QMatrix4x4(w11,w12,w13,w14,w21,w22,w23,w24,w31,w32,w33,w34,w41,w42,w43,w44);
+  Wnuinv = Wnu.inverted();
+  toCommon = inverse(wnu3x3() + dyadic(wnu3d(), commonCell.qvec));
+  nuCell.qvec = (wnud3() + wnudd() * commonCell.qvec) * toCommon;
+  tfactor=wnudd() - nuCell.qvec * wnu3d();
+  //nuCell.G=(Wnu*commonCell.G)*Wnuinv;
+  for (int i=0; i<commonCell.symmops.size(); i++){
+  QMatrix4x4 sc = QMatrix4x4(
+      commonCell.symmops.at(i).m11,commonCell.symmops.at(i).m21,commonCell.symmops.at(i).m31,0.,
+      commonCell.symmops.at(i).m12,commonCell.symmops.at(i).m22,commonCell.symmops.at(i).m32,0.,
+      commonCell.symmops.at(i).m13,commonCell.symmops.at(i).m23,commonCell.symmops.at(i).m33,0.,
+      commonCell.x4sym.at(i).x,commonCell.x4sym.at(i).y,commonCell.x4sym.at(i).z,commonCell.x4.at(i));
+  QMatrix4x4 nus = (Wnu*sc)*Wnuinv;
+  QVector4D tranu, trac = QVector4D(commonCell.trans.at(i).x,commonCell.trans.at(i).y,commonCell.trans.at(i).z,commonCell.x4tr.at(i));
+  tranu=Wnu * trac;
+  nuCell.symmops.append(m3x3(nus));  
+  nuCell.x4sym.append(V3(nus.data()[3],nus.data()[7],nus.data()[11]));
+  nuCell.x4.append(nus.data()[15]);  
+  nuCell.trans.append(clamp3(V3(tranu.x(),tranu.y(),tranu.z())));
+  nuCell.x4tr.append(tranu.w());
+  printf("%d %d %d %d \n",commonCell.x4sym.size(),commonCell.x4.size(),commonCell.trans.size(),commonCell.x4tr.size());
+  printf("nusymm  #%d/%d \n%2g %2g %2g %2g, %g\n%2g %2g %2g %2g, %g\n%2g %2g %2g %2g, %g\n%2g %2g %2g %2g, %g\n\n",i ,commonCell.symmops.size(),
+      nuCell.symmops.last().m11,nuCell.symmops.last().m21,nuCell.symmops.last().m31,0.,nuCell.trans.last().x,
+      nuCell.symmops.last().m12,nuCell.symmops.last().m22,nuCell.symmops.last().m32,0.,nuCell.trans.last().y,
+      nuCell.symmops.last().m13,nuCell.symmops.last().m23,nuCell.symmops.last().m33,0.,nuCell.trans.last().z,
+      nuCell.x4sym.last().x, nuCell.x4sym.last().y, nuCell.x4sym.last().z, nuCell.x4.last(),nuCell.x4tr.last()
+      );
+  }
+
+}
+};
+
 class Modulat{
   public:
     molekul *mol;
+    int iamcomp;
     char     atomname[strgl];
     V3       frac0;          // Fraktionelle Koordinaten  
-    const V3       kart(const double t);          // Berechnete kartesische Koordinaten  
+    const V3       kart(const double t, bool *outside2=NULL);          // Berechnete kartesische Koordinaten  
     const V3       frac(const double t);          // Berechnete fractionelle Koordinaten  
     const V3       displacement(const double t);  // Berechnete fractionelle Auslenkung  
     Matrix   uf0;           // Temperaturparameter 

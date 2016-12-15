@@ -3950,7 +3950,16 @@ void CubeGL::draw() {
     glVertex3f(-xx, yy,-6.0);
     glEnd();
     glColor4f(1.0,1.0,1.0,0.5);
-    if (!matoms.isEmpty())  renderText(-xx*0.85,yy*0.95,-6.9,QString("t0 = %1 %2").arg(tvalue,10,'f',4).arg(mol.bcnt) ,MLegendFont);
+    if (!matoms.isEmpty())  {
+      if (mol.ccc.size()==0) renderText(-xx*0.85,yy*0.95,-6.9,QString("t0 = %1 %2").arg(tvalue,10,'f',4).arg(mol.bcnt) ,MLegendFont);
+      else if (mol.ccc.size()==1) renderText(-xx*0.85,yy*0.95,-6.9,QString("t1 = %1 t2 = %2").arg(tvalue,10,'f',4).arg(tvalue*mol.ccc.at(0).tfactor,10,'f',4));
+      else if (mol.ccc.size()==2) renderText(-xx*0.85,yy*0.95,-6.9,QString("t1 = %1 t2 = %2 t3 = %3")
+          .arg(tvalue,10,'f',4)
+          .arg(tvalue*mol.ccc.at(0).tfactor,10,'f',4)
+          .arg(tvalue*mol.ccc.at(1).tfactor,10,'f',4)
+          );
+
+    }
     glPopMatrix();
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -4292,7 +4301,9 @@ if (!selectedAtoms.isEmpty()){
 	  for (int j=0;j<matoms.size();j++){
 	    if (imFokus==j) qglColor(Qt::yellow); else  glColor4f(tCR,tCG,tCB,tCA);
             if ((imFokus==j)||(!(mol.aStyle[matoms[j].OrdZahl]&ATOM_STYLE_NOLABEL))){
-              V3 lpos=matoms[j].kart(tvalue);
+              bool out=false;
+              V3 lpos=matoms[j].kart(tvalue,&out);              
+              if ((!mol.ccc.isEmpty())&&(!mol.zelle.commensurate)&&(out)) continue;
               double o=matoms[j].occupancy(tvalue);
               if (o>0.1) renderText( lpos.x,lpos.y,lpos.z, matoms[j].atomname,myFont);
             }

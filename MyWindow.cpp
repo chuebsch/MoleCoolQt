@@ -287,6 +287,7 @@ MyWindow::MyWindow( QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(pa
   seReAct->setChecked(false);
   connect(seReAct, SIGNAL (toggled(bool)),
 	  cubeGL, SLOT(togglReSe(bool)));
+  ModulationMenu = new QMenu("Modulation");
   QAction *MIA;
   seReAct->setVisible(false);
   menuBar()->addMenu(fileMenu);
@@ -295,6 +296,7 @@ MyWindow::MyWindow( QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(pa
   menuBar()->addMenu(dialogMenu);
   menuBar()->addMenu(invariomMenu);
   menuBar()->addMenu(xdMenu);
+  menuBar()->addMenu(ModulationMenu);
   MIA=menuBar()->addMenu(MolIsoMenu);
   menuBar()->addMenu(stereoMenu);
   menuBar()->addMenu(helpMenu);
@@ -839,14 +841,15 @@ createRenameWgd();
   workMenu->addAction(ydlStartAct);
   workMenu->addAction(ydlStopAct);  
   workMenu->addAction("make a short rotation movie",this,SLOT(makeRotMovi()));
-  tMovieStartAct=workMenu->addAction("Start t movie",this ,SLOT(tMovieStart())); 
-  tMovieStopAct=workMenu->addAction("Stop t movie",this,SLOT(tMovieStop()));  
+  
+  tMovieStartAct=ModulationMenu->addAction("Start t movie",this ,SLOT(tMovieStart())); 
+  tMovieStopAct=ModulationMenu->addAction("Stop t movie",this,SLOT(tMovieStop()));  
   tMovieStopAct->setShortcut(tr("t"));
   tMovieStartAct->setShortcut(tr("t"));
   tMovieStopAct->setEnabled(false);
   tMovieStartAct->setEnabled(false);
   {
-  QAction *a=exportShelxAtTvalueAct=workMenu->addAction("Export Shelx.res file at current t0 value",this,SLOT(exportShelxAtTvalue()));  
+  QAction *a=exportShelxAtTvalueAct=ModulationMenu->addAction("Export Shelx.res file at current t0 value",this,SLOT(exportShelxAtTvalue()));  
   a->setShortcut(tr("Alt+t"));
   a->setEnabled(false);
   }
@@ -1513,7 +1516,7 @@ void MyWindow::openMapControl(){
 void MyWindow::exportShelxAtTvalue(){
  QString selectedFilter="SHELX .res file (*.res)";
  bool ok;
- double t=QInputDialog::getDouble(this, "Enter t0 value", "Enter t0 value",cubeGL->tvalue,  0.0, 1.0, 3, &ok) ;
+ double t=QInputDialog::getDouble(this, "Enter t0 value", "Enter t0 value",cubeGL->tvalue,  0.0, (mol.ccc.isEmpty())?1.0:9999.0, 3, &ok) ;
  if (!ok) t=fmod(fabs(cubeGL->tvalue),1.0);
   QString fileName = QFileDialog::getSaveFileName(this,
       QString(tr("Save a shelx.res file at t0 = %1").arg(cubeGL->tvalue)), saveName,"SHELX .res file (*.res)",&selectedFilter,QFileDialog::DontUseNativeDialog );
@@ -1521,6 +1524,16 @@ void MyWindow::exportShelxAtTvalue(){
     QFile res(fileName);
     res.open(QIODevice::WriteOnly|QIODevice::Text);
     res.write(QString("TITL exported from:\nREM %1\nREM by MoleCoolQt at t0 = %2\n").arg(dirName).arg(t).toLatin1());
+    if (mol.zelle.commensurate){
+    res.write(QString("CELL %1 %2 %3 %4 %5 %6 %7\nZERR 1.0 0.0 0.0 0.0 0.0 0.0 0.0\nLATT -1\n")
+        .arg(mol.zelle.lambda)
+        .arg(mol.zelle.a*mol.zelle.commen.x)
+        .arg(mol.zelle.b*mol.zelle.commen.y)
+        .arg(mol.zelle.c*mol.zelle.commen.z)
+        .arg(mol.zelle.al)
+        .arg(mol.zelle.be)
+        .arg(mol.zelle.ga).toLatin1());
+    }else{
     res.write(QString("CELL %1 %2 %3 %4 %5 %6 %7\nZERR 1.0 0.0 0.0 0.0 0.0 0.0 0.0\nLATT -1\n")
         .arg(mol.zelle.lambda)
         .arg(mol.zelle.a)
@@ -1529,6 +1542,7 @@ void MyWindow::exportShelxAtTvalue(){
         .arg(mol.zelle.al)
         .arg(mol.zelle.be)
         .arg(mol.zelle.ga).toLatin1());
+    }
     QString aty,anu,s;
     QMap<int,int> sft;
     int j=1;
@@ -1550,12 +1564,15 @@ void MyWindow::exportShelxAtTvalue(){
       if (occ<0.1) continue;
       p=matoms[i].frac(t);
       u=matoms[i].uf(t);
+      QString nam =QString(matoms[i].atomname);
+      QString ps=mol.pse(matoms[i].OrdZahl);
+      nam=QString("%1%2").arg(ps).arg(i+1,4-ps.length(),36,QLatin1Char('0'));
       res.write(QString("%1 %2 %3 %4 %5 %6 %7 %8 =\n    %9 %10 %11 %12\n")
-          .arg(matoms[i].atomname)
+          .arg(nam)
           .arg(sft.value(matoms[i].OrdZahl))
-          .arg(p.x,10,'f')
-          .arg(p.y,10,'f')
-          .arg(p.z,10,'f')
+          .arg((mol.zelle.commensurate)?p.x/mol.zelle.commen.x:p.x,10,'f')
+          .arg((mol.zelle.commensurate)?p.y/mol.zelle.commen.y:p.y,10,'f')
+          .arg((mol.zelle.commensurate)?p.z/mol.zelle.commen.z:p.z,10,'f')
           .arg(matoms[i].amul*occ,10,'f')
           .arg(u.m11,10,'f')
           .arg(u.m22,10,'f')
@@ -2768,13 +2785,51 @@ void MyWindow::tMovieStart(){
   tidl = new QTimer(this);
   connect( tidl, SIGNAL(timeout()),
 	   this, SLOT(incT()) );
-  tidl->start(1);
+  tidl->start((int)cubeGL->twait);
 }
 
 void MyWindow::incT(){
-  cubeGL->tvalue=fmod(cubeGL->tvalue+cubeGL->tstep,1.0);
+  if (mol.ccc.isEmpty()) {
+    cubeGL->tvalue=fmod(cubeGL->tvalue+cubeGL->tstep,1.0);
+    statusBar()->showMessage(QString("t0 = %1").arg(cubeGL->tvalue));
+  }else{
+    cubeGL->tvalue+=cubeGL->tstep;
+    cubeGL->tvalue=fmod(cubeGL->tvalue,1.0);
+    if (mol.ccc.size()==1) statusBar()->showMessage(QString("t1  = %1  t2 = %2").arg(cubeGL->tvalue).arg(cubeGL->tvalue*mol.ccc.at(0).tfactor));
+    if (mol.ccc.size()==2) statusBar()->showMessage(QString("t1  = %1  t2 = %2  t3 = %3")
+      .arg(cubeGL->tvalue)
+      .arg(cubeGL->tvalue*mol.ccc.at(0).tfactor)
+      .arg(cubeGL->tvalue*mol.ccc.at(1).tfactor));
+      }
 //  speedSldr->setValue((int)(cubeGL->tvalue*128));
-  statusBar()->showMessage(QString("t0 = %1").arg(cubeGL->tvalue));
+
+  bool keepInCell=false;
+//  qDebug()<<matoms.size();
+  if (keepInCell){
+    for  (int i=0; i<matoms.size();i++){
+      double occ=matoms[i].occupancy(cubeGL->tvalue);
+      if (occ<0.1) continue;
+      V3 frc=matoms[i].frac(cubeGL->tvalue);
+      V3 lfoor=floor3(frc);
+      lfoor*=-1.0;
+      V3 nv=V3(0,0,0);
+      if (nv==lfoor);else{
+        Modulat m=matoms[i];
+        V3 f,f1;
+        do {
+        m=matoms[i].applySymm(identity,lfoor,matoms[i].x4sym,matoms[i].x4,matoms[i].x4trans);
+        f1=m.frac(cubeGL->tvalue);
+        f=floor3(f1);
+        lfoor=lfoor-f;
+        printf("%f %f %f  (%f %f %f) (%f %f %f)\n",f1.x,f1.y,f1.z,f.x,f.y,f.z,lfoor.x,lfoor.y,lfoor.z); 
+        }while ((nv!=f)&&(nv!=lfoor));
+        matoms.replace(i,m); 
+        mol.bonds_made=false;
+        V3 nfrc=matoms[i].frac(cubeGL->tvalue);
+        printf("%f %f %f => %f %f %f  (%f %f %f)\n",frc.x,frc.y,frc.z,nfrc.x,nfrc.y,nfrc.z,lfoor.x,lfoor.y,lfoor.z); 
+      }
+    }  
+  }
   cubeGL->updateGL(); 
 }
 
@@ -3234,10 +3289,13 @@ double MyWindow::dimension(QList<INP> xnp ){
 double MyWindow::mdimension(QList<Modulat> xnp ){
   double max=0,gg=0;
   int nimanda=0;
+//  qDebug()<<"mdimension..."<<xnp.size();
   for (int i=0;i<xnp.size();i++)
     for (int j=i+1;j<xnp.size();j++){
       if ((xnp.at(j).OrdZahl>=0)&&(xnp.at(j).OrdZahl>=0)) {
-	gg=Distance(xnp[i].kart(0.0),xnp[j].kart(0.0));
+	gg=Distance(xnp[i].kart(cubeGL->tvalue),xnp[j].kart(cubeGL->tvalue));
+//        V3 p=xnp[i].kart(cubeGL->tvalue);
+    //    printf("%f %f %f %f \n",gg,p.x,p.y,p.z );
 	nimanda++;
       }
       max=(max<gg)?gg:max;
@@ -3246,7 +3304,7 @@ double MyWindow::mdimension(QList<Modulat> xnp ){
     for (int i=0;i<xnp.size();i++)
       for (int j=i+1;j<xnp.size();j++){
 	nimanda++;
-	gg=Distance(xnp[i].kart(0),xnp[j].kart(0));
+	gg=Distance(xnp[i].kart(cubeGL->tvalue),xnp[j].kart(cubeGL->tvalue));
 	max=(max<gg)?gg:max;
       }
   }
@@ -3679,9 +3737,11 @@ dummys.append(newAtom);
 void MyWindow::load_Jana(QString fileName){
   mol.zelle.symmops.clear();
   mol.zelle.trans.clear();
+  mol.ccc.clear();
   QString fileBase,m40n,m50n,m80n;
   fileBase=fileName;
- mol.dimensions=3; 
+  mol.dimensions=3; 
+  mol.ncomp=1; 
   if  (fileBase.contains(QRegExp(".m\\d\\d$"))) fileBase.chop(4);
   m40n=fileBase+(".m40");
   m50n=fileBase+(".m50");
@@ -3694,13 +3754,17 @@ void MyWindow::load_Jana(QString fileName){
   //printf("m50 read\n");
   char gitt='P'; 
   int phcnt=0;
+  int ncomposite=1,ccmp=0;;
+  QString Wmats[2];
   QStringList atypen;
   QList<V3>lavec;
+  
   QList<double> lavec4;
   for (int li=0; li<all.size();li++){
     tok.clear();
     tok=all.at(li).split(" ",QString::SkipEmptyParts);
     if (tok.size()){
+//      qDebug()<<tok.at(0).toUpper();
       if ((tok.size()>1)&&(tok.at(0).toUpper()=="PHASE")) {
         phcnt++;
         if (curentPhase != phcnt) continue;
@@ -3751,7 +3815,26 @@ void MyWindow::load_Jana(QString fileName){
       }
       if (((!phcnt)||((phcnt)&&(curentPhase==phcnt)))&&(tok.size()>1 )&&(tok.at(0).toUpper()=="NDIM")){
           mol.dimensions=tok.at(1).toInt();
-          printf("Dimensions in m50: %d\n ", mol.dimensions);
+          if ((tok.size()>3 )&&(tok.at(2).toUpper()=="NCOMP"))
+                ncomposite = mol.ncomp = tok.at(3).toInt();
+                
+          printf("Dimensions in m50: %d\nComposites: %d\n", mol.dimensions,mol.ncomp );
+      }
+
+      if (((!phcnt)||((phcnt)&&(curentPhase==phcnt)))&&(tok.size()>3 )&&(tok.at(0).toUpper()=="COMMEN")){
+        mol.zelle.commensurate=true;
+        mol.zelle.commen.x=tok.at(1).toInt();
+        mol.zelle.commen.y=tok.at(2).toInt();
+        mol.zelle.commen.z=tok.at(3).toInt();
+ }
+      if (((!phcnt)||((phcnt)&&(curentPhase==phcnt)))&&(tok.size()>1 )&&(tok.at(0).toUpper()=="TZERO")){
+        cubeGL->tvalue=tok.at(1).toDouble();
+       // qDebug()<<"ATOMS"<<tok;
+      }
+      if (((!phcnt)||((phcnt)&&(curentPhase==phcnt)))&&(mol.dimensions==4)&&(tok.at(0).toUpper()=="WMATRIX")){
+        Wmats[ccmp++]=all.at(li+1)+all.at(li+2)+all.at(li+3)+all.at(li+4);
+        li+=4;
+//       qDebug()<<"Wnu"<< Wmats[ccmp-1]; 
       }
       if (((!phcnt)||((phcnt)&&(curentPhase==phcnt)))&&(tok.size()>2 )&&(tok.at(0).toUpper()=="SYMMETRY")){
         QString s=all.at(li).toUpper();
@@ -3784,16 +3867,31 @@ void MyWindow::load_Jana(QString fileName){
       tzeroBox->setMaximum(0);
       tzeroBox->setMaximum(1);
       tzeroBox->setSingleStep(0.01);
-      tzeroBox->setValue(0.00);
+      tzeroBox->setValue(cubeGL->tvalue);
       tzeroBox->setDecimals(3);
       QDoubleSpinBox *tstepBox= new QDoubleSpinBox(modulDlg);
       tstepBox->setMinimum(0.001);
+      QSpinBox *tfpsBox= new QSpinBox(modulDlg);
+      tfpsBox->setMinimum(1);
+      tfpsBox->setMaximum(60);
+      tfpsBox->setValue(25);
+      if (mol.zelle.commensurate) {
+        mol.zelle.qvec=mol.zelle.qr+mol.zelle.qi;
+        mol.zelle.qvec.x = round(mol.zelle.qvec.x*mol.zelle.commen.x)/mol.zelle.commen.x;
+        mol.zelle.qvec.y = round(mol.zelle.qvec.y*mol.zelle.commen.y)/mol.zelle.commen.y;
+        mol.zelle.qvec.z = round(mol.zelle.qvec.z*mol.zelle.commen.z)/mol.zelle.commen.z;
+        double qrr = sqrt(Norm(mol.zelle.qvec));
+         tstepBox->setDecimals(11);
+         tstepBox->setSingleStep(0.000000001);
+         tstepBox->setValue(qrr);
+      }
+      else{
       tstepBox->setValue(0.01);
       tstepBox->setSingleStep(0.001);
       tstepBox->setMaximum(0.999);
       tstepBox->setDecimals(3);
 
-      tstepBox->setDecimals(3);
+      }
       mol.bondsBetweenSGs=new QCheckBox("Draw bonds between symmetry groups",modulDlg);
       mol.bondsBetweenSGs->setChecked(false);
       mol.bondsBetweenSGs->setToolTip("molecular structures are redered faster, if this is checked. No bonds are drawn between symmetry releated molecules.");
@@ -3814,17 +3912,24 @@ void MyWindow::load_Jana(QString fileName){
       glt->addWidget(tstepBox,3,1,1,1);
       tstl= new QLabel("t steps for movie = ",modulDlg);
       glt->addWidget(tstl,3,0,1,1);
-      glt->addWidget(mol.bondsBetweenSGs,4,0,1,1);
+      glt->addWidget(new QLabel("Maximal t-steps per second"),4,0,1,1);
+      glt->addWidget(tfpsBox,4,1,1,1);
+      glt->addWidget(mol.bondsBetweenSGs,5,0,1,1);
       glt->addWidget(bbx,10,0,1,3);
       if (modulDlg->exec()==QDialog::Accepted){
           cubeGL->tvalue=tzeroBox->value();
           cubeGL->tstep =tstepBox->value();
+          cubeGL->twait =1000.0/ tfpsBox->value();
+
           cubeGL->isModulated=rad2_->isChecked();
       }
     if (cubeGL->isModulated){
-    mol.zelle.qvec.x=mol.zelle.qr.x+mol.zelle.qi.x;
-    mol.zelle.qvec.y=mol.zelle.qr.y+mol.zelle.qi.y;
-    mol.zelle.qvec.z=mol.zelle.qr.z+mol.zelle.qi.z;
+    mol.zelle.qvec=mol.zelle.qr+mol.zelle.qi;
+    if (mol.zelle.commensurate){
+      mol.zelle.qvec.x = round(mol.zelle.qvec.x*mol.zelle.commen.x)/mol.zelle.commen.x;
+      mol.zelle.qvec.y = round(mol.zelle.qvec.y*mol.zelle.commen.y)/mol.zelle.commen.y;
+      mol.zelle.qvec.z = round(mol.zelle.qvec.z*mol.zelle.commen.z)/mol.zelle.commen.z;
+    }
     printf("\nQr%g %g %g\nQi%g %g %g\nQv%g %g %g\n",
         mol.zelle.qr.x,
         mol.zelle.qr.y,
@@ -3849,7 +3954,7 @@ void MyWindow::load_Jana(QString fileName){
   all = QString(m40.readAll()).split("\n",QString::SkipEmptyParts);
   m40.close();
   //printf("m40 read\n");
-  int na=0,iread;
+  int na=0,na1=0,na2=0,na3=0,iread;
   INP newAtom;
   newAtom.part=0;
   newAtom.sg=0;
@@ -3875,7 +3980,17 @@ void MyWindow::load_Jana(QString fileName){
         printf("I will skip the first %d atoms\n",skip);
       }
       if ((li-cmdli)==(curentPhase-1)) {
-        na = tok.at(0).toInt();
+        na1 = tok.at(0).toInt();
+        if (tok.at(1).toInt()>0) qDebug()<<"This version does not support Jana-molecules yet!";
+        if ((mol.ncomp>1)&&(tok.size()>2)) {
+          na2 = tok.at(2).toInt();
+          if (tok.at(3).toInt()>0) qDebug()<<"This version does not support Jana-molecules yet!";
+        }
+        if ((mol.ncomp>2)&&(tok.size()>4)) {
+          na3 = tok.at(4).toInt();
+          if (tok.at(5).toInt()>0) qDebug()<<"This version does not support Jana-molecules yet!";
+        }
+        na=na1+na2+na3;
 //      qDebug()<< "I will read in "<<na<<li<<cmdli<<curentPhase-1<<all.at(li);
       }
 //      if ((li)&&(!na)) return;
@@ -3899,7 +4014,7 @@ void MyWindow::load_Jana(QString fileName){
    //     printf("'11111111222333444 555555555666666666777777777888888888'\n");
         printf("%3ditems read. jtf:%3d lmx:%3d %-10s %4d %12.6f%12.6f%12.6f%12.6f\n",iread,newAtom.jtf,newAtom.lmax,newAtom.atomname,newAtom.atomtype,newAtom.frac.x,newAtom.frac.y,newAtom.frac.z,newAtom.amul);
         if (newAtom.jtf>0) {
-          li++;
+          while ((all.at(li)[0]!=' ')&&(all.at(li)[0]!='-'))li++;//sometimes there are lines starting with the atomname
           sscanf(all.at(li).toStdString().c_str(),"%9lf%9lf%9lf%9lf%9lf%9lf",
               &newAtom.uf.m11,
               &newAtom.uf.m22,
@@ -3907,10 +4022,10 @@ void MyWindow::load_Jana(QString fileName){
               &newAtom.uf.m12,
               &newAtom.uf.m13,
               &newAtom.uf.m23);
-          newAtom.uf.m12=newAtom.uf.m21;
-          newAtom.uf.m13=newAtom.uf.m31;
-          newAtom.uf.m23=newAtom.uf.m32;
-            
+          newAtom.uf.m21=newAtom.uf.m12;
+          newAtom.uf.m31=newAtom.uf.m13;
+          newAtom.uf.m32=newAtom.uf.m23;
+           qDebug()<<newAtom.uf.m11<<newAtom.uf.m22<<newAtom.uf.m33<<newAtom.uf.m12<<newAtom.uf.m13<<newAtom.uf.m23; 
         }
 
         if (newAtom.jtf>2) {
@@ -3929,6 +4044,7 @@ void MyWindow::load_Jana(QString fileName){
               &newAtom.c223,
               &newAtom.c233,
               &newAtom.c333);
+          qDebug()<<newAtom.c111<<newAtom.c112<<newAtom.c113<<newAtom.c122<<newAtom.c123<<newAtom.c133<<newAtom.c222<<newAtom.c223<<newAtom.c233<<newAtom.c333;
 //*
           newAtom.c111/=cfac;//mol.zelle.as*mol.zelle.as*mol.zelle.as*
           newAtom.c222/=cfac;//mol.zelle.bs*mol.zelle.bs*mol.zelle.bs*
@@ -4000,6 +4116,7 @@ void MyWindow::load_Jana(QString fileName){
           char polynomString[60];
           sscanf(all.at(li).toStdString().c_str(),"%9lf%s",&o,polynomString);
           printf("Polynom String:'%s'\n",polynomString);
+          if (0==strncmp(polynomString,"Ortho",20)) modat->setPolyType(1);
           if (0==strncmp(polynomString,"Legendre",20)) modat->setPolyType(2);
           if (0==strncmp(polynomString,"XHarm",20)) modat->setPolyType(3);
           for (int ok=0; ok<wo;ok++){
@@ -4015,7 +4132,7 @@ void MyWindow::load_Jana(QString fileName){
                  xc,yc,zc;
           sscanf(all.at(li).toStdString().c_str(),"%9lf%9lf%9lf%9lf%9lf%9lf",
               &xs,&ys,&zs,&xc,&yc,&zc);
-          //printf("pk %d %f %f %f %f %f %f\n",pk,xs,ys,zs,xc,yc,zc);
+          printf("pk %d %f %f %f %f %f %f\n",pk,xs,ys,zs,xc,yc,zc);
           //qDebug()<<modat->debugme();
           modat->setWavePosPar(pk,xs,ys,zs,xc,yc,zc);
           }
@@ -4047,6 +4164,11 @@ void MyWindow::load_Jana(QString fileName){
         modat->OrdZahl=mol.Get_OZ(atypen.at(newAtom.atomtype-1));
         if (newAtom.amul==0) modat->OrdZahl=-1;
         atloc[modat->atomname]=masymmUnit.size();
+        ccmp=3;
+        if ((na2+na1)>masymmUnit.size()) ccmp=2;
+        if (na1>masymmUnit.size()) ccmp=1;
+        printf("this is in composite %d\n",ccmp);
+        modat->iamcomp=ccmp;
         masymmUnit.append(*modat);
         //masymmUnit.last().plotT();
         }
@@ -4149,6 +4271,34 @@ void MyWindow::load_Jana(QString fileName){
       }
     }
   }
+  if ((mol.dimensions==4)&& (ncomposite>1)){
+  for (int i=0; i<ncomposite-1;i++){
+//    fprintf(stderr,"ok\n");4302
+    tok.clear();
+    tok=Wmats[i].split(" ",QString::SkipEmptyParts);
+  //  qDebug()<<tok.size()<<i;
+    if (tok.size()!=16) continue;
+    mol.ccc.append(Composite(
+      tok.at( 0).toDouble(),
+      tok.at( 1).toDouble(),
+      tok.at( 2).toDouble(),
+      tok.at( 3).toDouble(),
+      tok.at( 4).toDouble(),
+      tok.at( 5).toDouble(),
+      tok.at( 6).toDouble(),
+      tok.at( 7).toDouble(),
+      tok.at( 8).toDouble(),
+      tok.at( 9).toDouble(),
+      tok.at(10).toDouble(),
+      tok.at(11).toDouble(),
+      tok.at(12).toDouble(),
+      tok.at(13).toDouble(),
+      tok.at(14).toDouble(),
+      tok.at(15).toDouble(),mol.zelle));
+//    fprintf(stderr,"2ok\n");
+  }
+  }
+//    fprintf(stderr,"3ok\n");
   for (int i=0;i<asymmUnit.size();i++) { 
 //    mol.frac2kart(asymmUnit[i].frac,asymmUnit[i].kart);
 //    printf("%-10s %4d %12.6f%12.6f%12.6f\n",asymmUnit[i].atomname,asymmUnit[i].OrdZahl,asymmUnit[i].kart.x,asymmUnit[i].kart.y,asymmUnit[i].kart.z);
@@ -4158,6 +4308,7 @@ void MyWindow::load_Jana(QString fileName){
     else mol.Uf2Uo(asymmUnit[i].uf,asymmUnit[i].u);
   printf("%12.6f%12.6f%12.6f%12.6f%12.6f%12.6f\n",asymmUnit[i].u.m11,asymmUnit[i].u.m22,asymmUnit[i].u.m33, asymmUnit[i].u.m12, asymmUnit[i].u.m13,asymmUnit[i].u.m23);
   }
+//  fprintf(stderr,"%d\n",__LINE__);
   growSymm(6);
   fmcq->curentPhase=curentPhase;
   if (!fmcq->loadm80AndPerform(m80n.toStdString().c_str())) {
@@ -4295,6 +4446,7 @@ void MyWindow::load_BayMEM(QString fileName) {
     if (bml.at(i).startsWith("title")) sscanf(bml.at(i).toStdString().c_str(),"title %s",CID);
     if (bml.at(i).startsWith("endcenters")){
       centr=false;
+     // printf("endcenters\n");
     }
     if (bml.at(i).startsWith("endsymmetry")){
       symo=false;
@@ -4330,16 +4482,31 @@ void MyWindow::load_BayMEM(QString fileName) {
         mol.decodeSymmCard(s);
     }
     if (centr){
-    QStringList tok=bml.at(i).split(" ",QString::SkipEmptyParts);
-       V3 v=V3(0,0,0);
-        v.x  = tok.at(0).toDouble();
-        v.y  = tok.at(1).toDouble();
-        v.z  = tok.at(2).toDouble();
-        lavec.append(v);
+   //   qDebug()<<bml.at(i);
+      QStringList tok=bml.at(i).split(" ",QString::SkipEmptyParts);
+      V3 v=V3(0,0,0);
+      if (tok.at(0).contains('/')) {
+        QStringList bruch = tok.at(0).split("/",QString::SkipEmptyParts);
+        v.x = bruch.at(0).toDouble()/bruch.at(1).toDouble();
+      }else
+      v.x  = tok.at(0).toDouble();
+      if (tok.at(1).contains('/')) {
+        QStringList bruch = tok.at(1).split("/",QString::SkipEmptyParts);
+        v.y = bruch.at(0).toDouble()/bruch.at(1).toDouble();
+      }else
+      v.y  = tok.at(1).toDouble();
+      if (tok.at(2).contains('/')) {
+        QStringList bruch = tok.at(2).split("/",QString::SkipEmptyParts);
+        v.z = bruch.at(0).toDouble()/bruch.at(1).toDouble();
+      }else
+      v.z  = tok.at(2).toDouble();
+      lavec.append(v);
 
     }
     if (bml.at(i).startsWith("symmetry"))symo=true;
-    if (bml.at(i).startsWith("centers"))centr=true;
+    if (bml.at(i).startsWith("centers")){
+  //    printf("centers\n");
+      centr=true;}
     }
 //    qDebug()<<CID<<asymmUnit.size()<<mol.zelle.trans.size()<<mol.zelle.symmops.size()<<mol.zelle.a<<mol.zelle.b<<mol.zelle.c<<mol.zelle.al<<mol.zelle.be<<mol.zelle.ga;
     if (!coo.isEmpty()){
@@ -4721,6 +4888,7 @@ smx=atmax=asymmUnit.size();
         tt.z=(tt.z>1)?tt.z-1:tt.z;
         mol.zelle.symmops.append(mol.zelle.symmops.at(i));
         mol.zelle.trans.append(tt);
+//        qDebug()<<"add by center"<<tt.x<<tt.y<<tt.z<<mol.encodeSymm(mol.zelle.symmops.size()-1);
         }
       }
     }
@@ -8057,6 +8225,7 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
   mol.wombats.clear();
   mol.zelle.qr=mol.zelle.qi=mol.zelle.qvec=V3(0,0,0),
   exportShelxAtTvalueAct->setEnabled(false);
+  mol.zelle.commensurate=false;
   tMovieStartAct->setEnabled(false);
   phaseSpin->hide();
   infoKanal->clear();
@@ -9077,7 +9246,7 @@ void MyWindow::mSDM(QStringList &brauchSymm,int packart){
 	dddd=(sdm.at(k).d+0.02);
 	if ((dk>0.01)&&(dddd>=dk)) {
 //	  printf("n=%d dk%g %g %s %s \n",n,dk,dddd, masymmUnit[sdm.at(k).a1].atomname,masymmUnit[sdm.at(k).a2].atomname);
-	  bs=QString("%1_%2%3%4:%5,").arg(n+1).arg(5-(int)floorD.x).arg(5-(int)floorD.y).arg(5-(int)floorD.z).arg(masymmUnit[sdm.at(k).a1].molindex);
+	  bs=QString("%1_%2 %3 %4:%5,").arg(n+1).arg(5-(int)floorD.x).arg(5-(int)floorD.y).arg(5-(int)floorD.z).arg(masymmUnit[sdm.at(k).a1].molindex);
 	  if  (!brauchSymm.contains(bs)) {
 	    brauchSymm.append(bs);
  	   }
@@ -9099,8 +9268,8 @@ void MyWindow::mSDM(QStringList &brauchSymm,int packart){
       }
     }
     */
-  while (brauchSymm.contains("1_555:")){
-    brauchSymm.removeAt(brauchSymm.indexOf(QRegExp("1_555:\\d+")));
+  while (brauchSymm.contains("1_5 5 5:")){
+    brauchSymm.removeAt(brauchSymm.indexOf(QRegExp("1_5 5 5:\\d+")));
   }
   printf("mSDM time used: %d milliseconds.\n",speedTest.restart());
 }
@@ -9275,16 +9444,100 @@ void MyWindow::mgrowSymm(int packart,int packatom){
   QString  bs;
   mol.bonds_made=0;
   mol.knopf_made=0;
-  if ((packart==5) && (packatom>-1) && (packatom<matoms.size())) expander=matoms[packatom].frac(cubeGL->tvalue);
   xdinp.clear();
   matoms.clear();
+  if (mol.zelle.commensurate){
+    V3 p,g0;
+    for (int h=-2; h< mol.zelle.commen.x; h++){
+      for (int k=-2; k< mol.zelle.commen.y; k++){
+        for (int l=-2; l< mol.zelle.commen.z; l++){
+          for (int s=0; s<mol.zelle.symmops.size(); s++){
+            for (int i=0; i<masymmUnit.size(); i++) {
+              Modulat *newAt = NULL;
+              if (masymmUnit[i].iamcomp>1)
+                newAt = new Modulat(masymmUnit[i].applySymm(
+                      mol.ccc[masymmUnit[i].iamcomp-2].nuCell.symmops.at(s),
+                      mol.ccc[masymmUnit[i].iamcomp-2].nuCell.trans.at(s)+V3(h,k,l),
+                      mol.ccc[masymmUnit[i].iamcomp-2].nuCell.x4sym.at(s),
+                      mol.ccc[masymmUnit[i].iamcomp-2].nuCell.x4.at(s),
+                      mol.ccc[masymmUnit[i].iamcomp-2].nuCell.x4tr.at(s)));
+              else
+                newAt = new Modulat(masymmUnit[i].applySymm(
+                      mol.zelle.symmops.at(s),
+                      mol.zelle.trans.at(s)+V3(h,k,l), 
+                      mol.zelle.x4sym.at(s), 
+                      mol.zelle.x4.at(s),
+                      mol.zelle.x4tr.at(s)));
+              bool gibscho=false;
+              for(int gbt=0;gbt<matoms.size();gbt++){
+                if (matoms.at(gbt).OrdZahl<0) continue;
+                g0=matoms[gbt].frac(cubeGL->tvalue);
+                p=newAt->frac(cubeGL->tvalue);
+                if ((matoms[gbt].OrdZahl>-1)&&(fl(p.x-g0.x,p.y-g0.y,p.z-g0.z)<0.2)) gibscho=true; 
+              }
+              if (!gibscho) { 
+                matoms.append(*newAt);
+                //V3 r=newAt->frac(cubeGL->tvalue);
+                //printf("%s %f %f %f  \n",newAt->atomname,r.x,r.y,r.z);
+              }
+            }
+          }
+        }
+      }
+    }
+    printf("Commensurate zell has %d atoms\n",matoms.size());
+    packart=99; 
+  }
+  if (!mol.ccc.isEmpty()){
+    V3 p,g0;
+    for (int h=-1; h< 2; h++){
+      for (int k=-1; k< 2; k++){
+        for (int l=-1; l< 2; l++){
+          for (int s=0; s<mol.zelle.symmops.size(); s++){
+            for (int i=0; i<masymmUnit.size(); i++) {
+              Modulat *newAt = NULL;
+              if (masymmUnit[i].iamcomp>1)
+                newAt = new Modulat(masymmUnit[i].applySymm(
+                      mol.ccc[masymmUnit[i].iamcomp-2].nuCell.symmops.at(s),
+                      mol.ccc[masymmUnit[i].iamcomp-2].nuCell.trans.at(s)+V3(h,k,l),
+                      mol.ccc[masymmUnit[i].iamcomp-2].nuCell.x4sym.at(s),
+                      mol.ccc[masymmUnit[i].iamcomp-2].nuCell.x4.at(s),
+                      mol.ccc[masymmUnit[i].iamcomp-2].nuCell.x4tr.at(s)));
+              else
+                newAt = new Modulat(masymmUnit[i].applySymm(
+                      mol.zelle.symmops.at(s),
+                      mol.zelle.trans.at(s)+V3(h,k,l), 
+                      mol.zelle.x4sym.at(s), 
+                      mol.zelle.x4.at(s),
+                      mol.zelle.x4tr.at(s)));
+              bool gibscho=false;
+              for(int gbt=0;gbt<matoms.size();gbt++){
+                if (matoms.at(gbt).OrdZahl<0) continue;
+                g0=matoms[gbt].frac(cubeGL->tvalue);
+                p=newAt->frac(cubeGL->tvalue);
+                if ((matoms[gbt].OrdZahl>-1)&&(fl(p.x-g0.x,p.y-g0.y,p.z-g0.z)<0.2)) gibscho=true; 
+              }
+              if (!gibscho) { 
+                matoms.append(*newAt);
+                //V3 r=newAt->frac(cubeGL->tvalue);
+                //printf("%s %f %f %f  \n",newAt->atomname,r.x,r.y,r.z);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    packart=9;
+  }
+  if ((packart==5) && (packatom>-1) && (packatom<matoms.size())) expander=matoms[packatom].frac(cubeGL->tvalue);
   QString blob=infoKanal->toPlainText();
- // qDebug()<<"blob"<<__LINE__;
+  // qDebug()<<"blob"<<__LINE__;
   if ((packart==5)&&(blob.contains("'"))){
     QStringList blub=blob.split("'",QString::SkipEmptyParts);
     for (int i=0; i<blub.size(); i++) if ((i%2)==1) brauchSymm.append(QString("%1,").arg(blub.at(i)));
   }
- // qDebug()<<"blob"<<__LINE__;
+  // qDebug()<<"blob"<<__LINE__;
   if ((packart==1)||(packart==6)){
     if (brauchSymm.isEmpty()) {mSDM(brauchSymm,packart);packart=6;}
     if (brauchSymm.isEmpty()) {packart=0;}
@@ -9298,17 +9551,39 @@ void MyWindow::mgrowSymm(int packart,int packatom){
     for (int n=0; n<mol.zelle.symmops.size();n++){
       for (int i=0; i<masymmUnit.size();i++){
         if ((masymmUnit.at(i).OrdZahl>-1)&&(masymmUnit.at(i).molindex>0)){
-          prime=mol.zelle.symmops.at(n) * masymmUnit.at(i).frac0 + mol.zelle.trans.at(n) ;//+ V3(-0.0050,-0.0050,-0.0050)
+          if (masymmUnit[i].iamcomp>1) 
+            prime=mol.ccc[masymmUnit[i].iamcomp-2].nuCell.symmops.at(n) 
+              * masymmUnit[i].frac(cubeGL->tvalue) 
+              + mol.ccc[masymmUnit[i].iamcomp-2].nuCell.trans.at(n);
+          else            
+            prime=mol.zelle.symmops.at(n) * masymmUnit[i].frac(cubeGL->tvalue) + mol.zelle.trans.at(n) ;
           floorD=V3(floor(prime.x),floor(prime.y),floor(prime.z));
           prime=prime -floorD;	  
+          //printf("%f %f %f __ %f %f %f \n",prime.x,prime.y,prime.z,floorD.x,floorD.y,floorD.z);
           dawars=1000.0;
           if (!matoms.isEmpty())for (int g=0; g<matoms.size();g++){
             if ((masymmUnit[i].OrdZahl*matoms[g].OrdZahl<0)) continue;
-            dl=fl(prime.x-matoms[g].frac0.x, prime.y-matoms[g].frac0.y, prime.z-matoms[g].frac0.z);
+            V3 f=matoms[g].frac(cubeGL->tvalue);
+            dl=fl(prime.x-f.x, prime.y-f.y, prime.z-f.z);
             dawars=(dl<dawars)?dl:dawars;
           }
           if (dawars<0.01) continue; // */
-          Modulat *newAt = new Modulat(masymmUnit[i].applySymm(mol.zelle.symmops.at(n),mol.zelle.trans.at(n)-floorD, mol.zelle.x4sym.at(n), mol.zelle.x4.at(n),mol.zelle.x4tr.at(n)));
+
+          Modulat *newAt = NULL;
+          if (masymmUnit[i].iamcomp>1)
+            newAt = new Modulat(masymmUnit[i].applySymm(
+                  mol.ccc[masymmUnit[i].iamcomp-2].nuCell.symmops.at(n),
+                  mol.ccc[masymmUnit[i].iamcomp-2].nuCell.trans.at(n)-floorD,
+                  mol.ccc[masymmUnit[i].iamcomp-2].nuCell.x4sym.at(n),
+                  mol.ccc[masymmUnit[i].iamcomp-2].nuCell.x4.at(n),
+                  mol.ccc[masymmUnit[i].iamcomp-2].nuCell.x4tr.at(n)));
+          else
+            newAt = new Modulat(masymmUnit[i].applySymm(
+                  mol.zelle.symmops.at(n),
+                  mol.zelle.trans.at(n)-floorD, 
+                  mol.zelle.x4sym.at(n), 
+                  mol.zelle.x4.at(n),
+                  mol.zelle.x4tr.at(n)));
           matoms.append(*newAt);
         }
       }
@@ -9319,22 +9594,27 @@ void MyWindow::mgrowSymm(int packart,int packatom){
     for (int i=0; i<masymmUnit.size();i++){
       if ((masymmUnit.at(i).OrdZahl>-1)&&(masymmUnit.at(i).molindex>0)){
         for (int n=0; n<mol.zelle.symmops.size();n++){
-          prime=mol.zelle.symmops.at(n) * masymmUnit.at(i).frac0 + mol.zelle.trans.at(n) ;//+ V3(0.005,0.005,0.005)
+          if (masymmUnit[i].iamcomp>1) 
+            prime=mol.ccc[masymmUnit[i].iamcomp-2].nuCell.symmops.at(n) 
+              * masymmUnit[i].frac(cubeGL->tvalue) 
+              + mol.ccc[masymmUnit[i].iamcomp-2].nuCell.trans.at(n);
+          else            
+            prime=mol.zelle.symmops.at(n) * masymmUnit[i].frac(cubeGL->tvalue) + mol.zelle.trans.at(n) ;
           floorD=V3(floor(prime.x),floor(prime.y),floor(prime.z));
           bs.clear();
-          bs=QString("%1_%2%3%4:%5,").arg(n+1).arg(5-(int)floorD.x).arg(5-(int)floorD.y).arg(5-(int)floorD.z)
-          .arg(masymmUnit.at(i).molindex);
+          bs=QString("%1_%2 %3 %4:%5,").arg(n+1).arg(5-(int)floorD.x).arg(5-(int)floorD.y).arg(5-(int)floorD.z)
+            .arg(masymmUnit.at(i).molindex);
           if  (!brauchSymm.contains(bs)) {
             brauchSymm.append(bs);
           }
         }
       }//molindex
     }
-       infoKanalNews(QString("Used Symmetry:<br>%1").arg(mol.symmcode2human(brauchSymm)));
+    infoKanalNews(QString("Used Symmetry:<br>%1").arg(mol.symmcode2human(brauchSymm)));
     int s,h,k,l,gibscho=0,symmgroup;
 
     for (int j=0;j<brauchSymm.size();j++){
-      if (5!=sscanf(brauchSymm[j].toLatin1(),"%d_%1d%1d%1d:%d",&s,&h,&k,&l,&symmgroup))qDebug()<<"Katastrophe, o je!";
+      if (5!=sscanf(brauchSymm[j].toLatin1(),"%d_%d %d %d:%d",&s,&h,&k,&l,&symmgroup))qDebug()<<"Katastrophe, o je!";
       h-=5;
       k-=5;
       l-=5;
@@ -9342,7 +9622,23 @@ void MyWindow::mgrowSymm(int packart,int packatom){
       for (int i=0;i<masymmUnit.size();i++){
         if ((masymmUnit[i].molindex==symmgroup)&&(masymmUnit[i].OrdZahl>-1)){// newAtom.frac=mol.zelle.symmops[s]*asymmUnit[i].frac+mol.zelle.trans.at(s)+V3(h,k,l);
 
-          Modulat *newAt = new Modulat(masymmUnit[i].applySymm(mol.zelle.symmops.at(s),mol.zelle.trans.at(s)+V3(h,k,l), mol.zelle.x4sym.at(s), mol.zelle.x4.at(s),mol.zelle.x4tr.at(s)));
+          Modulat *newAt = NULL;
+          if (masymmUnit[i].iamcomp>1)
+            newAt = new Modulat(masymmUnit[i].applySymm(
+                  mol.ccc[masymmUnit[i].iamcomp-2].nuCell.symmops.at(s),
+                  mol.ccc[masymmUnit[i].iamcomp-2].nuCell.trans.at(s)+V3(h,k,l),
+                  mol.ccc[masymmUnit[i].iamcomp-2].nuCell.x4sym.at(s),
+                  mol.ccc[masymmUnit[i].iamcomp-2].nuCell.x4.at(s),
+                  mol.ccc[masymmUnit[i].iamcomp-2].nuCell.x4tr.at(s)));
+          else
+            newAt = new Modulat(masymmUnit[i].applySymm(
+                  mol.zelle.symmops.at(s),
+                  mol.zelle.trans.at(s)+V3(h,k,l), 
+                  mol.zelle.x4sym.at(s), 
+                  mol.zelle.x4.at(s),
+                  mol.zelle.x4tr.at(s)));
+          //     matoms.append(*newAt);
+          //Modulat *newAt = new Modulat(masymmUnit[i].applySymm(mol.zelle.symmops.at(s),mol.zelle.trans.at(s)+V3(h,k,l), mol.zelle.x4sym.at(s), mol.zelle.x4.at(s),mol.zelle.x4tr.at(s)));
           sprintf(newAt->atomname,"%s_%d",masymmUnit[i].atomname,j+1);
           newAt->sg=1+j;
           //	  newAtom.OrdZahl = asymmUnit[i].OrdZahl;	  
@@ -9350,7 +9646,8 @@ void MyWindow::mgrowSymm(int packart,int packatom){
           gibscho=0;
           for(int gbt=0;gbt<matoms.size();gbt++){
             if (matoms.at(gbt).OrdZahl<0) continue;
-            if ((matoms[gbt].OrdZahl>-1)&&(fl(newAt->frac0.x-matoms[gbt].frac0.x,newAt->frac0.y-matoms[gbt].frac0.y,newAt->frac0.z-matoms[gbt].frac0.z)<0.2)) gibscho=1; 
+            V3 n0=newAt->frac(cubeGL->tvalue), g0=matoms[gbt].frac(cubeGL->tvalue);
+            if ((matoms[gbt].OrdZahl>-1)&&(fl(n0.x-g0.x,n0.y-g0.y,n0.z-g0.z)<0.2)) gibscho=1; 
           }
           if (!gibscho) { 
             matoms.append(*newAt);
@@ -9361,85 +9658,125 @@ void MyWindow::mgrowSymm(int packart,int packatom){
     statusBar()->showMessage(tr("Neighbor search is finished"));
 
   }//4
-    if ((packart==5)&&(packatom>-1)){//expand around given atom
-      matoms=masymmUnit;
-      V3 prime,floorD,D;
-      double dk;
-      for (int n=0; n<mol.zelle.symmops.size();n++){
-	for (int i=0; i<masymmUnit.size();i++){
-	  prime=mol.zelle.symmops.at(n) * masymmUnit[i].frac(cubeGL->tvalue) + mol.zelle.trans.at(n);
-	  D=prime - expander + V3(0.5,0.5,0.5) ;
-	  floorD=V3(floor(D.x),floor(D.y),floor(D.z));
-	  if ((n==0)&&(floorD==V3(0,0,0))) {continue;}
-	  D=D - floorD - V3(0.5,0.5,0.5);
-	  dk=fl(D.x,D.y,D.z);
-	  if (dk<mol.gd){
-	    bs=QString("%1_%2%3%4:%5,").arg(n+1).arg(5-(int)floorD.x).arg(5-(int)floorD.y).arg(5-(int)floorD.z).arg(masymmUnit.at(i).molindex);
-/*            qDebug()<<bs
-              <<brauchSymm
-              <<brauchSymm.contains(bs)
-              <<packatom
-              <<matoms.at(packatom).atomname
-              <<expander.x
-              <<expander.y
-              <<expander.z
-              <<masymmUnit.at(i).atomname;*/
-	    if  (!brauchSymm.contains(bs)) {
-	      brauchSymm.append(bs);
-	    }
-	  }
-	}
+  if ((packart==5)&&(packatom>-1)){//expand around given atom
+    matoms=masymmUnit;
+    V3 prime,floorD,D;
+    double dk;
+    for (int n=0; n<mol.zelle.symmops.size();n++){
+      for (int i=0; i<masymmUnit.size();i++){
+        if (masymmUnit[i].iamcomp>1) 
+          prime=mol.ccc[masymmUnit[i].iamcomp-2].nuCell.symmops.at(n) 
+            * masymmUnit[i].frac(cubeGL->tvalue) 
+            + mol.ccc[masymmUnit[i].iamcomp-2].nuCell.trans.at(n);
+        else            
+          prime=mol.zelle.symmops.at(n) * masymmUnit[i].frac(cubeGL->tvalue) + mol.zelle.trans.at(n);
+        D=prime - expander + V3(0.5,0.5,0.5) ;
+        floorD=V3(floor(D.x),floor(D.y),floor(D.z));
+        printf("floor %f %f %f\n",floorD.x,floorD.y,floorD.z);
+        if ((n==0)&&(floorD==V3(0,0,0))) {continue;}
+        D=D - floorD - V3(0.5,0.5,0.5);
+        dk=fl(D.x,D.y,D.z);
+        if (dk<mol.gd){
+          bs=QString("%1_%2 %3 %4:%5,").arg(n+1).arg(5-(int)floorD.x).arg(5-(int)floorD.y).arg(5-(int)floorD.z).arg(masymmUnit.at(i).molindex);
+          /*            qDebug()<<bs
+                        <<brauchSymm
+                        <<brauchSymm.contains(bs)
+                        <<packatom
+                        <<matoms.at(packatom).atomname
+                        <<expander.x
+                        <<expander.y
+                        <<expander.z
+                        <<masymmUnit.at(i).atomname;*/
+          if  (!brauchSymm.contains(bs)) {
+            brauchSymm.append(bs);
+          }
+        }
       }
-      int s,h,k,l,gibscho=0,symmgroup;
-      infoKanalNews(QString("Used Symmetry:<br>%1").arg(mol.symmcode2human(brauchSymm)));
-      for (int j=0;j<brauchSymm.size();j++){
-//	int ifx=
-          sscanf(brauchSymm[j].toLatin1(),"%d_%1d%1d%1d:%d",&s,&h,&k,&l,&symmgroup);
-	h-=5;
-	k-=5;
-	l-=5;
-	s--;
-//        printf("fix %d\n",ifx);
-	for (int i=0;i<masymmUnit.size();i++) 
-	  if ((masymmUnit[i].molindex==symmgroup)&&(masymmUnit[i].OrdZahl>-1)){
-	    //newAtom.frac=mol.zelle.symmops.at(s)*masymmUnit[i].frac+mol.zelle.trans.at(s)+V3(h,k,l);
-            Modulat *newAt = new Modulat(masymmUnit[i].applySymm(mol.zelle.symmops.at(s),mol.zelle.trans.at(s)+V3(h,k,l), mol.zelle.x4sym.at(s), mol.zelle.x4.at(s),mol.zelle.x4tr.at(s)));
-	    sprintf(newAt->atomname,"%s_%d",masymmUnit[i].atomname,j+1);
-	    newAt->sg=1+j;
-	    newAt->molindex=masymmUnit[i].molindex;
-            gibscho=0;
-	      for(int gbt=0;gbt<matoms.size();gbt++){
-		if (matoms.at(gbt).OrdZahl<0) continue;
-		if (fl(newAt->frac0.x-matoms[gbt].frac0.x,newAt->frac0.y-matoms[gbt].frac0.y,newAt->frac0.z-matoms[gbt].frac0.z)<0.2) gibscho=1;
-	      }
-	      if (!gibscho) {
-		matoms.append(*newAt);
-	      }
-	  }
-      }
-      statusBar()->showMessage(tr("Neighbor search is finished"));
-    }  
-  
+    }
+    int s,h,k,l,gibscho=0,symmgroup;
+    infoKanalNews(QString("Used Symmetry:<br>%1").arg(mol.symmcode2human(brauchSymm)));
+    for (int j=0;j<brauchSymm.size();j++){
+      //	int ifx=
+      sscanf(brauchSymm[j].toLatin1(),"%d_%d %d %d:%d",&s,&h,&k,&l,&symmgroup);
+      h-=5;
+      k-=5;
+      l-=5;
+      s--;
+      //        printf("fix %d\n",ifx);
+      for (int i=0;i<masymmUnit.size();i++) 
+        if ((masymmUnit[i].molindex==symmgroup)&&(masymmUnit[i].OrdZahl>-1)){
+          //newAtom.frac=mol.zelle.symmops.at(s)*masymmUnit[i].frac+mol.zelle.trans.at(s)+V3(h,k,l);
+          //  Modulat *newAt = new Modulat(masymmUnit[i].applySymm(mol.zelle.symmops.at(s),mol.zelle.trans.at(s)+V3(h,k,l), mol.zelle.x4sym.at(s), mol.zelle.x4.at(s),mol.zelle.x4tr.at(s)));
+          Modulat *newAt = NULL;
+          if (masymmUnit[i].iamcomp>1)
+            newAt = new Modulat(masymmUnit[i].applySymm(
+                  mol.ccc[masymmUnit[i].iamcomp-2].nuCell.symmops.at(s),
+                  mol.ccc[masymmUnit[i].iamcomp-2].nuCell.trans.at(s)+V3(h,k,l),
+                  mol.ccc[masymmUnit[i].iamcomp-2].nuCell.x4sym.at(s),
+                  mol.ccc[masymmUnit[i].iamcomp-2].nuCell.x4.at(s),
+                  mol.ccc[masymmUnit[i].iamcomp-2].nuCell.x4tr.at(s)));
+          else
+            newAt = new Modulat(masymmUnit[i].applySymm(
+                  mol.zelle.symmops.at(s),
+                  mol.zelle.trans.at(s)+V3(h,k,l), 
+                  mol.zelle.x4sym.at(s), 
+                  mol.zelle.x4.at(s),
+                  mol.zelle.x4tr.at(s)));
+          sprintf(newAt->atomname,"%s_%d",masymmUnit[i].atomname,j+1);
+          newAt->sg=1+j;
+          newAt->molindex=masymmUnit[i].molindex;
+          gibscho=0;
+          for(int gbt=0;gbt<matoms.size();gbt++){
+            if (matoms.at(gbt).OrdZahl<0) continue;
+            V3 n0=newAt->frac(cubeGL->tvalue), g0=matoms[gbt].frac(cubeGL->tvalue);
+            if ((matoms[gbt].OrdZahl>-1)&&(fl(n0.x-g0.x,n0.y-g0.y,n0.z-g0.z)<0.2)) gibscho=1; 
+            //if (fl(newAt->frac0.x-matoms[gbt].frac0.x,newAt->frac0.y-matoms[gbt].frac0.y,newAt->frac0.z-matoms[gbt].frac0.z)<0.2) gibscho=1;
+          }
+          if (!gibscho) {
+            matoms.append(*newAt);
+          }
+        }
+    }
+    statusBar()->showMessage(tr("Neighbor search is finished"));
+  }  
+
   if (packart==6){ 
-/*    qDebug()<<"hi"<<brauchSymm
-      <<mol.zelle.symmops.size()
-      <<mol.zelle.trans.size()
-      <<mol.zelle.x4sym.size()
-      <<mol.zelle.x4.size()
-      <<mol.zelle.x4tr.size();// */
+/*        qDebug()<<"hi"<<brauchSymm
+          <<mol.zelle.symmops.size()
+          <<mol.zelle.trans.size()
+          <<mol.zelle.x4sym.size()
+          <<mol.zelle.x4.size()
+          <<mol.zelle.x4tr.size();// */
     int s,h,k,l,gibscho=0,symmgroup;
     matoms=masymmUnit;
     infoKanalNews(QString("Used Symmetry:<br>%1").arg(mol.symmcode2human(brauchSymm)));
     for (int j=0;j<brauchSymm.size();j++){
       balken->setValue(j);
-      sscanf(brauchSymm[j].toLatin1(),"%d_%1d%1d%1d:%d",&s,&h,&k,&l,&symmgroup);
+      sscanf(brauchSymm[j].toLatin1(),"%d_%d %d %d:%d",&s,&h,&k,&l,&symmgroup);
       h-=5;
       k-=5;
       l-=5;
       s--;
       for (int i=0;i<masymmUnit.size();i++){ 
         if ((masymmUnit[i].molindex==symmgroup)&&(masymmUnit[i].OrdZahl>-1)){ 
-          Modulat *newAt = new Modulat(masymmUnit[i].applySymm(mol.zelle.symmops.at(s),mol.zelle.trans.at(s)+V3(h,k,l), mol.zelle.x4sym.at(s), mol.zelle.x4.at(s),mol.zelle.x4tr.at(s)));
+            V3 r0=masymmUnit[i].frac(cubeGL->tvalue);
+            printf("##%s %f %f %f  \n",masymmUnit[i].atomname,r0.x,r0.y,r0.z);
+          //Modulat *newAt = new Modulat(masymmUnit[i].applySymm(mol.zelle.symmops.at(s),mol.zelle.trans.at(s)+V3(h,k,l), mol.zelle.x4sym.at(s), mol.zelle.x4.at(s),mol.zelle.x4tr.at(s)));
+          Modulat *newAt = NULL;
+          if (masymmUnit[i].iamcomp>1)
+            newAt = new Modulat(masymmUnit[i].applySymm(
+                  mol.ccc[masymmUnit[i].iamcomp-2].nuCell.symmops.at(s),
+                  mol.ccc[masymmUnit[i].iamcomp-2].nuCell.trans.at(s)+V3(h,k,l),
+                  mol.ccc[masymmUnit[i].iamcomp-2].nuCell.x4sym.at(s),
+                  mol.ccc[masymmUnit[i].iamcomp-2].nuCell.x4.at(s),
+                  mol.ccc[masymmUnit[i].iamcomp-2].nuCell.x4tr.at(s)));
+          else
+            newAt = new Modulat(masymmUnit[i].applySymm(
+                  mol.zelle.symmops.at(s),
+                  mol.zelle.trans.at(s)+V3(h,k,l), 
+                  mol.zelle.x4sym.at(s), 
+                  mol.zelle.x4.at(s),
+                  mol.zelle.x4tr.at(s)));
           sprintf(newAt->atomname,"%s_%d",masymmUnit[i].atomname,j+1);
           //  newAtom.frac=mol.zelle.symmops.at(s)*asymmUnit[i].frac+mol.zelle.trans.at(s)+V3(h,k,l);
           //  newAtom.part=asymmUnit[i].part;
@@ -9450,10 +9787,14 @@ void MyWindow::mgrowSymm(int packart,int packatom){
           gibscho=0;
           for(int gbt=0;gbt<matoms.size();gbt++){
             if (matoms.at(gbt).OrdZahl<0) continue;
-            if (fl(newAt->frac0.x-matoms[gbt].frac0.x,newAt->frac0.y-matoms[gbt].frac0.y,newAt->frac0.z-matoms[gbt].frac0.z)<0.2) gibscho=1;
+            V3 n0=newAt->frac(cubeGL->tvalue), g0=matoms[gbt].frac(cubeGL->tvalue);
+            if ((matoms[gbt].OrdZahl>-1)&&(fl(n0.x-g0.x,n0.y-g0.y,n0.z-g0.z)<0.2)) gibscho=1; 
+            //            if (fl(newAt->frac0.x-matoms[gbt].frac0.x,newAt->frac0.y-matoms[gbt].frac0.y,newAt->frac0.z-matoms[gbt].frac0.z)<0.2) gibscho=1;
           }
           if (!gibscho) {
             matoms.append(*newAt);
+//            V3 r=newAt->frac(cubeGL->tvalue);
+//            printf("%s %f %f %f  \n",newAt->atomname,r.x,r.y,r.z);
           }
         }//molindex
       }
@@ -9482,10 +9823,10 @@ void MyWindow::mgrowSymm(int packart,int packatom){
   mol.frac2kart(uz7f,mol.uz7k);
   double dim=mdimension(matoms);
   cubeGL->L=100.0/dim;
-  //qDebug()<<dim<<cubeGL->L;
+  qDebug()<<dim<<"dim L"<<cubeGL->L;
   cubeGL->bas=0;
 
-//  cubeGL->resetENV();
+  //  cubeGL->resetENV();
   dock->hide();
   dock2->hide();
   cubeGL->setVisible(true);
@@ -9496,9 +9837,9 @@ void MyWindow::mgrowSymm(int packart,int packatom){
 }
 
 void MyWindow::growSymm(int packart,int packatom){
-//  qDebug()<<smx<<atmax <<asymmUnit.size();
+  //  qDebug()<<smx<<atmax <<asymmUnit.size();
   if ((asymmUnit.isEmpty())&&(!masymmUnit.isEmpty())){
-//    qDebug()<<packart<<packatom<<"modul grow";
+    //    qDebug()<<packart<<packatom<<"modul grow";
     mgrowSymm(packart,packatom);
     return;
   }
@@ -9524,13 +9865,13 @@ void MyWindow::growSymm(int packart,int packatom){
     if (brauchSymm.isEmpty()) {SDM(brauchSymm,packart);packart=6;}
     if (brauchSymm.isEmpty()) {packart=0;}
   }
-//  printf("growSymm line %d\n",__LINE__);
+  //  printf("growSymm line %d\n",__LINE__);
   if (!george) makeXDPartAux();
-//  printf("growSymm line %d\n",__LINE__);
+  //  printf("growSymm line %d\n",__LINE__);
   xdinp=asymmUnit;
   //matoms=masymmUnit;//*
 
-//  if (!packart) for (int i=0; i<xdinp.size(); i++) printf("%-9s -->%d<-- %d %d \n",xdinp.at(i).atomname,xdinp.at(i).molindex-asymmUnit.at(i).molindex,xdinp.at(i).molindex,asymmUnit.at(i).molindex);
+  //  if (!packart) for (int i=0; i<xdinp.size(); i++) printf("%-9s -->%d<-- %d %d \n",xdinp.at(i).atomname,xdinp.at(i).molindex-asymmUnit.at(i).molindex,xdinp.at(i).molindex,asymmUnit.at(i).molindex);
   INP newAtom;  
   newAtom.sg=1;
   infoKanalNews("Used Symmetry:");
@@ -9540,48 +9881,48 @@ void MyWindow::growSymm(int packart,int packatom){
     if (packart==4){//packe die Zelle
       V3 prime,floorD;
       for (int i=0; i<asymmUnit.size();i++)
-	if ((asymmUnit.at(i).OrdZahl>-1)&&(asymmUnit.at(i).molindex>0)){
-	  for (int n=0; n<mol.zelle.symmops.size();n++){
-	    prime=mol.zelle.symmops.at(n) * asymmUnit.at(i).frac + mol.zelle.trans.at(n) ;//+ V3(0.005,0.005,0.005)
-	    floorD=V3(floor(prime.x),floor(prime.y),floor(prime.z));
-	    bs.clear();
-	    bs=QString("%1_%2%3%4:%5,").arg(n+1).arg(5-(int)floorD.x).arg(5-(int)floorD.y).arg(5-(int)floorD.z).arg(asymmUnit.at(i).molindex);
-	    if  (!brauchSymm.contains(bs)) {
-	      brauchSymm.append(bs);
-	    }
-	  }
-	}
+        if ((asymmUnit.at(i).OrdZahl>-1)&&(asymmUnit.at(i).molindex>0)){
+          for (int n=0; n<mol.zelle.symmops.size();n++){
+            prime=mol.zelle.symmops.at(n) * asymmUnit.at(i).frac + mol.zelle.trans.at(n) ;//+ V3(0.005,0.005,0.005)
+            floorD=V3(floor(prime.x),floor(prime.y),floor(prime.z));
+            bs.clear();
+            bs=QString("%1_%2%3%4:%5,").arg(n+1).arg(5-(int)floorD.x).arg(5-(int)floorD.y).arg(5-(int)floorD.z).arg(asymmUnit.at(i).molindex);
+            if  (!brauchSymm.contains(bs)) {
+              brauchSymm.append(bs);
+            }
+          }
+        }
       infoKanalNews(QString("Used Symmetry:<br>%1").arg(mol.symmcode2human(brauchSymm)));
       int s,h,k,l,gibscho=0,symmgroup;
 
       for (int j=0;j<brauchSymm.size();j++){
-	if (5!=sscanf(brauchSymm[j].toLatin1(),"%d_%1d%1d%1d:%d",&s,&h,&k,&l,&symmgroup))qDebug()<<"katastrfe";
-	h-=5;
-	k-=5;
-	l-=5;
-	s--;
-	for (int i=0;i<asymmUnit.size();i++){
-	  if ((asymmUnit[i].molindex==symmgroup)&&(asymmUnit[i].OrdZahl>-1)) newAtom.frac=mol.zelle.symmops[s]*asymmUnit[i].frac+mol.zelle.trans.at(s)+V3(h,k,l);
-	  sprintf(newAtom.atomname,"%s_%d",asymmUnit[i].atomname,j+1);
-	  newAtom.sg=1+j;
-	  newAtom.OrdZahl = asymmUnit[i].OrdZahl;	  
+        if (5!=sscanf(brauchSymm[j].toLatin1(),"%d_%1d%1d%1d:%d",&s,&h,&k,&l,&symmgroup))qDebug()<<"katastrfe";
+        h-=5;
+        k-=5;
+        l-=5;
+        s--;
+        for (int i=0;i<asymmUnit.size();i++){
+          if ((asymmUnit[i].molindex==symmgroup)&&(asymmUnit[i].OrdZahl>-1)) newAtom.frac=mol.zelle.symmops[s]*asymmUnit[i].frac+mol.zelle.trans.at(s)+V3(h,k,l);
+          sprintf(newAtom.atomname,"%s_%d",asymmUnit[i].atomname,j+1);
+          newAtom.sg=1+j;
+          newAtom.OrdZahl = asymmUnit[i].OrdZahl;	  
           newAtom.amul=asymmUnit[i].amul;
-	  newAtom.molindex = asymmUnit[i].molindex;
-	  if ((asymmUnit[i].u.m12==0.0)&&(asymmUnit[i].u.m23==0.0)&&(asymmUnit[i].u.m13==0.0)){
-	    newAtom.u.m11=newAtom.u.m22=newAtom.u.m33=asymmUnit[i].uf.m11;
-	    newAtom.u.m12=newAtom.u.m13=newAtom.u.m23=newAtom.u.m21=newAtom.u.m31=newAtom.u.m32=0.0;}
-	  else {
-	    Usym(asymmUnit[i].uf,mol.zelle.symmops[s],newAtom.uf);
-	    mol.Uf2Uo(newAtom.uf,newAtom.u);}
-	    gibscho=0;
-	    for(int gbt=0;gbt<xdinp.size();gbt++){
-	      if (xdinp.at(gbt).OrdZahl<0) continue;
-	      if ((xdinp[gbt].OrdZahl>-1)&&(fl(newAtom.frac.x-xdinp[gbt].frac.x,newAtom.frac.y-xdinp[gbt].frac.y,newAtom.frac.z-xdinp[gbt].frac.z)<0.2)) gibscho=1; 
-	    }
-	    if (!gibscho) { 
-	      xdinp.append(newAtom);
-	    }
-	}
+          newAtom.molindex = asymmUnit[i].molindex;
+          if ((asymmUnit[i].u.m12==0.0)&&(asymmUnit[i].u.m23==0.0)&&(asymmUnit[i].u.m13==0.0)){
+            newAtom.u.m11=newAtom.u.m22=newAtom.u.m33=asymmUnit[i].uf.m11;
+            newAtom.u.m12=newAtom.u.m13=newAtom.u.m23=newAtom.u.m21=newAtom.u.m31=newAtom.u.m32=0.0;}
+          else {
+            Usym(asymmUnit[i].uf,mol.zelle.symmops[s],newAtom.uf);
+            mol.Uf2Uo(newAtom.uf,newAtom.u);}
+          gibscho=0;
+          for(int gbt=0;gbt<xdinp.size();gbt++){
+            if (xdinp.at(gbt).OrdZahl<0) continue;
+            if ((xdinp[gbt].OrdZahl>-1)&&(fl(newAtom.frac.x-xdinp[gbt].frac.x,newAtom.frac.y-xdinp[gbt].frac.y,newAtom.frac.z-xdinp[gbt].frac.z)<0.2)) gibscho=1; 
+          }
+          if (!gibscho) { 
+            xdinp.append(newAtom);
+          }
+        }
       }
       statusBar()->showMessage(tr("Neighbor search is finished"));
 
@@ -9590,174 +9931,174 @@ void MyWindow::growSymm(int packart,int packatom){
       V3 prime,floorD;
       double dawars=1000.0,dl;
       /*
-	for (int i=0; i<asymmUnit.size();i++){
-          prime=asymmUnit.at(i).frac;
-          if (fabs(asymmUnit.at(i).frac.x)<0.01)  {
-            prime.x=1;
-	    newAtom.part=asymmUnit[i].part;
-	    newAtom.frac=prime;
-	    newAtom.OrdZahl=asymmUnit[i].OrdZahl;
-	    newAtom.molindex=asymmUnit[i].molindex;
-	    sprintf(newAtom.atomname,"%s'",asymmUnit[i].atomname);
-	    newAtom.sg=1;
-	    if ((asymmUnit[i].u.m12==0.0)&&(asymmUnit[i].u.m23==0.0)&&(asymmUnit[i].u.m13==0.0)){
-	      newAtom.uf.m11=newAtom.u.m11=newAtom.u.m22=newAtom.u.m33=asymmUnit[i].uf.m11;
-	      newAtom.u.m12=newAtom.u.m13=newAtom.u.m23=newAtom.u.m21=newAtom.u.m31=newAtom.u.m32=0.0;
-	    }
-	    else {
-	      Usym(asymmUnit[i].uf,mol.zelle.symmops[0],newAtom.uf);
-	      Uf2Uo(newAtom.uf,newAtom.u);
-	    }
-	    xdinp.append(newAtom);
-	    smx++;
-          }
-          if (fabs(asymmUnit.at(i).frac.y)<0.01)  {
-            prime.y=1;
-	    newAtom.part=asymmUnit[i].part;
-	    newAtom.frac=prime;
-	    newAtom.OrdZahl=asymmUnit[i].OrdZahl;
-	    newAtom.molindex=asymmUnit[i].molindex;
-	    sprintf(newAtom.atomname,"%s'",asymmUnit[i].atomname);
-	    newAtom.sg=1;
-	    if ((asymmUnit[i].u.m12==0.0)&&(asymmUnit[i].u.m23==0.0)&&(asymmUnit[i].u.m13==0.0)){
-	      newAtom.uf.m11=newAtom.u.m11=newAtom.u.m22=newAtom.u.m33=asymmUnit[i].uf.m11;
-	      newAtom.u.m12=newAtom.u.m13=newAtom.u.m23=newAtom.u.m21=newAtom.u.m31=newAtom.u.m32=0.0;
-	    }
-	    else {
-	      Usym(asymmUnit[i].uf,mol.zelle.symmops[0],newAtom.uf);
-	      Uf2Uo(newAtom.uf,newAtom.u);
-	    }
-	    xdinp.append(newAtom);
-	    smx++;
-          }
-          if (fabs(asymmUnit.at(i).frac.z)<0.01)  {
-            prime.z=1;
-	    newAtom.part=asymmUnit[i].part;
-	    newAtom.frac=prime;
-	    newAtom.OrdZahl=asymmUnit[i].OrdZahl;
-	    newAtom.molindex=asymmUnit[i].molindex;
-	    sprintf(newAtom.atomname,"%s'",asymmUnit[i].atomname);
-	    newAtom.sg=1;
-	    if ((asymmUnit[i].u.m12==0.0)&&(asymmUnit[i].u.m23==0.0)&&(asymmUnit[i].u.m13==0.0)){
-	      newAtom.uf.m11=newAtom.u.m11=newAtom.u.m22=newAtom.u.m33=asymmUnit[i].uf.m11;
-	      newAtom.u.m12=newAtom.u.m13=newAtom.u.m23=newAtom.u.m21=newAtom.u.m31=newAtom.u.m32=0.0;
-	    }
-	    else {
-	      Usym(asymmUnit[i].uf,mol.zelle.symmops[0],newAtom.uf);
-	      Uf2Uo(newAtom.uf,newAtom.u);
-	    }
-	    xdinp.append(newAtom);
-	    smx++;
-          }
-        }*/
+         for (int i=0; i<asymmUnit.size();i++){
+         prime=asymmUnit.at(i).frac;
+         if (fabs(asymmUnit.at(i).frac.x)<0.01)  {
+         prime.x=1;
+         newAtom.part=asymmUnit[i].part;
+         newAtom.frac=prime;
+         newAtom.OrdZahl=asymmUnit[i].OrdZahl;
+         newAtom.molindex=asymmUnit[i].molindex;
+         sprintf(newAtom.atomname,"%s'",asymmUnit[i].atomname);
+         newAtom.sg=1;
+         if ((asymmUnit[i].u.m12==0.0)&&(asymmUnit[i].u.m23==0.0)&&(asymmUnit[i].u.m13==0.0)){
+         newAtom.uf.m11=newAtom.u.m11=newAtom.u.m22=newAtom.u.m33=asymmUnit[i].uf.m11;
+         newAtom.u.m12=newAtom.u.m13=newAtom.u.m23=newAtom.u.m21=newAtom.u.m31=newAtom.u.m32=0.0;
+         }
+         else {
+         Usym(asymmUnit[i].uf,mol.zelle.symmops[0],newAtom.uf);
+         Uf2Uo(newAtom.uf,newAtom.u);
+         }
+         xdinp.append(newAtom);
+         smx++;
+         }
+         if (fabs(asymmUnit.at(i).frac.y)<0.01)  {
+         prime.y=1;
+         newAtom.part=asymmUnit[i].part;
+         newAtom.frac=prime;
+         newAtom.OrdZahl=asymmUnit[i].OrdZahl;
+         newAtom.molindex=asymmUnit[i].molindex;
+         sprintf(newAtom.atomname,"%s'",asymmUnit[i].atomname);
+         newAtom.sg=1;
+         if ((asymmUnit[i].u.m12==0.0)&&(asymmUnit[i].u.m23==0.0)&&(asymmUnit[i].u.m13==0.0)){
+         newAtom.uf.m11=newAtom.u.m11=newAtom.u.m22=newAtom.u.m33=asymmUnit[i].uf.m11;
+         newAtom.u.m12=newAtom.u.m13=newAtom.u.m23=newAtom.u.m21=newAtom.u.m31=newAtom.u.m32=0.0;
+         }
+         else {
+         Usym(asymmUnit[i].uf,mol.zelle.symmops[0],newAtom.uf);
+         Uf2Uo(newAtom.uf,newAtom.u);
+         }
+         xdinp.append(newAtom);
+         smx++;
+         }
+         if (fabs(asymmUnit.at(i).frac.z)<0.01)  {
+         prime.z=1;
+         newAtom.part=asymmUnit[i].part;
+         newAtom.frac=prime;
+         newAtom.OrdZahl=asymmUnit[i].OrdZahl;
+         newAtom.molindex=asymmUnit[i].molindex;
+         sprintf(newAtom.atomname,"%s'",asymmUnit[i].atomname);
+         newAtom.sg=1;
+         if ((asymmUnit[i].u.m12==0.0)&&(asymmUnit[i].u.m23==0.0)&&(asymmUnit[i].u.m13==0.0)){
+         newAtom.uf.m11=newAtom.u.m11=newAtom.u.m22=newAtom.u.m33=asymmUnit[i].uf.m11;
+         newAtom.u.m12=newAtom.u.m13=newAtom.u.m23=newAtom.u.m21=newAtom.u.m31=newAtom.u.m32=0.0;
+         }
+         else {
+         Usym(asymmUnit[i].uf,mol.zelle.symmops[0],newAtom.uf);
+         Uf2Uo(newAtom.uf,newAtom.u);
+         }
+         xdinp.append(newAtom);
+         smx++;
+         }
+         }*/
       for (int n=0; n<mol.zelle.symmops.size();n++){
-	for (int i=0; i<asymmUnit.size();i++)
-	  if ((asymmUnit.at(i).OrdZahl>-1)&&(asymmUnit.at(i).molindex>0)){
-	    prime=mol.zelle.symmops.at(n) * asymmUnit.at(i).frac + mol.zelle.trans.at(n) ;//+ V3(-0.0050,-0.0050,-0.0050)
-	    floorD=V3(floor(prime.x),floor(prime.y),floor(prime.z));
-	    prime=prime -floorD;	  
-	    dawars=1000.0;
-	    for (int g=0; g<xdinp.size();g++){
-	      if ((xdinp[i].OrdZahl*xdinp[g].OrdZahl<0)) continue;
-	      dl=fl(prime.x-xdinp[g].frac.x, prime.y-xdinp[g].frac.y, prime.z-xdinp[g].frac.z);
-	      dawars=(dl<dawars)?dl:dawars;
-	    }
-	    if (dawars<0.01) continue; // */
-	    bs=QString("%1_%2%3%4:%5,").arg(n+1).arg(5-(int)floorD.x).arg(5-(int)floorD.y).arg(5-(int)floorD.z).arg(asymmUnit.at(i).molindex);
-	    if  (!brauchSymm.contains(bs)) {
-	      brauchSymm.append(bs);
-	    }
-	    newAtom.part=asymmUnit[i].part;
-	    newAtom.frac=prime;
-	    newAtom.OrdZahl=asymmUnit[i].OrdZahl;
-	    newAtom.molindex=asymmUnit[i].molindex;
+        for (int i=0; i<asymmUnit.size();i++)
+          if ((asymmUnit.at(i).OrdZahl>-1)&&(asymmUnit.at(i).molindex>0)){
+            prime=mol.zelle.symmops.at(n) * asymmUnit.at(i).frac + mol.zelle.trans.at(n) ;//+ V3(-0.0050,-0.0050,-0.0050)
+            floorD=V3(floor(prime.x),floor(prime.y),floor(prime.z));
+            prime=prime -floorD;	  
+            dawars=1000.0;
+            for (int g=0; g<xdinp.size();g++){
+              if ((xdinp[i].OrdZahl*xdinp[g].OrdZahl<0)) continue;
+              dl=fl(prime.x-xdinp[g].frac.x, prime.y-xdinp[g].frac.y, prime.z-xdinp[g].frac.z);
+              dawars=(dl<dawars)?dl:dawars;
+            }
+            if (dawars<0.01) continue; // */
+            bs=QString("%1_%2%3%4:%5,").arg(n+1).arg(5-(int)floorD.x).arg(5-(int)floorD.y).arg(5-(int)floorD.z).arg(asymmUnit.at(i).molindex);
+            if  (!brauchSymm.contains(bs)) {
+              brauchSymm.append(bs);
+            }
+            newAtom.part=asymmUnit[i].part;
+            newAtom.frac=prime;
+            newAtom.OrdZahl=asymmUnit[i].OrdZahl;
+            newAtom.molindex=asymmUnit[i].molindex;
             newAtom.amul=asymmUnit[i].amul;
-	    sprintf(newAtom.atomname,"%s'",asymmUnit[i].atomname);
-	    newAtom.sg=1;
-	    if ((asymmUnit[i].u.m12==0.0)&&(asymmUnit[i].u.m23==0.0)&&(asymmUnit[i].u.m13==0.0)){
-	      newAtom.uf.m11=newAtom.u.m11=newAtom.u.m22=newAtom.u.m33=asymmUnit[i].uf.m11;
-	      newAtom.u.m12=newAtom.u.m13=newAtom.u.m23=newAtom.u.m21=newAtom.u.m31=newAtom.u.m32=0.0;
-	    }
-	    else {
-	      Usym(asymmUnit[i].uf,mol.zelle.symmops[n],newAtom.uf);
-	      mol.Uf2Uo(newAtom.uf,newAtom.u);
-	    }
-        //printf("%-10s %9.5f %9.5f %9.5f\n",newAtom.atomname,newAtom.frac.x,newAtom.frac.y,newAtom.frac.z);
-	    xdinp.append(newAtom);
-	    smx++;
-	  }
+            sprintf(newAtom.atomname,"%s'",asymmUnit[i].atomname);
+            newAtom.sg=1;
+            if ((asymmUnit[i].u.m12==0.0)&&(asymmUnit[i].u.m23==0.0)&&(asymmUnit[i].u.m13==0.0)){
+              newAtom.uf.m11=newAtom.u.m11=newAtom.u.m22=newAtom.u.m33=asymmUnit[i].uf.m11;
+              newAtom.u.m12=newAtom.u.m13=newAtom.u.m23=newAtom.u.m21=newAtom.u.m31=newAtom.u.m32=0.0;
+            }
+            else {
+              Usym(asymmUnit[i].uf,mol.zelle.symmops[n],newAtom.uf);
+              mol.Uf2Uo(newAtom.uf,newAtom.u);
+            }
+            //printf("%-10s %9.5f %9.5f %9.5f\n",newAtom.atomname,newAtom.frac.x,newAtom.frac.y,newAtom.frac.z);
+            xdinp.append(newAtom);
+            smx++;
+          }
       }
 
 
       char dumstr[500];
       for (int j=0; j<3;j++){
-          int asa=xdinp.size();
-          for (int i=0;i<asa;i++){
+        int asa=xdinp.size();
+        for (int i=0;i<asa;i++){
           if (fabs(xdinp.at(i).frac.x)<0.05) {
-              newAtom.frac=xdinp.at(i).frac;
-              newAtom.frac.x+=1.0;
-              newAtom.sg=1;
-              newAtom.part=xdinp[i].part;
-              newAtom.OrdZahl=xdinp[i].OrdZahl;
-              newAtom.molindex=xdinp[i].molindex;
-              strcpy(dumstr,xdinp[i].atomname);
-              sprintf(newAtom.atomname,"%s'",strtok(dumstr,"'"));
-              dawars=1000.0;
-              prime=newAtom.frac;
-              for (int g=0; g<xdinp.size();g++){
-                if ((xdinp[i].OrdZahl*xdinp[g].OrdZahl<0)) continue;
-                dl=fl(prime.x-xdinp[g].frac.x, prime.y-xdinp[g].frac.y, prime.z-xdinp[g].frac.z);
-                dawars=(dl<dawars)?dl:dawars;
-              }
-              if (dawars>0.01) {
-                  xdinp.append(newAtom);
-                  //printf("%-10s %9.5f %9.5f %9.5f\n",newAtom.atomname, newAtom.frac.x,newAtom.frac.y,newAtom.frac.z);
-                  smx++;
-              }
+            newAtom.frac=xdinp.at(i).frac;
+            newAtom.frac.x+=1.0;
+            newAtom.sg=1;
+            newAtom.part=xdinp[i].part;
+            newAtom.OrdZahl=xdinp[i].OrdZahl;
+            newAtom.molindex=xdinp[i].molindex;
+            strcpy(dumstr,xdinp[i].atomname);
+            sprintf(newAtom.atomname,"%s'",strtok(dumstr,"'"));
+            dawars=1000.0;
+            prime=newAtom.frac;
+            for (int g=0; g<xdinp.size();g++){
+              if ((xdinp[i].OrdZahl*xdinp[g].OrdZahl<0)) continue;
+              dl=fl(prime.x-xdinp[g].frac.x, prime.y-xdinp[g].frac.y, prime.z-xdinp[g].frac.z);
+              dawars=(dl<dawars)?dl:dawars;
+            }
+            if (dawars>0.01) {
+              xdinp.append(newAtom);
+              //printf("%-10s %9.5f %9.5f %9.5f\n",newAtom.atomname, newAtom.frac.x,newAtom.frac.y,newAtom.frac.z);
+              smx++;
+            }
           }
           if (fabs(xdinp.at(i).frac.y)<0.05) {
-              newAtom.frac=xdinp.at(i).frac;
-              newAtom.frac.y+=1.0;
-              newAtom.sg=1;
-              newAtom.part=xdinp[i].part;
-              newAtom.OrdZahl=xdinp[i].OrdZahl;
-              newAtom.molindex=xdinp[i].molindex;
-              strcpy(dumstr,xdinp[i].atomname);
-              sprintf(newAtom.atomname,"%s'",strtok(dumstr,"'"));
-              dawars=1000.0;
-              prime=newAtom.frac;
-              for (int g=0; g<xdinp.size();g++){
-                if ((xdinp[i].OrdZahl*xdinp[g].OrdZahl<0)) continue;
-                dl=fl(prime.x-xdinp[g].frac.x, prime.y-xdinp[g].frac.y, prime.z-xdinp[g].frac.z);
-                dawars=(dl<dawars)?dl:dawars;
-              }
-              if (dawars>0.01) {
-                xdinp.append(newAtom);
-                //printf("%-10s %9.5f %9.5f %9.5f\n",newAtom.atomname, newAtom.frac.x,newAtom.frac.y,newAtom.frac.z);
-                smx++;
-              }
+            newAtom.frac=xdinp.at(i).frac;
+            newAtom.frac.y+=1.0;
+            newAtom.sg=1;
+            newAtom.part=xdinp[i].part;
+            newAtom.OrdZahl=xdinp[i].OrdZahl;
+            newAtom.molindex=xdinp[i].molindex;
+            strcpy(dumstr,xdinp[i].atomname);
+            sprintf(newAtom.atomname,"%s'",strtok(dumstr,"'"));
+            dawars=1000.0;
+            prime=newAtom.frac;
+            for (int g=0; g<xdinp.size();g++){
+              if ((xdinp[i].OrdZahl*xdinp[g].OrdZahl<0)) continue;
+              dl=fl(prime.x-xdinp[g].frac.x, prime.y-xdinp[g].frac.y, prime.z-xdinp[g].frac.z);
+              dawars=(dl<dawars)?dl:dawars;
+            }
+            if (dawars>0.01) {
+              xdinp.append(newAtom);
+              //printf("%-10s %9.5f %9.5f %9.5f\n",newAtom.atomname, newAtom.frac.x,newAtom.frac.y,newAtom.frac.z);
+              smx++;
+            }
           }
           if (fabs(xdinp.at(i).frac.z)<0.05) {
-              newAtom.frac=xdinp.at(i).frac;
-              newAtom.sg=1;
-              newAtom.part=xdinp[i].part;
-              newAtom.OrdZahl=xdinp[i].OrdZahl;
-              newAtom.molindex=xdinp[i].molindex;
-              strcpy(dumstr,xdinp[i].atomname);
-              sprintf(newAtom.atomname,"%s'",strtok(dumstr,"'"));
-              newAtom.frac.z+=1.0;
-              dawars=1000.0;
-              prime=newAtom.frac;
-              for (int g=0; g<xdinp.size();g++){
-                if ((xdinp[i].OrdZahl*xdinp[g].OrdZahl<0)) continue;
-                dl=fl(prime.x-xdinp[g].frac.x, prime.y-xdinp[g].frac.y, prime.z-xdinp[g].frac.z);
-                dawars=(dl<dawars)?dl:dawars;
-              }
-              if (dawars>0.01){ xdinp.append(newAtom);
+            newAtom.frac=xdinp.at(i).frac;
+            newAtom.sg=1;
+            newAtom.part=xdinp[i].part;
+            newAtom.OrdZahl=xdinp[i].OrdZahl;
+            newAtom.molindex=xdinp[i].molindex;
+            strcpy(dumstr,xdinp[i].atomname);
+            sprintf(newAtom.atomname,"%s'",strtok(dumstr,"'"));
+            newAtom.frac.z+=1.0;
+            dawars=1000.0;
+            prime=newAtom.frac;
+            for (int g=0; g<xdinp.size();g++){
+              if ((xdinp[i].OrdZahl*xdinp[g].OrdZahl<0)) continue;
+              dl=fl(prime.x-xdinp[g].frac.x, prime.y-xdinp[g].frac.y, prime.z-xdinp[g].frac.z);
+              dawars=(dl<dawars)?dl:dawars;
+            }
+            if (dawars>0.01){ xdinp.append(newAtom);
               //printf("%-10s %9.5f %9.5f %9.5f\n",newAtom.atomname, newAtom.frac.x,newAtom.frac.y,newAtom.frac.z);
               smx++;}
           }
-          }
+        }
       }// */
       infoKanalNews(QString("Used Symmetry:<br>%1").arg(mol.symmcode2human(brauchSymm)));
       printf("%d\n",smx);
@@ -9766,119 +10107,119 @@ void MyWindow::growSymm(int packart,int packatom){
       V3 prime,floorD,D;
       double dk;
       for (int n=0; n<mol.zelle.symmops.size();n++){
-	for (int i=0; i<asymmUnit.size();i++){
-	  prime=mol.zelle.symmops.at(n) * asymmUnit.at(i).frac + mol.zelle.trans.at(n);
-	  D=prime - expander + V3(0.5,0.5,0.5) ;
-	  floorD=V3(floor(D.x),floor(D.y),floor(D.z));
-	  if ((n==0)&&(floorD==V3(0,0,0))) {continue;}
-	  D=D - floorD - V3(0.5,0.5,0.5);
-	  dk=fl(D.x,D.y,D.z);
-	  if (dk<SUCHRAD){
-	    bs=QString("%1_%2%3%4:%5,").arg(n+1).arg(5-(int)floorD.x).arg(5-(int)floorD.y).arg(5-(int)floorD.z).arg(asymmUnit.at(i).molindex);
-	    if  (!brauchSymm.contains(bs)) {
-	      brauchSymm.append(bs);
-	    }
-	  }
-	}
+        for (int i=0; i<asymmUnit.size();i++){
+          prime=mol.zelle.symmops.at(n) * asymmUnit.at(i).frac + mol.zelle.trans.at(n);
+          D=prime - expander + V3(0.5,0.5,0.5) ;
+          floorD=V3(floor(D.x),floor(D.y),floor(D.z));
+          if ((n==0)&&(floorD==V3(0,0,0))) {continue;}
+          D=D - floorD - V3(0.5,0.5,0.5);
+          dk=fl(D.x,D.y,D.z);
+          if (dk<SUCHRAD){
+            bs=QString("%1_%2%3%4:%5,").arg(n+1).arg(5-(int)floorD.x).arg(5-(int)floorD.y).arg(5-(int)floorD.z).arg(asymmUnit.at(i).molindex);
+            if  (!brauchSymm.contains(bs)) {
+              brauchSymm.append(bs);
+            }
+          }
+        }
       }
       int s,h,k,l,gibscho=0,symmgroup;
       infoKanalNews(QString("Used Symmetry:<br>%1").arg(mol.symmcode2human(brauchSymm)));
       for (int j=0;j<brauchSymm.size();j++){
-	sscanf(brauchSymm[j].toLatin1(),"%d_%1d%1d%1d:%d",&s,&h,&k,&l,&symmgroup);
-	h-=5;
-	k-=5;
-	l-=5;
-	s--;
-	for (int i=0;i<asymmUnit.size();i++) 
-	  if ((asymmUnit[i].molindex==symmgroup)&&(asymmUnit[i].OrdZahl>-1)){
-	    newAtom.frac=mol.zelle.symmops.at(s)*asymmUnit[i].frac+mol.zelle.trans.at(s)+V3(h,k,l);
-	    sprintf(newAtom.atomname,"%s_%d",asymmUnit[i].atomname,j+1);
-	    newAtom.sg=1+j;
+        sscanf(brauchSymm[j].toLatin1(),"%d_%1d%1d%1d:%d",&s,&h,&k,&l,&symmgroup);
+        h-=5;
+        k-=5;
+        l-=5;
+        s--;
+        for (int i=0;i<asymmUnit.size();i++) 
+          if ((asymmUnit[i].molindex==symmgroup)&&(asymmUnit[i].OrdZahl>-1)){
+            newAtom.frac=mol.zelle.symmops.at(s)*asymmUnit[i].frac+mol.zelle.trans.at(s)+V3(h,k,l);
+            sprintf(newAtom.atomname,"%s_%d",asymmUnit[i].atomname,j+1);
+            newAtom.sg=1+j;
             newAtom.atomtype=asymmUnit[i].atomtype;
             newAtom.jtf=asymmUnit[i].jtf;
             newAtom.part=asymmUnit[i].part;
             newAtom.amul=asymmUnit[i].amul;
-	    newAtom.OrdZahl=asymmUnit[i].OrdZahl;
-	    newAtom.molindex=asymmUnit[i].molindex;
-	    if (asymmUnit[i].jtf<2){
-	      newAtom.u.m11=newAtom.u.m22=newAtom.u.m33=asymmUnit[i].uf.m11;
-	      newAtom.u.m12=newAtom.u.m13=newAtom.u.m23=newAtom.u.m21=newAtom.u.m31=newAtom.u.m32=0.0;}
-	    else {
-	      Usym(asymmUnit[i].uf,mol.zelle.symmops[s],newAtom.uf);
-	      mol.Uf2Uo(newAtom.uf,newAtom.u);}
-/*            qDebug()<<"~~~~~~(o-o)"<<asymmUnit[i].jtf
-              <<asymmUnit[i].uf.m11<<newAtom.uf.m11
-              <<asymmUnit[i].uf.m22<<newAtom.uf.m22
-              <<asymmUnit[i].uf.m33<<newAtom.uf.m33; // */
-	      gibscho=0;
-	      for(int gbt=0;gbt<xdinp.size();gbt++){
-		if (xdinp.at(gbt).OrdZahl<0) continue;
-		if (fl(newAtom.frac.x-xdinp[gbt].frac.x,newAtom.frac.y-xdinp[gbt].frac.y,newAtom.frac.z-xdinp[gbt].frac.z)<0.2) gibscho=1;
-	      }
-	      if (!gibscho) {
-		xdinp.append(newAtom);
-	      }
-	  }
+            newAtom.OrdZahl=asymmUnit[i].OrdZahl;
+            newAtom.molindex=asymmUnit[i].molindex;
+            if (asymmUnit[i].jtf<2){
+              newAtom.u.m11=newAtom.u.m22=newAtom.u.m33=asymmUnit[i].uf.m11;
+              newAtom.u.m12=newAtom.u.m13=newAtom.u.m23=newAtom.u.m21=newAtom.u.m31=newAtom.u.m32=0.0;}
+            else {
+              Usym(asymmUnit[i].uf,mol.zelle.symmops[s],newAtom.uf);
+              mol.Uf2Uo(newAtom.uf,newAtom.u);}
+            /*            qDebug()<<"~~~~~~(o-o)"<<asymmUnit[i].jtf
+                          <<asymmUnit[i].uf.m11<<newAtom.uf.m11
+                          <<asymmUnit[i].uf.m22<<newAtom.uf.m22
+                          <<asymmUnit[i].uf.m33<<newAtom.uf.m33; // */
+            gibscho=0;
+            for(int gbt=0;gbt<xdinp.size();gbt++){
+              if (xdinp.at(gbt).OrdZahl<0) continue;
+              if (fl(newAtom.frac.x-xdinp[gbt].frac.x,newAtom.frac.y-xdinp[gbt].frac.y,newAtom.frac.z-xdinp[gbt].frac.z)<0.2) gibscho=1;
+            }
+            if (!gibscho) {
+              xdinp.append(newAtom);
+            }
+          }
       }
       statusBar()->showMessage(tr("Neighbor search is finished"));
     }  
     if (packart==6){ 
- // printf("growSymm line %d\n",__LINE__);
+      // printf("growSymm line %d\n",__LINE__);
       int s,h,k,l,gibscho=0,symmgroup;
       balken->setMinimum(0);
       balken->setMaximum(brauchSymm.size());
       balken->show();      
       infoKanalNews(QString("Used Symmetry:<br>%1").arg(mol.symmcode2human(brauchSymm)));
       for (int j=0;j<brauchSymm.size();j++){
-	balken->setValue(j);
-	sscanf(brauchSymm[j].toLatin1(),"%d_%1d%1d%1d:%d",&s,&h,&k,&l,&symmgroup);
-	h-=5;
-	k-=5;
-	l-=5;
-	s--;
-    /*
-    int psiz=mol.polyeders.size();
-    printf("===>%d\n",mol.polyeders.size());
-    for (int i=0;i<psiz;i++){
-        PolyEder p;
-        p.af=mol.zelle.symmops.at(s)*mol.polyeders.at(i).af+mol.zelle.trans.at(s)+V3(h,k,l);
-        p.bf=mol.zelle.symmops.at(s)*mol.polyeders.at(i).bf+mol.zelle.trans.at(s)+V3(h,k,l);
-        p.cf=mol.zelle.symmops.at(s)*mol.polyeders.at(i).cf+mol.zelle.trans.at(s)+V3(h,k,l);
-        gibscho=0;
-        for(int gbt=0;gbt<psiz;gbt++)
-        if ((fl(p.af.x-mol.polyeders.at(gbt).af.x,p.af.y-mol.polyeders.at(gbt).af.y,p.af.z-mol.polyeders.at(gbt).af.z)+
-             fl(p.bf.x-mol.polyeders.at(gbt).bf.x,p.bf.y-mol.polyeders.at(gbt).bf.y,p.bf.z-mol.polyeders.at(gbt).bf.z)+
-             fl(p.cf.x-mol.polyeders.at(gbt).af.x,p.cf.y-mol.polyeders.at(gbt).cf.y,p.cf.z-mol.polyeders.at(gbt).cf.z))<0.5) gibscho=1;
-        mol.polyeders.append(p);
-    }*/
-	for (int i=0;i<asymmUnit.size();i++) 
-	  if ((asymmUnit[i].molindex==symmgroup)&&(asymmUnit[i].OrdZahl>-1)){ 
-	    newAtom.frac=mol.zelle.symmops.at(s)*asymmUnit[i].frac+mol.zelle.trans.at(s)+V3(h,k,l);
-	    newAtom.part=asymmUnit[i].part;
+        balken->setValue(j);
+        sscanf(brauchSymm[j].toLatin1(),"%d_%1d%1d%1d:%d",&s,&h,&k,&l,&symmgroup);
+        h-=5;
+        k-=5;
+        l-=5;
+        s--;
+        /*
+           int psiz=mol.polyeders.size();
+           printf("===>%d\n",mol.polyeders.size());
+           for (int i=0;i<psiz;i++){
+           PolyEder p;
+           p.af=mol.zelle.symmops.at(s)*mol.polyeders.at(i).af+mol.zelle.trans.at(s)+V3(h,k,l);
+           p.bf=mol.zelle.symmops.at(s)*mol.polyeders.at(i).bf+mol.zelle.trans.at(s)+V3(h,k,l);
+           p.cf=mol.zelle.symmops.at(s)*mol.polyeders.at(i).cf+mol.zelle.trans.at(s)+V3(h,k,l);
+           gibscho=0;
+           for(int gbt=0;gbt<psiz;gbt++)
+           if ((fl(p.af.x-mol.polyeders.at(gbt).af.x,p.af.y-mol.polyeders.at(gbt).af.y,p.af.z-mol.polyeders.at(gbt).af.z)+
+           fl(p.bf.x-mol.polyeders.at(gbt).bf.x,p.bf.y-mol.polyeders.at(gbt).bf.y,p.bf.z-mol.polyeders.at(gbt).bf.z)+
+           fl(p.cf.x-mol.polyeders.at(gbt).af.x,p.cf.y-mol.polyeders.at(gbt).cf.y,p.cf.z-mol.polyeders.at(gbt).cf.z))<0.5) gibscho=1;
+           mol.polyeders.append(p);
+           }*/
+        for (int i=0;i<asymmUnit.size();i++) 
+          if ((asymmUnit[i].molindex==symmgroup)&&(asymmUnit[i].OrdZahl>-1)){ 
+            newAtom.frac=mol.zelle.symmops.at(s)*asymmUnit[i].frac+mol.zelle.trans.at(s)+V3(h,k,l);
+            newAtom.part=asymmUnit[i].part;
             newAtom.amul=asymmUnit[i].amul;
             newAtom.atomtype=asymmUnit[i].atomtype;
 
 
-	    sprintf(newAtom.atomname,"%s_%d",asymmUnit[i].atomname,j+1);
-	  newAtom.sg=1+j;
-	    newAtom.OrdZahl=asymmUnit[i].OrdZahl;
-	    newAtom.molindex=asymmUnit[i].molindex;
-	    if ((asymmUnit[i].u.m12==0.0 )&&(asymmUnit[i].u.m23==0.0)&&(asymmUnit[i].u.m13==0.0)){
+            sprintf(newAtom.atomname,"%s_%d",asymmUnit[i].atomname,j+1);
+            newAtom.sg=1+j;
+            newAtom.OrdZahl=asymmUnit[i].OrdZahl;
+            newAtom.molindex=asymmUnit[i].molindex;
+            if ((asymmUnit[i].u.m12==0.0 )&&(asymmUnit[i].u.m23==0.0)&&(asymmUnit[i].u.m13==0.0)){
               newAtom.uf=asymmUnit[i].uf;
-	      newAtom.u.m11=newAtom.u.m22=newAtom.u.m33=asymmUnit[i].uf.m11;
-	      newAtom.u.m12=newAtom.u.m13=newAtom.u.m23=newAtom.u.m21=newAtom.u.m31=newAtom.u.m32=0.0;}
-	    else { 
-	      Usym(asymmUnit[i].uf,mol.zelle.symmops[s],newAtom.uf);
-	      mol.Uf2Uo(newAtom.uf,newAtom.u);}
-	      gibscho=0;
-	      for(int gbt=0;gbt<xdinp.size();gbt++){
-		if (xdinp.at(gbt).OrdZahl<0) continue;
-		if (fl(newAtom.frac.x-xdinp[gbt].frac.x,newAtom.frac.y-xdinp[gbt].frac.y,newAtom.frac.z-xdinp[gbt].frac.z)<0.2) gibscho=1;
-	      }
-	      if (!gibscho) {
-		xdinp.append(newAtom);
-	      }
-	  }
+              newAtom.u.m11=newAtom.u.m22=newAtom.u.m33=asymmUnit[i].uf.m11;
+              newAtom.u.m12=newAtom.u.m13=newAtom.u.m23=newAtom.u.m21=newAtom.u.m31=newAtom.u.m32=0.0;}
+            else { 
+              Usym(asymmUnit[i].uf,mol.zelle.symmops[s],newAtom.uf);
+              mol.Uf2Uo(newAtom.uf,newAtom.u);}
+            gibscho=0;
+            for(int gbt=0;gbt<xdinp.size();gbt++){
+              if (xdinp.at(gbt).OrdZahl<0) continue;
+              if (fl(newAtom.frac.x-xdinp[gbt].frac.x,newAtom.frac.y-xdinp[gbt].frac.y,newAtom.frac.z-xdinp[gbt].frac.z)<0.2) gibscho=1;
+            }
+            if (!gibscho) {
+              xdinp.append(newAtom);
+            }
+          }
       }
       statusBar()->showMessage(tr("Neighbor search is finished"));
     }  
@@ -9891,51 +10232,51 @@ void MyWindow::growSymm(int packart,int packatom){
 
   //int atoms=0;
   /*xs=0;ys=0,zs=0;
-  for (int i=0; i<smx; i++){
+    for (int i=0; i<smx; i++){
     if (xdinp[i].OrdZahl>-1){
-      atoms++;
-      xs+=xdinp[i].kart.x;
-      ys+=xdinp[i].kart.y;
-      zs+=xdinp[i].kart.z;
+    atoms++;
+    xs+=xdinp[i].kart.x;
+    ys+=xdinp[i].kart.y;
+    zs+=xdinp[i].kart.z;
     }
-  }*/
+    }*/
   for (int i=0;i<smx;i++){
     if (xdinp[i].OrdZahl<0){
       xdinp[i].u.m11=xdinp[i].u.m22=xdinp[i].u.m33=xdinp[i].u.m12=xdinp[i].u.m13=xdinp[i].u.m23=xdinp[i].u.m21=xdinp[i].u.m31=xdinp[i].u.m32=0.0;
     }
   }
 
-/*  xs/=(atoms);ys/=(atoms);zs/=(atoms);
+  /*  xs/=(atoms);ys/=(atoms);zs/=(atoms);
 
-  for (int i=0; i<smx; i++){
-    xdinp[i].kart.x-=xs;
-    xdinp[i].kart.y-=ys;
-    xdinp[i].kart.z-=zs;
-  }*/
-//  printf("growSymm line %d\n",__LINE__);
+      for (int i=0; i<smx; i++){
+      xdinp[i].kart.x-=xs;
+      xdinp[i].kart.y-=ys;
+      xdinp[i].kart.z-=zs;
+      }*/
+  //  printf("growSymm line %d\n",__LINE__);
   if (!george){
-//  printf("growSymm line %d\n",__LINE__);
+    //  printf("growSymm line %d\n",__LINE__);
     for (int i=0; i<asymmUnit.size() ;i++)
       if (xdinp[i].OrdZahl>-1){
-         // printf("%s %d %d %d %s %s\n",asymmUnit.at(i).atomname,asymmUnit[i].nax,asymmUnit[i].nay2,asymmUnit[i].nay1,asymmUnit[asymmUnit[i].nax-1].atomname,asymmUnit[asymmUnit[i].nay2-1].atomname);
-	if ((asymmUnit[i].nax<1)||(asymmUnit[i].nax-1>xdinp.size()))qDebug()<<"There is something wrong with the local coordinate systems!"<<asymmUnit[i].atomname;
-	if ((asymmUnit[i].nay2<1)||(asymmUnit[i].nay2-1>xdinp.size()))qDebug()<<"There is something wrong with the local coordinate systems!"<<asymmUnit[i].atomname;
-	xdinp[i].ax1=xdinp[asymmUnit[i].nax-1].kart-xdinp[i].kart;
-	xdinp[i].ax1=Normalize(xdinp[i].ax1);
-	xdinp[i].ax2=xdinp[asymmUnit[i].nay2-1].kart-xdinp[i].kart;
-	xdinp[i].ax2=Normalize(xdinp[i].ax2);
-	xdinp[i].ax3= xdinp[i].ax1 %xdinp[i].ax2;
-	xdinp[i].ax3=Normalize(xdinp[i].ax3);
-	xdinp[i].ax2= xdinp[i].ax3 %xdinp[i].ax1;
-	xdinp[i].ax2=Normalize(xdinp[i].ax2);
+        // printf("%s %d %d %d %s %s\n",asymmUnit.at(i).atomname,asymmUnit[i].nax,asymmUnit[i].nay2,asymmUnit[i].nay1,asymmUnit[asymmUnit[i].nax-1].atomname,asymmUnit[asymmUnit[i].nay2-1].atomname);
+        if ((asymmUnit[i].nax<1)||(asymmUnit[i].nax-1>xdinp.size()))qDebug()<<"There is something wrong with the local coordinate systems!"<<asymmUnit[i].atomname;
+        if ((asymmUnit[i].nay2<1)||(asymmUnit[i].nay2-1>xdinp.size()))qDebug()<<"There is something wrong with the local coordinate systems!"<<asymmUnit[i].atomname;
+        xdinp[i].ax1=xdinp[asymmUnit[i].nax-1].kart-xdinp[i].kart;
+        xdinp[i].ax1=Normalize(xdinp[i].ax1);
+        xdinp[i].ax2=xdinp[asymmUnit[i].nay2-1].kart-xdinp[i].kart;
+        xdinp[i].ax2=Normalize(xdinp[i].ax2);
+        xdinp[i].ax3= xdinp[i].ax1 %xdinp[i].ax2;
+        xdinp[i].ax3=Normalize(xdinp[i].ax3);
+        xdinp[i].ax2= xdinp[i].ax3 %xdinp[i].ax1;
+        xdinp[i].ax2=Normalize(xdinp[i].ax2);
 
         int probe = xdinp[i].icor1-xdinp[i].icor2;
-	probe=(probe<0)?(probe+3)%2:probe%2;
-	if (probe) xdinp[i].lflag*=-1;
-	xdinp[i].ax3*=(double)xdinp[i].lflag;
+        probe=(probe<0)?(probe+3)%2:probe%2;
+        if (probe) xdinp[i].lflag*=-1;
+        xdinp[i].ax3*=(double)xdinp[i].lflag;
       }
   }
-//  printf("growSymm line %d\n",__LINE__);
+  //  printf("growSymm line %d\n",__LINE__);
   V3 uz0f,uz1f,uz2f,uz3f,uz4f,uz5f,uz6f,uz7f;
   uz0f.x=0.0;  uz0f.y=0.0;  uz0f.z=0.0;
   uz1f.x=1.0;  uz1f.y=0.0;  uz1f.z=0.0;
@@ -9954,7 +10295,7 @@ void MyWindow::growSymm(int packart,int packatom){
   mol.frac2kart(uz5f,mol.uz5k);
   mol.frac2kart(uz6f,mol.uz6k);
   mol.frac2kart(uz7f,mol.uz7k);
-//printf("%g,%g %g\n",mol.uz4k.x,mol.uz4k.y,mol.uz4k.z);
+  //printf("%g,%g %g\n",mol.uz4k.x,mol.uz4k.y,mol.uz4k.z);
   if ((Norm(atom1Pos)>0)||(Norm(atom2Pos)>0)){
     Matrix OM;
     V3 r1,r2,r3,t1,t2,t3;
@@ -9981,13 +10322,13 @@ void MyWindow::growSymm(int packart,int packatom){
     kl1min=(kl1<kl1min)?kl1:kl1min;
 
     if (kl1>0.002){
-        V3 rrr=xdinp[0].kart-atom1Pos;
+      V3 rrr=xdinp[0].kart-atom1Pos;
       if (cubeGL->moliso!=NULL) cubeGL->moliso->orig=Vector3(rrr.x,rrr.y,rrr.z);
       for (int ii=0; ii<xdinp.size(); ii++)
         printf("%-8s %12.5f  %12.5f  %12.5f\n",xdinp.at(ii).atomname,
-               xdinp.at(ii).kart.x+cubeGL->moliso->orig.x,
-               xdinp.at(ii).kart.y+cubeGL->moliso->orig.y,
-               xdinp.at(ii).kart.z+cubeGL->moliso->orig.z);
+            xdinp.at(ii).kart.x+cubeGL->moliso->orig.x,
+            xdinp.at(ii).kart.y+cubeGL->moliso->orig.y,
+            xdinp.at(ii).kart.z+cubeGL->moliso->orig.z);
       printf("Atom1 %12.5f %12.5f %12.5f\n",atom1Pos.x,atom1Pos.y,atom1Pos.z);
       printf("Atom2 %12.5f %12.5f %12.5f\n",atom2Pos.x,atom2Pos.y,atom2Pos.z);
       printf("Atom3 %12.5f %12.5f %12.5f\n",atom3Pos.x,atom3Pos.y,atom3Pos.z);
@@ -10074,27 +10415,27 @@ void MyWindow::growSymm(int packart,int packatom){
 
   double dim=dimension(xdinp);
   if ((asymmUnit.isEmpty())&&(!masymmUnit.isEmpty()))  dim=mdimension(matoms);
-//  if ((Norm(atom1Pos)==0)&&(Norm(atom2Pos)==0)) cubeGL->L=100.0/dim;
+  //  if ((Norm(atom1Pos)==0)&&(Norm(atom2Pos)==0)) cubeGL->L=100.0/dim;
   if (cubeGL->moliso==NULL) cubeGL->L=100.0/dim; 
   //qDebug()<<dim<<cubeGL->L;
   /*if (mol.nListe>2) {
     free(mol.vL);
     mol.vL=NULL;
     mol.nListe=0;
-  }*/
+    }*/
 
   //if ((!fck)&&(!fastrun)) mol.findChains(xdinp);
   /*if (mol.nListe>2) {
     mol.vL=mol.smoothPoints(mol.vL,mol.nListe);
     mol.vL=mol.smoothPoints(mol.vL,mol.nListe);
     mol.vL=mol.smoothPoints(mol.vL,mol.nListe);
-  }
-*/
-//  printf("growSymm line %d\n",__LINE__);
+    }
+    */
+  //  printf("growSymm line %d\n",__LINE__);
   cubeGL->resetENV();
   if ((!asymmUnit.isEmpty())&&(masymmUnit.isEmpty())) initLists(xdinp);
   else {cubeGL->bas=0;printf("keine listen!\n");}
-//  printf("growSymm line %d\n",__LINE__);
+  //  printf("growSymm line %d\n",__LINE__);
   dock->hide();
   dock2->hide();
   cubeGL->setVisible(true);
@@ -10105,6 +10446,6 @@ void MyWindow::growSymm(int packart,int packatom){
 }
 
 void MyWindow::polyColorIng(bool b){
-    mol.polyShapColor=b;
-    cubeGL->updateGL();
+  mol.polyShapColor=b;
+  cubeGL->updateGL();
 }
