@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=500;
+int rev=503;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -9444,9 +9444,9 @@ void MyWindow::mgrowSymm(int packart,int packatom){
   QString  bs;
   mol.bonds_made=0;
   mol.knopf_made=0;
+  if (mol.zelle.commensurate){
   xdinp.clear();
   matoms.clear();
-  if (mol.zelle.commensurate){
     V3 p,g0;
     for (int h=-2; h< mol.zelle.commen.x; h++){
       for (int k=-2; k< mol.zelle.commen.y; k++){
@@ -9488,8 +9488,10 @@ void MyWindow::mgrowSymm(int packart,int packatom){
     printf("Commensurate zell has %d atoms\n",matoms.size());
     packart=99; 
   }
-  if (!mol.ccc.isEmpty()){
+  else if (!mol.ccc.isEmpty()){
     V3 p,g0;
+  xdinp.clear();
+  matoms.clear();
     for (int h=-1; h< 2; h++){
       for (int k=-1; k< 2; k++){
         for (int l=-1; l< 2; l++){
@@ -9530,12 +9532,21 @@ void MyWindow::mgrowSymm(int packart,int packatom){
 
     packart=9;
   }
-  if ((packart==5) && (packatom>-1) && (packatom<matoms.size())) expander=matoms[packatom].frac(cubeGL->tvalue);
+//  printf("===>>>%d %d\n",packart,packatom);
+  if ((packart==5) && (packatom>-1) && (packatom<matoms.size())) {
+    expander=matoms[packatom].frac(cubeGL->tvalue);
+  //  qDebug()<<  matoms[packatom].atomname<< expander.x<< expander.y<< expander.z;
+  }
   QString blob=infoKanal->toPlainText();
   // qDebug()<<"blob"<<__LINE__;
   if ((packart==5)&&(blob.contains("'"))){
     QStringList blub=blob.split("'",QString::SkipEmptyParts);
-    for (int i=0; i<blub.size(); i++) if ((i%2)==1) brauchSymm.append(QString("%1,").arg(blub.at(i)));
+    for (int i=0; i<blub.size(); i++) if ((i%2)==1) brauchSymm.append(QString("%1").arg(blub.at(i)));
+//    qDebug() << brauchSymm;
+  }
+  if (packart<9){
+  xdinp.clear();
+  matoms.clear();
   }
   // qDebug()<<"blob"<<__LINE__;
   if ((packart==1)||(packart==6)){
@@ -9672,12 +9683,14 @@ void MyWindow::mgrowSymm(int packart,int packatom){
           prime=mol.zelle.symmops.at(n) * masymmUnit[i].frac(cubeGL->tvalue) + mol.zelle.trans.at(n);
         D=prime - expander + V3(0.5,0.5,0.5) ;
         floorD=V3(floor(D.x),floor(D.y),floor(D.z));
-        printf("floor %f %f %f\n",floorD.x,floorD.y,floorD.z);
         if ((n==0)&&(floorD==V3(0,0,0))) {continue;}
         D=D - floorD - V3(0.5,0.5,0.5);
         dk=fl(D.x,D.y,D.z);
         if (dk<mol.gd){
+          
+      //  printf("floor %f %f %f dk%f  %s\n",floorD.x,floorD.y,floorD.z,dk,masymmUnit.at(i).atomname);
           bs=QString("%1_%2 %3 %4:%5,").arg(n+1).arg(5-(int)floorD.x).arg(5-(int)floorD.y).arg(5-(int)floorD.z).arg(masymmUnit.at(i).molindex);
+        //  qDebug()<<bs;
           /*            qDebug()<<bs
                         <<brauchSymm
                         <<brauchSymm.contains(bs)
@@ -9695,6 +9708,7 @@ void MyWindow::mgrowSymm(int packart,int packatom){
     }
     int s,h,k,l,gibscho=0,symmgroup;
     infoKanalNews(QString("Used Symmetry:<br>%1").arg(mol.symmcode2human(brauchSymm)));
+   // qDebug()<<brauchSymm;
     for (int j=0;j<brauchSymm.size();j++){
       //	int ifx=
       sscanf(brauchSymm[j].toLatin1(),"%d_%d %d %d:%d",&s,&h,&k,&l,&symmgroup);
@@ -9702,6 +9716,8 @@ void MyWindow::mgrowSymm(int packart,int packatom){
       k-=5;
       l-=5;
       s--;
+
+//      printf("s%d h%d k%d l%d sg%d\n", s, h, k, l, symmgroup);
       //        printf("fix %d\n",ifx);
       for (int i=0;i<masymmUnit.size();i++) 
         if ((masymmUnit[i].molindex==symmgroup)&&(masymmUnit[i].OrdZahl>-1)){
@@ -9760,7 +9776,7 @@ void MyWindow::mgrowSymm(int packart,int packatom){
       for (int i=0;i<masymmUnit.size();i++){ 
         if ((masymmUnit[i].molindex==symmgroup)&&(masymmUnit[i].OrdZahl>-1)){ 
             V3 r0=masymmUnit[i].frac(cubeGL->tvalue);
-            printf("##%s %f %f %f  \n",masymmUnit[i].atomname,r0.x,r0.y,r0.z);
+          //  printf("##%s %f %f %f  \n",masymmUnit[i].atomname,r0.x,r0.y,r0.z);
           //Modulat *newAt = new Modulat(masymmUnit[i].applySymm(mol.zelle.symmops.at(s),mol.zelle.trans.at(s)+V3(h,k,l), mol.zelle.x4sym.at(s), mol.zelle.x4.at(s),mol.zelle.x4tr.at(s)));
           Modulat *newAt = NULL;
           if (masymmUnit[i].iamcomp>1)
