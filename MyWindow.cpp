@@ -4025,7 +4025,7 @@ void MyWindow::load_Jana(QString fileName){
           newAtom.uf.m21=newAtom.uf.m12;
           newAtom.uf.m31=newAtom.uf.m13;
           newAtom.uf.m32=newAtom.uf.m23;
-           qDebug()<<newAtom.uf.m11<<newAtom.uf.m22<<newAtom.uf.m33<<newAtom.uf.m12<<newAtom.uf.m13<<newAtom.uf.m23; 
+         //  qDebug()<<newAtom.uf.m11<<newAtom.uf.m22<<newAtom.uf.m33<<newAtom.uf.m12<<newAtom.uf.m13<<newAtom.uf.m23;
         }
 
         if (newAtom.jtf>2) {
@@ -4044,7 +4044,7 @@ void MyWindow::load_Jana(QString fileName){
               &newAtom.c223,
               &newAtom.c233,
               &newAtom.c333);
-          qDebug()<<newAtom.c111<<newAtom.c112<<newAtom.c113<<newAtom.c122<<newAtom.c123<<newAtom.c133<<newAtom.c222<<newAtom.c223<<newAtom.c233<<newAtom.c333;
+         // qDebug()<<newAtom.c111<<newAtom.c112<<newAtom.c113<<newAtom.c122<<newAtom.c123<<newAtom.c133<<newAtom.c222<<newAtom.c223<<newAtom.c233<<newAtom.c333;
 //*
           newAtom.c111/=cfac;//mol.zelle.as*mol.zelle.as*mol.zelle.as*
           newAtom.c222/=cfac;//mol.zelle.bs*mol.zelle.bs*mol.zelle.bs*
@@ -9839,7 +9839,7 @@ void MyWindow::mgrowSymm(int packart,int packatom){
   mol.frac2kart(uz7f,mol.uz7k);
   double dim=mdimension(matoms);
   cubeGL->L=100.0/dim;
-  qDebug()<<dim<<"dim L"<<cubeGL->L;
+  //qDebug()<<dim<<"dim L"<<cubeGL->L;
   cubeGL->bas=0;
 
   //  cubeGL->resetENV();
