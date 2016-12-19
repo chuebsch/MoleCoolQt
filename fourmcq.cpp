@@ -819,6 +819,27 @@ double FourMCQ::proba(double max, double prob){
   return max*sig*f;
 }
 
+void FourMCQ::map4dto3d(const double t,const  V3 q, const int n[4],const double *D,double *B){
+  double a,b;
+  int c,idx3,n123=n[0]*n[1]*n[2],cp1;
+  int m=n[0]*n[1]*n[2]*n[3]*999;
+  for (int ix=0; ix<n[0]; ix++)
+    for (int iy=0; iy<n[1]; iy++)
+      for (int iz=0; iz<n[2]; iz++){
+        a=
+          ix*dx.x*q.x + iy*dy.x*q.x + iz*dz.x*q.x +
+          ix*dx.y*q.y + iy*dy.y*q.y + iz*dz.y*q.y +
+          ix*dx.z*q.z + iy*dy.z*q.z + iz*dz.z*q.z + t;
+        a = (a+m) - ((int) (a+m));//0.0---0.9999999
+        a*=n[3];
+        b = (a+m) - ((int) (a+m));
+        c = ((int) a)%n123;
+        cp1 = (c+1)%n123;
+        idx3=ix+(iy+iz*n[1])*n[0];
+        B[idx3]=D[idx3+c*n123]*(1.0-b)+D[idx3+cp1*n123]*(b);
+            
+      }
+}
 
 void FourMCQ::PDFbyFFT(int i, int options,double proba){
   const int it[480]= {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 20, 21, 22, 24, 25, 26, 27,

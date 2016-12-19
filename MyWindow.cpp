@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=503;
+int rev=504;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -8494,11 +8494,11 @@ void MyWindow::makeRotMovi(){
   if (rotation<(360/ MoviDegreeStepSize)) {
     char fname[255] ;     
     statusBar()->showMessage(tr("create pic #%1 of 360").arg(rotation+1) );	
-    sprintf(fname, "/tmp/molisoclip%5.3f.ppm", (rotation++)/1000.0 );
+    sprintf(fname, "molisoclip%04d.png", rotation++);
     cubeGL->noWaitLabel=true;
     cubeGL->paparazi=true;
     glGetDoublev(GL_MODELVIEW_MATRIX,cubeGL->MM);
-    QPixmap   map = cubeGL->renderPixmap(1280,720);
+    QPixmap   map = cubeGL->renderPixmap(1920,1080);
     cubeGL->paparazi=false;
     map.save(fname);
 //    fprintf( stderr, "Saved the image in file %s\n", fname );
@@ -8509,14 +8509,14 @@ void MyWindow::makeRotMovi(){
   else{
     {
       if (!fileName.isEmpty()) {
-	  system("cat /tmp/molisoclip*.ppm | ppmtoy4m -v 0 >/tmp/MOLISO.MOVIE"); 
-	  system("echo y > /tmp/Y.antwort");
+        //ffmpeg -r 60 -f image2 -s 1920x1080 -start_number 1 -i /tmp/molisoclip%04d.png -vframes 360 -vcodec libx264 -crf 25  -pix_fmt yuv420p %s
+        //-i ~/path_to_overlay.png -filter_complex "[0:v][1:v] overlay=0:0"
 	  char CONVERTBEFEHL[1500];
-	  sprintf (CONVERTBEFEHL, "ffmpeg -i /tmp/MOLISO.MOVIE -vcodec h264 -pix_fmt yuv420p %s </tmp/Y.antwort", fileName.toStdString().c_str());
+	  //sprintf (CONVERTBEFEHL, "ffmpeg -i /tmp/MOLISO.MOVIE -vcodec h264 -pix_fmt yuv420p %s </tmp/Y.antwort", fileName.toStdString().c_str());
+          printf("\n%s\n",CONVERTBEFEHL);
+	  sprintf (CONVERTBEFEHL, "ffmpeg -r 60 -f image2 -s 1920x1080 -start_number 0 -i molisoclip%%04d.png -vframes 360 -vcodec libx264 -crf 25  -pix_fmt yuv420p %s", fileName.toStdString().c_str());
 	  system(CONVERTBEFEHL);
-	  system("rm /tmp/molisoclip*.ppm");
-	  system("rm /tmp/Y.antwort");
-	  system("rm /tmp/MOLISO.MOVIE");
+	  system("rm molisoclip*.png");
       }
     }
 //    printf("\n\n'rotation.avi' should be crated now please test it with xanim. Install mjpegtools if not!\n\n");
@@ -9775,7 +9775,7 @@ void MyWindow::mgrowSymm(int packart,int packatom){
       s--;
       for (int i=0;i<masymmUnit.size();i++){ 
         if ((masymmUnit[i].molindex==symmgroup)&&(masymmUnit[i].OrdZahl>-1)){ 
-            V3 r0=masymmUnit[i].frac(cubeGL->tvalue);
+          //  V3 r0=masymmUnit[i].frac(cubeGL->tvalue);
           //  printf("##%s %f %f %f  \n",masymmUnit[i].atomname,r0.x,r0.y,r0.z);
           //Modulat *newAt = new Modulat(masymmUnit[i].applySymm(mol.zelle.symmops.at(s),mol.zelle.trans.at(s)+V3(h,k,l), mol.zelle.x4sym.at(s), mol.zelle.x4.at(s),mol.zelle.x4tr.at(s)));
           Modulat *newAt = NULL;
