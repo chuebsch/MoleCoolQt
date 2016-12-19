@@ -528,6 +528,8 @@ class Composite;
 class molekul {
  public:
   QSettings *einstellung;
+
+  QString ffmpegexe;
   Cell zelle;
   int LOD;
   Matrix jacobi(Matrix A, V3 &D);

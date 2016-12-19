@@ -3518,6 +3518,12 @@ void CubeGL::rotY(double speed){
   updateGL();  
 }
 
+
+void CubeGL::rotate(double dang, double x, double y,double z){
+    glRotateL(dang,x,y,z);
+    updateGL();
+}
+
 void CubeGL::moveY(double speed){
     if (!noWaitLabel)moving->start(80);
   glTranslateL(0.0,speed,0.0);

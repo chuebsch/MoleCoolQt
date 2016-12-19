@@ -2809,6 +2809,7 @@ double * molekul::jacobi2(const Matrix &uij, V3 &ev) {
 void molekul::loadSettings(){
     QSettings einstellung( QSettings::IniFormat, QSettings::UserScope ,"Christian_B._Huebschle","MoleCoolQt" );
     einstellung.beginGroup("Version 0.1");
+    ffmpegexe=einstellung.value("FFMPEG.EXE",ffmpegexe).toString();
     pseSize=einstellung.value("FontSize",10).toInt();
     LOD=einstellung.value("LevelOfDetail",3).toInt();
     tubifiedAtoms=einstellung.value("tubes").toBool();

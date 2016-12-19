@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=504;
+int rev=505;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -8532,7 +8532,64 @@ void MyWindow::makeRotMovi(){
   statusBar()->showMessage("Video created!");
   cubeGL->updateGL();
 #else
-  qDebug()<<"Experimental functionality only on Linux at the moment, sorry.";
+    if (mol.ffmpegexe.isEmpty()||(!QFile::exists(mol.ffmpegexe))){
+        qDebug()<<"You need ffmpeg.exe. You can get it from here https://ffmpeg.zeranoe.com/builds/";
+        QString selectedFilter1="*.exe";
+        mol.ffmpegexe= QFileDialog::getOpenFileName(this,"path to ffmpeg.exe","ffmpeg.exe","windows executable(*.exe)",&selectedFilter1,QFileDialog::DontUseNativeDialog );
+        if (mol.ffmpegexe.isEmpty()) return;
+    }
+    QString selectedFilter;
+    QString fileName = QFileDialog::getSaveFileName(this,
+        QString(tr("Save a rotation movie")),saveName,"mp4-file (*.mp4)",&selectedFilter,QFileDialog::DontUseNativeDialog );
+    int rotation = 0,d,e,f,h;
+    d = cubeGL->_win_width;
+    e = cubeGL->_win_height;
+    f = cubeGL->myFont.pointSize ();
+    h = cubeGL->MLegendFont.pointSize ();
+    double MoviDegreeStepSize=1.0;
+    while (rotation<=(360/ MoviDegreeStepSize)){
+    if (rotation<(360/ MoviDegreeStepSize)) {
+      char fname[255] ;
+      statusBar()->showMessage(tr("create pic #%1 of 360").arg(rotation+1) );
+      sprintf(fname, "molisoclip%04d.png", rotation++);
+      cubeGL->noWaitLabel=true;
+      cubeGL->paparazi=true;
+      glGetDoublev(GL_MODELVIEW_MATRIX,cubeGL->MM);
+      QPixmap   map = cubeGL->renderPixmap(1920,1080);
+      cubeGL->paparazi=false;
+      map.save(fname);
+  //    fprintf( stderr, "Saved the image in file %s\n", fname );
+      //rotRight();
+      //cubeGL->rotY(-MoviDegreeStepSize*-.05);
+      cubeGL->rotate(MoviDegreeStepSize,0.0,1.0,0.0);
+      statusBar()->showMessage("please wait until video has been created...");
+    }
+    else{
+      {
+        if (!fileName.isEmpty()) {
+          //ffmpeg -r 60 -f image2 -s 1920x1080 -start_number 1 -i /tmp/molisoclip%04d.png -vframes 360 -vcodec libx264 -crf 25  -pix_fmt yuv420p %s
+          //-i ~/path_to_overlay.png -filter_complex "[0:v][1:v] overlay=0:0"
+        char CONVERTBEFEHL[1500];
+        //sprintf (CONVERTBEFEHL, "ffmpeg -i /tmp/MOLISO.MOVIE -vcodec h264 -pix_fmt yuv420p %s </tmp/Y.antwort", fileName.toStdString().c_str());
+            printf("\n%s\n",CONVERTBEFEHL);
+        sprintf (CONVERTBEFEHL, "%s -r 60 -f image2 -s 1920x1080 -start_number 0 -i molisoclip%%04d.png -vframes 360 -vcodec libx264 -crf 25  -pix_fmt yuv420p %s"
+                 ,mol.ffmpegexe.toStdString().c_str(), fileName.toStdString().c_str());
+        system(CONVERTBEFEHL);
+        system("del molisoclip*.png");
+        }
+      }
+  //    printf("\n\n'rotation.avi' should be crated now please test it with xanim. Install mjpegtools if not!\n\n");
+     rotation+=3000;
+    }
+    }
+      //  printf("____myIdle %d\n",rotation);
+    cubeGL->myFont.setPointSize(f);
+    cubeGL->MLegendFont.setPointSize(h);
+    cubeGL->_win_width=d;
+    cubeGL->_win_height=e;
+    cubeGL->noWaitLabel=false;
+    statusBar()->showMessage("Video created!");
+    cubeGL->updateGL();
 #endif
 
 }
@@ -8916,6 +8973,7 @@ void MyWindow::updateTime() {
 void MyWindow::closeEvent(QCloseEvent *event)  {
 
     if (mol.einstellung->group()!="Version 0.1")mol.einstellung->beginGroup("Version 0.1");
+    mol.einstellung->setValue("FFMPEG.EXE",mol.ffmpegexe);
     mol.einstellung->setValue("NoMessageBoxesPopup",noMessBox->isChecked());
    mol.einstellung->setValue("size", size() );
    mol.einstellung->setValue("position", pos() );
