@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=505;
+int rev=508;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -8535,7 +8535,7 @@ void MyWindow::makeRotMovi(){
   cubeGL->updateGL();
 #else
     if (mol.ffmpegexe.isEmpty()||(!QFile::exists(mol.ffmpegexe))){
-        qDebug()<<"You need ffmpeg.exe. You can get it from here https://ffmpeg.zeranoe.com/builds/";
+        qDebug()<<"You need ffmpeg.exe. You can get it from here https://ffmpeg.org/download.html";
         QString selectedFilter1="*.exe";
         mol.ffmpegexe= QFileDialog::getOpenFileName(this,"path to ffmpeg.exe","ffmpeg.exe","windows executable(*.exe)",&selectedFilter1,QFileDialog::DontUseNativeDialog );
         if (mol.ffmpegexe.isEmpty()) return;
@@ -8615,7 +8615,8 @@ void MyWindow::makeTMovi(){
   ffmpegedt = new QLineEdit(mol.ffmpegexe);
   QPushButton *ffbrs = new QPushButton("Browse");
   connect(ffbrs,SIGNAL(pressed()),this,SLOT(setFFMPEGEXE()));
-  QLabel *ffmpegtxt =new QLabel("Path to ffmpeg.exe <br>(You need ffmpeg.exe. You can get it from here <a href=\"https://ffmpeg.zeranoe.com/builds/\">https://ffmpeg.zeranoe.com/builds/</a> )");
+  QLabel *ffmpegtxt =new QLabel("Path to ffmpeg.exe <br>(You need ffmpeg.exe. You can get it from here <a href=\"https://ffmpeg.org/download.html\">https://ffmpeg.org/download.html</a> )");
+  ffmpegtxt->setOpenExternalLinks(true);
   QRadioButton *hd720 = new QRadioButton("1280x720",tdlg);
   QRadioButton *hd1080 = new QRadioButton("1920x1080",tdlg);
   hd1080->setChecked(true);
