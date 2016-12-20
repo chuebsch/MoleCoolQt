@@ -120,6 +120,8 @@ public slots:
      void openRecentFile();
      void saveScene();
      void printScene();
+     void setFFMPEGEXE();
+     void setMP4();
      void pdfDlg();
      void pdfDlg2();
      void howOldIsTheLatesDataBase();
@@ -140,6 +142,7 @@ public slots:
      void rotLeft();
      void rotRight();
      void makeRotMovi();
+     void makeTMovi();
      void moveR();
      void moveL();
      void moveU();
@@ -235,6 +238,7 @@ protected:
      QLineEdit *fromEdit,*toEdit,*regExpEdit;
      QDoubleValidator *qv;
      QLineEdit *searchAtomEdit;
+     QLineEdit *ffmpegedt,*mp4file;
      QAction  *searchAtomCancel,*orthoAct;
      QDialog *sfdlg;
      QDialog *packdlg;

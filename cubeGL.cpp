@@ -563,7 +563,7 @@ void CubeGL::changeTColor() {
 
 void CubeGL::initializeGL() {
   moving->stop();
-  printf("initializeGL\n");
+ // printf("initializeGL\n");
   glEnable(GL_LINE_SMOOTH);   
   glHint(GL_LINE_SMOOTH_HINT,GL_NICEST);
   const GLfloat  position[] = {100.0f, 100.0f,100.0f,0.0f};
@@ -3957,6 +3957,7 @@ void CubeGL::draw() {
     glEnd();
     glColor4f(1.0,1.0,1.0,0.5);
     if (!matoms.isEmpty())  {
+      glColor4f(tCR,tCG,tCB,tCA);
       if (mol.ccc.size()==0) renderText(-xx*0.85,yy*0.95,-6.9,QString("t0 = %1 %2").arg(tvalue,10,'f',4).arg(mol.bcnt) ,MLegendFont);
       else if (mol.ccc.size()==1) renderText(-xx*0.85,yy*0.95,-6.9,QString("t1 = %1 t2 = %2").arg(tvalue,10,'f',4).arg(tvalue*mol.ccc.at(0).tfactor,10,'f',4));
       else if (mol.ccc.size()==2) renderText(-xx*0.85,yy*0.95,-6.9,QString("t1 = %1 t2 = %2 t3 = %3")
