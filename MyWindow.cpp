@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=508;
+int rev=510;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -8644,30 +8644,45 @@ void MyWindow::makeTMovi(){
   if(tdlg->exec()==QDialog::Accepted) {
     if (mol.ffmpegexe.isEmpty()||mp4file->text().isEmpty()) return;
     QString fileName=mp4file->text();
-    int rotation = 0,d,e,f,h;
+    int d,e,f,h;
+    bool hd=(hd720->isChecked()) ;
     int frames = dura->value()*60;
-    double stepssi= 1.0/frames;
-    printf("stepsize=%f frames %d\n",stepssi,frames);
-    int wi = (hd720->isChecked()) ? 1280 : 1920;
-    int hi = (hd720->isChecked()) ? 720  : 1080;
+    int wi = (hd) ? 1280 : 1920;
+    int hi = (hd) ? 720  : 1080;
     d = cubeGL->_win_width;
     e = cubeGL->_win_height;
     f = cubeGL->myFont.pointSize ();
     h = cubeGL->MLegendFont.pointSize ();
-    QMessageBox *q =new QMessageBox(QMessageBox::Information,"Wait!","please wait until video has been created...");
+    printf("%p\n",cubeGL);
+    QDialog *q =new QDialog(this);
+    q->setWindowTitle("Wait! t-Movie file ");
+    QProgressBar *bar = new QProgressBar(q);
+    bar->setMinimum(0);
+    bar->setMaximum(frames);
+    QGridLayout *g= new QGridLayout(q);
+    g->addWidget(bar,0,0);
+    QLabel *l=new QLabel("Please wait until t-movie is created!!");
+    g->addWidget(l,1,0);
     q->show();
-    for (rotation=0; rotation<frames; rotation++){
+    double stepssi= 1.0/frames;
+    QPixmap   map;
+    printf("stepsize=%f frames %d\n",stepssi,frames);
+    for (int i=0; i<frames; i++){
+      l->setText(QString("Please wait until t-movie is created!! %1").arg(frames));
+      bar->setValue(i);
       char fname[255] ;
-      statusBar()->showMessage(tr("create pic #%1 of %2").arg(rotation+1).arg(frames) );
-      sprintf(fname, "molisoclip%04d.png", rotation);
+    //  statusBar()->showMessage(tr("create pic #%1 of %2").arg(i+1).arg(frames) );
+      sprintf(fname, "molisoclip%04d.png", i);
       cubeGL->noWaitLabel=true;
       cubeGL->paparazi=true;
       glGetDoublev(GL_MODELVIEW_MATRIX,cubeGL->MM);
-      QPixmap   map = cubeGL->renderPixmap(wi,hi);
+      map = cubeGL->renderPixmap(wi,hi);
       cubeGL->paparazi=false;
       map.save(fname);
       cubeGL->tvalue=fmod(cubeGL->tvalue+stepssi,1.0);
-      cubeGL->updateGL();
+     // cubeGL->updateGL();
+      q->update();
+      q->repaint();
     }
         if (!fileName.isEmpty()) {
           QPixmap watermark = QIcon(":/images/logo.png").pixmap(200, 34);
@@ -8678,7 +8693,7 @@ void MyWindow::makeTMovi(){
         //sprintf (CONVERTBEFEHL, "ffmpeg -i /tmp/MOLISO.MOVIE -vcodec h264 -pix_fmt yuv420p %s </tmp/Y.antwort", fileName.toStdString().c_str());
           //  printf("\n%s\n",CONVERTBEFEHL);
         sprintf (CONVERTBEFEHL, "%s -r 60 -f image2 -s %s -start_number 0 -i molisoclip%%04d.png -i mcqwatermark.png -filter_complex \"[0:v][1:v] overlay=%d:%d\" -vframes %d -vcodec libx264 -crf 25  -pix_fmt yuv420p %s"
-                 ,mol.ffmpegexe.toStdString().c_str(),(hd720->isChecked()) ?"1280x720":"1920x1080",wi-230,hi-40,frames ,fileName.toStdString().c_str());
+                 ,mol.ffmpegexe.toStdString().c_str(),(hd) ?"1280x720":"1920x1080",wi-230,hi-40,frames ,fileName.toStdString().c_str());
         system(CONVERTBEFEHL);
 #ifndef _WIN32
         system("rm molisoclip*.png");
@@ -8693,16 +8708,68 @@ void MyWindow::makeTMovi(){
     cubeGL->_win_width=d;
     cubeGL->_win_height=e;
     cubeGL->noWaitLabel=false;
-    statusBar()->showMessage("Video created!");
-    cubeGL->updateGL();
-    q->close();
-
+   q->close();
+   // filmFred = new TMovieThread(frames,wi,hi,d,e,f,h,cubeGL,fileName,hd720->isChecked());
+    //connect(filmFred,SIGNAL(finished ()),q,SLOT(close()));
+   // filmFred->start();
   } 
 }
-
-
-
-
+ 
+/*
+void TMovieThread::run(){
+    double stepssi= 1.0/frames;
+    QPixmap   map;
+    printf("stepsize=%f frames %d\n",stepssi,frames);
+    for (int i=0; i<frames; i++){
+      char fname[255] ;
+    //  statusBar()->showMessage(tr("create pic #%1 of %2").arg(i+1).arg(frames) );
+      sprintf(fname, "molisoclip%04d.png", i);
+      printf("%d %d %d %p %s\n",i,wi,hi,cubeGL,fileName.toStdString().c_str());
+      cubeGL->noWaitLabel=true;
+      printf("%d\n",__LINE__);
+      cubeGL->paparazi=true;
+      printf("%d\n",__LINE__);
+     // glGetDoublev(GL_MODELVIEW_MATRIX,cubeGL->MM);
+      printf("%d\n",__LINE__);
+      map = cubeGL->renderPixmap(wi,hi);
+      printf("%d\n",__LINE__);
+      cubeGL->paparazi=false;
+      printf("%d\n",__LINE__);
+      map.save(fname);
+      printf("%d\n",__LINE__);
+      cubeGL->tvalue=fmod(cubeGL->tvalue+stepssi,1.0);
+      printf("%d\n",__LINE__);
+      cubeGL->updateGL();
+      printf("%d\n",__LINE__);
+    }
+        if (!fileName.isEmpty()) {
+          QPixmap watermark = QIcon(":/images/logo.png").pixmap(200, 34);
+          watermark.save("mcqwatermark.png");
+          //ffmpeg -r 60 -f image2 -s 1920x1080 -start_number 1 -i /tmp/molisoclip%04d.png -vframes 360 -vcodec libx264 -crf 25  -pix_fmt yuv420p %s
+          //-i ~/path_to_overlay.png -filter_complex "[0:v][1:v] overlay=0:0"
+        char CONVERTBEFEHL[1500];
+        //sprintf (CONVERTBEFEHL, "ffmpeg -i /tmp/MOLISO.MOVIE -vcodec h264 -pix_fmt yuv420p %s </tmp/Y.antwort", fileName.toStdString().c_str());
+          //  printf("\n%s\n",CONVERTBEFEHL);
+        sprintf (CONVERTBEFEHL, "%s -r 60 -f image2 -s %s -start_number 0 -i molisoclip%%04d.png -i mcqwatermark.png -filter_complex \"[0:v][1:v] overlay=%d:%d\" -vframes %d -vcodec libx264 -crf 25  -pix_fmt yuv420p %s"
+                 ,mol.ffmpegexe.toStdString().c_str(),(hd) ?"1280x720":"1920x1080",wi-230,hi-40,frames ,fileName.toStdString().c_str());
+        system(CONVERTBEFEHL);
+#ifndef _WIN32
+        system("rm molisoclip*.png");
+        system("rm mcqwatermark.png");
+#else
+        system("del molisoclip*.png");
+        system("del mcqwatermark.png");
+#endif
+        }
+    cubeGL->myFont.setPointSize(f);
+    cubeGL->MLegendFont.setPointSize(h);
+    cubeGL->_win_width=d;
+    cubeGL->_win_height=e;
+    cubeGL->noWaitLabel=false;
+  //  statusBar()->showMessage("Video created!");
+  exec();
+}
+*/
 
 void MyWindow::openDipoleFile() {
   QString fileName;
@@ -9297,6 +9364,113 @@ inline int trindex(int i,int j){
   return (I*(I+1)/2-I+J-1);
 }
 
+void MyWindow::plotSDM(int steps){
+  QList<SdmItem> sdm;
+  double t=0.0,stepwidth=1.0/(steps);//,oo=0;
+  if (masymmUnit.isEmpty()) {
+    return;
+  }
+  SdmItem sdmItem;
+  sdmItem.a1=0;
+  sdmItem.a2=1;
+  sdmItem.sn=0;
+  sdmItem.d=666;
+  QList<Modulat> mato;
+  V3 p,g0;
+  printf("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n");
+  for (int h=-1; h< 2; h++){
+    for (int k=-1; k< 2; k++){
+      for (int l=-1; l< 2; l++){
+        for (int s=0; s<mol.zelle.symmops.size(); s++){
+          for (int i=0; i<masymmUnit.size(); i++) {
+            Modulat *newAt = NULL;
+            if (masymmUnit[i].iamcomp>1)
+              newAt = new Modulat(masymmUnit[i].applySymm(
+                    mol.ccc[masymmUnit[i].iamcomp-2].nuCell.symmops.at(s),
+                    mol.ccc[masymmUnit[i].iamcomp-2].nuCell.trans.at(s)+V3(h,k,l),
+                    mol.ccc[masymmUnit[i].iamcomp-2].nuCell.x4sym.at(s),
+                    mol.ccc[masymmUnit[i].iamcomp-2].nuCell.x4.at(s),
+                    mol.ccc[masymmUnit[i].iamcomp-2].nuCell.x4tr.at(s)));
+            else
+              newAt = new Modulat(masymmUnit[i].applySymm(
+                    mol.zelle.symmops.at(s),
+                    mol.zelle.trans.at(s)+V3(h,k,l), 
+                    mol.zelle.x4sym.at(s), 
+                    mol.zelle.x4.at(s),
+                    mol.zelle.x4tr.at(s)));
+            bool gibscho=false;
+            for(int gbt=0;gbt<mato.size();gbt++){
+              if (mato.at(gbt).OrdZahl<0) continue;
+              g0=mato[gbt].frac(t);
+              p=newAt->frac(t);
+              if ((mato[gbt].OrdZahl>-1)&&(fl(p.x-g0.x,p.y-g0.y,p.z-g0.z)<0.2)) gibscho=true; 
+            }
+            if (!gibscho) { 
+              mato.append(*newAt);
+              //V3 r=newAt->frac(cubeGL->tvalue);
+              //printf("%s %f %f %f  \n",newAt->atomname,r.x,r.y,r.z);
+            }
+          }
+        }
+      }
+    }
+  }
+  printf("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n");
+
+  for (int i=0; i<steps; i++){
+  sdm.clear();
+  for (int i=0; i<mato.size(); i++){
+    double min=10000.0,dddd;
+    for (int j=0; j<=i; j++ ){
+      double dk = sqrt(Distance(mato[i].kart(t) , mato[j].kart(t))) ;
+
+      if ((dk>0.01)&&(min>dk)){  
+        min=dk;
+        sdmItem.d=min;
+        sdmItem.a1=i;
+        sdmItem.a2=j;
+      }
+      if ((mato[sdmItem.a1].OrdZahl>-1)&&(mato[sdmItem.a2].OrdZahl>-1)) 
+        dddd=(mol.Kovalenz_Radien[mato[sdmItem.a1].OrdZahl]+ mol.Kovalenz_Radien[mato[sdmItem.a2].OrdZahl])*0.012;
+      else dddd=0;
+      if ((dddd>sdmItem.d)&(mato[sdmItem.a1].OrdZahl==0)&&(mato[sdmItem.a2].OrdZahl==0)) {
+        dddd=0;
+      }
+
+      if (sdmItem.d<dddd){
+        sdmItem.covalent=true;
+        if  (sdmItem.sn) printf("%s==%s %g (%g) %d\n",
+            mato[sdmItem.a1].atomname, 
+            mato[sdmItem.a2].atomname ,
+            sdmItem.d,dddd,sdmItem.sn );// */
+        sdm.append(sdmItem);
+      }else sdmItem.covalent=false;
+
+    }
+  }
+  qSort(sdm.begin(),sdm.end());
+    printf("%12.6f ",t);
+    int end=9;
+    for (int j=0; (j<sdm.size()) && (j<end);j++) if (sdm.at(j).covalent){ 
+     // oo= masymmUnit[sdm.at(j).a1].occupancy(t)* masymmUnit[sdm.at(j).a2].occupancy(t);
+      printf("(%4s=%-4s%9.6f[%d_%g%g%g])", mato.at(sdm.at(j).a1).atomname, mato.at(sdm.at(j).a2).atomname, // 
+          sdm.at(j).d,
+          sdm.at(j).sn,
+         -sdm.at(j).floorD.x+5,
+         -sdm.at(j).floorD.y+5,
+         -sdm.at(j).floorD.z+5
+
+          //oo
+          );
+    }
+    else end++;
+    printf("\n");
+    t+=stepwidth;
+
+  }
+}
+
+
 void MyWindow::mSDM(QStringList &brauchSymm,int packart){
   // George Sheldrick Seminar ideas
   if (masymmUnit.isEmpty()) {
@@ -9407,8 +9581,9 @@ void MyWindow::mSDM(QStringList &brauchSymm,int packart){
 	dk=fl(dp.x,dp.y,dp.z);
 	dddd=(sdm.at(k).d+0.02);
 	if ((dk>0.01)&&(dddd>=dk)) {
-//	  printf("n=%d dk%g %g %s %s \n",n,dk,dddd, masymmUnit[sdm.at(k).a1].atomname,masymmUnit[sdm.at(k).a2].atomname);
+	  //printf("n=%d dk%g %g %s %s \n",n,dk,dddd, masymmUnit[sdm.at(k).a1].atomname,masymmUnit[sdm.at(k).a2].atomname);
 	  bs=QString("%1_%2 %3 %4:%5,").arg(n+1).arg(5-(int)floorD.x).arg(5-(int)floorD.y).arg(5-(int)floorD.z).arg(masymmUnit[sdm.at(k).a1].molindex);
+          //qDebug()<<bs;
 	  if  (!brauchSymm.contains(bs)) {
 	    brauchSymm.append(bs);
  	   }
@@ -10019,6 +10194,7 @@ void MyWindow::growSymm(int packart,int packatom){
   if ((asymmUnit.isEmpty())&&(!masymmUnit.isEmpty())){
     //    qDebug()<<packart<<packatom<<"modul grow";
     mgrowSymm(packart,packatom);
+    //plotSDM(25);
     return;
   }
   QTime speedTest;

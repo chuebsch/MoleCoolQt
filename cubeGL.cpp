@@ -623,6 +623,14 @@ void CubeGL::initializeGL() {
    }
 //  printf("initializeGL %d\n",__LINE__);
   
+  if ((cbas)&&(!mol.cBonds.isEmpty())) {
+  glNewList(cbas, GL_COMPILE );
+  glPushMatrix();
+  glScaled( L, L, L );
+  mol.cbonds(xdinp);
+  glPopMatrix();
+  glEndList();
+  }
 //    glLoadMatrixd(MM);
   if (0&&!xdinp.isEmpty()) {
     int adpstate=mol.adp;
@@ -1296,14 +1304,14 @@ void CubeGL::tplot(){
   extern QList<Modulat> matoms;
   if ((expandatom>-1)&&(expandatom<matoms.size())){
     int steps=int(1.0/tstep);
-    QString text=matoms[expandatom].plotT(steps);
+    QString text = matoms[expandatom].plotT(steps);
     QFont font;
     font.setFamily("Courier");
     font.setFixedPitch(true);
     font.setPointSize(10);  
     QFontMetrics fm(font);
 
-    QDialog *tp=new QDialog(this);
+    QDialog *tp = new QDialog(this);
     QTextBrowser *tb = new QTextBrowser(tp);
 
     tp->setMinimumWidth(99*fm.maxWidth());
@@ -1312,7 +1320,71 @@ void CubeGL::tplot(){
     tb->setPlainText(text);
     tb->setFont(font);
     QGridLayout *l = new QGridLayout(tp);
-    l->addWidget(tb);
+    QTabWidget *tab = new QTabWidget(tp);
+    QGraphicsScene *scene1= new QGraphicsScene(-30,-50,550,586);
+    scene1->setBackgroundBrush(QBrush(QColor("#e9f7d6")));
+    scene1->clear ();
+    QGraphicsView *view1 = new QGraphicsView(scene1,tp);
+    tab->addTab(tb,"Text");
+    for (int i=0; i<101;i++) {
+      scene1->addLine(i*5,0,i*5,500,(i%5)?QPen(QColor("#cbdbbb"),0):QPen(QColor("#959d9d"),0));
+    }
+    for (int i=0; i<101;i++){
+      scene1->addLine(0,i*5,500,i*5,(i%5)?QPen(QColor("#cbdbbb"),0):QPen(QColor("#959d9d"),0));
+    }
+    //QMap<double,double> xdisp,ydisp,zdisp;
+    scene1->addLine(125,0,125,500,QPen(QColor("#000000"),0));
+    scene1->addLine(250,0,250,500,QPen(QColor("#000000"),0));
+    scene1->addLine(500,0,500,500,QPen(QColor("#000000"),0));
+    scene1->addLine(750,0,750,500,QPen(QColor("#000000"),0));
+    scene1->addLine(0,125,500,125,QPen(QColor("#000000"),0));
+    scene1->addLine(0,250,500,250,QPen(QColor("#000000"),0));
+    scene1->addLine(0,500,500,500,QPen(QColor("#000000"),0));
+    scene1->addLine(0,750,500,750,QPen(QColor("#000000"),0));
+    QString txt=text;
+    txt.remove(QRegExp("^#.*displacements\n"));
+    QStringList li = txt.split(QRegExp("\\s+"),QString::SkipEmptyParts);
+    int end=li.size()/8 -1; 
+    for (int i = 0; i < end; i++){
+     // printf("%f %f %f %f\n",li.at(i*8).toDouble() ,li.at(i*8+4).toDouble() ,li.at((i+1)*8).toDouble() ,li.at((i+1)*8+4).toDouble());
+     if (li.at((i+1)*8).toDouble()-li.at(i*8).toDouble()<3*tstep){
+      scene1->addLine( li.at(i*8).toDouble()*500 ,li.at(i*8+5).toDouble()*250+250 ,li.at((i+1)*8).toDouble()*500 ,li.at((i+1)*8+5).toDouble()*250+250,QPen(QColor("#ff0000"),0));
+      scene1->addLine( li.at(i*8).toDouble()*500 ,li.at(i*8+6).toDouble()*250+250 ,li.at((i+1)*8).toDouble()*500 ,li.at((i+1)*8+6).toDouble()*250+250,QPen(QColor("#009900"),0));
+      scene1->addLine( li.at(i*8).toDouble()*500 ,li.at(i*8+7).toDouble()*250+250 ,li.at((i+1)*8).toDouble()*500 ,li.at((i+1)*8+7).toDouble()*250+250,QPen(QColor("#0000ff"),0));
+     }
+    }
+    QGraphicsScene *scene2= new QGraphicsScene(-30,-50,550,586);
+    scene2->setBackgroundBrush(QBrush(QColor("#e9f7d6")));
+    scene2->clear ();
+    for (int i=0; i<101;i++) {
+      scene2->addLine(i*5,0,i*5,500,(i%5)?QPen(QColor("#cbdbbb"),0):QPen(QColor("#959d9d"),0));
+    }
+    for (int i=0; i<101;i++){
+      scene2->addLine(0,i*5,500,i*5,(i%5)?QPen(QColor("#cbdbbb"),0):QPen(QColor("#959d9d"),0));
+    }
+    //QMap<double,double> xdisp,ydisp,zdisp;
+    scene2->addLine(125,0,125,500,QPen(QColor("#000000"),0));
+    scene2->addLine(250,0,250,500,QPen(QColor("#000000"),0));
+    scene2->addLine(500,0,500,500,QPen(QColor("#000000"),0));
+    scene2->addLine(750,0,750,500,QPen(QColor("#000000"),0));
+    scene2->addLine(0,125,500,125,QPen(QColor("#000000"),0));
+    scene2->addLine(0,250,500,250,QPen(QColor("#000000"),0));
+    scene2->addLine(0,500,500,500,QPen(QColor("#000000"),0));
+    scene2->addLine(0,750,500,750,QPen(QColor("#000000"),0));
+    for (int i = 0; i < end; i++){
+     // printf("%f %f %f %f\n",li.at(i*8).toDouble() ,li.at(i*8+4).toDouble() ,li.at((i+1)*8).toDouble() ,li.at((i+1)*8+4).toDouble());
+     if (li.at((i+1)*8).toDouble()-li.at(i*8).toDouble()<3*tstep){
+      scene2->addLine( li.at(i*8).toDouble()*500 ,li.at(i*8+2).toDouble()*250+250 ,li.at((i+1)*8).toDouble()*500 ,li.at((i+1)*8+2).toDouble()*250+250,QPen(QColor("#ff0000"),0));
+      scene2->addLine( li.at(i*8).toDouble()*500 ,li.at(i*8+3).toDouble()*250+250 ,li.at((i+1)*8).toDouble()*500 ,li.at((i+1)*8+3).toDouble()*250+250,QPen(QColor("#009900"),0));
+      scene2->addLine( li.at(i*8).toDouble()*500 ,li.at(i*8+4).toDouble()*250+250 ,li.at((i+1)*8).toDouble()*500 ,li.at((i+1)*8+4).toDouble()*250+250,QPen(QColor("#0000ff"),0));
+     }
+    }
+    QGraphicsView *view2 = new QGraphicsView(scene2,tp);
+    tab->addTab(view1,"Displacements");
+    tab->addTab(view2,"fract. coordi.");
+
+    l->addWidget(tab);
+
     tp->show();
   }
 }
