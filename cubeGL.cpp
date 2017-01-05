@@ -1336,11 +1336,11 @@ void CubeGL::tplot(){
     scene1->addLine(125,0,125,500,QPen(QColor("#000000"),0));
     scene1->addLine(250,0,250,500,QPen(QColor("#000000"),0));
     scene1->addLine(500,0,500,500,QPen(QColor("#000000"),0));
-    scene1->addLine(750,0,750,500,QPen(QColor("#000000"),0));
+    scene1->addLine(375,0,375,500,QPen(QColor("#000000"),0));
     scene1->addLine(0,125,500,125,QPen(QColor("#000000"),0));
     scene1->addLine(0,250,500,250,QPen(QColor("#000000"),0));
     scene1->addLine(0,500,500,500,QPen(QColor("#000000"),0));
-    scene1->addLine(0,750,500,750,QPen(QColor("#000000"),0));
+    scene1->addLine(0,375,500,375,QPen(QColor("#000000"),0));
     QString txt=text;
     txt.remove(QRegExp("^#.*displacements\n"));
     QStringList li = txt.split(QRegExp("\\s+"),QString::SkipEmptyParts);
