@@ -1324,7 +1324,7 @@ void CubeGL::tplot(){
     QGraphicsScene *scene1= new QGraphicsScene(-30,-50,550,586);
     scene1->setBackgroundBrush(QBrush(QColor("#e9f7d6")));
     scene1->clear ();
-    QGraphicsView *view1 = new QGraphicsView(scene1,tp);
+    view1 = new QGraphicsView(scene1,tp);
     tab->addTab(tb,"Text");
     for (int i=0; i<101;i++) {
       scene1->addLine(i*5,0,i*5,500,(i%5)?QPen(QColor("#cbdbbb"),0):QPen(QColor("#959d9d"),0));
@@ -1341,6 +1341,31 @@ void CubeGL::tplot(){
     scene1->addLine(0,250,500,250,QPen(QColor("#000000"),0));
     scene1->addLine(0,500,500,500,QPen(QColor("#000000"),0));
     scene1->addLine(0,375,500,375,QPen(QColor("#000000"),0));
+    QGraphicsTextItem *tx = scene1->addText("1.0");
+    tx->moveBy(-25,-15);
+    tx = scene1->addText("0");
+    tx->moveBy(-15,230);
+    tx = scene1->addText("-1.0");
+    tx->moveBy(-35,485);
+
+    tx = scene1->addText("0.0");
+    tx->moveBy(-15,500);
+    tx = scene1->addText("0.5");
+    tx->moveBy(241,500);
+    tx = scene1->addText("1.0");
+    tx->moveBy(485,500);
+    tx = scene1->addText(matoms[expandatom].atomname);
+    tx->moveBy(-70,150);
+    tx = scene1->addText("fract. x * a");
+    tx->moveBy(-70,180);
+    tx->setDefaultTextColor(QColor("#ff0000")); 
+    tx = scene1->addText("fract. y * b");
+    tx->moveBy(-70,195);
+    tx->setDefaultTextColor(QColor("#009900")); 
+    tx = scene1->addText("fract. z * c");
+    tx->moveBy(-70,210);
+    tx->setDefaultTextColor(QColor("#0000ff")); 
+
     QString txt=text;
     txt.remove(QRegExp("^#.*displacements\n"));
     QStringList li = txt.split(QRegExp("\\s+"),QString::SkipEmptyParts);
@@ -1366,11 +1391,35 @@ void CubeGL::tplot(){
     scene2->addLine(125,0,125,500,QPen(QColor("#000000"),0));
     scene2->addLine(250,0,250,500,QPen(QColor("#000000"),0));
     scene2->addLine(500,0,500,500,QPen(QColor("#000000"),0));
-    scene2->addLine(750,0,750,500,QPen(QColor("#000000"),0));
+    scene2->addLine(375,0,375,500,QPen(QColor("#000000"),0));
     scene2->addLine(0,125,500,125,QPen(QColor("#000000"),0));
     scene2->addLine(0,250,500,250,QPen(QColor("#000000"),0));
     scene2->addLine(0,500,500,500,QPen(QColor("#000000"),0));
-    scene2->addLine(0,750,500,750,QPen(QColor("#000000"),0));
+    scene2->addLine(0,375,500,375,QPen(QColor("#000000"),0));
+    tx= scene2->addText("1.0");
+    tx->moveBy(-25,-15);
+    tx = scene2->addText("0");
+    tx->moveBy(-15,230);
+    tx = scene2->addText("-1.0");
+    tx->moveBy(-35,485);
+
+    tx = scene2->addText("0.0");
+    tx->moveBy(-15,500);
+    tx = scene2->addText("0.5");
+    tx->moveBy(241,500);
+    tx = scene2->addText("1.0");
+    tx->moveBy(485,500);
+    tx = scene2->addText(matoms[expandatom].atomname);
+    tx->moveBy(-70,150);
+    tx = scene2->addText("fract. x ");
+    tx->moveBy(-70,180);
+    tx->setDefaultTextColor(QColor("#ff0000")); 
+    tx = scene2->addText("fract. y ");
+    tx->moveBy(-70,195);
+    tx->setDefaultTextColor(QColor("#009900")); 
+    tx = scene2->addText("fract. z ");
+    tx->moveBy(-70,210);
+    tx->setDefaultTextColor(QColor("#0000ff")); 
     for (int i = 0; i < end; i++){
      // printf("%f %f %f %f\n",li.at(i*8).toDouble() ,li.at(i*8+4).toDouble() ,li.at((i+1)*8).toDouble() ,li.at((i+1)*8+4).toDouble());
      if (li.at((i+1)*8).toDouble()-li.at(i*8).toDouble()<3*tstep){
@@ -1379,14 +1428,28 @@ void CubeGL::tplot(){
       scene2->addLine( li.at(i*8).toDouble()*500 ,li.at(i*8+4).toDouble()*250+250 ,li.at((i+1)*8).toDouble()*500 ,li.at((i+1)*8+4).toDouble()*250+250,QPen(QColor("#0000ff"),0));
      }
     }
-    QGraphicsView *view2 = new QGraphicsView(scene2,tp);
+    view2 = new QGraphicsView(scene2,tp);
     tab->addTab(view1,"Displacements");
     tab->addTab(view2,"fract. coordi.");
 
     l->addWidget(tab);
+  QToolBar *tob=new QToolBar(this);
+  tob-> addAction(QIcon(":/images/zoomin.png"),"Zoom +",this,SLOT(zoomin())); 
+  tob-> addAction(QIcon(":/images/zoomout.png"),"Zoom -",this,SLOT(zoomout()));
 
+    l->addWidget(tob);
     tp->show();
   }
+}
+
+void CubeGL::zoomin(){
+  view1->scale(1.05,1.05);
+  view2->scale(1.05,1.05);
+}
+
+void CubeGL::zoomout(){
+  view1->scale(0.95,0.95);
+  view2->scale(0.95,0.95);
 }
 
 void CubeGL::setRotCenter(){

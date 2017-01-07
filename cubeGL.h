@@ -157,6 +157,8 @@ public slots:
   void disConnectSelection();
   void coordinativeBonds();
   void delCoordinative();
+  void zoomin();
+  void zoomout();
 signals:
   void message(const QString &);
   void bigmessage(const QString &);
@@ -176,6 +178,7 @@ protected:
   void contextMenuEvent(QContextMenuEvent *event);
 
 private:  
+  QGraphicsView *view1, *view2; 
   int imFokus;
   QString selectedFilter;
   double mlsc;
