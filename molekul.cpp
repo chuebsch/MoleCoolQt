@@ -2444,7 +2444,7 @@ void molekul::make_bonds(QList<Modulat> xdinp,double t){
 	soll_abst=((Kovalenz_Radien[xdinp[i].OrdZahl]+
 		    Kovalenz_Radien[xdinp[j].OrdZahl])
 		   -(0.08*fabs((double)ElNeg[xdinp[i].OrdZahl]
-                   -ElNeg[xdinp[j].OrdZahl])))*1.25;
+                   -ElNeg[xdinp[j].OrdZahl])))*1.1;
 	gg=100.0*sqrt( Distance(xdinp[i].kart(t),xdinp[j].kart(t)));
 	if (gg<soll_abst) {
 	  bd[bcnt].a=i;	
@@ -5363,7 +5363,7 @@ QString Modulat::plotT(int steps){
       if (iamcomp>1) fact=mol->ccc[iamcomp-2].tfactor;
       double t=0.0,stepwidth=1.0/(steps*fact);
       V3 p,fr;
-      QString text=QString("#%1 %2 steps (%3 %4 %5) %6 %7 %8 %9 %10\n#t      occupancy  xfract.    yfract.    zfract.    displacements\n").arg(atomname).arg(steps)
+      QString text=QString("#%1 %2 steps (%3 %4 %5) %6 %7 %8 %9 %10\n#t           occupancy  xfract.    yfract.    zfract.    displacements                    umin       umean      umax\n").arg(atomname).arg(steps)
         .arg(x4sym.x)
         .arg(x4sym.y)
         .arg(x4sym.z)
@@ -5374,6 +5374,8 @@ QString Modulat::plotT(int steps){
         .arg((polytype==0)?"":(polytype==2)?"Legendre polynoms":(polytype==3)?"XHarmonic":"unknown polynom")
         ;
       double occ=0.0;
+      Matrix ucc;
+      V3 ev=V3(0,0,0),sev=V3(0,0,0);
       for (int i=0; i<=steps; i++){
         occ=occupancy(t);
         if (occ<0.1) {
@@ -5382,7 +5384,30 @@ QString Modulat::plotT(int steps){
         }
         fr=frac(t);
         p=displacement(t);
-        text.append(QString("%1 %2 %3 %4 %5 %6 %7 %8\n")
+
+        ucc=u(t);
+        ev=V3(0,0,0);
+        mol->jacobi2(ucc,ev);
+        int chos1=(ev.x<ev.y)?(ev.x<ev.z)?1:3:(ev.z<ev.y)?3:2;
+
+        int chos2=(ev.x>ev.y)?(ev.x>ev.z)?1:3:(ev.z>ev.y)?3:2;
+        switch (chos1){
+        case 1:sev.x=ev.x;break;
+        case 2:sev.x=ev.y;break;
+        case 3:sev.x=ev.z;break;
+        }
+        switch (chos2){
+        case 1:sev.z=ev.x;break;
+        case 2:sev.z=ev.y;break;
+        case 3:sev.z=ev.z;break;
+        }
+        int chose3=6-chos1-chos2;
+        switch (chose3){
+        case 1:sev.y=ev.x;break;
+        case 2:sev.y=ev.y;break;
+        case 3:sev.y=ev.z;break;
+        }
+        text.append(QString("%1 %2 %3 %4 %5 %6 %7 %8 %9 %10 %11\n")
             .arg(t,10,'f',6)
             .arg(occ,10,'f',6)
             .arg(fr.x,10,'f',6)
@@ -5390,7 +5415,11 @@ QString Modulat::plotT(int steps){
             .arg(fr.z,10,'f',6)
             .arg(p.x*mol->zelle.a,10,'f',6)
             .arg(p.y*mol->zelle.b,10,'f',6)
-            .arg(p.z*mol->zelle.c,10,'f',6));
+            .arg(p.z*mol->zelle.c,10,'f',6)
+                    .arg(sev.x,10,'f',6)
+                    .arg(sev.y,10,'f',6)
+                    .arg(sev.z,10,'f',6)
+                    );
 //        printf("%5.2f (%10.6f) %10.6f%10.6f%10.6f  %10.6f%10.6f%10.6f\n",t,occ,fr.x,fr.y,fr.z,p.x,p.y,p.z);
         t+=stepwidth;
       }

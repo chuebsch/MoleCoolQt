@@ -178,7 +178,7 @@ protected:
   void contextMenuEvent(QContextMenuEvent *event);
 
 private:  
-  QGraphicsView *view1, *view2; 
+  QGraphicsView *view1, *view2, *view3;
   int imFokus;
   QString selectedFilter;
   double mlsc;

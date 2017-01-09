@@ -289,6 +289,7 @@ MyWindow::MyWindow( QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(pa
   connect(seReAct, SIGNAL (toggled(bool)),
 	  cubeGL, SLOT(togglReSe(bool)));
   ModulationMenu = new QMenu("Modulation");
+  ModulationMenu->setEnabled(false);
   QAction *MIA;
   seReAct->setVisible(false);
   menuBar()->addMenu(fileMenu);
@@ -3740,6 +3741,7 @@ void MyWindow::load_Jana(QString fileName){
   mol.zelle.symmops.clear();
   mol.zelle.trans.clear();
   mol.ccc.clear();
+  sprintf(CID,"no title");
   QString fileBase,m40n,m50n,m80n;
   fileBase=fileName;
   mol.dimensions=3; 
@@ -3926,6 +3928,9 @@ void MyWindow::load_Jana(QString fileName){
           cubeGL->isModulated=rad2_->isChecked();
       }
     if (cubeGL->isModulated){
+        ModulationMenu->setEnabled(true);
+        fmcq->doMaps->setChecked(false);
+
     mol.zelle.qvec=mol.zelle.qr+mol.zelle.qi;
     if (mol.zelle.commensurate){
       mol.zelle.qvec.x = round(mol.zelle.qvec.x*mol.zelle.commen.x)/mol.zelle.commen.x;
@@ -8220,6 +8225,7 @@ void MyWindow::showPackDlg(){
 void MyWindow::loadFile(QString fileName,double GD){//empty
 //  printf("loadFILe %d\n",__LINE__);
   cubeGL->pause=true;
+  ModulationMenu->setEnabled(false);
   cubeGL->rename=false;
   hatlokale=0;
   tMovieStop();
@@ -8511,6 +8517,8 @@ void MyWindow::makeRotMovi(){
   else{
     {
       if (!fileName.isEmpty()) {
+          QPixmap watermark = QIcon(":/images/logo.png").pixmap(200, 34);
+          watermark.save("mcqwatermark.png");
         //ffmpeg -r 60 -f image2 -s 1920x1080 -start_number 1 -i /tmp/molisoclip%04d.png -vframes 360 -vcodec libx264 -crf 25  -pix_fmt yuv420p %s
         //-i ~/path_to_overlay.png -filter_complex "[0:v][1:v] overlay=0:0"
 	  char CONVERTBEFEHL[1500];
@@ -8569,19 +8577,16 @@ void MyWindow::makeRotMovi(){
     else{
       {
         if (!fileName.isEmpty()) {
-          //ffmpeg -r 60 -f image2 -s 1920x1080 -start_number 1 -i /tmp/molisoclip%04d.png -vframes 360 -vcodec libx264 -crf 25  -pix_fmt yuv420p %s
-          //-i ~/path_to_overlay.png -filter_complex "[0:v][1:v] overlay=0:0"
         char CONVERTBEFEHL[1500];
         //sprintf (CONVERTBEFEHL, "ffmpeg -i /tmp/MOLISO.MOVIE -vcodec h264 -pix_fmt yuv420p %s </tmp/Y.antwort", fileName.toStdString().c_str());
             printf("\n%s\n",CONVERTBEFEHL);
-        sprintf (CONVERTBEFEHL, "%s -r 60 -f image2 -s 1920x1080 -start_number 0 -i molisoclip%%04d.png -vframes 360 -vcodec libx264 -crf 25  -pix_fmt yuv420p %s"
+            //-i mcqwatermark.png -filter_complex \"[0:v][1:v] overlay=%d:%d\"
+        sprintf (CONVERTBEFEHL, "%s -r 60 -f image2 -s 1920x1080 -start_number 0 -i molisoclip%%04d.png  -vframes 360 -vcodec libx264 -crf 25  -pix_fmt yuv420p %s"
                  ,mol.ffmpegexe.toStdString().c_str(), fileName.toStdString().c_str());
         system(CONVERTBEFEHL);
         system("del molisoclip*.png");
         }
-      }
-  //    printf("\n\n'rotation.avi' should be crated now please test it with xanim. Install mjpegtools if not!\n\n");
-     rotation+=3000;
+      }rotation+=3000;
     }
     }
       //  printf("____myIdle %d\n",rotation);
@@ -8655,20 +8660,20 @@ void MyWindow::makeTMovi(){
     h = cubeGL->MLegendFont.pointSize ();
     printf("%p\n",cubeGL);
     QDialog *q =new QDialog(this);
-    q->setWindowTitle("Wait! t-Movie file ");
+    q->setWindowTitle("Wait! t-Movie file creation in progress");
     QProgressBar *bar = new QProgressBar(q);
     bar->setMinimum(0);
     bar->setMaximum(frames);
     QGridLayout *g= new QGridLayout(q);
     g->addWidget(bar,0,0);
-    QLabel *l=new QLabel("Please wait until t-movie is created!!");
+    QLabel *l=new QLabel(QString("Please wait until t-movie is created!! %1 frames will be created and joined to a mp4 movie file.").arg(frames));
     g->addWidget(l,1,0);
     q->show();
     double stepssi= 1.0/frames;
     QPixmap   map;
     printf("stepsize=%f frames %d\n",stepssi,frames);
     for (int i=0; i<frames; i++){
-      l->setText(QString("Please wait until t-movie is created!! %1").arg(frames));
+      l->setText(QString("Please wait until t-movie is created!! %1 of %2").arg(i).arg(frames));
       bar->setValue(i);
       char fname[255] ;
     //  statusBar()->showMessage(tr("create pic #%1 of %2").arg(i+1).arg(frames) );
