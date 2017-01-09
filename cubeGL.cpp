@@ -10,14 +10,14 @@
 #define GL_MULTISAMPLE  0x809D
 #endif
 V3 mil;
-CubeGL::CubeGL(QWidget *parent,double vang) : QGLWidget(parent) {
+CubeGL::CubeGL(QWidget *parent) : QGLWidget(parent) {
    setFormat(QGLFormat(QGL::SampleBuffers) );
    atomsClickable=true;
    negpdf=true;
    faceCull=0;
    paparazi=false;
    tvalue=0.0;
-   vangle=vang;
+   vangle=29.0;
    chicken= new QAction("Permanent wireframe mode",this);
    chicken->setCheckable(true);
    chicken->setChecked(false);

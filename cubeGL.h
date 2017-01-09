@@ -19,7 +19,7 @@
 class CubeGL : public QGLWidget {
 Q_OBJECT
 public:
-  CubeGL(QWidget *parent ,double vang);
+  CubeGL(QWidget *parent);
   MolIso *moliso;
   double L;
   bool pause,negpdf,paparazi;

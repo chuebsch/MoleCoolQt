@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=512;
+int rev=513;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -127,7 +127,7 @@ MyWindow::MyWindow( QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(pa
   if (mol.einstellung->contains("ViewAngle")){
     vang=mol.einstellung->value("ViewAngle",27.0).toDouble();
   }
-  cubeGL =new CubeGL(this,vang);
+  cubeGL =new CubeGL(this);
   cubeGL->bas=0;
   mol.vorobas=0;
   scalePic=1.0;
@@ -1488,6 +1488,7 @@ statusBar()->addPermanentWidget(balken);
   menuBar()->insertMenu(MIA,hirshMenu);
   }
 
+  cubeGL->setViewAngle(vang);
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

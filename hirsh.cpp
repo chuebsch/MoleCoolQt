@@ -520,7 +520,7 @@ void Hirshfeld::stickyNumbersx(int iv){
   xSpacing->setText(QString("Voxel dimension x = %1 %2").arg(mol->zelle.a/nx, 0, 'f', 4).arg(QString::fromUtf8("Å")));
   if (nx==iv) return;
   int j;  
-  for (j=0; magic.at(j)< iv; j++);
+  for (j=0; magic.at(j)< iv; j++){}
 
  // printf("what shall %d %d<>%d %d\n",magic.at(j],iv,nx,magic.at(j+1]);
   if (nx>iv) {
@@ -542,7 +542,7 @@ void Hirshfeld::stickyNumbersy(int iv){
   ySpacing->setText(QString("Voxel dimension y = %1 %2").arg(mol->zelle.b/ny, 0, 'f', 4).arg(QString::fromUtf8("Å")));
   if (ny==iv) return;
   int j;  
-  for (j=0; magic.at(j)< iv; j++);
+  for (j=0; magic.at(j)< iv; j++){}
 
  // printf("what shall %d %d<>%d %d\n",magic.at(j),iv,nx,magic.at(j+1));
   if (ny>iv) {
@@ -563,7 +563,7 @@ void Hirshfeld::stickyNumbersz(int iv){
   zSpacing->setText(QString("Voxel dimension z = %1 %2").arg(mol->zelle.c/nz, 0, 'f', 4).arg(QString::fromUtf8("Å")));
   if (nz==iv) return;
   int j;  
-  for (j=0; magic.at(j)< iv; j++);
+  for (j=0; magic.at(j)< iv; j++){}
 
  // printf("what shall %d %d<>%d %d\n",magic.at(j),iv,nx,magic.at(j+1));
   if (nz>iv) {
