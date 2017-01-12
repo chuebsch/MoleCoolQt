@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=513;
+int rev=514;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -1251,7 +1251,7 @@ statusBar()->addPermanentWidget(balken);
   cubeGL->bgCB=(float) mol.einstellung->value("background_color_blue" ).toDouble();
   cubeGL->bgCA=(float) mol.einstellung->value("background_color_alpha").toDouble();
   cubeGL->checkTC();
-
+/*
   cubeGL-> MM[0]= (float)  mol.einstellung->value("Matrix00").toDouble();
   cubeGL-> MM[1]= (float)  mol.einstellung->value("Matrix01").toDouble();
   cubeGL-> MM[2]= (float)  mol.einstellung->value("Matrix02").toDouble();
@@ -1267,7 +1267,7 @@ statusBar()->addPermanentWidget(balken);
   cubeGL->MM[12]= (float)  mol.einstellung->value("Matrix12").toDouble();
   cubeGL->MM[13]= (float)  mol.einstellung->value("Matrix13").toDouble();
   cubeGL->MM[14]= (float)  mol.einstellung->value("Matrix14").toDouble();
-  cubeGL->MM[15]= (float)  mol.einstellung->value("Matrix15").toDouble();
+  cubeGL->MM[15]= (float)  mol.einstellung->value("Matrix15").toDouble();*/
   QVariant variant;
   if (mol.einstellung->contains("LabelFont")){
     variant=mol.einstellung->value("LabelFont");
@@ -1479,14 +1479,7 @@ statusBar()->addPermanentWidget(balken);
   Pfad=Pfad.section('/',0,-2);
   Pfad.append("/DABA.txt");
   if (QFileInfo(Pfad).exists()) cubeGL->loadDataBase(Pfad);
-  Pfad=mol.einstellung->fileName();
-  Pfad=Pfad.section('/',0,-2);
-  Pfad.append("/hirsh");
-  if (QFileInfo(Pfad).exists()) {
-  QMenu *hirshMenu = new QMenu("Hirshfeld");
-  hirshMenu->addAction("Hirshfeld", this, SLOT(openHirsh())); 
-  menuBar()->insertMenu(MIA,hirshMenu);
-  }
+  Pfad=mol.einstellung->fileName(); Pfad=Pfad.section('/',0,-2); Pfad.append("/hirsh"); if (QFileInfo(Pfad).exists()) { QFile f(Pfad); bool da=false; f.open(QIODevice::ReadOnly); da=QByteArray::fromHex("0d42798c8e9015b9abcb1049c776dae8")==QCryptographicHash::hash (f.readAll(), QCryptographicHash::Md5 ); f.close(); if (da) { QMenu *hirshMenu = new QMenu("Hirshfeld"); hirshMenu->addAction("Hirshfeld", this, SLOT(openHirsh())); menuBar()->insertMenu(MIA,hirshMenu); } }
 
   cubeGL->setViewAngle(vang);
 }

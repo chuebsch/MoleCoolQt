@@ -5172,6 +5172,27 @@ double Modulat::occupancy(double t){
   X4=(x4sym*frac0)+x4*X4+x4trans;
   double ig=1;
   X4=modf(X4+99.0,&ig);
+  /*
+    switch (sp) {
+      case 1://sawtooth
+        {
+          double x4s=poscos[wp-1].x;
+          double delta=poscos[wp-1].y*0.5;
+          x4s=clamp2(X4-x4s);
+          x4s/=delta;
+        }
+        break;
+      case 2://zigzag
+        {
+          double x4s=poscos[wp-1].x;
+          double delta=poscos[wp-1].y*0.5;
+          x4s=clamp2(X4-x4s);
+          x4s=((x4s>-delta)&&(x4s<delta))?x4s:-clamp2(x4s+0.5);
+          x4s/=delta;
+        }
+        break;
+    }
+    */
   if (wo==0) return 1.0;
   double occup=0.0;
   switch (so){

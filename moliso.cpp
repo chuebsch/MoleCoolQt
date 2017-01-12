@@ -484,7 +484,7 @@ void MolIso::readJanaHeader(QString fname){
     exit(0);  
     }
   }
-  if (idim!=21) {
+  if ((idim!=21)&&(idim!=6)) {
   qDebug()<<".m81 file suport only for 3 Dimensions, sorry"<<idim;
   exit(0);
   }
