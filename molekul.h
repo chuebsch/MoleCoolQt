@@ -1061,4 +1061,33 @@ class Modulat{
     int polytype;
     double fpol[101];//2*50+1
 };
+
+class JmPos{
+    QString pName;
+    int sig,smo,smp,smt,wmo,wmp,wmt;
+    double aimol,phi,chi,psi;
+    V3 trans,rm,rp;
+    double tls[21];
+    double *tlsm(const double t);
+};
+
+
+
+class JanaMolecule{
+private:
+    int nAtm, nPos,lrot;
+    QString Mname;
+    int IR;
+    QString PointG;
+    QString refp;
+public:
+    int np(){return nPos;}
+    int na(){return nAtm;}
+    QList<Modulat> atoms;
+    QList<JmPos> positions;
+    V3 ref;
+    JanaMolecule(QString name,int ir,QString pg,QString M,int na,int np,int lr):nAtm(na),nPos(np),lrot(lr),Mname(name),IR(ir),PointG(pg),
+    refp(M){}
+};
+
 #endif

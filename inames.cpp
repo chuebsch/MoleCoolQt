@@ -289,8 +289,8 @@ void inames::ringlord(Connection cl){//
 
 }
 
-QString inames::invName(MyAtom core,Connection &cl, CEnvironment &sel ,int rung){
-  if (rung==0) ringlord(cl); 
+QString inames::invName(MyAtom core, Connection &cl, CEnvironment &sel , int rung){
+  if (rung==0) ringlord(cl);
   CEnvironment erstesphaere;
   int tmp1;
   if (core.an<0) return QString("Not a real atom!"); 

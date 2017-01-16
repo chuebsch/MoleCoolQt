@@ -5167,19 +5167,20 @@ const V3 Modulat::displacement(const double t){
   return p;
 }
 double Modulat::occupancy(double t){
+    double ooo=1.0;
   double X4=t+(mol->zelle.qvec*frac0);
   //  printf("%sfrac X4 %g frac0 %g %g %g t%g\n",atomname,X4,frac0.x,frac0.y,frac0.z,t);
   X4=(x4sym*frac0)+x4*X4+x4trans;
   double ig=1;
   X4=modf(X4+99.0,&ig);
-  /*
+
     switch (sp) {
       case 1://sawtooth
         {
           double x4s=poscos[wp-1].x;
           double delta=poscos[wp-1].y*0.5;
           x4s=clamp2(X4-x4s);
-          x4s/=delta;
+          ooo=((x4s<delta)&&(x4s>-delta))?1.0:0.0;
         }
         break;
       case 2://zigzag
@@ -5192,8 +5193,8 @@ double Modulat::occupancy(double t){
         }
         break;
     }
-    */
-  if (wo==0) return 1.0;
+    //*/
+  if (wo==0) return ooo;
   double occup=0.0;
   switch (so){
     case 0: //harmonic occupancy function

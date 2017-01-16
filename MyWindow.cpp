@@ -3752,6 +3752,9 @@ void MyWindow::load_Jana(QString fileName){
   //printf("m50 read\n");
   char gitt='P'; 
   int phcnt=0;
+  int lrot=1,nmol1=0,nmol2=0,nmol3=0;
+  QList<int>  nAtm1, nPos1,nAtm2, nPos2,nAtm3, nPos3;
+  JanaMolecule *currentMolekule=NULL;
   int ncomposite=1,ccmp=0;;
   QString Wmats[2];
   QStringList atypen;
@@ -3982,17 +3985,34 @@ void MyWindow::load_Jana(QString fileName){
       }
       if ((li-cmdli)==(curentPhase-1)) {
         na1 = tok.at(0).toInt();
-        if (tok.at(1).toInt()>0) qDebug()<<"This version does not support Jana-molecules yet!";
+        lrot = tok.last().toInt();
+        nmol1=tok.at(1).toInt();
+       // if (nmol1>0) qDebug()<<"This version does not support Jana-molecules yet!";
         if ((mol.ncomp>1)&&(tok.size()>2)) {
           na2 = tok.at(2).toInt();
-          if (tok.at(3).toInt()>0) qDebug()<<"This version does not support Jana-molecules yet!";
+          nmol2=tok.at(3).toInt();
+          if (nmol2>0) qDebug()<<"This version does not support Jana-molecules yet!";
         }
         if ((mol.ncomp>2)&&(tok.size()>4)) {
           na3 = tok.at(4).toInt();
-          if (tok.at(5).toInt()>0) qDebug()<<"This version does not support Jana-molecules yet!";
+          nmol3=tok.at(5).toInt();
+          if (nmol3>0) qDebug()<<"This version does not support Jana-molecules yet!";
         }
         na=na1+na2+na3;
 //      qDebug()<< "I will read in "<<na<<li<<cmdli<<curentPhase-1<<all.at(li);
+      }
+      if (((li-cmdli)<=(curentPhase+nmol1-1))&&(nmol1)&&(tok.size()==2)) {
+          nAtm1.append(tok.at(0).toInt());
+          nPos1.append(tok.at(1).toInt());
+       //   qDebug()<<nAtm1<<nPos1;
+      }
+      if (((li-cmdli)<=(curentPhase+nmol2+nmol1-1))&&(nmol2)&&(tok.size()==2)) {
+          nAtm2.append(tok.at(0).toInt());
+          nPos2.append(tok.at(1).toInt());
+      }
+      if (((li-cmdli)<=(curentPhase+nmol3+nmol2+nmol1-1))&&(nmol3)&&(tok.size()==2)) {
+          nAtm3.append(tok.at(0).toInt());
+          nPos3.append(tok.at(1).toInt());
       }
 //      if ((li)&&(!na)) return;
 //      qDebug()<<all.at(li).contains(QRegExp("^[A-z]+"))<<all.at(li)<<na<<asymmUnit.size();
@@ -4183,6 +4203,71 @@ void MyWindow::load_Jana(QString fileName){
         asymmUnit.append(newAtom);
       }
         }
+      }
+
+      if ((currentMolekule!=NULL)&&(currentMolekule->atoms.size()<currentMolekule->na())&&(all.at(li).contains(QRegExp("^[A-z]+")))){
+       int so,sp,st,wo,wp,wt;
+       sscanf(all.at(li).toStdString().c_str(),"%*8s%*3d%*3d    %*9f%*9f%*9f%*9f     %1d%1d%1d%3d%3d%3d",
+                           &so,&sp,&st,&wo,&wp,&wt);
+       Modulat *molat=new Modulat(wo,wp,wt,so,sp,st);
+       iread=sscanf(all.at(li).toStdString().c_str(),"%8s%3d%3d    %9lf%9lf%9lf%9lf     ",molat->atomname,&molat->OrdZahl,
+                    &molat->jtf,  &molat->amul, &molat->frac0.x, &molat->frac0.y, &molat->frac0.z);
+       molat->OrdZahl=mol.Get_OZ(atypen.at(molat->OrdZahl-1));
+       li++;
+       sscanf(all.at(li).toStdString().c_str(),"%9lf%9lf%9lf%9lf%9lf%9lf",
+           &molat->uf0.m11,
+           &molat->uf0.m22,
+           &molat->uf0.m33,
+           &molat->uf0.m12,
+           &molat->uf0.m13,
+           &molat->uf0.m23);
+       if (wo){
+         li++;
+         double o,os,oc;
+         char polynomString[60];
+         sscanf(all.at(li).toStdString().c_str(),"%9lf%s",&o,polynomString);
+         printf("Polynom String:'%s'\n",polynomString);
+         if (0==strncmp(polynomString,"Ortho",20)) molat->setPolyType(1);
+         if (0==strncmp(polynomString,"Legendre",20)) molat->setPolyType(2);
+         if (0==strncmp(polynomString,"XHarm",20)) molat->setPolyType(3);
+         for (int ok=0; ok<wo;ok++){
+         li++;
+         sscanf(all.at(li).toStdString().c_str(),"%9lf%9lf",&os,&oc);
+         molat->setWaveOccPar(ok,o,os,oc);
+         }
+       }
+       if (wp){
+         for (int pk=0; pk<wp;pk++){
+         li++;
+         double xs,ys,zs,
+                xc,yc,zc;
+         sscanf(all.at(li).toStdString().c_str(),"%9lf%9lf%9lf%9lf%9lf%9lf",
+             &xs,&ys,&zs,&xc,&yc,&zc);
+         printf("pk %d %f %f %f %f %f %f\n",pk,xs,ys,zs,xc,yc,zc);
+         //qDebug()<<modat->debugme();
+         molat->setWavePosPar(pk,xs,ys,zs,xc,yc,zc);
+         }
+       }
+       if (wt){
+         for (int tk=0; tk<wt;tk++){
+         li++;
+         double u11s,u22s,u33s, u12s,u13s,u23s;
+         double u11c,u22c,u33c, u12c,u13c,u23c;
+         sscanf(all.at(li).toStdString().c_str(),"%9lf%9lf%9lf%9lf%9lf%9lf",
+             &u11s,&u22s,&u33s, &u12s,&u13s,&u23s);
+         li++;
+         sscanf(all.at(li).toStdString().c_str(),"%9lf%9lf%9lf%9lf%9lf%9lf",
+             &u11c,&u22c,&u33c, &u12c,&u13c,&u23c);
+         molat->setWaveTemPar(tk,u11s,u22s,u33s, u12s,u13s,u23s,u11c,u22c,u33c, u12c,u13c,u23c);
+         }
+       }
+       currentMolekule->atoms.append(*molat);
+       qDebug()<<molat->atomname<<molat->amul;
+      }
+      if (((masymmUnit.size()==na)||(asymmUnit.size()==na))&&((tok.size()==4)||(tok.size()==6))&&(all.at(li).contains(QRegExp("^[A-z]+")))){
+         // qDebug()<<all.at(li);
+//anaMolecule(QString name,int ir,QString pg,QString M,int na,int np,int lr)
+          currentMolekule = new JanaMolecule(tok.at(0),tok.at(1).toInt(),tok.at(2),tok.at(3),nAtm1.at(0),nPos1.at(0),lrot);
       }
       if ((asymmUnit.size()<=na)&&(all.at(li).contains(QRegExp("^ [A-z]+")))&&(tok.size()>1)){
           axstr[asymmUnit.size()-1]=tok.at(tok.size()-2);
