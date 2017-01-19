@@ -94,6 +94,7 @@ void MolisoStartDlg::brwsIso(){
         "XD-3D-Grid-Files (*.grd);;"
         "Jana2006 m81-Files (*.m81);;"
         "BayMEM binary file (*.raw);;"
+        "General volumetric data (*.?ed);;"
         "GAUSSIAN Cube-Files (*.cube *.cub *.rho_r_3);;" ,&selectedFilter,QFileDialog::DontUseNativeDialog ));
 
   iso_grid_name  = iedit->text();
@@ -104,6 +105,7 @@ void MolisoStartDlg::brwsMap(){
         "XD-3D-Grid-Files (*.grd);;"
         "Jana2006 m81-Files (*.m81);;"
         "BayMEM binary file (*.raw);;"
+        "General volumetric data (*.?ed);;"
         "GAUSSIAN Cube-Files (*.cube *.cub *.rho_r_3);;",&selectedFilter,QFileDialog::DontUseNativeDialog  ));
   mcbx->setChecked(!medit->text().isEmpty());
   map_grid_name  = medit->text();

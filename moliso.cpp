@@ -444,9 +444,9 @@ void MolIso::readBMBinaryHeader(QString fname){
       
       <<capVx;*/
     double
-      jdx=1.0/breite,
-      jdy=1.0/hoehe,
-      jdz=1.0/tiefe;
+      jdx=1.0/(breite),
+      jdy=1.0/(hoehe),
+      jdz=1.0/(tiefe);
 
     xd=V3(jdx ,0,0);
     yd=V3(0, jdy,0);
@@ -659,6 +659,49 @@ void MolIso::readJanaHeader(QString fname){
   // exit(0);
 }
 
+void MolIso::readGVDHeader(QString fname){
+  extern molekul mol;
+  QFile gh(fname);
+  gh.open(QIODevice::ReadOnly);
+  QString all =gh.readAll();
+  QStringList lines = all.split(QRegExp("[\n\r]+"));
+  all.clear();
+
+  QStringList tok = lines.at(1).split(" ",QString::SkipEmptyParts);
+  mol.zelle.a  = tok.at(0).toDouble();
+  mol.zelle.b  = tok.at(1).toDouble();
+  mol.zelle.c  = tok.at(2).toDouble();
+  mol.zelle.al = tok.at(3).toDouble();
+  mol.zelle.be = tok.at(4).toDouble();
+  mol.zelle.ga = tok.at(5).toDouble();
+  mol.setup_zelle();
+    
+  tok = lines.at(2).split(" ",QString::SkipEmptyParts);
+  breite=tok.at(0).toInt();
+  hoehe=tok.at(1).toInt();
+  tiefe=tok.at(2).toInt();
+  bh = hoehe*breite;
+
+  bh=breite*hoehe;
+  double
+    jdx=1.0/(breite-1),
+    jdy=1.0/(hoehe-1),
+    jdz=1.0/(tiefe-1);
+  V3 xd,yd,zd,xdk,ydk,zdk;
+  xd=V3(jdx ,0,0);
+  yd=V3(0, jdy,0);
+  zd=V3(0,0, jdz);
+  mol.frac2kart(xd,xdk);
+  mol.frac2kart(yd,ydk);
+  mol.frac2kart(zd,zdk);
+  x_dim=Vector3(xdk.x,xdk.y,xdk.z);
+  y_dim=Vector3(ydk.x,ydk.y,ydk.z);
+  z_dim=Vector3(zdk.x,zdk.y,zdk.z);
+  GHName=fname;
+  qDebug()<<breite<<hoehe<<tiefe<<xdk.x<<xdk.y<<xdk.z<<ydk.x<<ydk.y<<ydk.z<<zdk.x<<zdk.y<<zdk.z;
+  gh.close();
+}
+
 void MolIso::readXDGridHeader(QString fname,int &fileType){
   if (fname.endsWith(".m81",Qt::CaseInsensitive)) {
     readJanaHeader(fname);
@@ -666,12 +709,19 @@ void MolIso::readXDGridHeader(QString fname,int &fileType){
     fileType=81;
     return;
   }
-    if (fname.endsWith(".raw",Qt::CaseInsensitive)) {
-      readBMBinaryHeader(fname);
-      GHName=fname;
-      fileType=7202;//my room number in BT
-      return;
-    }
+  if (fname.contains(QRegExp("\\..ed$"))){
+    qDebug()<<fname<<__LINE__;
+    readGVDHeader(fname);
+    GHName=fname;
+    fileType=321;
+    return;
+  }
+  if (fname.endsWith(".raw",Qt::CaseInsensitive)) {
+    readBMBinaryHeader(fname);
+    GHName=fname;
+    fileType=7202;//my room number in BT
+    return;
+  }
   QFile gh(fname);
 
   printf("%s\n",fname.toStdString().c_str());
@@ -1232,14 +1282,15 @@ void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &st
       }
     }
     isoF.close(); 
-  }else if (fileType==125){// ein cube file hoffentlich
+  }else if ((fileType==321)||(fileType==125)){// ein cube file hoffentlich oder ein ?ed file 
     isoF.open(QIODevice::ReadOnly);
-    for (int i=0; i<(atomanzahl+6);i++) isoF.readLine();
+    if (fileType==321) for (int i=0; i<3 ;i++) isoF.readLine();
+    else for (int i=0; i<(atomanzahl+6);i++) isoF.readLine();
     int pmax=breite*hoehe*tiefe,altb=0,b=0;
     int p=pmax-1;
     QVector<double> rewerte(pmax);
     while (!isoF.atEnd () && (p>=0)) {
-      QStringList numbers = QString(isoF.readLine()).split(" ",QString::SkipEmptyParts);
+      QStringList numbers = QString(isoF.readLine()).split(QRegExp("\\s+"),QString::SkipEmptyParts);
       if ((!numbers.isEmpty())&&(!numbers.at(0).contains('.'))) continue;
       for (int i=0; i<numbers.size();i++) {rewerte[p--]=(numbers.at(i).toDouble());}
       b=38-37*p/pmax;
@@ -1314,14 +1365,14 @@ void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &st
         }
       }
     mapF.close();                                                                              
-    }else if (fileType==125){//{ // ein cube file hoffentlich
+    }else if ((fileType==321)||(fileType==125)){//{ // ein cube file hoffentlich
     mapF.open(QIODevice::ReadOnly);
       for (int i=0; i<(atomanzahl+6);i++) mapF.readLine();
       int pmax=breite*hoehe*tiefe,altb=0,b=0;
       int p=pmax-1;
       QVector<double> rewerte(pmax);
       while (!mapF.atEnd () && (p>=0)) {
-        QStringList numbers = QString(mapF.readLine()).split(" ",QString::SkipEmptyParts);
+        QStringList numbers = QString(mapF.readLine()).split(QRegExp("\\s+"),QString::SkipEmptyParts);
         if ((!numbers.isEmpty())&&(!numbers.at(0).contains('.'))) continue;
         for (int i=0; i<numbers.size();i++) {rewerte[p--]=(numbers.at(i).toDouble());}
         b=76-37*p/pmax;

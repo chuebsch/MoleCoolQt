@@ -4590,36 +4590,36 @@ void molekul::setup_zelle(){
   zelle.cs_al = (zelle.al==90)?0:cos(zelle.al/g2r);
   zelle.cs_be = (zelle.be==90)?0:cos(zelle.be/g2r);
   zelle.cs_ga = (zelle.ga==90)?0:cos(zelle.ga/g2r);
-  double
-    sn_al = (zelle.al==90)?1:sin(zelle.al/g2r),
-          sn_be = (zelle.be==90)?1:sin(zelle.be/g2r),
-          sn_ga = (zelle.ga==90)?1:sin(zelle.ga/g2r);
+//  double
+  zelle.sn_al = (zelle.al==90)?1:sin(zelle.al/g2r);
+  zelle.sn_be = (zelle.be==90)?1:sin(zelle.be/g2r);
+  zelle.sn_ga = (zelle.ga==90)?1:sin(zelle.ga/g2r);
 
   zelle.phi=  sqrt(1-(zelle.cs_al*zelle.cs_al)-(zelle.cs_be*zelle.cs_be)-(zelle.cs_ga*zelle.cs_ga) + 2*zelle.cs_al*zelle.cs_be*zelle.cs_ga);
   zelle.V = zelle.a*zelle.b*zelle.c*zelle.phi;
   printf("%f %f %f %f %f %f V %f phi %f\n",zelle.a,zelle.b,zelle.c,zelle.al,zelle.be,zelle.ga,zelle.V,zelle.phi);
-  printf("%f %f %f %f %f %f \n",zelle.cs_al,zelle.cs_be ,zelle.cs_ga, sn_al, sn_be,sn_ga);
-  zelle.as= zelle.c*zelle.b*sn_al/zelle.V;
-  zelle.bs= zelle.c*zelle.a*sn_be/zelle.V;
-  zelle.cs= zelle.a*zelle.b*sn_ga/zelle.V;
-  zelle.cosra=(zelle.cs_be*zelle.cs_ga-zelle.cs_al)/(sn_be*sn_ga),
-  zelle.cosrb=(zelle.cs_al*zelle.cs_ga-zelle.cs_be)/(sn_al*sn_ga),
-  zelle.cosrg=(zelle.cs_al*zelle.cs_be-zelle.cs_ga)/(sn_al*sn_be);
+  printf("%f %f %f %f %f %f \n",zelle.cs_al,zelle.cs_be ,zelle.cs_ga, zelle.sn_al, zelle.sn_be,zelle.sn_ga);
+  zelle.as= zelle.c*zelle.b*zelle.sn_al/zelle.V;
+  zelle.bs= zelle.c*zelle.a*zelle.sn_be/zelle.V;
+  zelle.cs= zelle.a*zelle.b*zelle.sn_ga/zelle.V;
+  zelle.cosra=(zelle.cs_be*zelle.cs_ga-zelle.cs_al)/(zelle.sn_be*zelle.sn_ga),
+  zelle.cosrb=(zelle.cs_al*zelle.cs_ga-zelle.cs_be)/(zelle.sn_al*zelle.sn_ga),
+  zelle.cosrg=(zelle.cs_al*zelle.cs_be-zelle.cs_ga)/(zelle.sn_al*zelle.sn_be);
 
   zelle.als=acos(zelle.cosra)*g2r;
   zelle.bes=acos(zelle.cosrb)*g2r;
   zelle.gas=acos(zelle.cosrg)*g2r; 
   printf("%f %f %f %f %f %f \n",zelle.cosra,zelle.cosrb,zelle.cosrg,zelle.als,zelle.bes,zelle.gas);
-  const double tau=zelle.c*((zelle.cs_al-zelle.cs_be*zelle.cs_ga)/sn_ga);
+  const double tau=zelle.c*((zelle.cs_al-zelle.cs_be*zelle.cs_ga)/zelle.sn_ga);
   zelle.f2c.m11 = zelle.a;
   zelle.f2c.m21 = 0.0;
   zelle.f2c.m31 = 0.0;
   zelle.f2c.m12 = zelle.b * zelle.cs_ga;
-  zelle.f2c.m22 = zelle.b * sn_ga;
+  zelle.f2c.m22 = zelle.b * zelle.sn_ga;
   zelle.f2c.m32 = 0.0;
   zelle.f2c.m13 = zelle.c * zelle.cs_be;
   zelle.f2c.m23 = tau;
-  zelle.f2c.m33 = zelle.c * zelle.phi / sn_ga;
+  zelle.f2c.m33 = zelle.c * zelle.phi / zelle.sn_ga;
 
   printf("f2c: \n%12.6f %12.6f %12.6f\n%12.6f %12.6f %12.6f\n%12.6f %12.6f %12.6f\n",zelle.f2c.m11,zelle.f2c.m12,zelle.f2c.m13,zelle.f2c.m21,zelle.f2c.m22
       ,zelle.f2c.m23,zelle.f2c.m31,zelle.f2c.m32, zelle.f2c.m33);
@@ -5447,6 +5447,142 @@ QString Modulat::plotT(int steps){
       }
       return text;
     }
+void JanaMolecule::printpos(const double t,QList<Modulat> &ma){
+  const double g2r=180.0/M_PI;
+  Matrix f2c=atoms.at(0).mol->zelle.f2c;
+  Matrix c2f=inverse(f2c);
+  Matrix R;
+  if (!refp.isEmpty()) 
+    for(int j=0;j<atoms.size();j++){
+      if (refp==QString(atoms.at(j).atomname)) {ref=atoms[j].frac(t); break;}
+    }
+  for (int i=0; i<positions.size();i++){
+    R=(lrot==0)?
+      Matrix(
+          cos(positions.at(i).phi/g2r),     -sin(positions.at(i).phi/g2r),0.,
+          sin(positions.at(i).phi/g2r),      cos(positions.at(i).phi/g2r),0.,
+          0.,0.,1.0)*
+      Matrix(
+          1.0,0.,0.,
+          0., cos(positions.at(i).chi/g2r),    -sin(positions.at(i).chi/g2r),
+          0., sin(positions.at(i).chi/g2r),     cos(positions.at(i).chi/g2r))*
+      Matrix(
+          cos(positions.at(i).psi/g2r),     -sin(positions.at(i).psi/g2r),0.,
+          sin(positions.at(i).psi/g2r),      cos(positions.at(i).psi/g2r),0., 
+          0.,0.,1.0)*f2c
+      :
+      Matrix(
+          cos(positions.at(i).phi/g2r),     -sin(positions.at(i).phi/g2r),0.,
+          sin(positions.at(i).phi/g2r),      cos(positions.at(i).phi/g2r),0.,
+          0.,0.,1.0)*
+      Matrix(
+          cos(positions.at(i).chi/g2r), 0.,    sin(positions.at(i).chi/g2r),
+          0.,1.0,0.,
+          -sin(positions.at(i).chi/g2r), 0.,   cos(positions.at(i).chi/g2r))*
+      Matrix(
+          1.0,0.,0.,
+          0.,cos(positions.at(i).psi/g2r),     -sin(positions.at(i).psi/g2r),
+          0.,sin(positions.at(i).psi/g2r),      cos(positions.at(i).psi/g2r))*f2c;
+    for(int j=0;j<atoms.size();j++){
+      Modulat m=Modulat(atoms[j]);
+      V3 r=R*(atoms[j].frac(t)-ref);
+      r=(c2f*r)+ref+positions.at(i).trans;
+      m.frac0=r;
+      if (atoms.at(j).jtf==0){
+      V3 loc=f2c*(r-ref);
+      Matrix uc;
+      //   0  1  2  3  4  5   6      7     8  9 10        11  12 13 14 15 16    17 18     19 20  
+      //
+      //  11 22 33 12 13 23, 11     22    33 12 13        23, 11 22 33 12 13    21 23     31 32  
+      // [1, 0, 0, 0, 0, 0,  0, x3*x3, x2*x2, 0, 0, -2*x2*x3, 0, 0, 0, 0, 0, 2*x3, 0, -2*x2, 0]
+      //j 11 22 33 12 13 23, 11     22    33 12 13        23, 11 21 31 12 22    32 13     23 33  
+      //
+      uc.m11=
+        positions.at(i).tls[0]*1+
+        positions.at(i).tls[7]*loc.z*loc.z+
+        positions.at(i).tls[8]*loc.y*loc.y
+        -2*loc.y*loc.z*positions.at(i).tls[11]+
+        2*loc.z*positions.at(i).tls[13]
+        -2*loc.y*positions.at(i).tls[14];
+      //   0  1  2  3  4  5      6  7      8  9        10 11  12 13 14    15  16 17 18 19   20  
+      //
+      //  11 22 33 12 13 23,    11 22     33 12        13 23, 11 22 33    12  13 21 23 31   32  
+      //[ 0, 1, 0, 0, 0, 0, x3*x3, 0, x1*x1, 0, -2*x1*x3,  0, 0, 0, 0, -2*x3, 0, 0, 0, 0, 2*x1]
+      //j 11 22 33 12 13 23, 11     22    33 12 13        23, 11 21 31    12  22 32 13 23   33 
+      uc.m22=positions.at(i).tls[1]+
+        positions.at(i).tls[6]*loc.z*loc.z+
+        positions.at(i).tls[8]*loc.x*loc.x
+        -2*loc.x*loc.z*positions.at(i).tls[10]
+        -2*loc.z*positions.at(i).tls[15]
+        +2*loc.x*positions.at(i).tls[17];
+      //   0  1  2  3  4  5      6  7      8  9        10 11  12 13 14    15  16 17 18 19   20  
+      //
+      //  11 22 33 12 13 23,    11 22     33 12        13 23, 11 22 33    12    13 21     23 31 32  
+      //[ 0, 0, 1, 0, 0, 0, x2*x2, x1*x1, 0, -2*x1*x2, 0, 0,  0, 0, 0,    0, 2*x2, 0, -2*x1, 0, 0 ]
+      //j 11 22 33 12 13 23,    11 22     33 12        13 23, 11 21 31    12  22 32 13       23 33 
+      uc.m33=positions.at(i).tls[2]
+        +positions.at(i).tls[6]*loc.y*loc.y
+        +positions.at(i).tls[7]*loc.x*loc.x
+        -2*loc.x*loc.y*positions.at(i).tls[9]
+        +2*loc.y*positions.at(i).tls[18]
+        -2*loc.x*positions.at(i).tls[19];
+      //  0  1  2  3  4  5  6  7       8       9     10    11    12  13 14 15 16 17 18  19  20  
+      //
+      // 11 22 33 12 13 23,11 22      33      12     13    23,   11  22 33 12 13 21 23  31  32  
+      //[0, 0, 0, 1, 0, 0, 0, 0, -x1*x2, -x3*x3, x2*x3, x1*x3, -x3, x3, 0, 0, 0, 0, 0, x1, -x2]
+      uc.m12=uc.m21=positions.at(i).tls[3]
+        -loc.x*loc.y*positions.at(i).tls[8]
+        -loc.z*loc.z*positions.at(i).tls[9]
+        +loc.y*loc.z*positions.at(i).tls[10]
+        +loc.x*loc.z*positions.at(i).tls[11]
+        -loc.z*positions.at(i).tls[12]
+        +loc.z*positions.at(i).tls[16]
+        +loc.x*positions.at(i).tls[14]
+        -loc.x*positions.at(i).tls[17];
+
+      //  0  1  2  3  4  5  6       7  8      9      10    11   12 13   14 15 16   17  18 19  20  
+      //
+      // 11 22 33 12 13 23,11      22 33     12      13    23,  11 22   33 12 13   21  23 31  32  
+      //[0, 0, 0, 0, 1, 0, 0, -x1*x3, 0, x2*x3, -x2*x2, x1*x2, x2, 0, -x2, 0, 0, -x1, x3, 0,   0
+      //j11 22 33 12 13 23,11      22 33     12      13    23,  11 21   31 12 22   32  13 23  33 
+      //
+      uc.m13=uc.m31=positions.at(i).tls[4]
+        -loc.x*loc.z*positions.at(i).tls[7]
+        +loc.y*loc.z*positions.at(i).tls[9]
+        -loc.y*loc.y*positions.at(i).tls[10]
+        +loc.x*loc.y*positions.at(i).tls[11]
+        +loc.y*positions.at(i).tls[12]
+        -loc.y*positions.at(i).tls[20]
+        -loc.x*positions.at(i).tls[13]
+        +loc.z*positions.at(i).tls[19];
+
+      //  0  1  2  3  4  5       6  7  8      9     10     11  12   13  14  15   16 17 18 19 20  
+      //
+      // 11 22 33 12 13 23,     11 22 33     12     13     23, 11   22  33  12   13 21 23 31 32  
+      //[0, 0, 0, 0, 0, 1, -x2*x3, 0, 0, x1*x3, x1*x2, -x1*x1, 0, -x1, x1, x2, -x3, 0, 0, 0, 0]
+      //j11 22 33 12 13 23,     11 22 33     12     13     23, 11   21  31  12   22 32 13 23 33 
+      uc.m23=uc.m32=positions.at(i).tls[5]
+        -loc.y*loc.z*positions.at(i).tls[6]
+        +loc.x*loc.z*positions.at(i).tls[9]
+        +loc.x*loc.y*positions.at(i).tls[10]
+        -loc.x*loc.x*positions.at(i).tls[11]
+        -loc.x*positions.at(i).tls[16]
+        +loc.x*positions.at(i).tls[20]
+        +loc.y*positions.at(i).tls[15]
+        -loc.z*positions.at(i).tls[18];
+
+      /*  Matrix n=Matrix(zelle.as,0,0,0,zelle.bs,0,0,0,zelle.cs);
+          Matrix m=(n*x)*n;
+          y=(transponse(c2f)*m)*(c2f);
+          */
+      m.uf0=uc;
+      }
+      printf("%-8s %f %f %f\n",atoms.at(j).atomname,r.x,r.y,r.z);
+      ma.append(m);
+
+    }
+  }
+}
 
   /*
    *

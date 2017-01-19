@@ -1323,10 +1323,14 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu, int maxmap){
   readsize=fread(&lr[0],sizeof(rec64),1,f);
   rewind (f);
   if ((wr[0].size_head== wr[0].size_tail)&&  (wr[0].size_tail==40)) winformat=1;
-  else if ((lr[0].size_head!= lr[0].size_tail)||  (lr[0].size_tail!=40)) {
-    return false;
+  else if ((lr[0].size_head!= lr[0].size_tail)||  (lr[0].size_tail!=40))  
+  {
+    readsize=fread(&llr[0],sizeof(rec128),1,f);
+    if ((llr[0].size_head!= llr[0].size_tail)||  (llr[0].size_tail!=40)) return false;
+    else winformat=-1;
+    rewind (f);
   }
-  //   printf("%d %d |%d %d|  %d %d %d\n",lr[0].size_head,lr[0].size_tail,wr[0].size_head,wr[0].size_tail,(lr[0].size_head!= lr[0].size_tail),lr[0].size_tail!=40,winformat);
+//     printf("%d %d |%d %d|  %d %d %d\n",lr[0].size_head,lr[0].size_tail,wr[0].size_head,wr[0].size_tail,(lr[0].size_head!= lr[0].size_tail),lr[0].size_tail!=40,winformat);
   ok= readMas(filename);
   //fprintf(stderr ,"read mas\n");
   nr=0;
@@ -1340,7 +1344,7 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu, int maxmap){
   }
   emit bigmessage(filename);
   while (!feof(f)){
-    if (winformat) {
+    if (winformat==1) {
       readsize = fread(&wr[nr],sizeof(reco),1,f);
       lr[nr].ih=wr[nr].ih;
       lr[nr].ik=wr[nr].ik;
@@ -1352,6 +1356,19 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu, int maxmap){
       lr[nr].d5=wr[nr].d5;
       lr[nr].d6=wr[nr].d6;
       lr[nr].d7=wr[nr].d7;
+    }
+    else if (winformat==-1) {
+      readsize = fread(&llr[nr],sizeof(rec128),1,f);
+      lr[nr].ih=llr[nr].ih;
+      lr[nr].ik=llr[nr].ik;
+      lr[nr].il=llr[nr].il;
+      lr[nr].d1=llr[nr].d1;
+      lr[nr].d2=llr[nr].d2;
+      lr[nr].d3=llr[nr].d3;
+      lr[nr].d4=llr[nr].d4;
+      lr[nr].d5=llr[nr].d5;
+      lr[nr].d6=llr[nr].d6;
+      lr[nr].d7=llr[nr].d7;
     }
     else readsize = fread(&lr[nr],sizeof(rec64),1,f);
     if ((readsize)&&(abs(lr[nr].ih)<130)&&(abs(lr[nr].ik)<130)&&(abs(lr[nr].il)<130)) nr++;//((lr[nr].ih|lr[nr].ik|lr[nr].il)!=0)&&

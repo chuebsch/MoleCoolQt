@@ -28,6 +28,14 @@ int  ih,
 float d1,d2,d3,d4,d5,d6,d7;
 int size_tail;
 } rec64;
+typedef struct {
+long int size_head;
+int  ih,
+     ik,
+     il;
+float d1,d2,d3,d4,d5,d6,d7;
+long int size_tail;
+} rec128;
 #pragma pack(pop)   /* restore original alignment from stack */
 #define LM 2000000
 
@@ -94,6 +102,7 @@ Q_OBJECT
 	  fftwf_plan  fwd_plan;
           fftwf_complex *B;
           FNode *nodex,*nodey,*nodez;
+          rec128 llr[LM];
 	  rec64 lr[LM];
 	  reco wr[LM];
       float fc2[LM][3];

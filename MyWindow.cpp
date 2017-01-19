@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=515;
+int rev=517;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -3971,7 +3971,7 @@ void MyWindow::load_Jana(QString fileName){
   int skip=0,cmdli=0;
   bool commands=false;
   for (int li=0; li<all.size();li++){
-    
+   if (all.at(li).contains("s.u. block")) break; 
     if (all.at(li).contains("commands")) commands=true;
     if (all.at(li).startsWith("end")) {li++;commands=false;cmdli=li;}
     if (commands) continue;
@@ -4210,6 +4210,8 @@ void MyWindow::load_Jana(QString fileName){
        sscanf(all.at(li).toStdString().c_str(),"%*8s%*3d%*3d    %*9f%*9f%*9f%*9f     %1d%1d%1d%3d%3d%3d",
                            &so,&sp,&st,&wo,&wp,&wt);
        Modulat *molat=new Modulat(wo,wp,wt,so,sp,st);
+       molat->mol=&mol;
+       molat->iamcomp=ccmp;
        iread=sscanf(all.at(li).toStdString().c_str(),"%8s%3d%3d    %9lf%9lf%9lf%9lf     ",molat->atomname,&molat->OrdZahl,
                     &molat->jtf,  &molat->amul, &molat->frac0.x, &molat->frac0.y, &molat->frac0.z);
        molat->OrdZahl=mol.Get_OZ(atypen.at(molat->OrdZahl-1));
@@ -4262,7 +4264,28 @@ void MyWindow::load_Jana(QString fileName){
          }
        }
        currentMolekule->atoms.append(*molat);
-       qDebug()<<molat->atomname<<molat->amul;
+      }
+      if ((currentMolekule!=NULL)&&(all.at(li).contains("pos#"))&&(currentMolekule->positions.size()<currentMolekule->np())){
+        int so,sp,st,wo,wp,wt;
+        sscanf(all.at(li).toStdString().c_str(),"%*8s%*3d%*3d%*f %1d%1d%1d%3d%3d%3d",&so,&sp,&st,&wo,&wp,&wt);
+        currentMolekule->positions.append(JmPos(tok.at(0),tok.at(1).toInt(),tok.at(2).toInt(),tok.at(3).toDouble(),
+            so,sp,st,wo,wp,wt));
+        li++;
+        tok.clear();
+        tok=all.at(li).split(" ",QString::SkipEmptyParts);
+        currentMolekule->positions.last().phi=tok.at(0).toDouble();
+        currentMolekule->positions.last().chi=tok.at(1).toDouble();
+        currentMolekule->positions.last().psi=tok.at(2).toDouble();
+        currentMolekule->positions.last().trans.x=tok.at(3).toDouble();
+        currentMolekule->positions.last().trans.y=tok.at(4).toDouble();
+        currentMolekule->positions.last().trans.z=tok.at(5).toDouble();
+        li++;
+        qDebug()<<all.at(li)<<currentMolekule->positions.last().aimol<<"LINE::"<<__LINE__;
+        QList<Modulat> ma;
+        if (currentMolekule->positions.size()==currentMolekule->np()) currentMolekule->printpos(0.0,ma);
+        masymmUnit.append(ma);
+
+//        currentMolekule->positions.last().
       }
       if (((masymmUnit.size()==na)||(asymmUnit.size()==na))&&((tok.size()==4)||(tok.size()==6))&&(all.at(li).contains(QRegExp("^[A-z]+")))){
          // qDebug()<<all.at(li);

@@ -164,6 +164,7 @@ signals:
   ~MolIso();
   void loadMI(QString fname,bool om=false,bool mima=true);
   void readBMBinaryHeader(QString fname);
+  void readGVDHeader(QString fname);
   void readXDGridHeader(QString fname,int &fileType);
   void readJanaHeader(QString fname);
   void createSurface(QString isoFileName, QString mapFileName, QString &storeFaceName,int fileType);

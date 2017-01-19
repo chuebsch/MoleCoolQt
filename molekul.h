@@ -483,6 +483,7 @@ struct Cell {
   double phi,V,as,bs,cs,als,bes,gas,lambda;
   double cosra,cosrb,cosrg;
   double cs_al,cs_be,cs_ga;
+  double sn_al,sn_be,sn_ga;
   bool centro,commensurate;
   QChar lattis;
   int symuncent;
@@ -1063,12 +1064,37 @@ class Modulat{
 };
 
 class JmPos{
+  public:
+    JmPos(QString _pName, int _sig, int _jtf,double _ai,int _wo, int _wp, int _wt, int _so, int _sp, int _st):pName(_pName),sig(_sig),rotty(_jtf),aimol(_ai), smo(_so),smp(_sp),smt(_st),wmo(_wo),wmp(_wp),wmt(_wt){
+      os.clear();
+      oc.clear();
+      possin.clear();
+      poscos.clear();
+      tlsSin.clear();
+      tlsCos.clear();
+      for (int i=0; i<wmo; i++) {os.append(0.0);oc.append(0.0);}
+      for (int i=0; i<wmp; i++) {possin.append(V3(0,0,0)); poscos.append(V3(0,0,0));};
+      for (int i=0; i<wmt*21; i++) {tlsSin.append(0.0);tlsCos.append(0.0);}
+    //  x4sym=V3(0,0,0);
+    //  x4=1;
+    //  x4trans=0.0;
+      polytype=0;
+    };
     QString pName;
-    int sig,smo,smp,smt,wmo,wmp,wmt;
-    double aimol,phi,chi,psi;
+    int sig,rotty;
+    double aimol;
+    int  smo,smp,smt,wmo,wmp,wmt;
+    double phi,chi,psi;
+
     V3 trans,rm,rp;
     double tls[21];
     double *tlsm(const double t);
+    QList<V3> possin,poscos;//pos
+    QList<V3> rotsin,rotcos;//rot
+    double o;
+    QList<double> os,oc;//occ
+    QList<double> tlsSin,tlsCos;
+    int polytype;
 };
 
 
@@ -1088,6 +1114,7 @@ public:
     V3 ref;
     JanaMolecule(QString name,int ir,QString pg,QString M,int na,int np,int lr):nAtm(na),nPos(np),lrot(lr),Mname(name),IR(ir),PointG(pg),
     refp(M){}
+    void printpos(const double t,QList<Modulat> &ma);
 };
 
 #endif
