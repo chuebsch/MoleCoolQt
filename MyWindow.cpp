@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=519;
+int rev=520;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -1455,16 +1455,6 @@ statusBar()->addPermanentWidget(balken);
     isonam.prepend("/");
     isonam.prepend(QDir::currentPath());
       }
-      /*
-      mol.einstellung->setValue("iso_grid_name",isonam);
-      mol.einstellung->setValue("map_grid_name",mapnam);
-      mol.einstellung->setValue("load_face_name","");
-      mol.einstellung->setValue("save_face_name","");
-      mol.einstellung->setValue("adp_struct_name","");
-      mol.einstellung->setValue("Moliso_Dialog_checks",mapnam.isEmpty()&1);
-      mol.einstellung->sync();
-      qDebug()<<"hallo"<<mol.einstellung->value("iso_grid_name");
-*/
       int chk=0;
       chk=(!mapnam.isEmpty()&1);
       chk|=(!fnam.isEmpty()&1)<<3;
@@ -2755,8 +2745,6 @@ void MyWindow::about(){
 
   QMessageBox::about(this,tr("About MoleCoolQt"),
           tr("<b>MoleCoolQt is written by Dr. Christian B. H&uuml;bschle, University of G&ouml;ttingen, Germany; now: University of Bayreuth</b><p>"
-		 "Please visit the following web sites: <a href=\"http://ewald.ac.chemie.uni-goettingen.de/index.html\">"
-		 "Dr. Birger Dittrich's Work Group</a> and "
 		 "<a href=\"http://www.molecoolqt.de\">MoleCoolQt site</a><p>"
 		 "If you find bugs, typos or have any suggestions then contact me under <a href=\"mailto:chuebsch@moliso.de\">chuebsch@moliso.de</a>"
                  "<p> This is Revision %1 from: %2 <br> The Version of Qt used is: %3.<br>%4<p>This program was build: %5<p>%6")
@@ -4280,13 +4268,83 @@ void MyWindow::load_Jana(QString fileName){
         currentMolekule->positions.last().trans.y=tok.at(4).toDouble();
         currentMolekule->positions.last().trans.z=tok.at(5).toDouble();
         li++;
-        qDebug()<<all.at(li)<<currentMolekule->positions.last().aimol<<"LINE::"<<__LINE__;
-        QList<Modulat> ma;
-        if (currentMolekule->positions.size()==currentMolekule->np()) currentMolekule->printpos(0.0,ma);
-        masymmUnit.append(ma);
+        for (int ri=0; ri<currentMolekule->positions.last().rotty; ri++){
+          //1st read mol orient
+          //2nd read act orient 
+          li++;
+        }
+        bool use_tls = false;
+        for (int iii=0; iii<currentMolekule->atoms.size();iii++) if (currentMolekule->atoms.at(iii).jtf==0) use_tls = true;
+        if (use_tls){//use TLS
+          const char nn[21][4]={"T11","T22","T33","T12","T13","T23","L11","L22","L33","L12","L13","L23","S11","S21","S31","S12","S22","S23","S13","S23","S33"};
+          tok.clear();
+          tok=all.at(li).split(" ",QString::SkipEmptyParts);
+          for (int itls=0;itls<21; itls+=6){
+          sscanf(all.at(li++).toStdString().c_str(),"%9lf%9lf%9lf%9lf%9lf%9lf",
+              &currentMolekule->positions.last().tls[itls],
+              &currentMolekule->positions.last().tls[itls+1],
+              &currentMolekule->positions.last().tls[itls+2],
+              &currentMolekule->positions.last().tls[itls+3],
+              &currentMolekule->positions.last().tls[itls+4],
+              &currentMolekule->positions.last().tls[itls+5]);
 
-//        currentMolekule->positions.last().
-      }
+          }
+          li--;
+          for (int itls=0;itls<21; itls++)
+           printf("%s %9.6f \n",nn[itls],currentMolekule->positions.last().tls[itls]); 
+        }
+        if (wo){
+          li++;
+          double o,os,oc;
+          char polynomString[60];
+          sscanf(all.at(li).toStdString().c_str(),"%9lf%s",&o,polynomString);
+          printf("#Polynom String:'%s'\n",polynomString);
+          if (0==strncmp(polynomString,"Ortho",20)) {
+           // modat->setPolyType(1);
+          }
+          if (0==strncmp(polynomString,"Legendre",20)) {
+           // modat->setPolyType(2);
+          }
+          if (0==strncmp(polynomString,"XHarm",20)) {
+           // modat->setPolyType(3);
+          }
+          for (int ok=0; ok<wo;ok++){
+          li++;
+          sscanf(all.at(li).toStdString().c_str(),"%9lf%9lf",&os,&oc);
+          //modat->setWaveOccPar(ok,o,os,oc);
+          }
+        }
+        if (wp){ 
+          for (int pk=0; pk<wp;pk++){       
+          li++;
+          double xs,ys,zs,
+                 xc,yc,zc;
+          sscanf(all.at(li).toStdString().c_str(),"%9lf%9lf%9lf%9lf%9lf%9lf",
+              &xs,&ys,&zs,&xc,&yc,&zc);
+          printf("#pk %d %f %f %f %f %f %f\n",pk,xs,ys,zs,xc,yc,zc);
+          //modat->setWavePosPar(pk,xs,ys,zs,xc,yc,zc);
+          }
+        }
+        if (wt){ 
+          for (int tk=0; tk<wt;tk++){       
+          li++;
+          double u11s,u22s,u33s, u12s,u13s,u23s;
+          double u11c,u22c,u33c, u12c,u13c,u23c;
+          sscanf(all.at(li).toStdString().c_str(),"%9lf%9lf%9lf%9lf%9lf%9lf",
+              &u11s,&u22s,&u33s, &u12s,&u13s,&u23s);
+          li++;
+          sscanf(all.at(li).toStdString().c_str(),"%9lf%9lf%9lf%9lf%9lf%9lf",
+              &u11c,&u22c,&u33c, &u12c,&u13c,&u23c);
+          //modat->setWaveTemPar(tk,u11s,u22s,u33s, u12s,u13s,u23s,u11c,u22c,u33c, u12c,u13c,u23c);
+          }
+        }
+          qDebug()<<all.at(li)<<currentMolekule->positions.last().aimol<<"LINE::"<<__LINE__;
+          QList<Modulat> ma;
+          if (currentMolekule->positions.size()==currentMolekule->np()) currentMolekule->printpos(0.0,ma);
+          masymmUnit.append(ma);
+
+          //        currentMolekule->positions.last().
+        }
       if (((masymmUnit.size()==na)||(asymmUnit.size()==na))&&((tok.size()==4)||(tok.size()==6))&&(all.at(li).contains(QRegExp("^[A-z]+")))){
          // qDebug()<<all.at(li);
 //anaMolecule(QString name,int ir,QString pg,QString M,int na,int np,int lr)
@@ -4432,7 +4490,7 @@ void MyWindow::load_Jana(QString fileName){
 
 void MyWindow::howOldIsTheLatesDataBase(){
   connect(net, SIGNAL(finished(QNetworkReply*)), this, SLOT(replyFinished(QNetworkReply*)));
-  reply = net->get(QNetworkRequest(QUrl("http://ewald.ac.chemie.uni-goettingen.de/___mole_cool_qt__/latestDABA.php")));
+  reply = net->get(QNetworkRequest(QUrl("http://www.molecoolqt.de/latestDABA.php")));
 }
 
 void MyWindow::replyFinished(QNetworkReply* antwort){
@@ -4447,7 +4505,7 @@ void MyWindow::replyFinished(QNetworkReply* antwort){
   printf("days %d\n",d);
   if ((d>0)&&(d<3650)) {
     connect(net, SIGNAL(finished(QNetworkReply*)), this, SLOT(replyFinished2(QNetworkReply*)));
-    reply = net->get(QNetworkRequest(QUrl("http://ewald.ac.chemie.uni-goettingen.de/___mole_cool_qt__/loadDABA.php")));
+    reply = net->get(QNetworkRequest(QUrl("http://www.molecoolqt.de/loadDABA.php")));
   }
 }
 
@@ -4478,7 +4536,7 @@ void MyWindow::load_BayMEM(QString fileName) {
   george=true;
   mol.pmin=10000;
   mol.pmax=-10000;
-  printf("load BayMEM  %d\n",__LINE__);
+//  printf("load BayMEM  %d\n",__LINE__);
   newAtom.part=0;
   newAtom.sg=0;
   someThingToRestore();
