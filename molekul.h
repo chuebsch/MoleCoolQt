@@ -533,6 +533,7 @@ class molekul {
   QString ffmpegexe;
   Cell zelle;
   int LOD;
+  double modscal;
   Matrix jacobi(Matrix A, V3 &D);
   double * jacobi2(const Matrix &uij, V3 &ev);
   int adp,intern;
@@ -579,6 +580,7 @@ class molekul {
   void loadSettings();
   void readXDPath(QString fname);
   molekul(void) {
+    modscal=1.0;
     dratom=false;
     qPeakRad=0.05;
     CPRad=0.025;

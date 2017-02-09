@@ -95,7 +95,7 @@ class MyWindow : public QMainWindow {
     void growSymm(int packart,int packatom = -1);
     void mgrowSymm(int packart,int packatom = -1);
     QComboBox *filterColumnComboBox;
-
+    QDoubleSpinBox *modScale;
     public slots:
       void allowPolyeder();
     void addMoreQPeaks();
@@ -150,6 +150,7 @@ class MyWindow : public QMainWindow {
     void tMovieStop();
     void changeScalePic();
     void changeViewAngle();
+    void changeModScal(double d);
     void editPartAux();
     void changeADP();
     void zoomIn();

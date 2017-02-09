@@ -4147,12 +4147,22 @@ void CubeGL::draw() {
     glColor4f(1.0,1.0,1.0,0.5);
     if (!matoms.isEmpty())  {
       glColor4f(tCR,tCG,tCB,tCA);
-      if (mol.ccc.size()==0) renderText(-xx*0.85,yy*0.95,-6.9,QString("t0 = %1 %2").arg(tvalue,10,'f',4).arg(mol.bcnt) ,MLegendFont);
-      else if (mol.ccc.size()==1) renderText(-xx*0.85,yy*0.95,-6.9,QString("t1 = %1 t2 = %2").arg(tvalue,10,'f',4).arg(tvalue*mol.ccc.at(0).tfactor,10,'f',4),MLegendFont);
-      else if (mol.ccc.size()==2) renderText(-xx*0.85,yy*0.95,-6.9,QString("t1 = %1 t2 = %2 t3 = %3")
-          .arg(tvalue,10,'f',4)
-          .arg(tvalue*mol.ccc.at(0).tfactor,10,'f',4)
-          .arg(tvalue*mol.ccc.at(1).tfactor,10,'f',4),MLegendFont
+      if (mol.ccc.size()==0)      renderText(-xx*0.85,yy*0.95,-6.9,QString("t0 = %1; %2 bonds; modulation scale factor: %3")
+          .arg(tvalue,7,'f',4)
+          .arg(mol.bcnt) 
+          .arg(mol.modscal,5,'f',2)
+          ,MLegendFont);
+      else if (mol.ccc.size()==1) renderText(-xx*0.85,yy*0.95,-6.9,QString("t1 = %1; t2 = %2; modulation scale factor: %3")
+          .arg(tvalue,7,'f',4)
+          .arg(tvalue*mol.ccc.at(0).tfactor,7,'f',4)
+          .arg(mol.modscal,5,'f',2)
+          ,MLegendFont);
+      else if (mol.ccc.size()==2) renderText(-xx*0.85,yy*0.95,-6.9,QString("t1 = %1; t2 = %2; t3 = %3; modulation scale factor: %4")
+          .arg(tvalue,7,'f',4)
+          .arg(tvalue*mol.ccc.at(0).tfactor,7,'f',4)
+          .arg(tvalue*mol.ccc.at(1).tfactor,7,'f',4)
+          .arg(mol.modscal,5,'f',2)
+          ,MLegendFont
           );
 
     }
@@ -4179,13 +4189,24 @@ void CubeGL::draw() {
         double xx = ((double) _win_width/_win_height) * 2.0,
            yy = 1.77777777778;
       glColor4f(tCR,tCG,tCB,tCA);
-      if (mol.ccc.size()==0) renderText(-xx*0.85,yy*0.95,-6.9,QString("t0 = %1 %2").arg(tvalue,10,'f',4).arg(mol.bcnt) ,MLegendFont);
-      else if (mol.ccc.size()==1) renderText(-xx*0.85,yy*0.95,-6.9,QString("t1 = %1 t2 = %2").arg(tvalue,10,'f',4).arg(tvalue*mol.ccc.at(0).tfactor,10,'f',4));
-      else if (mol.ccc.size()==2) renderText(-xx*0.85,yy*0.95,-6.9,QString("t1 = %1 t2 = %2 t3 = %3")
-          .arg(tvalue,10,'f',4)
-          .arg(tvalue*mol.ccc.at(0).tfactor,10,'f',4)
-          .arg(tvalue*mol.ccc.at(1).tfactor,10,'f',4)
-          );
+      if (mol.ccc.size()==0) renderText(-xx*0.85,yy*0.95,-6.9,QString("t0 = %1; %2 bonds; modulation scale factor: %3")
+          .arg(tvalue,7,'f',4)
+          .arg(mol.bcnt) 
+          .arg(mol.modscal,5,'f',2)
+          ,MLegendFont);
+      else if (mol.ccc.size()==1) renderText(-xx*0.85,yy*0.95,-6.9,QString("t1 = %1; t2 = %2; modulation scale factor: %3")
+          .arg(tvalue,7,'f',4)
+          .arg(tvalue*mol.ccc.at(0).tfactor,7,'f',4)
+          .arg(mol.modscal,5,'f',2)
+          ,MLegendFont);
+          
+          
+      else if (mol.ccc.size()==2) renderText(-xx*0.85,yy*0.95,-6.9,QString("t1 = %1; t2 = %2; t3 = %3; modulation scale factor: %4")
+          .arg(tvalue,7,'f',4)
+          .arg(tvalue*mol.ccc.at(0).tfactor,7,'f',4)
+          .arg(tvalue*mol.ccc.at(1).tfactor,7,'f',4)
+          .arg(mol.modscal,5,'f',2)
+          ,MLegendFont);
 
     }
     glPopMatrix();

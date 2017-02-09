@@ -1982,68 +1982,7 @@ void molekul::atoms(QList<INP> xdinp,const int proba){//ADP Schwingungsellipsoid
       else if (xdinp[j].OrdZahl>-1){
 	if (rad) glScaled(rad,rad,rad);
 	else glScaled(0.15,0.15,0.15);
-      }else {
-	if (xdinp[j].OrdZahl==-2){
-	  /*
-	printf("New Mexico\n");
-	double imat[16];
-	glLoadIdentity();
-	glGetDoublev( GL_MODELVIEW_MATRIX, (double*)imat );
-	double Erg[4];
-	Matrix m2,modM(imat[0],imat[1],imat[2],imat[4],imat[5],imat[6],imat[8],imat[9],imat[10]);
-        m2=xdinp[j].uf*modM*transponse(xdinp[j].uf);
-	printf (" %8.5f %8.5f %8.5f      %8.5f %8.5f %8.5f \n %8.5f %8.5f %8.5f      %8.5f %8.5f %8.5f \n %8.5f %8.5f %8.5f      %8.5f %8.5f %8.5f \n",
-			xdinp[j].uf.m11,
-			xdinp[j].uf.m12,
-			xdinp[j].uf.m13,imat[0],imat[1],imat[2],
-			xdinp[j].uf.m21,
-			xdinp[j].uf.m22,
-			xdinp[j].uf.m23,imat[4],imat[5],imat[6],
-			xdinp[j].uf.m31,
-			xdinp[j].uf.m32,
-			xdinp[j].uf.m33,imat[8],imat[9],imat[10]);   // * /
-	  imat[0]= m2.m11;
-	  imat[1]= m2.m21;
-	  imat[2]= m2.m31;
-	  imat[4]= m2.m12;
-	  imat[5]= m2.m22;
-	  imat[6]= m2.m32;
-	  imat[8]= m2.m13;
-	  imat[9]= m2.m23;
-	  imat[10]=m2.m33;
-          glLoadMatrixd(imat);
-	  / *
-	  glBegin(GL_LINES);
-	  glColor3f(0.5,0.5,0);
-	  glVertex3d(xdinp[j].kart.x,xdinp[j].kart.y,xdinp[j].kart.z);
-	  glVertex3d(xdinp[j].uf.m11,xdinp[j].uf.m12,xdinp[j].uf.m13);
-	  glColor3f(0.0,0.5,0.5);
-	  glVertex3d(xdinp[j].kart.x,xdinp[j].kart.y,xdinp[j].kart.z);
-	  glVertex3d(xdinp[j].uf.m21,xdinp[j].uf.m22,xdinp[j].uf.m23);
-	  glColor3f(0.5,0.0,0.5);
-	  glVertex3d(xdinp[j].kart.x,xdinp[j].kart.y,xdinp[j].kart.z);
-	  glVertex3d(xdinp[j].uf.m31,xdinp[j].uf.m32,xdinp[j].uf.m33);
-	  glEnd();
-*/
-	  /*
-
-	  Erg[0]=acos((xdinp[j].uf.m11+xdinp[j].uf.m22+xdinp[j].uf.m33-1.0)/2.0);
-	  if (Erg[0]==0) {
-	    Erg[1]=0.5773502691896257645;
-	    Erg[2]=0.5773502691896257645;
-	    Erg[3]=0.5773502691896257645;
-	  }else{
-	    Erg[1]=(xdinp[j].uf.m23-xdinp[j].uf.m32)/(2.0*sin(Erg[0]));
-	    Erg[2]=(xdinp[j].uf.m31-xdinp[j].uf.m12)/(2.0*sin(Erg[0]));
-	    Erg[3]=(xdinp[j].uf.m12-xdinp[j].uf.m21)/(2.0*sin(Erg[0]));
-	    Erg[0]*=180.0/M_PI;
-	  } */
-//	  glScaled(0.20,0.20,0.20);
-
-// */
-    }//else glScaled(1.0,1.0,1.0);
       }
-
       GLUquadricObj *q = gluNewQuadric();
       gluQuadricNormals(q, GL_SMOOTH);   
 
@@ -2080,10 +2019,15 @@ void molekul::atoms(QList<INP> xdinp,const int proba){//ADP Schwingungsellipsoid
           if (xdinp[j].atomname[0]=='H') {glColor3f(0.5,0.0,0.0);icosaeder(qPeakRad);}else
           if (xdinp[j].atomname[0]=='P') {glColor3f(0.0,0.0,0.6);icosaeder(qPeakRad);}else
           if (xdinp[j].atomname[0]=='O') {glColor3f(0.0,0.3,0.1);icosaeder(qPeakRad);}else
-          if (xdinp[j].atomname[0]=='Q') {Farbverlauf(xdinp[j].peakHeight,pmin,pmax);
+          if (xdinp[j].atomname[0]=='Q') {
+            Farbverlauf(xdinp[j].peakHeight,pmin,pmax);
            // dodecaeder(qPeakRad);
-           icosaeder(qPeakRad);
+            icosaeder(qPeakRad);
             }
+          else {
+            Farbverlauf(xdinp[j].amul,-1.5,1.5);
+            triacontaeder(CPRad);
+          }
         }
       }
 
@@ -2430,7 +2374,7 @@ void molekul::make_bonds(QList<Modulat> xdinp,double t){
   if (NULL==(bd=(bindi*)malloc(sizeof(bindi)*msiz)))return;
   for (int i=0;i<xdinp.size();i++) {
       //printf("i=%d sg=%d part=%d\n",i,xdinp[i].sg,xdinp[i].part);
-    for (int j=0;j<xdinp.size();j++) {
+    for (int j=i+1;j<xdinp.size();j++) {
       if (i==j) continue;
       if((xdinp[i].OrdZahl<0)||(xdinp[j].OrdZahl<0)) continue;
       if((xdinp[i].OrdZahl==0)&&(xdinp[j].OrdZahl==0)) continue;
@@ -5054,15 +4998,15 @@ const V3 Modulat::frac(const double t){
     switch (sp) {
       case 0:
         for (int i=0; i<wp;i++){
-          p+=possin[i]*sin(2*M_PI*(i+1)*X4);
-          p+=poscos[i]*cos(2*M_PI*(i+1)*X4);
+          p+=possin[i] * mol->modscal *sin(2*M_PI*(i+1)*X4);
+          p+=poscos[i] * mol->modscal *cos(2*M_PI*(i+1)*X4);
         }
         break;
       case 1://sawtooth
         {
           for (int i=0; i<wp-1;i++){
-            p+=possin[i]*sin(2*M_PI*(i+1)*X4);
-            p+=poscos[i]*cos(2*M_PI*(i+1)*X4);
+            p+=possin[i] * mol->modscal *sin(2*M_PI*(i+1)*X4);
+            p+=poscos[i] * mol->modscal *cos(2*M_PI*(i+1)*X4);
           }
           double x4s=poscos[wp-1].x;
           double delta=poscos[wp-1].y*0.5;
@@ -5074,8 +5018,8 @@ const V3 Modulat::frac(const double t){
       case 2://zigzag
         {
           for (int i=0; i<wp-1;i++){
-            p+=possin[i]*sin(2*M_PI*(i+1)*X4);
-            p+=poscos[i]*cos(2*M_PI*(i+1)*X4);
+            p+=possin[i] * mol->modscal *sin(2*M_PI*(i+1)*X4);
+            p+=poscos[i] * mol->modscal *cos(2*M_PI*(i+1)*X4);
           }
           double x4s=poscos[wp-1].x;
           double delta=poscos[wp-1].y*0.5;
@@ -5091,8 +5035,8 @@ const V3 Modulat::frac(const double t){
     double pom=(X4-os[0])/delta;
     getFPol(pom,wp*2+1,polytype);
     for (int i=0; i<wp;i++){
-      p+=possin[i]*fpol[2*i+2];
-      p+=poscos[i]*fpol[2*i+3];
+      p+=possin[i] * mol->modscal *fpol[2*i+2];
+      p+=poscos[i] * mol->modscal *fpol[2*i+3];
     }
   }
   if (iamcomp>1){

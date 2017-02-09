@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=522;
+int rev=523;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -924,11 +924,25 @@ createRenameWgd();
   sLabel->setFrameStyle(QFrame::Panel  );
   sLabel->setLineWidth(2);
   sLabel->setText("MolecoolQt a viewing program for molecular structures");
+
   balken = new QProgressBar(this);
   balken->hide();
-statusBar()->addPermanentWidget(balken);
+  statusBar()->addPermanentWidget(balken);
+  modScale = new QDoubleSpinBox(this);
+  modScale->setMaximum(50.0);
+  modScale->setMinimum(0.01);
+  modScale->setValue(1.0);
+  modScale->setSingleStep(0.2);
+  modScale->setPrefix("modulation scale");
+  modScale->setMinimumWidth(190);
+  modScale->setSuffix(" ");
+  modScale->setDecimals(2);
+  modScale->hide();
+  connect(modScale,SIGNAL(valueChanged(double )),this ,SLOT(changeModScal(double)));
   statusBar()->addPermanentWidget(speedSldr);
+  statusBar()->addPermanentWidget(modScale);
   statusBar()->addPermanentWidget(sLabel);
+
   
   statusBar()->setWhatsThis("This is the status bar. You can hide it in the View menu by unchecking 'toggle Status bar'.");
   
@@ -3915,6 +3929,7 @@ void MyWindow::load_Jana(QString fileName){
     if (cubeGL->isModulated){
         ModulationMenu->setEnabled(true);
         fmcq->doMaps->setChecked(false);
+  modScale->show();
 
     mol.zelle.qvec=mol.zelle.qr+mol.zelle.qi;
     if (mol.zelle.commensurate){
@@ -6809,19 +6824,19 @@ double getNum(double v,double fv[20],double uiso){
 }
 int part=0;
 int isacommand(char command[8]){
-  const char bfl[105][5]={
+  const char bfl[108][5]={
     "ACTA", "AFIX", "MPLA", "ANIS", "BASF", "BIND", "BLOC", "BOND", "BUMP", "CELL", "CGLS", "CHIV", "CONF", "CONN", "DAMP", "DANG", //0-15
     "DEFS", "DELU", "DFIX", "DISP", "EADP", "EGEN", "END",  "EQIV", "ESEL", "EXTI", "EXYZ", "FEND", "FLAT", "FMAP", "FRAG", "FREE", //16-31
     "FVAR", "GRID", "HFIX", "HKLF", "HOPE", "HTAB", "INIT", "ISOR", "LAST", "LATT", "LAUE", "LIST", "L.S.", "MERG", "MOLE", "MORE", //32-47
     "MOVE", "NCSY", "OMIT", "PART", "PATT", "PHAN", "PHAS", "PLAN", "PSEE", "REM",  "RESI", "RTAB", "SADI", "SAME", "SFAC", "SHEL", //48-63
     "SIMU", "SIZE", "SPEC", "SPIN", "STIR", "SUMP", "SWAT", "SYMM", "TEMP", "TEXP", "TIME", "TITL", "TREF", "TWIN", "UNIT", "VECT", //64-79
     "WPDB", "WGHT", "ZERR", "XNPD", "REST", "CHAN", "RIGU", "FLAP", "RNUM", "SOCC", "PRIG", "WIGL", "RANG", "TANG", "ADDA", "STAG",
-    "ATOM", "HETA", "SCAL", "ABIN", "ANSC", "ANSR", "NOTR", "NEUT", "TWST"
+    "ATOM", "HETA", "SCAL", "ABIN", "ANSC", "ANSR", "NOTR", "NEUT", "TWST", "BEDE", "LONE"
   };
   int i=0;
   for (size_t j=0; j<strlen(command); j++) command[j] = toupper( command[j] );
-  while ((i<105)&&(strcmp(command,bfl[i]))) i++;
-  if (i==105) i=-1;
+  while ((i<108)&&(strcmp(command,bfl[i]))) i++;
+  if (i==108) i=-1;
   return i+1;
 }
 
@@ -6847,7 +6862,7 @@ void MyWindow::load_sheldrick(QString fileName){
   part=0;
   char line[85],line2[85],llin[166],dv[50],dvv[50],command[8],ext[85],Ami3[5];
   int acnt=0,sorte=0,gitter=0,bfl,sftr[85],resNr=-1;
-  int sf;
+  int sf,pda=0;
   double fvar[20],Uiso=0.05; 
   dummax=0; 
   atmax=1; 
@@ -6860,6 +6875,14 @@ void MyWindow::load_sheldrick(QString fileName){
   if ((adp=fopen(fn,"r"))==NULL) {qDebug("Can't open %s!!!\n",fn);exit(2);}
   while (!feof(adp)) { 
     egals=fgets(line,83,adp);
+    if (line[0]==' ') continue;//if there is a = continue line this should have been handeld before
+    if (line[0]=='\n') continue;
+    if (strchr(line,'!')){
+      char *idx=strchr(line,'!'); 
+          //printf("------ZN> %ld %c\n",idx-line,line[idx-line]);
+      if (line[0]=='L') line[idx-line]=' ';
+      else line[idx-line]='\0';
+    }
     command[0]='\0';
     if (line[0]=='+'){
       char incpfad[80];
@@ -6879,6 +6902,7 @@ void MyWindow::load_sheldrick(QString fileName){
 
     sscanf(line,"%[a-zA-Z.] %[^\n]",command,ext); 
     bfl=isacommand(command);
+//    printf("%d [%s][%s]%s",bfl,command,ext,line);
     if (bfl) {
       if (bfl==10) {
         sscanf(ext,"%lf %lf%lf%lf%lf%lf%lf\n",&mol.zelle.lambda,&mol.zelle.a,&mol.zelle.b,&mol.zelle.c,&mol.zelle.al,&mol.zelle.be,&mol.zelle.ga);
@@ -6968,7 +6992,7 @@ void MyWindow::load_sheldrick(QString fileName){
           newAtom.jtf=2;
 	}else {
           newAtom.jtf=1;
-	  int pda=sscanf(line,"%s %d %lf %lf %lf %lf %lf %lf",
+	  pda=sscanf(line,"%s %d %lf %lf %lf %lf %lf %lf",
 			 newAtom.atomname,
 			 &newAtom.atomtype,
 			 &newAtom.frac.x,
@@ -6982,7 +7006,7 @@ void MyWindow::load_sheldrick(QString fileName){
 	    mol.pmax=fmax(mol.pmax,newAtom.peakHeight);
             //printf("%s %f %f\n",line,mol.pmin,mol.pmax);
 	  }
-          //printf("[%s] {%s}\n",line,newAtom.atomname);
+
 	  newAtom.amul=getNum(newAtom.amul,fvar,Uiso);
 
 	  newAtom.uf.m11=getNum(newAtom.uf.m11,fvar,Uiso);
@@ -7002,8 +7026,10 @@ void MyWindow::load_sheldrick(QString fileName){
 	}
         newAtom.part=part;
         newAtom.OrdZahl=(newAtom.atomname[0]=='Q')?-1:sftr[newAtom.atomtype-1];
+        if ((pda==7)&&(newAtom.atomname[0]=='L')) newAtom.OrdZahl=-2;
 	if (!strcmp(dv,"Q")) dummax++;
 	else atmax++;
+        printf("pda=%d[%s] %d atom{%s}\n",pda,line,newAtom.OrdZahl,newAtom.atomname);
 	asymmUnit.append(newAtom);
 	acnt++;
       }
@@ -8385,6 +8411,7 @@ void MyWindow::showPackDlg(){
 void MyWindow::loadFile(QString fileName,double GD){//empty
 //  printf("loadFILe %d\n",__LINE__);
   cubeGL->pause=true;
+  modScale->hide();
   ModulationMenu->setEnabled(false);
   cubeGL->rename=false;
   hatlokale=0;
@@ -8857,7 +8884,7 @@ void MyWindow::makeTMovi(){
         char CONVERTBEFEHL[1500];
         //sprintf (CONVERTBEFEHL, "ffmpeg -i /tmp/MOLISO.MOVIE -vcodec h264 -pix_fmt yuv420p %s </tmp/Y.antwort", fileName.toStdString().c_str());
           //  printf("\n%s\n",CONVERTBEFEHL);
-        sprintf (CONVERTBEFEHL, "%s -r 60 -f image2 -s %s -start_number 0 -i molisoclip%%04d.png -i mcqwatermark.png -filter_complex \"[0:v][1:v] overlay=%d:%d\" -vframes %d -vcodec libx264 -crf 25  -pix_fmt yuv420p %s"
+        sprintf (CONVERTBEFEHL, "\"%s\" -r 60 -f image2 -s %s -start_number 0 -i molisoclip%%04d.png -i mcqwatermark.png -filter_complex \"[0:v][1:v] overlay=%d:%d\" -vframes %d -vcodec libx264 -crf 25  -pix_fmt yuv420p %s"
                  ,mol.ffmpegexe.toStdString().c_str(),(hd) ?"1280x720":"1920x1080",wi-230,hi-40,frames ,fileName.toStdString().c_str());
         system(CONVERTBEFEHL);
 #ifndef _WIN32
@@ -9427,12 +9454,20 @@ void MyWindow::makeXDPartAux(){
   if ((!asymmUnit.isEmpty())&&(atmax)){
     const double TOLERANZ = 0.0005;
     QStringList befehle;
-    befehle  <<"ACTA" << "AFIX" << "MPLA" << "ANIS" << "BASF" << "BIND" << "BLOC" << "BOND" << "BUMP" << "CELL" << "CGLS" << "CHIV" << "CONF" << "CONN" << "DAMP" << "DANG" <<
-			 "DEFS" << "DELU" << "DFIX" << "DISP" << "EADP" << "EGEN" << "END" <<  "EQIV" << "ESEL" << "EXTI" << "EXYZ" << "FEND" << "FLAT" << "FMAP" << "FRAG" << "FREE" << 
-			 "FVAR" << "GRID" << "HFIX" << "HKLF" << "HOPE" << "HTAB" << "INIT" << "ISOR" << "LAST" << "LATT" << "LAUE" << "LIST" << "L.S." << "MERG" << "MOLE" << "MORE" << 
-			 "MOVE" << "NCSY" << "OMIT" << "PART" << "PATT" << "PHAN" << "PHAS" << "PLAN" << "PSEE" << "REM" <<  "RESI" << "RTAB" << "SADI" << "SAME" << "SFAC" << "SHEL" << 
-			 "SIMU" << "SIZE" << "SPEC" << "SPIN" << "STIR" << "SUMP" << "SWAT" << "SYMM" << "TEMP" << "TEXP" << "TIME" << "TITL" << "TREF" << "TWIN" << "UNIT" << "VECT" << 
-			 "WPDB" << "WGHT" << "ZERR";
+    befehle  <<"ACTA" << "AFIX" << "MPLA" << "ANIS" << "BASF" << "BIND" << "BLOC" << "BOND" 
+      << "BUMP" << "CELL" << "CGLS" << "CHIV" << "CONF" << "CONN" << "DAMP" << "DANG" 
+      << "DEFS" << "DELU" << "DFIX" << "DISP" << "EADP" << "EGEN" << "END" <<  "EQIV" 
+      << "ESEL" << "EXTI" << "EXYZ" << "FEND" << "FLAT" << "FMAP" << "FRAG" << "FREE" 
+      << "FVAR" << "GRID" << "HFIX" << "HKLF" << "HOPE" << "HTAB" << "INIT" << "ISOR" 
+      << "LAST" << "LATT" << "LAUE" << "LIST" << "L.S." << "MERG" << "MOLE" << "MORE" 
+      << "MOVE" << "NCSY" << "OMIT" << "PART" << "PATT" << "PHAN" << "PHAS" << "PLAN" 
+      << "PSEE" << "REM" <<  "RESI" << "RTAB" << "SADI" << "SAME" << "SFAC" << "SHEL" 
+      << "SIMU" << "SIZE" << "SPEC" << "SPIN" << "STIR" << "SUMP" << "SWAT" << "SYMM" 
+      << "TEMP" << "TEXP" << "TIME" << "TITL" << "TREF" << "TWIN" << "UNIT" << "VECT" 
+      << "WPDB" << "WGHT" << "ZERR"<<
+      "XNPD"<< "REST"<< "CHAN"<< "RIGU"<< "FLAP"<< "RNUM"<< "SOCC"<< "PRIG"<< "WIGL"<< "RANG"<< "TANG"<< "ADDA"<< "STAG"<<
+      "ATOM"<< "HETA"<< "SCAL"<< "ABIN"<< "ANSC"<< "ANSR"<< "NOTR"<< "NEUT"<< "TWST";
+
     QDir work=QDir(QDir::current());  
     QStringList filter;
     filter << "*res"<<"*ins";      
@@ -10962,6 +10997,12 @@ void MyWindow::growSymm(int packart,int packatom){
   dock->show();
   dock->setMaximumWidth(width()/5);
   printf("growSymm %d milliseconds with packart = %d\n",speedTest.restart(),packart);
+}
+
+void MyWindow::changeModScal(double d){
+  mol.modscal=d;
+  modScale->setSingleStep(d/5);
+  cubeGL->setFocus(Qt::OtherFocusReason);
 }
 
 void MyWindow::polyColorIng(bool b){
