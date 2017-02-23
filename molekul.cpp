@@ -2459,7 +2459,7 @@ int molekul::findPoly(int zi, PolyEder p,QList<INP> xd){
 
 void molekul::planes(QList<INP> xd){
   QList<V3> allNormals,uniqNormals;
-  QMap<int,QList<int>> inplane;
+/*  QMap<int,QList<int>> inplane;
   V3 n,zent;
   for (int i=0; i<xd.size(); i++){
     zent=xd[i].kart;
@@ -2511,6 +2511,7 @@ void molekul::planes(QList<INP> xd){
          mii.z
          );
   }
+  */
 }
 
 void molekul::make_polyeder(QList<INP> xd){
