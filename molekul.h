@@ -750,6 +750,7 @@ class molekul {
   int Get_OZ(QString S1);
   void setup_zelle();
   void entknoten();
+  void SDMprint(QList<SdmItem> sdm,QList<INP> au);
   void multiplicity(QList<INP> &au);
   void Uf2Uo(const Matrix x, Matrix & y);
   void copyAcol(GLfloat _Acol[108][4],GLfloat _arad[108],int _aStyle[108]);
@@ -804,6 +805,7 @@ class molekul {
   void make_polyeder(QList<INP> xd);
 //  void cyclsort(PolyEder & p);
   int findPoly(int zi, PolyEder p,QList<INP> xd);
+  void planes(QList<INP> xd);
   double * jacobi(double a[3][3], double d[3]); 
   double mbonds_last_t;
 };

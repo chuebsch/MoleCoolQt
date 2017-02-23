@@ -24,7 +24,7 @@ CubeGL::CubeGL(QWidget *parent) : QGLWidget(parent) {
    connect(chicken,SIGNAL(toggled(bool)),this,SLOT(updateGL()));
    quickRot= new QAction("No change in view while rotation",this );
    quickRot->setCheckable(true);
-   quickRot->setChecked(false);
+   quickRot->setChecked(true);
    connect(quickRot,SIGNAL(toggled(bool)),this,SLOT(toggleNoWaitLabel(bool)));
    growIt=false;
    pause = monochrom = false;
@@ -3710,7 +3710,7 @@ void CubeGL::rotY(double speed){
 
 void CubeGL::rotate(double dang, double x, double y,double z){
     glRotateL(dang,x,y,z);
-    updateGL();
+  //  updateGL();
 }
 
 void CubeGL::moveY(double speed){

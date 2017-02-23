@@ -76,8 +76,9 @@ class MyWindow : public QMainWindow {
     QAction *createmoliso,*noMoliso;
     QAction *showface,*showLeg,*movLeg, *mildir;
     QAction *aboutAct;
-    QLabel *sLabel;
-    QPushButton *savset, *lodset ;
+    QLabel *sLabel,*ffl;
+    QProgressBar *bar;
+    QPushButton *savset, *lodset, *closeFF ;
     QAction *back_Grad, *togLabel,*togHBond,*donTGrow;
     QCheckBox *mclmox;
     QLCDNumber *time;
@@ -92,6 +93,8 @@ class MyWindow : public QMainWindow {
     QAction *tMovieStartAct;
     QAction *tMovieStopAct;
     QAction *seReAct;
+    QTextBrowser *brs;
+    QProcess *runffmpeg;
     void growSymm(int packart,int packatom = -1);
     void mgrowSymm(int packart,int packatom = -1);
     QComboBox *filterColumnComboBox;
@@ -157,6 +160,7 @@ class MyWindow : public QMainWindow {
     void zoomOut();
     void rotLeft();
     void rotRight();
+    void updateOutput();
     void makeRotMovi();
     void makeTMovi();
     void moveR();
@@ -265,6 +269,7 @@ class MyWindow : public QMainWindow {
     double scalePic;
     QString dirName;
     QString saveName;
+    QString fffn;
     void initLists(QList<INP> xd);
     void updateRecentFileActions();
     QString strippedName(const QString &fullFileName);

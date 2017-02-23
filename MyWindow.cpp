@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=525;
+int rev=526;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -842,7 +842,7 @@ createRenameWgd();
   workMenu->addAction(mveDownAct );
   workMenu->addAction(ydlStartAct);
   workMenu->addAction(ydlStopAct);  
-  workMenu->addAction("make a short rotation movie",this,SLOT(makeRotMovi()));
+  workMenu->addAction("Make a rotation-movie file",this,SLOT(makeRotMovi()));
   
   tMovieStartAct=ModulationMenu->addAction("Start t movie",this ,SLOT(tMovieStart())); 
   tMovieStopAct=ModulationMenu->addAction("Stop t movie",this,SLOT(tMovieStop()));  
@@ -2746,10 +2746,6 @@ QMessageBox::information(this,xdinp.at(ind).atomname,QString("U11 = %1 U22 = %2 
 }
 
 void MyWindow::about(){  
-  QString date="$LastChangedDate: 2010-12-01 19:15:18 +0100 (Mi, 01 Dez 2010)$";
-  date.remove("LastChangedDate:");
-  date.remove("$");
-  QString bau_datum=QString(__TIME__ " " __DATE__);
 #ifdef __x86_64__
   QString has64bit=QString("64 bit Version");
 #else
@@ -2761,8 +2757,8 @@ void MyWindow::about(){
           tr("<b>MoleCoolQt is written by Dr. Christian B. H&uuml;bschle, University of G&ouml;ttingen, Germany; now: University of Bayreuth</b><p>"
 		 "<a href=\"http://www.molecoolqt.de\">MoleCoolQt site</a><p>"
 		 "If you find bugs, typos or have any suggestions then contact me under <a href=\"mailto:chuebsch@moliso.de\">chuebsch@moliso.de</a>"
-                 "<p> This is Revision %1 from: %2 <br> The Version of Qt used is: %3.<br>%4<p>This program was build: %5<p>%6")
-                     .arg(rev).arg(date).arg(qVersion ()).arg(openGLVersion).arg(bau_datum).arg(has64bit));
+                 "<p> This is Revision %1 <br> The Version of Qt used is: %2.<br>%3<p>%4")
+                     .arg(rev).arg(qVersion ()).arg(openGLVersion).arg(has64bit));
 
 }
 
@@ -2974,7 +2970,7 @@ void MyWindow::saveScene(){
   cubeGL->MLegendFont.setPointSize(h);
   cubeGL->_win_width=d;
   cubeGL->_win_height=e;
-  cubeGL->noWaitLabel=false;
+  cubeGL->noWaitLabel=cubeGL->quickRot->isChecked();
 
   cubeGL->scalePicNow=1.0;
   cubeGL->updateGL();
@@ -8673,121 +8669,6 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
   cubeGL->updateGL();
 }
 
-void MyWindow::makeRotMovi(){
-//HD 1280×720;
-#ifndef _WIN32
-  QString selectedFilter;
-  QString fileName = QFileDialog::getSaveFileName(this,
-      QString(tr("Save a rotation movie")),saveName,"mp4-file (*.mp4)",&selectedFilter,QFileDialog::DontUseNativeDialog );
-  int rotation = 0,d,e,f,h;
-  d = cubeGL->_win_width;
-  e = cubeGL->_win_height;
-  f = cubeGL->myFont.pointSize ();
-  h = cubeGL->MLegendFont.pointSize ();
-  double MoviDegreeStepSize=1.0;
-  while (rotation<=(360/ MoviDegreeStepSize)){
-  if (rotation<(360/ MoviDegreeStepSize)) {
-    char fname[255] ;     
-    statusBar()->showMessage(tr("create pic #%1 of 360").arg(rotation+1) );	
-    sprintf(fname, "molisoclip%04d.png", rotation++);
-    cubeGL->noWaitLabel=true;
-    cubeGL->paparazi=true;
-    glGetDoublev(GL_MODELVIEW_MATRIX,cubeGL->MM);
-    QPixmap   map = cubeGL->renderPixmap(1920,1080);
-    cubeGL->paparazi=false;
-    map.save(fname);
-//    fprintf( stderr, "Saved the image in file %s\n", fname );
-    rotRight();
-    cubeGL->rotY(-MoviDegreeStepSize*-.05);
-    statusBar()->showMessage("please wait until video has been created...");
-  }
-  else{
-    {
-      if (!fileName.isEmpty()) {
-          QPixmap watermark = QIcon(":/images/logo.png").pixmap(200, 34);
-          watermark.save("mcqwatermark.png");
-        //ffmpeg -r 60 -f image2 -s 1920x1080 -start_number 1 -i /tmp/molisoclip%04d.png -vframes 360 -vcodec libx264 -crf 25  -pix_fmt yuv420p %s
-        //-i ~/path_to_overlay.png -filter_complex "[0:v][1:v] overlay=0:0"
-	  char CONVERTBEFEHL[1500];
-	  //sprintf (CONVERTBEFEHL, "ffmpeg -i /tmp/MOLISO.MOVIE -vcodec h264 -pix_fmt yuv420p %s </tmp/Y.antwort", fileName.toStdString().c_str());
-          printf("\n%s\n",CONVERTBEFEHL);
-	  sprintf (CONVERTBEFEHL, "ffmpeg -r 60 -f image2 -s 1920x1080 -start_number 0 -i molisoclip%%04d.png -vframes 360 -vcodec libx264 -crf 25  -pix_fmt yuv420p %s", fileName.toStdString().c_str());
-	  system(CONVERTBEFEHL);
-	  system("rm molisoclip*.png");
-      }
-    }
-//    printf("\n\n'rotation.avi' should be crated now please test it with xanim. Install mjpegtools if not!\n\n");
-   rotation+=3000; 
-  }
-  }
-    //  printf("____myIdle %d\n",rotation);
-  cubeGL->myFont.setPointSize(f);
-  cubeGL->MLegendFont.setPointSize(h);
-  cubeGL->_win_width=d;
-  cubeGL->_win_height=e;
-  cubeGL->noWaitLabel=false;
-  statusBar()->showMessage("Video created!");
-  cubeGL->updateGL();
-#else
-    if (mol.ffmpegexe.isEmpty()||(!QFile::exists(mol.ffmpegexe))){
-        qDebug()<<"You need ffmpeg.exe. You can get it from here https://ffmpeg.org/download.html";
-        QString selectedFilter1="*.exe";
-        mol.ffmpegexe= QFileDialog::getOpenFileName(this,"path to ffmpeg.exe","ffmpeg.exe","windows executable(*.exe)",&selectedFilter1,QFileDialog::DontUseNativeDialog );
-        if (mol.ffmpegexe.isEmpty()) return;
-    }
-    QString selectedFilter;
-    QString fileName = QFileDialog::getSaveFileName(this,
-        QString(tr("Save a rotation movie")),saveName,"mp4-file (*.mp4)",&selectedFilter,QFileDialog::DontUseNativeDialog );
-    int rotation = 0,d,e,f,h;
-    d = cubeGL->_win_width;
-    e = cubeGL->_win_height;
-    f = cubeGL->myFont.pointSize ();
-    h = cubeGL->MLegendFont.pointSize ();
-    double MoviDegreeStepSize=1.0;
-    while (rotation<=(360/ MoviDegreeStepSize)){
-    if (rotation<(360/ MoviDegreeStepSize)) {
-      char fname[255] ;
-      statusBar()->showMessage(tr("create pic #%1 of 360").arg(rotation+1) );
-      sprintf(fname, "molisoclip%04d.png", rotation++);
-      cubeGL->noWaitLabel=true;
-      cubeGL->paparazi=true;
-      glGetDoublev(GL_MODELVIEW_MATRIX,cubeGL->MM);
-      QPixmap   map = cubeGL->renderPixmap(1920,1080);
-      cubeGL->paparazi=false;
-      map.save(fname);
-  //    fprintf( stderr, "Saved the image in file %s\n", fname );
-      //rotRight();
-      //cubeGL->rotY(-MoviDegreeStepSize*-.05);
-      cubeGL->rotate(MoviDegreeStepSize,0.0,1.0,0.0);
-      statusBar()->showMessage("please wait until video has been created...");
-    }
-    else{
-      {
-        if (!fileName.isEmpty()) {
-        char CONVERTBEFEHL[1500];
-        //sprintf (CONVERTBEFEHL, "ffmpeg -i /tmp/MOLISO.MOVIE -vcodec h264 -pix_fmt yuv420p %s </tmp/Y.antwort", fileName.toStdString().c_str());
-            printf("\n%s\n",CONVERTBEFEHL);
-            //-i mcqwatermark.png -filter_complex \"[0:v][1:v] overlay=%d:%d\"
-        sprintf (CONVERTBEFEHL, "%s -r 60 -f image2 -s 1920x1080 -start_number 0 -i molisoclip%%04d.png  -vframes 360 -vcodec libx264 -crf 25  -pix_fmt yuv420p %s"
-                 ,mol.ffmpegexe.toStdString().c_str(), fileName.toStdString().c_str());
-        system(CONVERTBEFEHL);
-        system("del molisoclip*.png");
-        }
-      }rotation+=3000;
-    }
-    }
-      //  printf("____myIdle %d\n",rotation);
-    cubeGL->myFont.setPointSize(f);
-    cubeGL->MLegendFont.setPointSize(h);
-    cubeGL->_win_width=d;
-    cubeGL->_win_height=e;
-    cubeGL->noWaitLabel=false;
-    statusBar()->showMessage("Video created!");
-    cubeGL->updateGL();
-#endif
-
-}
-
 void MyWindow::setFFMPEGEXE(){
    mol.ffmpegexe= QFileDialog::getOpenFileName(this,"path to ffmpeg.exe","ffmpeg.exe","",NULL,QFileDialog::DontUseNativeDialog );
    if (ffmpegedt!=NULL) ffmpegedt->setText(mol.ffmpegexe);
@@ -8796,6 +8677,53 @@ void MyWindow::setFFMPEGEXE(){
 void MyWindow::setMP4(){
    QString s = QFileDialog::getSaveFileName(this,"save mp4 file","test.mp4","Movie file (*.mp4)",NULL,QFileDialog::DontUseNativeDialog );
    if (mp4file!=NULL) mp4file->setText(s);
+}
+
+void MyWindow::updateOutput(){
+  if (runffmpeg->pid()) {
+    brs->show();
+    QString s=brs->toPlainText();
+    s.append(runffmpeg->readAllStandardOutput());
+    s.append(runffmpeg->readAllStandardError());
+    brs->setPlainText(s);
+  }else{
+    brs->show();
+    QString s=brs->toPlainText();
+    s.append(runffmpeg->readAllStandardOutput());
+    s.append(runffmpeg->readAllStandardError());
+    brs->setPlainText(s);
+    QDir d=QDir::current();
+
+    QStringList clips;
+    clips.append("molisoclip*");
+    clips  = d.entryList(clips);
+    for (int i=0; i<clips.size();i++) QFile::remove(clips.at(i));
+    QFile::remove("mcqwatermark.png");
+    qint64 size = 0;
+    QFile myFile(fffn);
+    if (myFile.open(QIODevice::ReadOnly)){
+      size = myFile.size();  //when file does open.
+      myFile.close();
+    }
+    int kMGT=0;
+    double siz=(double)size;
+    while (siz>1024){
+     siz/=1024;
+     kMGT++;
+    }
+    QString byte="B";
+    switch (kMGT){ 
+      case 1: byte.prepend("k"); break;
+      case 2: byte.prepend("M"); break;
+      case 3: byte.prepend("G"); break;
+      case 4: byte.prepend("T"); break;
+    }
+    QString fss=QString("%1 %2").arg(siz, 0, 'f', 2).arg(byte);
+
+    ffl->setText(QString("finished! %1 has %2").arg(fffn).arg(fss));
+    bar->hide();
+    closeFF->show();
+  }
 }
 
 void MyWindow::makeTMovi(){
@@ -8820,6 +8748,10 @@ void MyWindow::makeTMovi(){
   dura->setMaximum(300);
   dura->setValue(10);
   dura->setSuffix("s");
+  QSpinBox *fps= new QSpinBox(tdlg);
+  fps->setMinimum(12);
+  fps->setMaximum(60);
+  fps->setValue(30);
 
   l->addWidget(ffmpegtxt,0,0,1,20);
   l->addWidget(ffmpegedt,1,0,1,18);
@@ -8828,17 +8760,26 @@ void MyWindow::makeTMovi(){
   l->addWidget(hd1080,2,6,1,5);
   l->addWidget(new QLabel("Duration"),3,0,1,1);
   l->addWidget(dura,3,1,1,1);
-  l->addWidget(new QLabel("mp4 file name"),4,0,1,1);
-  l->addWidget(mp4file,4,1,1,18);
-  l->addWidget(mp4brs,4,19,1,1);
+  l->addWidget(new QLabel("Frames per second (FPS)"),4,0,1,1);
+  l->addWidget(fps,4,1,1,1);
+  l->addWidget(new QLabel("mp4 file name"),5,0,1,1);
+  l->addWidget(mp4file,5,1,1,18);
+  l->addWidget(mp4brs,5,19,1,1);
 
   l->addWidget(buttonBox,20,0,1,20);
   if(tdlg->exec()==QDialog::Accepted) {
     if (mol.ffmpegexe.isEmpty()||mp4file->text().isEmpty()) return;
     QString fileName=mp4file->text();
+    if (QFile::exists(fileName)) {
+      QString n=fileName;
+      QString re=QString("_%1_.mp4").arg(QDateTime::currentMSecsSinceEpoch (),0,36);
+      n.replace(QRegExp(".mp4$"),re);
+      QFile::rename(fileName,n);
+    }
     int d,e,f,h;
     bool hd=(hd720->isChecked()) ;
-    int frames = dura->value()*60;
+    int frameRate=fps->value();
+    int frames = dura->value()*frameRate;
     int wi = (hd) ? 1280 : 1920;
     int hi = (hd) ? 720  : 1080;
     d = cubeGL->_win_width;
@@ -8848,19 +8789,40 @@ void MyWindow::makeTMovi(){
     printf("%p\n",cubeGL);
     QDialog *q =new QDialog(this);
     q->setWindowTitle("Wait! t-Movie file creation in progress");
-    QProgressBar *bar = new QProgressBar(q);
+    bar = new QProgressBar(q);
     bar->setMinimum(0);
     bar->setMaximum(frames);
     QGridLayout *g= new QGridLayout(q);
     g->addWidget(bar,0,0);
-    QLabel *l=new QLabel(QString("Please wait until t-movie is created!! %1 frames will be created and joined to a mp4 movie file.").arg(frames));
-    g->addWidget(l,1,0);
+    ffl=new QLabel(QString("Please wait until t-movie is created!! %1 frames will be created and joined to a mp4 movie file.").arg(frames));
+    g->addWidget(ffl,1,0);
+    brs=new QTextBrowser(q);
+    QTextCharFormat fmt;
+    brs->setFontFamily("Courier");
+    QPalette p = brs->palette();
+    p.setBrush(QPalette::Active,QPalette::Base,QColor("#242424"));
+    brs->setPalette (p );
+    fmt.setFontFamily("Courier");
+    fmt.setBackground(QColor("#242424"));
+    fmt.setForeground(QColor("#DDDD00"));
+    fmt.setFontWeight(50);
+    brs->setCurrentCharFormat(fmt); 
+    brs->setWordWrapMode(QTextOption::WordWrap);
+    brs->setPlainText("====================\n Output of ffmpeg: \n====================\n\n");
+  
+    brs->hide();
+    g->addWidget(brs,2,0);
+    closeFF = new QPushButton("close", q);
+    g->addWidget(closeFF,3,0);
+    connect(closeFF,SIGNAL(released()),q,SLOT(close()));
+    closeFF->hide();
+        
     q->show();
     double stepssi= 1.0/frames;
     QPixmap   map;
     printf("stepsize=%f frames %d\n",stepssi,frames);
     for (int i=0; i<frames; i++){
-      l->setText(QString("Please wait until t-movie is created!! %1 of %2").arg(i).arg(frames));
+      ffl->setText(QString("Please wait until t-movie is created!! %1 of %2").arg(i).arg(frames));
       bar->setValue(i);
       char fname[255] ;
     //  statusBar()->showMessage(tr("create pic #%1 of %2").arg(i+1).arg(frames) );
@@ -8879,89 +8841,180 @@ void MyWindow::makeTMovi(){
         if (!fileName.isEmpty()) {
           QPixmap watermark = QIcon(":/images/logo.png").pixmap(200, 34);
           watermark.save("mcqwatermark.png");
-          //ffmpeg -r 60 -f image2 -s 1920x1080 -start_number 1 -i /tmp/molisoclip%04d.png -vframes 360 -vcodec libx264 -crf 25  -pix_fmt yuv420p %s
-          //-i ~/path_to_overlay.png -filter_complex "[0:v][1:v] overlay=0:0"
-        char CONVERTBEFEHL[1500];
-        //sprintf (CONVERTBEFEHL, "ffmpeg -i /tmp/MOLISO.MOVIE -vcodec h264 -pix_fmt yuv420p %s </tmp/Y.antwort", fileName.toStdString().c_str());
-          //  printf("\n%s\n",CONVERTBEFEHL);
-        sprintf (CONVERTBEFEHL, "\"%s\" -r 60 -f image2 -s %s -start_number 0 -i molisoclip%%04d.png -i mcqwatermark.png -filter_complex \"[0:v][1:v] overlay=%d:%d\" -vframes %d -vcodec libx264 -crf 25  -pix_fmt yuv420p %s"
-                 ,mol.ffmpegexe.toStdString().c_str(),(hd) ?"1280x720":"1920x1080",wi-230,hi-40,frames ,fileName.toStdString().c_str());
-        system(CONVERTBEFEHL);
-#ifndef _WIN32
-        system("rm molisoclip*.png");
-        system("rm mcqwatermark.png");
-#else
-        system("del molisoclip*.png");
-        system("del mcqwatermark.png");
-#endif
+        QStringList al;
+        al <<"-r"<< QString("%1").arg(frameRate)<< "-f"<< "image2"<< "-s"<< QString("%1").arg((hd)?"1280x720":"1920x1080")
+           <<"-start_number"<< "0"<< "-i"<< "molisoclip%04d.png"<< 
+           "-i"<< "mcqwatermark.png"<< "-filter_complex"<< QString("[0:v][1:v] overlay=%1:%2").arg(wi-230).arg(hi-40)<<           
+           "-vframes"<< QString("%1").arg(frames)<< "-codec:v"<< "libx264" <<"-crf" <<"25"<< "-pix_fmt"<< "yuv420p"<< fileName;
+           
+        runffmpeg = new QProcess(this);
+        QDir dn=QDir(QDir::current());  
+        runffmpeg->setWorkingDirectory(QDir::current().absolutePath());                           // updateXLput()
+        connect(runffmpeg,SIGNAL(readyReadStandardOutput ()),this,SLOT(updateOutput()));
+        connect(runffmpeg,SIGNAL(finished(int,QProcess::ExitStatus)),this,SLOT(updateOutput()));
+        connect(runffmpeg,SIGNAL(error(QProcess::ProcessError)),this,SLOT(updateOutput())); 
+
+        runffmpeg->start(mol.ffmpegexe,al);
+        fffn=fileName;
+        updateOutput();
+
         }
     cubeGL->myFont.setPointSize(f);
     cubeGL->MLegendFont.setPointSize(h);
     cubeGL->_win_width=d;
     cubeGL->_win_height=e;
-    cubeGL->noWaitLabel=false;
-   q->close();
+    cubeGL->noWaitLabel=cubeGL->quickRot->isChecked();
+   //q->close();
    // filmFred = new TMovieThread(frames,wi,hi,d,e,f,h,cubeGL,fileName,hd720->isChecked());
     //connect(filmFred,SIGNAL(finished ()),q,SLOT(close()));
    // filmFred->start();
   } 
 }
- 
-/*
-void TMovieThread::run(){
+
+void MyWindow::makeRotMovi(){
+  QDialog *tdlg = new QDialog(this);
+  QGridLayout *l = new QGridLayout(tdlg);
+  QDialogButtonBox *buttonBox = new QDialogButtonBox( QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+  connect(buttonBox, SIGNAL(accepted()), tdlg, SLOT(accept()));
+  connect(buttonBox, SIGNAL(rejected()), tdlg, SLOT(reject()));  
+  ffmpegedt = new QLineEdit(mol.ffmpegexe);
+  QPushButton *ffbrs = new QPushButton("Browse");
+  connect(ffbrs,SIGNAL(pressed()),this,SLOT(setFFMPEGEXE()));
+  QLabel *ffmpegtxt =new QLabel("Path to ffmpeg.exe <br>(You need ffmpeg.exe. You can get it from here <a href=\"https://ffmpeg.org/download.html\">https://ffmpeg.org/download.html</a> )");
+  ffmpegtxt->setOpenExternalLinks(true);
+  QRadioButton *hd720 = new QRadioButton("1280x720",tdlg);
+  QRadioButton *hd1080 = new QRadioButton("1920x1080",tdlg);
+  hd1080->setChecked(true);
+  mp4file = new QLineEdit("test.mp4");
+  QPushButton *mp4brs = new QPushButton("Browse");
+  connect(mp4brs,SIGNAL(pressed()),this,SLOT(setMP4())); 
+  QSpinBox *dura= new QSpinBox(tdlg);
+  dura->setMinimum(5);
+  dura->setMaximum(300);
+  dura->setValue(10);
+  dura->setSuffix("s");
+  QSpinBox *fps= new QSpinBox(tdlg);
+  fps->setMinimum(12);
+  fps->setMaximum(60);
+  fps->setValue(30);
+
+  l->addWidget(ffmpegtxt,0,0,1,20);
+  l->addWidget(ffmpegedt,1,0,1,18);
+  l->addWidget(ffbrs,1,19,1,1);
+  l->addWidget(hd720,2,0,1,5);
+  l->addWidget(hd1080,2,6,1,5);
+  l->addWidget(new QLabel("Duration"),3,0,1,1);
+  l->addWidget(dura,3,1,1,1);
+  l->addWidget(new QLabel("Frames per second (FPS)"),4,0,1,1);
+  l->addWidget(fps,4,1,1,1);
+  l->addWidget(new QLabel("mp4 file name"),5,0,1,1);
+  l->addWidget(mp4file,5,1,1,18);
+  l->addWidget(mp4brs,5,19,1,1);
+
+  l->addWidget(buttonBox,20,0,1,20);
+  if(tdlg->exec()==QDialog::Accepted) {
+    if (mol.ffmpegexe.isEmpty()||mp4file->text().isEmpty()) return;
+    QString fileName=mp4file->text();
+    if (QFile::exists(fileName)) {
+      QString n=fileName;
+      QString re=QString("_%1_.mp4").arg(QDateTime::currentMSecsSinceEpoch (),0,36);
+      n.replace(QRegExp(".mp4$"),re);
+      QFile::rename(fileName,n);
+    }
+    int d,e,f,h;
+    bool hd=(hd720->isChecked()) ;
+    int frameRate=fps->value();
+    int frames = dura->value()*frameRate;
+    int wi = (hd) ? 1280 : 1920;
+    int hi = (hd) ? 720  : 1080;
+    d = cubeGL->_win_width;
+    e = cubeGL->_win_height;
+    f = cubeGL->myFont.pointSize ();
+    h = cubeGL->MLegendFont.pointSize ();
+    printf("%p\n",cubeGL);
+    QDialog *q =new QDialog(this);
+    q->setWindowTitle("Wait! Movie file creation in progress");
+    bar = new QProgressBar(q);
+    bar->setMinimum(0);
+    bar->setMaximum(frames);
+    QGridLayout *g= new QGridLayout(q);
+    g->addWidget(bar,0,0);
+    ffl=new QLabel(QString("Please wait until movie is created!! %1 frames will be created and joined to a mp4 movie file.").arg(frames));
+    g->addWidget(ffl,1,0);
+    brs=new QTextBrowser(q);
+    QTextCharFormat fmt;
+    brs->setFontFamily("Courier");
+    QPalette p = brs->palette();
+    p.setBrush(QPalette::Active,QPalette::Base,QColor("#242424"));
+    brs->setPalette (p );
+    fmt.setFontFamily("Courier");
+    fmt.setBackground(QColor("#242424"));
+    fmt.setForeground(QColor("#DDDD00"));
+    fmt.setFontWeight(50);
+    brs->setCurrentCharFormat(fmt); 
+    brs->setWordWrapMode(QTextOption::WordWrap);
+    brs->setPlainText("====================\n Output of ffmpeg: \n====================\n\n");
+  
+    brs->hide();
+    g->addWidget(brs,2,0);
+    closeFF = new QPushButton("close", q);
+    g->addWidget(closeFF,3,0);
+    connect(closeFF,SIGNAL(released()),q,SLOT(close()));
+    closeFF->hide();
+        
+    q->show();
     double stepssi= 1.0/frames;
     QPixmap   map;
     printf("stepsize=%f frames %d\n",stepssi,frames);
     for (int i=0; i<frames; i++){
+      ffl->setText(QString("Please wait until movie is created!! %1 of %2").arg(i).arg(frames));
+      bar->setValue(i);
       char fname[255] ;
     //  statusBar()->showMessage(tr("create pic #%1 of %2").arg(i+1).arg(frames) );
       sprintf(fname, "molisoclip%04d.png", i);
-      printf("%d %d %d %p %s\n",i,wi,hi,cubeGL,fileName.toStdString().c_str());
       cubeGL->noWaitLabel=true;
-      printf("%d\n",__LINE__);
       cubeGL->paparazi=true;
-      printf("%d\n",__LINE__);
-     // glGetDoublev(GL_MODELVIEW_MATRIX,cubeGL->MM);
-      printf("%d\n",__LINE__);
+      glGetDoublev(GL_MODELVIEW_MATRIX,cubeGL->MM);
       map = cubeGL->renderPixmap(wi,hi);
-      printf("%d\n",__LINE__);
       cubeGL->paparazi=false;
-      printf("%d\n",__LINE__);
       map.save(fname);
-      printf("%d\n",__LINE__);
-      cubeGL->tvalue=fmod(cubeGL->tvalue+stepssi,1.0);
-      printf("%d\n",__LINE__);
-      cubeGL->updateGL();
-      printf("%d\n",__LINE__);
+      cubeGL->rotate(360.0/frames,0.0,1.0,0.0);
+     // cubeGL->updateGL();
+      q->update();
+      q->repaint();
     }
         if (!fileName.isEmpty()) {
           QPixmap watermark = QIcon(":/images/logo.png").pixmap(200, 34);
           watermark.save("mcqwatermark.png");
-          //ffmpeg -r 60 -f image2 -s 1920x1080 -start_number 1 -i /tmp/molisoclip%04d.png -vframes 360 -vcodec libx264 -crf 25  -pix_fmt yuv420p %s
-          //-i ~/path_to_overlay.png -filter_complex "[0:v][1:v] overlay=0:0"
-        char CONVERTBEFEHL[1500];
-        //sprintf (CONVERTBEFEHL, "ffmpeg -i /tmp/MOLISO.MOVIE -vcodec h264 -pix_fmt yuv420p %s </tmp/Y.antwort", fileName.toStdString().c_str());
-          //  printf("\n%s\n",CONVERTBEFEHL);
-        sprintf (CONVERTBEFEHL, "%s -r 60 -f image2 -s %s -start_number 0 -i molisoclip%%04d.png -i mcqwatermark.png -filter_complex \"[0:v][1:v] overlay=%d:%d\" -vframes %d -vcodec libx264 -crf 25  -pix_fmt yuv420p %s"
-                 ,mol.ffmpegexe.toStdString().c_str(),(hd) ?"1280x720":"1920x1080",wi-230,hi-40,frames ,fileName.toStdString().c_str());
-        system(CONVERTBEFEHL);
-#ifndef _WIN32
-        system("rm molisoclip*.png");
-        system("rm mcqwatermark.png");
-#else
-        system("del molisoclip*.png");
-        system("del mcqwatermark.png");
-#endif
+        QStringList al;
+        al <<"-r"<< QString("%1").arg(frameRate)<< "-f"<< "image2"<< "-s"<< QString("%1").arg((hd)?"1280x720":"1920x1080")
+           <<"-start_number"<< "0"<< "-i"<< "molisoclip%04d.png"<< 
+           "-i"<< "mcqwatermark.png"<< "-filter_complex"<< QString("[0:v][1:v] overlay=%1:%2").arg(wi-230).arg(hi-40)<<           
+           "-vframes"<< QString("%1").arg(frames)<< "-codec:v"<< "libx264" <<"-crf" <<"25"<< "-pix_fmt"<< "yuv420p"<< fileName;
+           
+        runffmpeg = new QProcess(this);
+        QDir dn=QDir(QDir::current());  
+        runffmpeg->setWorkingDirectory(QDir::current().absolutePath());                           // updateXLput()
+        connect(runffmpeg,SIGNAL(readyReadStandardOutput ()),this,SLOT(updateOutput()));
+        connect(runffmpeg,SIGNAL(finished(int,QProcess::ExitStatus)),this,SLOT(updateOutput()));
+        connect(runffmpeg,SIGNAL(error(QProcess::ProcessError)),this,SLOT(updateOutput())); 
+
+        runffmpeg->start(mol.ffmpegexe,al);
+        fffn=fileName;
+        updateOutput();
+
         }
     cubeGL->myFont.setPointSize(f);
     cubeGL->MLegendFont.setPointSize(h);
     cubeGL->_win_width=d;
     cubeGL->_win_height=e;
-    cubeGL->noWaitLabel=false;
-  //  statusBar()->showMessage("Video created!");
-  exec();
+    cubeGL->noWaitLabel=cubeGL->quickRot->isChecked();
+   //q->close();
+   // filmFred = new TMovieThread(frames,wi,hi,d,e,f,h,cubeGL,fileName,hd720->isChecked());
+    //connect(filmFred,SIGNAL(finished ()),q,SLOT(close()));
+   // filmFred->start();
+  } 
 }
-*/
 
 void MyWindow::openDipoleFile() {
   QString fileName;

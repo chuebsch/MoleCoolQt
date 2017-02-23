@@ -2416,6 +2416,7 @@ void molekul::make_bonds(QList<Modulat> xdinp,double t){
   bonds_made=1;
   mbonds_last_t=t;
 }
+
 /*void molekul::cyclsort(PolyEder & p){
     int mini=qMin(p.ai,p.bi);
     int dum1,dum2;
@@ -2437,17 +2438,18 @@ void molekul::make_bonds(QList<Modulat> xdinp,double t){
         p.ci=dum1;
     }
 }// */
+
 int molekul::findPoly(int zi, PolyEder p,QList<INP> xd){
     int answer=-1;
     //GLfloat d;
     for (int i=0; i<polyeders.size(); i++){
-   //     if (zi==polyeders.at(i).zi) printf("%d %g\n",zi,fabsf(p.norm*polyeders.at(i).norm));
+//        if (zi==polyeders.at(i).zi) printf("%d %g\n",zi,fabsf(p.norm*polyeders.at(i).norm));
         if ((zi==polyeders.at(i).zi)&&(0.7f<fabsf(p.norm*polyeders.at(i).norm))){
             if (0.1<(polyeders.at(i).mid-xd[zi].kart)*(p.mid-xd[zi].kart)) {
-                //printf("polyeders.at(i).mid %g %g %g polyeders.at(i).norm %g %g %g\n",
-               //        polyeders.at(i).mid.x,polyeders.at(i).mid.y,polyeders.at(i).mid.z,
-                //       polyeders.at(i).norm.x,polyeders.at(i).norm.y,polyeders.at(i).norm.z
-                //       );
+                /*printf("polyeders.at(i).mid %g %g %g polyeders.at(i).norm %g %g %g\n",
+                       polyeders.at(i).mid.x,polyeders.at(i).mid.y,polyeders.at(i).mid.z,
+                       polyeders.at(i).norm.x,polyeders.at(i).norm.y,polyeders.at(i).norm.z
+                       );*/
                 return i;
             }
         }
@@ -2455,14 +2457,77 @@ int molekul::findPoly(int zi, PolyEder p,QList<INP> xd){
     return answer;
 }
 
+void molekul::planes(QList<INP> xd){
+  QList<V3> allNormals,uniqNormals;
+  QMap<int,QList<int>> inplane;
+  V3 n,zent;
+  for (int i=0; i<xd.size(); i++){
+    zent=xd[i].kart;
+    if (Knopf[i].lz<2)continue;
+    for (int j=0; j<Knopf[i].lz;j++){
+      int di=Knopf[i].lig[j],da=Knopf[i].lig[(j+1)%Knopf[i].lz];
+      n=Normalize((xd[di].kart-zent)%(xd[da].kart-zent));
+  //    printf("%6s %6s %6s %d %d %d\n",xd[i].atomname,xd[da].atomname,xd[di].atomname,i,da,di);
+      double max=0.0;
+      for (int k=0; k<allNormals.size(); k++) max=fmax(max,fabs(n*allNormals.at(k)));
+      allNormals.append(n);
+      for (int k=0; k<uniqNormals.size(); k++) if (fabs(n*uniqNormals.at(k))>0.99) {
+//        printf("Mx%f u%d \n",n*uniqNormals.at(k),k);
+        if (!inplane[k].contains(i)) inplane[k].append(i);
+        if (!inplane[k].contains(di)) inplane[k].append(di);
+        if (!inplane[k].contains(da)) inplane[k].append(da);
+        break;
+      } 
+      if (max>0.99) continue;
+//      printf("mx%f u%d \n",max,uniqNormals.size());
+      
+      int k=uniqNormals.size();
+      if (!inplane[k].contains(i)) inplane[k].append(i);
+      if (!inplane[k].contains(di)) inplane[k].append(di);
+      if (!inplane[k].contains(da)) inplane[k].append(da);
+      uniqNormals.append(n);
+
+    }
+  }
+  printf("%d all normals, %d unique \n",allNormals.size(),uniqNormals.size());
+  for (int k=0; k<uniqNormals.size(); k++)  {
+    V3 mii=V3(0,0,0);
+    for (int l=0; l<inplane[k].size(); l++) {mii+= xd[inplane[k].at(l)].kart;printf("%s ",xd[inplane[k].at(l)].atomname);}
+    mii*=1.0/inplane[k].size();
+     int ok=0;
+     for (int w=0; w<xd.size();w++){
+       if (inplane[k].contains(w)){
+         int du=3;
+         for (int j=0; j<Knopf[w].lz;j++){
+           if (inplane[k].contains(Knopf[w].lig[j])) du--;
+         }
+         if (du==1) ok++;
+       }
+     }
+     printf("ok? %d\n",ok);
+     if (ok==inplane[k].size()) printf(" %f %f %f origin={%f,%f,%f} \n",uniqNormals.at(k).x,uniqNormals.at(k).y,uniqNormals.at(k).z,
+         mii.x,
+         mii.y,
+         mii.z
+         );
+  }
+}
+
 void molekul::make_polyeder(QList<INP> xd){
     printf("make_polyeder\n");
     if (!knopf_made) make_knopf(xd);
-    V3 zent;
+ //   planes(xd);
+    V3 zent;/*
+    extern QList<INP> asymmUnit;
+    INP newAtom;
+    newAtom.part=0;
+    newAtom.sg=0;
+    newAtom.OrdZahl=-3;
+    sprintf(newAtom.atomname,"CP00");*/
     PolyEder polyvecs;
     polyeders.clear();
     int index;
-    double vol,r,soll_abst;//,mr;
+    double vol,r,soll_abst,d,w;//,mr;
     for (int i=0; i<xd.size(); i++){
         if (Knopf[i].lz<4)continue;
         zent=xd[i].kart;
@@ -2474,20 +2539,37 @@ void molekul::make_polyeder(QList<INP> xd){
         for (int j=0; j<Knopf[i].lz;j++){
             for (int k=j+1;k<Knopf[i].lz;k++){
                 for (int l=k+1;l<Knopf[i].lz;l++){
+                    polyvecs.norm=Normalize((xd[Knopf[i].lig[j]].kart-xd[Knopf[i].lig[k]].kart)%(xd[Knopf[i].lig[l]].kart-xd[Knopf[i].lig[k]].kart));
+
                     vol=((xd[Knopf[i].lig[j]].kart-zent)%(xd[Knopf[i].lig[k]].kart-zent))*(xd[Knopf[i].lig[l]].kart-zent);
 
                     if (fabs(vol)<0.2) continue;
-                    r=sqrt(Distance(xd[Knopf[i].lig[j]].kart,xd[Knopf[i].lig[k]].kart));//soll_abst;
+                    //if (d>0.3*soll_abst) 
+                    double r1,r2,r3;
+/*                    r= sqrt(Distance(xd[Knopf[i].lig[j]].kart,xd[Knopf[i].lig[k]].kart));//soll_abst;
                     r+=sqrt(Distance(xd[Knopf[i].lig[l]].kart,xd[Knopf[i].lig[k]].kart));//soll_abst;
-                    r+=sqrt(Distance(xd[Knopf[i].lig[j]].kart,xd[Knopf[i].lig[l]].kart));//soll_abst;
+                    r+=sqrt(Distance(xd[Knopf[i].lig[j]].kart,xd[Knopf[i].lig[l]].kart));//soll_abst;*/
+                    r =r1=sqrt(Distance(xd[Knopf[i].lig[j]].kart,zent));
+                    r+=r2=sqrt(Distance(xd[Knopf[i].lig[l]].kart,zent));
+                    r+=r3=sqrt(Distance(xd[Knopf[i].lig[k]].kart,zent));
+
+
                     polyvecs.edge.clear();
-                    polyvecs.norm=Normalize((xd[Knopf[i].lig[j]].kart-xd[Knopf[i].lig[k]].kart)%(xd[Knopf[i].lig[l]].kart-xd[Knopf[i].lig[k]].kart));
                     polyvecs.mid=xd[Knopf[i].lig[j]].kart+xd[Knopf[i].lig[k]].kart+xd[Knopf[i].lig[l]].kart;
                     polyvecs.mid*=1.0/3.0;
+                    d=polyvecs.norm*(polyvecs.mid-zent);
+                    w=Normalize(polyvecs.mid)*polyvecs.norm;
+//                    if (((d/soll_abst)<0.45)||(w<0.8)) continue;
+           //         printf("!!%-9s %g, soll%g %g vol%g %g   \n",xd[i].atomname,d,r/3.0, 3.0*d/r,vol,w);
+                    /*newAtom.kart=polyvecs.mid;
+                    kart2frac(newAtom.kart,newAtom.frac);
+                    asymmUnit.append(newAtom);
+*/
                     polyvecs.zi=i;
+//                    index=-1;
                     index=findPoly(i,polyvecs,xd);
                     if (index!=-1){
-                       // printf("foundpoly [%d]\n",index);
+                        //printf("foundpoly [%d]\n",index);
                         polyvecs=polyeders[index];
                        // printf("foundpoly %d %d\n",i,polyvecs.edge.size());
                         if (!polyvecs.edge.contains(Knopf[i].lig[j])) polyvecs.edge.append(Knopf[i].lig[j]);
@@ -4654,6 +4736,25 @@ int commonFaces(Vert a,Vert b, int f[2]){
       if (a.faces[i]==b.faces[j])f[matches++]=a.faces[i];
   return matches;
 }
+
+void  molekul::SDMprint(QList<SdmItem> sdm,QList<INP> au){
+  printf("          ");
+  for (int i=0; i<au.size(); i++) printf("| %6s |",au.at(i).atomname);
+  printf("\n"); 
+  for (int i=0; i<au.size(); i++) {
+    printf(" %6s  |",au.at(i).atomname);
+    for (int j=0; j<au.size(); j++) {
+      for (int k=0; k<sdm.size(); k++) {
+        if ((sdm.at(k).a1==i)&&(sdm.at(k).a2==j)){
+          printf("|%8.4f|",sdm.at(k).d);
+          break;
+        }
+      }  
+    }
+    printf("\n"); 
+  }
+}
+
 void molekul::voronoij(QList<INP> au, int intat){
   double dk,range=5.0;
   voroMsg.clear();
@@ -4699,6 +4800,7 @@ void molekul::voronoij(QList<INP> au, int intat){
     }
   }
   qSort(sdm.begin(),sdm.end());
+  SDMprint(sdm,au);
   QList<V3> n,m,doneLine;
   QList<int> intra;
   QList<Vert> v;
@@ -4883,10 +4985,12 @@ void molekul::voronoij(QList<INP> au, int intat){
   }
 //  printf("drawing %dms\n",speedTest.restart());
 }
+
 V3 eye;
 bool vbyeye(VPoly a,VPoly b){
 return (Distance(a.mid,eye)>Distance(b.mid,eye));
 }
+
 void molekul::drawVoronoi(V3 auge){
   eye=auge;
   qSort(vtriangles.begin(),vtriangles.end(),vbyeye);
