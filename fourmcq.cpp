@@ -646,7 +646,8 @@ void FourMCQ::temp(INP atom, int h, int k,int  l, double &eij, double &TA, doubl
 double prob(double p){
   int ip=(int)p;
   double fp=(p)-ip;
-  const double piso[100]={0.0,
+  const double piso[101]={
+    0.0,//0
     9.441911868E-01,//  1
     9.117339937E-01,//  2
     8.846510505E-01,//  3
@@ -745,9 +746,10 @@ double prob(double p){
     1.567706904E-02,// 96
     1.140573796E-02,// 97
     7.307777222E-03,// 98
-    3.439649783E-03// 99
+    3.439649783E-03,// 99
+    3.439649783E-03//fake  
   };
-  if (ip>98) return 0.0;
+  if (ip>99) return 0.0;
   return piso[ip]*(1.0-fp)+piso[ip+1]*(fp);
 }
 
@@ -851,7 +853,7 @@ void FourMCQ::map4dto3d(const double t,const  V3 q, const int n[4],const double 
       }
 }
 
-void FourMCQ::PDFbyFFT(int i, int options,double proba){
+void FourMCQ::PDFbyFFT(int i, int options,double probab){
   const int it[480]= {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 20, 21, 22, 24, 25, 26, 27,
     28, 30, 32, 33, 35, 36, 39, 40, 42, 44, 45, 48, 49, 50, 52, 54, 55, 56, 60, 63, 64, 65, 66, 70, 72, 75, 77,
     78, 80, 81, 84, 88, 90, 91, 96, 98, 99, 100, 104, 105, 108, 110, 112, 117, 120, 125, 126, 128, 130, 132, 135,
@@ -1156,9 +1158,10 @@ chgl->moliso->data.append(pdf[i]);
   printf("%d %g %4d%4d%4d %g\n",imin,B[imin][0],h,k,l,boxmin);
   }//  */
 fftwf_free(B);
-  fprintf(stderr,"Finished p.d.f.Fourier sigma %g DS%g DM%g N5%d Vol%g min %g max %g (ms %d) iso 50%% = %g, iso 90%% = %g, 99%% = %g\n",t,DS,DM,n8,mole->zelle.V,pmin,pmax,tack.elapsed()
+  fprintf(stderr,"Finished p.d.f.Fourier sigma %g DS%g DM%g N5%d Vol%g min %g max %g (ms %d) iso 50%% = %g, iso 90%% = %g, 99%% = %g\n",
+      t,DS,DM,n8,mole->zelle.V,pmin,pmax,tack.elapsed()
       ,pmax*prob(50.0)
-      ,pmax*prob(90.0) 
+      ,pmax*prob(90.0)
       ,pmax*prob(99.0));
   //  fprintf(stderr,"%d (%d %d %d )\n",inbox,mx,my,mz);
   info=QString("Finished p.d.f.Fourier. "); 
@@ -1185,17 +1188,17 @@ chgl->moliso->mdata.append(pdf[i]);
       ,pmax*prob(50.0)
       ,pmax*prob(90.0) 
       ,pmax*prob(99.0));
-  double P=pmax*prob(proba);
-  fprintf(stderr,"\nDesired probability of %g%% is at %g minimum in p.d.f is at %g%%\n",proba,pmax*prob(proba),aborp(pmax,ahpmin));
+  double P=pmax*prob(probab);
+  fprintf(stderr,"\nDesired probability of %g%% is at %g minimum in p.d.f is at %g%%\n",probab,pmax*prob(probab),aborp(pmax,ahpmin));
   QString fac("testpdf.face");
   chgl->moliso->iso_level=(scnd)?P:pmax*prob(99.0);
-  chgl->moliso->createSurface(fac,(scnd)?proba:99.0,pmax*prob(99.0),mapping,minus99,pmax);
+  chgl->moliso->createSurface(fac,(scnd)?probab:99.0,pmax*prob(99.0),mapping,minus99,pmax);
 
   chgl->pause=true;
   if (chgl->moliso->mibas) glDeleteLists(chgl->moliso->mibas,6);
   chgl->moliso->mibas=glGenLists(6);
   chgl->moliso->min=-98.999;
-  chgl->moliso->max= 2.0*(proba-chgl->moliso->min)+chgl->moliso->min;
+  chgl->moliso->max= 2.0*(probab-chgl->moliso->min)+chgl->moliso->min;
   chgl->moliso->loadMI(fac,false,(!scnd)||(mapping));
   chgl->MIS=true;
   chgl->MILe=true;
