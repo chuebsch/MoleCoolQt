@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=532;
+int rev=533;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -7857,7 +7857,6 @@ void MyWindow::openFile() {
                   "XYZ-Files (*.xyz);;"
 		  "Protein Data Base file (*.pdb *.ent);;",&selectedFilter,QFileDialog::DontUseNativeDialog ); 
   if (!fileName.isEmpty()) {
-    qDebug()<<selectedFilter;
     loadFile(fileName);
   }
 

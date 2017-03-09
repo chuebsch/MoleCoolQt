@@ -254,7 +254,7 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
       //i = sscanf (line, "%4hd%4hd%4hd%4hd%12f %*12f %12f %12f %12f %*12f %*12f %*12f %*12f %*12f %*12f %12f", 
           &ih0, &ik0, &il0, &iphid, 
           &fo0,&fc1, &fc0, &f20, &fsig);
-          float www=atan2f (f20 , fc0 );
+          //float www=atan2f (f20 , fc0 );
    /*     fprintf(test,"%4d%4d%4d fo%9f fc%9f=%9f a%9f b%9f sig%9f #%d phang%f A%f B%f\n",ih0,ik0,il0,fo0,
           fc1-sqrt(fc0*fc0+f20*f20),
           fc1,fc0,f20,fsig,i,www,cosf(www)*(fo0-fc1),sinf(www)*(fo0-fc1));// */
@@ -888,7 +888,7 @@ void FourMCQ::PDFbyFFT(int i, int options,double probab){
     4200, 4212, 4224, 4290, 4312, 4320, 4368, 4374, 4375, 4400, 4410, 4455, 4459, 4480, 4500, 4536, 4550, 4576,
     4608, 4620, 4680, 4704, 4725, 4752, 4800, 4802, 4851, 4860, 4875, 4900, 4914, 4928, 4950, 4992, 5000};
   extern QList<INP> xdinp;     
-  extern QList<Modulat> matoms;     
+//  extern QList<Modulat> matoms;     
   QString info="";
   INP atom=xdinp[i];
   QTime tack;
