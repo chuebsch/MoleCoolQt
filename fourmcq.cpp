@@ -91,7 +91,7 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
   double T,V;
   path=filename;
   datfo_f2=NULL;
-  char line[122];
+  char line[200];
   FILE *mapin;
   int dimension=0,skip;
   int i,ok=0;
@@ -218,7 +218,7 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
   // <...
   //
   nr=0;
-  //FILE *test=fopen("test==.hkl","wt");
+//  FILE *test=fopen("test1234.hkl","wt");
 
   do {
     skip = 0;
@@ -250,9 +250,14 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
           break;
       }
     } else {
-      i = sscanf (line, "%4hd%4hd%4hd%4hd%12f %*12f %12f %12f %12f %*12f %*12f %*12f %*12f %*12f %*12f %12f", &ih0, &ik0, &il0, &iphid, 
+      i = sscanf (line, "%4hd%4hd%4hd%4hd%12f%*12f%12f%12f%12f%*12f%*12f%*12f%*12f%*12f%*12f%12f", 
+      //i = sscanf (line, "%4hd%4hd%4hd%4hd%12f %*12f %12f %12f %12f %*12f %*12f %*12f %*12f %*12f %*12f %12f", 
+          &ih0, &ik0, &il0, &iphid, 
           &fo0,&fc1, &fc0, &f20, &fsig);
-        //fprintf(test,"%4d%4d%4d fo%9f fc%9f a%9f b%9f sig%9f #%d phang%f\n",ih0,ik0,il0,fo0,fc1,fc0,f20,fsig,i,atan2f (f20 , fc0 ));
+          float www=atan2f (f20 , fc0 );
+   /*     fprintf(test,"%4d%4d%4d fo%9f fc%9f=%9f a%9f b%9f sig%9f #%d phang%f A%f B%f\n",ih0,ik0,il0,fo0,
+          fc1-sqrt(fc0*fc0+f20*f20),
+          fc1,fc0,f20,fsig,i,www,cosf(www)*(fo0-fc1),sinf(www)*(fo0-fc1));// */
     }
 
     if (iphid!=curentPhase) skip=1;
@@ -342,8 +347,8 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
       double t=0.;
       double u=0.;
       double v=0.;
-      //      double z=0.;
-      //      double y=0.;
+      double z=0.;
+  //    double y=0.;
       //      double z2=0.;
       //      double y2=0.;
       double p=0.;
@@ -365,6 +370,9 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
         // */
         t=t+1.;
         u+=lr[i].d1;
+        z=lr[i].d4;
+//        y+=z;
+//        printf("merg\n");
         //v+=1./(lr[i].d2*lr[i].d2);
         v+=(lr[i].d2);
         p=lr[i].d3;
@@ -372,6 +380,7 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
       }
       m=n+1;
       lr[m].d1=fmax(0.,u/t);
+      lr[m].d4=z;
       lr[m].d2=v/(t*sqrt(t));
       lr[m].d3=p;
       n=m;
@@ -400,7 +409,7 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
      fclose(unmerg);
   // */
   n++;
-  //fprintf(stderr,"%d %d \n",nr,n);
+  fprintf(stderr,"%d %d \n",nr,n);
   nr=n;
 
   {
@@ -460,7 +469,7 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
         //       if (abs(lr[i].ih)+abs(lr[i].ik)+abs(lr[i].il)<7) printf("%4d%4d%4d %g %g %g\n",lr[i].ih,lr[i].ik,lr[i].il ,sintl,sqrt(sintl),1.0/sintl);
         sintl=1.0;
    //     if (sintl<0.00000001)sintl=0.000000001;
-        if(typ==0) ss=(lr[i].d1-lr[i].d4)/(C[14]*(s+t)*sintl);
+        if(typ==0) ss=(lr[i].d1-lr[i].d4)/(C[14]*(s+t)*sintl);//diff
         //if(typ==0) {ss=(lr[i].d1)/(C[14]*(s+t));ss*=ss;}
         //	if(typ==0) ss=(fmod1)/(C[14]*(s+t)*sintl);
         else if (typ==1) ss=(lr[i].d1)/(C[14]*(s+t)*sintl);

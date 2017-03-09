@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=531;
+int rev=532;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -3892,7 +3892,7 @@ void MyWindow::load_Jana(QString fileName){
 
       }
       mol.bondsBetweenSGs=new QCheckBox("Draw bonds between symmetry groups",modulDlg);
-      mol.bondsBetweenSGs->setChecked(false);
+      mol.bondsBetweenSGs->setChecked(true);
       mol.bondsBetweenSGs->setToolTip("molecular structures are redered faster, if this is checked. No bonds are drawn between symmetry releated molecules.");
       QDialogButtonBox *bbx = new    QDialogButtonBox(QDialogButtonBox::Open,Qt::Horizontal,modulDlg);
 
@@ -7842,7 +7842,8 @@ void MyWindow::openFile() {
   cubeGL->drawUz=true;
   cubeGL->drawAx=false;
   removeDipoleMoments();
-  QString selectedFilter;
+  QString filwas=dirName.section('.',-1);
+  QString selectedFilter=(filwas.startsWith('m'))?QString("Jana-Files (*.m*)"):QString();
   fileName = QFileDialog::getOpenFileName(this, tr("Open stucture file "), dirName,
 		  "XD-Files (*.res *.inp *.mas);;"
 		  "XD-Path-Files (*.pth);;"
@@ -7856,6 +7857,7 @@ void MyWindow::openFile() {
                   "XYZ-Files (*.xyz);;"
 		  "Protein Data Base file (*.pdb *.ent);;",&selectedFilter,QFileDialog::DontUseNativeDialog ); 
   if (!fileName.isEmpty()) {
+    qDebug()<<selectedFilter;
     loadFile(fileName);
   }
 
