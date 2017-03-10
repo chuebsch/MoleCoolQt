@@ -2459,6 +2459,7 @@ int molekul::findPoly(int zi, PolyEder p,QList<INP> xd){
 
 void molekul::planes(QList<INP> xd){
   QList<V3> allNormals,uniqNormals;
+  if (xd.size()) {}
 /*  QMap<int,QList<int>> inplane;
   V3 n,zent;
   for (int i=0; i<xd.size(); i++){
@@ -2528,7 +2529,7 @@ void molekul::make_polyeder(QList<INP> xd){
     PolyEder polyvecs;
     polyeders.clear();
     int index;
-    double vol,r,soll_abst,d,w;//,mr;
+    double vol,r,soll_abst;//d,,mr,w;
     for (int i=0; i<xd.size(); i++){
         if (Knopf[i].lz<4)continue;
         zent=xd[i].kart;
@@ -2558,8 +2559,8 @@ void molekul::make_polyeder(QList<INP> xd){
                     polyvecs.edge.clear();
                     polyvecs.mid=xd[Knopf[i].lig[j]].kart+xd[Knopf[i].lig[k]].kart+xd[Knopf[i].lig[l]].kart;
                     polyvecs.mid*=1.0/3.0;
-                    d=polyvecs.norm*(polyvecs.mid-zent);
-                    w=Normalize(polyvecs.mid)*polyvecs.norm;
+                    //d=polyvecs.norm*(polyvecs.mid-zent);
+                    //w=Normalize(polyvecs.mid)*polyvecs.norm;
 //                    if (((d/soll_abst)<0.45)||(w<0.8)) continue;
            //         printf("!!%-9s %g, soll%g %g vol%g %g   \n",xd[i].atomname,d,r/3.0, 3.0*d/r,vol,w);
                     /*newAtom.kart=polyvecs.mid;
@@ -2980,6 +2981,58 @@ void molekul::modulated(double t,QList<Modulat> mato,int draw,double steps) {
     glDisable(GL_BLEND);
     glPopMatrix();
   }
+}
+
+void molekul::makeLissajous(QList<Modulat> mato,int proba, bool gay){
+  double t=0.0;
+  int steps=100;
+  double sca=1.0; 
+  switch (proba ) {
+    case 10 :{ sca=0.76;break;}   //Hauptachsen der Eliipsoide 10% Wahrscheinlichkeit
+    case 30 :{ sca=1.19;break;}   //Hauptachsen der Eliipsoide 30% Wahrscheinlichkeit
+    case 50 :{ sca=1.54;break;}   //Hauptachsen der Eliipsoide 50% Wahrscheinlichkeit
+    case 70 :{ sca=1.91;break;}   //Hauptachsen der Eliipsoide 70% Wahrscheinlichkeit
+    case 90 :{ sca=2.50;break;}   //Hauptachsen der Eliipsoide 90% Wahrscheinlichkeit
+    default: ;
+  }
+  double o,st=1.0/steps;
+  V3 p0,evl,ev1,ev2,ev3;
+  Matrix m;
+  glDisable( GL_LIGHTING );
+  //  glDisable( GL_DEPTH_TEST ); 
+  glEnable(GL_BLEND);
+  glDisable(GL_CULL_FACE);
+  for (int i=0; i<mato.size();i++){
+    t=-st;
+    glBegin(GL_LINES);
+    for (int j=0; j<steps; j++){
+      t+=st;
+      o=mato[i].occupancy(t);
+      if (o<0.1){
+        glColor4d(0.,0.,0.,0.);
+        continue;
+      }
+      p0 = mato[i].kart(t); 
+      evl=V3(0,0,0);
+      m=jacobi(mato[i].u(t),evl);
+      if ((evl.x<0)||(evl.y<0)||(evl.z<0)) evl=V3(0,0,0);
+      ev1=V3(m.m11,m.m12,m.m13)*sqrt(evl.x)*sca;
+      glColor4d(Acol[mato.at(i).OrdZahl][0], Acol[mato.at(i).OrdZahl][1], Acol[mato.at(i).OrdZahl][2],o);
+      if (gay) Farbverlauf(t,0.0,1.0,o);
+      glVertex3d(p0.x + ev1.x, p0.y + ev1.y, p0.z + ev1.z);
+      glVertex3d(p0.x - ev1.x, p0.y - ev1.y, p0.z - ev1.z);
+      ev2=V3(m.m21,m.m22,m.m23)*sqrt(evl.y)*sca;
+      glVertex3d(p0.x + ev2.x, p0.y + ev2.y, p0.z + ev2.z);
+      glVertex3d(p0.x - ev2.x, p0.y - ev2.y, p0.z - ev2.z);
+      ev3=V3(m.m31,m.m32,m.m33)*sqrt(evl.z)*sca;
+      glVertex3d(p0.x + ev3.x, p0.y + ev3.y, p0.z + ev3.z);
+      glVertex3d(p0.x - ev3.x, p0.y - ev3.y, p0.z - ev3.z);
+    }
+    glEnd();
+  }
+  glEnable( GL_LIGHTING );
+  glEnable( GL_DEPTH_TEST ); 
+  glEnable(GL_CULL_FACE);
 }
 
 void molekul::readXDPath(QString fname){
@@ -5396,6 +5449,7 @@ void Modulat::makeXHarmOrtho0(double *xmat, int nd){
   }
   free(gmat);
 }
+
 double Modulat::xHarmOrtho(double x, int n, double *xmat, int nd){ 
   double res=0.0;
   for (int i=1; i<=n; i++){
@@ -5496,6 +5550,7 @@ QString Modulat::plotT(int steps){
       }
       return text;
     }
+
 void JanaMolecule::printpos(const double t,QList<Modulat> &ma){
   const double g2r=180.0/M_PI;
   Matrix f2c=atoms.at(0).mol->zelle.f2c;
@@ -5635,7 +5690,7 @@ void JanaMolecule::printpos(const double t,QList<Modulat> &ma){
   }
 }
 
-  /*
+  /* AUSKOMMENT
    *
    struct INP {
    char     atomname[strgl]; // Name of the Atom(s)   

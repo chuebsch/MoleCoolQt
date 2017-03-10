@@ -4343,7 +4343,10 @@ void CubeGL::draw() {
   glPushMatrix();
   glEnable(GL_LIGHTING);
   glScaled( L, L, L );
-  if (!matoms.isEmpty()) mol.modulated(tvalue,matoms,drawopt,tstep);
+  if (!matoms.isEmpty()) {
+    if (lissajous->isChecked()) mol.makeLissajous(matoms,mol.proba,lissajousGay->isChecked());
+    mol.modulated(tvalue,matoms,drawopt,tstep);
+  }
 //if (drawBo) mol.modulated
   glPopMatrix();
   }
