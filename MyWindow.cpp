@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=535;
+int rev=536;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -856,10 +856,10 @@ createRenameWgd();
   a->setEnabled(false);
   }
   ModulationMenu->addAction("create a t-movie mp4 file",this,SLOT(makeTMovi()));
-  cubeGL->lissajous=ModulationMenu->addAction("Show Lissajous traces");
+  cubeGL->lissajous=ModulationMenu->addAction("Show Lissajous traces",cubeGL,SLOT(updateGL()));
   cubeGL->lissajous->setCheckable(true);
   cubeGL->lissajous->setChecked(false);
-  cubeGL->lissajousGay=ModulationMenu->addAction("rainbow color map t-value on Lissajous traces");
+  cubeGL->lissajousGay=ModulationMenu->addAction("rainbow color map t-value on Lissajous traces",cubeGL,SLOT(updateGL()));
   cubeGL->lissajousGay->setCheckable(true);
   cubeGL->lissajousGay->setChecked(false);
   workMenu->addAction(fontSizeUpAct);
