@@ -2983,7 +2983,7 @@ void molekul::modulated(double t,QList<Modulat> mato,int draw,double steps) {
   }
 }
 
-void molekul::makeLissajous(QList<Modulat> mato,int proba, bool gay){
+void molekul::makeLissajous(QList<Modulat> mato,int proba, bool gay, bool adps){
   double t=0.0;
   int steps=100;
   double sca=1.0; 
@@ -3002,6 +3002,7 @@ void molekul::makeLissajous(QList<Modulat> mato,int proba, bool gay){
   //  glDisable( GL_DEPTH_TEST ); 
   glEnable(GL_BLEND);
   glDisable(GL_CULL_FACE);
+  glLineWidth(1.5);
   for (int i=0; i<mato.size();i++){
     t=-st;
     glBegin(GL_LINES);
@@ -3013,20 +3014,33 @@ void molekul::makeLissajous(QList<Modulat> mato,int proba, bool gay){
         continue;
       }
       p0 = mato[i].kart(t); 
-      evl=V3(0,0,0);
-      m=jacobi(mato[i].u(t),evl);
-      if ((evl.x<0)||(evl.y<0)||(evl.z<0)) evl=V3(0,0,0);
-      ev1=V3(m.m11,m.m12,m.m13)*sqrt(evl.x)*sca;
-      glColor4d(Acol[mato.at(i).OrdZahl][0], Acol[mato.at(i).OrdZahl][1], Acol[mato.at(i).OrdZahl][2],o);
-      if (gay) Farbverlauf(t,0.0,1.0,o);
-      glVertex3d(p0.x + ev1.x, p0.y + ev1.y, p0.z + ev1.z);
-      glVertex3d(p0.x - ev1.x, p0.y - ev1.y, p0.z - ev1.z);
-      ev2=V3(m.m21,m.m22,m.m23)*sqrt(evl.y)*sca;
-      glVertex3d(p0.x + ev2.x, p0.y + ev2.y, p0.z + ev2.z);
-      glVertex3d(p0.x - ev2.x, p0.y - ev2.y, p0.z - ev2.z);
-      ev3=V3(m.m31,m.m32,m.m33)*sqrt(evl.z)*sca;
-      glVertex3d(p0.x + ev3.x, p0.y + ev3.y, p0.z + ev3.z);
-      glVertex3d(p0.x - ev3.x, p0.y - ev3.y, p0.z - ev3.z);
+      if (adps){
+        evl=V3(0,0,0);
+        m=jacobi(mato[i].u(t),evl);
+        if ((evl.x<0)||(evl.y<0)||(evl.z<0)) evl=V3(0,0,0);
+        ev1=V3(m.m11,m.m12,m.m13)*sqrt(evl.x)*sca;
+        glColor4d(Acol[mato.at(i).OrdZahl][0], Acol[mato.at(i).OrdZahl][1], Acol[mato.at(i).OrdZahl][2],o);
+        if (gay) Farbverlauf(t,0.0,1.0,o);
+        glVertex3d(p0.x + ev1.x, p0.y + ev1.y, p0.z + ev1.z);
+        glVertex3d(p0.x - ev1.x, p0.y - ev1.y, p0.z - ev1.z);
+        ev2=V3(m.m21,m.m22,m.m23)*sqrt(evl.y)*sca;
+        glVertex3d(p0.x + ev2.x, p0.y + ev2.y, p0.z + ev2.z);
+        glVertex3d(p0.x - ev2.x, p0.y - ev2.y, p0.z - ev2.z);
+        ev3=V3(m.m31,m.m32,m.m33)*sqrt(evl.z)*sca;
+        glVertex3d(p0.x + ev3.x, p0.y + ev3.y, p0.z + ev3.z);
+        glVertex3d(p0.x - ev3.x, p0.y - ev3.y, p0.z - ev3.z);
+      }else{
+        double o1=mato[i].occupancy(t+st);
+        if ((o1*o)>0.1){
+          glColor4d(Acol[mato.at(i).OrdZahl][0], Acol[mato.at(i).OrdZahl][1], Acol[mato.at(i).OrdZahl][2],o);
+          if (gay) Farbverlauf(t,0.0,1.0,o);
+          glVertex3d(p0.x, p0.y, p0.z);
+          V3 p1=mato[i].kart(t+st);
+          glColor4d(Acol[mato.at(i).OrdZahl][0], Acol[mato.at(i).OrdZahl][1], Acol[mato.at(i).OrdZahl][2],o);
+          if (gay) Farbverlauf(t,0.0,1.0,o);
+          glVertex3d(p1.x, p1.y, p1.z);
+        }
+      }
     }
     glEnd();
   }

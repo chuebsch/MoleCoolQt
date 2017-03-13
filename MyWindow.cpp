@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=536;
+int rev=538;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -862,6 +862,10 @@ createRenameWgd();
   cubeGL->lissajousGay=ModulationMenu->addAction("rainbow color map t-value on Lissajous traces",cubeGL,SLOT(updateGL()));
   cubeGL->lissajousGay->setCheckable(true);
   cubeGL->lissajousGay->setChecked(false);
+  cubeGL->lissaADP=ModulationMenu->addAction("ADP axes on Lissajous traces",cubeGL,SLOT(updateGL()));
+  cubeGL->lissaADP->setCheckable(true);
+  cubeGL->lissaADP->setChecked(true);
+
   workMenu->addAction(fontSizeUpAct);
   workMenu->addAction(fontSizeDownAct);
   workMenu->addAction(matrixAct);

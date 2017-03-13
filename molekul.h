@@ -756,7 +756,7 @@ class molekul {
   void copyAcol(GLfloat _Acol[108][4],GLfloat _arad[108],int _aStyle[108]);
   void atoms(QList<INP> xdinp,const int proba);
   void modulated(double t, QList<Modulat> mato, int draw, double steps);
-  void makeLissajous(QList<Modulat> mato,int proba,bool gay);
+  void makeLissajous(QList<Modulat> mato,int proba,bool gay, bool adps);
   void bonds(QList<INP> xdinp);
   void bonds(Connection bond);
   double fl(double x,double y, double z);

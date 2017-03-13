@@ -33,7 +33,7 @@ public:
   QAction *showPolys;
   int cdens, cwid,awidth;
   QAction *addBond,*killBond,*clearSelection,*centerSelection,*addCoordi,*delCoordi; 
-  QAction *lissajous, *lissajousGay;
+  QAction *lissajous, *lissajousGay, *lissaADP;
   bool molisoTransparence;
   bool zebra;
   bool noWaitLabel;
