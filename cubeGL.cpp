@@ -4344,7 +4344,7 @@ void CubeGL::draw() {
   glEnable(GL_LIGHTING);
   glScaled( L, L, L );
   if (!matoms.isEmpty()) {
-    if (lissajous->isChecked()) mol.makeLissajous(matoms,mol.proba,lissajousGay->isChecked(),lissaADP->isChecked());
+    if (lissajous->isChecked()) mol.makeLissajous(matoms,mol.proba,lissajousGay->isChecked(),lissaADP->isChecked(),tstep,tvalue);
     mol.modulated(tvalue,matoms,drawopt,tstep);
   }
 //if (drawBo) mol.modulated

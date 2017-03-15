@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=538;
+int rev=539;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -10136,14 +10136,13 @@ void MyWindow::mgrowSymm(int packart,int packatom){
 //  printf("===>>>%d %d\n",packart,packatom);
   if ((packart==5) && (packatom>-1) && (packatom<matoms.size())) {
     expander=matoms[packatom].frac(cubeGL->tvalue);
-  //  qDebug()<<  matoms[packatom].atomname<< expander.x<< expander.y<< expander.z;
+//    qDebug()<<  matoms[packatom].atomname<< expander.x<< expander.y<< expander.z;
   }
   QString blob=infoKanal->toPlainText();
   // qDebug()<<"blob"<<__LINE__;
   if ((packart==5)&&(blob.contains("'"))){
     QStringList blub=blob.split("'",QString::SkipEmptyParts);
     for (int i=0; i<blub.size(); i++) if ((i%2)==1) brauchSymm.append(QString("%1").arg(blub.at(i)));
-//    qDebug() << brauchSymm;
   }
   if (packart<9){
   xdinp.clear();
@@ -10155,6 +10154,8 @@ void MyWindow::mgrowSymm(int packart,int packatom){
     if (brauchSymm.isEmpty()) {packart=0;}
   }
   if (packart==0){
+    infoKanal->clear();
+    matoms.clear();
     matoms=masymmUnit;
   }
   if (packart==3){//packe und schneide die Zelle

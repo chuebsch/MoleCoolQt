@@ -2983,9 +2983,9 @@ void molekul::modulated(double t,QList<Modulat> mato,int draw,double steps) {
   }
 }
 
-void molekul::makeLissajous(QList<Modulat> mato,int proba, bool gay, bool adps){
-  double t=0.0;
-  int steps=100;
+void molekul::makeLissajous(QList<Modulat> mato,int proba, bool gay, bool adps,double step,double t0 ){
+  double t=t0;
+  int steps=(int)(1.0/step);
   double sca=1.0; 
   switch (proba ) {
     case 10 :{ sca=0.76;break;}   //Hauptachsen der Eliipsoide 10% Wahrscheinlichkeit
@@ -2995,7 +2995,8 @@ void molekul::makeLissajous(QList<Modulat> mato,int proba, bool gay, bool adps){
     case 90 :{ sca=2.50;break;}   //Hauptachsen der Eliipsoide 90% Wahrscheinlichkeit
     default: ;
   }
-  double o,st=1.0/steps;
+  double o,st=step;
+  
   V3 p0,evl,ev1,ev2,ev3;
   Matrix m;
   glDisable( GL_LIGHTING );
@@ -3004,10 +3005,12 @@ void molekul::makeLissajous(QList<Modulat> mato,int proba, bool gay, bool adps){
   glDisable(GL_CULL_FACE);
   glLineWidth(1.5);
   for (int i=0; i<mato.size();i++){
-    t=-st;
+    t=t0-st;
+    t=fmod(t,1.0);
     glBegin(GL_LINES);
     for (int j=0; j<steps; j++){
       t+=st;
+      t=fmod(t,1.0);
       o=mato[i].occupancy(t);
       if (o<0.1){
         glColor4d(0.,0.,0.,0.);
