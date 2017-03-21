@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=541;
+int rev=542;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -10462,6 +10462,10 @@ void MyWindow::growSymm(int packart,int packatom){
     //plotSDM(25);
     return;
   }
+  if (packart==0){
+    infoKanal->clear();
+
+  }
   QTime speedTest;
   mol.vorobas=0;
   speedTest.start();
@@ -10843,6 +10847,8 @@ void MyWindow::growSymm(int packart,int packatom){
       statusBar()->showMessage(tr("Neighbor search is finished"));
     }  
   }
+
+
   smx=xdinp.size();
   balken->hide();      
   for (int i=0; i<smx; i++){

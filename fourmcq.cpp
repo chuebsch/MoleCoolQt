@@ -215,6 +215,7 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
     return false;
   }
   printf("We have %d Dimensions\n",dimension);
+ // qDebug()<<dimension<<"dimensions";
   // <...
   //
   nr=0;
@@ -227,7 +228,7 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
       switch (dimension) {
         case 4:
           im = 0;
-          i = sscanf (line, "%4hd%4hd%4hd%4hd%4hd%12f%*12f%*12f%12f%12f", &ih0, &ik0, &il0, &im, &iphid, &fo0, &fc0, &f20);
+          i = sscanf (line, "%4hd%4hd%4hd%4hd%4hd%12f%*12f%12f%12f%12f", &ih0, &ik0, &il0, &im, &iphid, &fo0,&fc1, &fc0, &f20);
           // fprintf(test,"%d %d %d %d %d %f %f %f \n",ih0,ik0,il0,im,iphid,fo0,fc0,f20);
 
           if (im != 0){
@@ -236,15 +237,15 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
           break;
         case 5:
           im = in = 0;
-          i = sscanf (line, "%4hd%4hd%4hd%4hd%4hd%4hd%12f%*12f%*12f%12f%12f", &ih0,
-              &ik0, &il0, &im, &in, &iphid, &fo0, &fc0, &f20);
+          i = sscanf (line, "%4hd%4hd%4hd%4hd%4hd%4hd%12f%*12f%12f%12f%12f", &ih0,
+              &ik0, &il0, &im, &in, &iphid, &fo0,&fc1, &fc0, &f20);
           if (im != 0 || in != 0)
             skip = 1;
           break;
         case 6:
           im = in = io = 0;
-          i = sscanf (line, "%4hd%4hd%4hd%4hd%4hd%4hd%4hd%12f%*12f%*12f%12f%12f",
-              &ih0, &ik0, &il0, &im, &in, &io, &iphid, &fo0, &fc0, &f20);
+          i = sscanf (line, "%4hd%4hd%4hd%4hd%4hd%4hd%4hd%12f%*12f%12f%12f%12f",
+              &ih0, &ik0, &il0, &im, &in, &io, &iphid, &fo0,&fc1, &fc0, &f20);
           if (im != 0 || in != 0 || io != 0)
             skip = 1;
           break;
@@ -473,7 +474,7 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
         //if(typ==0) {ss=(lr[i].d1)/(C[14]*(s+t));ss*=ss;}
         //	if(typ==0) ss=(fmod1)/(C[14]*(s+t)*sintl);
         else if (typ==1) ss=(lr[i].d1)/(C[14]*(s+t)*sintl);
-        if(lr[i].d2>1.E-6) ss=ss/(1.+rw*pow(lr[i].d2/lr[i].d4,4));
+        if ((lr[i].d2>1.E-6)&&(lr[i].d4>1.E-6)) ss=ss/(1.+rw*pow(lr[i].d2/lr[i].d4,4));
 //        if(lr[i].d2>1.E-6) ss=ss/(1.+rw*pow(lr[i].d2,4));
         for (int n=0; n<ns;n++){ 
           int j,k,l,m;
@@ -481,7 +482,7 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
           k=(int) (u*sy[1][n]+ v*sy[4][n] + w*sy[7][n]);
           l=(int) (u*sy[2][n]+ v*sy[5][n] + w*sy[8][n]);
           q=(lr[i].d3-2*M_PI*(u*sy[9][n]+v*sy[10][n]+w*sy[11][n]))-M_PI*(j*DX+k*DY+l*DZ);
-          //	  printf("%4d %4d %4d %12g %12g %d %12g %12g %12g\n",j,k,l,ss,q,n,sy[9][n],sy[10][n],sy[11][n]);
+//              printf("%4d %4d %4d ss%12g %12g %d %12g %12g %12g %d %f %f %f\n",j,k,l,ss,q,n,sy[9][n],sy[10][n],sy[11][n],typ,lr[i].d1,lr[i].d4,C[14]);
           j=(999*n1+j)%n1;
           k=(999*n2+k)%n2;
           l=(999*n3+l)%n3;

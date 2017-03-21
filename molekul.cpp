@@ -2240,7 +2240,7 @@ void molekul::UnitZell(double t) {
   //    printf("%d\n",ccc.size());
       bool com=zelle.commensurate;
       zelle.commensurate=false;
-      glLineWidth(1);
+      glLineWidth(1.0);
       for (int i=0; i<ccc.size(); i++){
 //        printf("ccc!!%d\n",i);
         Modulat *m=new Modulat(0,0,0,0,0,0);
@@ -2257,20 +2257,20 @@ void molekul::UnitZell(double t) {
         ncc++;
         }
       glBegin(GL_LINES);
-      glColor4f(1.0f,0.2f,0.2f,0.3);
+      glColor4f(1.0f,(i+1)*0.2f,(i+1)*0.2f,0.75);
 
       glVertex3d(uccmp[0].x,uccmp[0].y,uccmp[0].z);
       glVertex3d(uccmp[4].x,uccmp[4].y,uccmp[4].z);
       
-      glColor4f(0.2f,1.0f,0.2f,0.3);
+      glColor4f((i+1)*0.2f,1.0f,(i+1)*0.2f,0.75);
       glVertex3d(uccmp[0].x,uccmp[0].y,uccmp[0].z);
       glVertex3d(uccmp[2].x,uccmp[2].y,uccmp[2].z);
 
-      glColor4f(0.2f,0.2f,1.0f,0.3);
+      glColor4f((i+1)*0.2f,(i+1)*0.2f,1.0f,0.75);
       glVertex3d(uccmp[0].x,uccmp[0].y,uccmp[0].z);
       glVertex3d(uccmp[1].x,uccmp[1].y,uccmp[1].z);
 
-      glColor4f(0.8f,0.8f,1.0f,0.3);
+      glColor4f(0.8f,0.8f,1.0f,0.75);
       glVertex3d(uccmp[1].x,uccmp[1].y,uccmp[1].z);
       glVertex3d(uccmp[3].x,uccmp[3].y,uccmp[3].z);
 
