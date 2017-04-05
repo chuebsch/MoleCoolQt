@@ -32,7 +32,7 @@ public:
   QAction *foact,*fofcact,*f1f2act;
   QAction *showPolys;
   int cdens, cwid,awidth;
-  QAction *addBond,*killBond,*clearSelection,*centerSelection,*addCoordi,*delCoordi; 
+  QAction *addBond,*killBond,*clearSelection,*centerSelection,*addCoordi,*delCoordi,*hidSelected,*hidUnSelected,*showall;
   QAction *lissajous, *lissajousGay, *lissaADP;
   bool molisoTransparence;
   bool zebra;
@@ -42,7 +42,7 @@ public:
   bool isModulated;
   double mixdim,miydim,mizdim;
   int wirbas,cbas, bas, ibas, iSel, foubas[5];
-  int rotze;
+  int rotze,minxp,minyp,maxxp,maxyp;
   int expandatom;
   double milsize;
   bool back_grad;
@@ -154,6 +154,9 @@ public slots:
   void exportXDFiles();
   void updateBondActions();
   void disSelection();
+  void hidSelection();
+  void hidUnSelection();
+  void unHide();
   void connectSelection();
   void disConnectSelection();
   void coordinativeBonds();

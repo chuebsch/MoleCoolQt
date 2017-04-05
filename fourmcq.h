@@ -36,6 +36,10 @@ int  ih,
 float d1,d2,d3,d4,d5,d6,d7;
 long int size_tail;
 } rec128;
+typedef struct {
+    int h,k,l,m,n,o;
+    float fo,sig,fc,fca,fcb,phase;
+}fcf6d;
 #pragma pack(pop)   /* restore original alignment from stack */
 #define LM 2000000
 
@@ -64,6 +68,7 @@ Q_OBJECT
 	  ~FourMCQ();
           bool loadFouAndPerform(const char filename[],bool neu=true,int maxmap=3);
           bool loadm80AndPerform(const char filename[],bool neu=true);
+          bool loadDimensionm80AndPerform(const char filename[],bool neu=true);
           void map4dto3d(double t, V3 q, const int n[4],const double *D,double *B);
           void temp(INP atom, int h, int k, int  l, double &eij, double &TA, double &TB);
           void PDFbyFFT(int i, int options=14,double proba=50.0);
@@ -73,7 +78,7 @@ Q_OBJECT
           double lintrans,linwidth;
           float sigma[3];
           float iso[3];
-	  int n1,n2,n3,n4,n5;
+      int n1,n2,n3,n4,n5,nn[6];
           V3 urs;
 	  QCheckBox *doMaps;
           double rr,rw;
@@ -100,11 +105,12 @@ Q_OBJECT
       QString path,title;
 	  V3  delDA[27];
 	  fftwf_plan  fwd_plan;
-          fftwf_complex *B;
+          fftwf_complex *B,*B6;
           FNode *nodex,*nodey,*nodez;
           rec128 llr[LM];
 	  rec64 lr[LM];
 	  reco wr[LM];
+      fcf6d m80r[LM];
       float fc2[LM][3];
 	  char cen,git;
           int nr,nc,ns;

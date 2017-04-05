@@ -869,6 +869,7 @@ Composite(double w11,double w12,double w13,double w14,double w21,double w22,doub
 class Modulat{
   public:
     molekul *mol;
+    bool hidden;
     int iamcomp;
     char     atomname[strgl];
     V3       frac0;          // Fraktionelle Koordinaten  
@@ -945,6 +946,7 @@ class Modulat{
     Modulat(int _wo, int _wp, int _wt, int _so, int _sp, int _st):so(_so),sp(_sp),st(_st),wo(_wo),wp(_wp),wt(_wt){
       os.clear();
       oc.clear();
+      hidden=false;
       possin.clear();
       poscos.clear();
       usin.clear();

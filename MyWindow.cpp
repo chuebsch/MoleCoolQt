@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=543;
+int rev=544;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -1039,7 +1039,13 @@ createRenameWgd();
   a->setVisible(false);
   cubeGL->delCoordi=a=tb->addAction("remove all coordinative bonds",cubeGL,SLOT(delCoordinative()));
   a->setVisible(false);
-  cubeGL->clearSelection=a=tb->addAction("Unselect selected atoms",cubeGL,SLOT(disSelection()));
+  cubeGL->clearSelection=a=tb->addAction("Deselect atoms",cubeGL,SLOT(disSelection()));
+  a->setVisible(false);
+  cubeGL->hidSelected=a=tb->addAction("[hide selected]",cubeGL,SLOT(hidSelection()));
+  a->setVisible(false);
+  cubeGL->hidUnSelected=a=tb->addAction("]hide not selected[",cubeGL,SLOT(hidUnSelection()));
+  a->setVisible(false);
+  cubeGL->showall=a=tb->addAction("show hidden",cubeGL,SLOT(unHide()));
   a->setVisible(false);
   cubeGL->centerSelection=a=tb->addAction("Center selected atoms",cubeGL,SLOT(updateGL()));
   a->setCheckable(true);

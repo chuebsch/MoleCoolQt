@@ -2893,6 +2893,7 @@ void molekul::modulated(double t,QList<Modulat> mato,int draw,double steps) {
 
   if (draw&dr_atoms) {
     for  (int i=0; i<mato.size();i++){
+        if (mato.at(i).hidden) continue;
       double occ=mato[i].occupancy(t);
       if (occ<0.1) continue; 
       int myStyle=aStyle[mato[i].OrdZahl];
@@ -2963,6 +2964,7 @@ void molekul::modulated(double t,QList<Modulat> mato,int draw,double steps) {
     V3 beg,end;
     bool out1=false, out2=false;
     for (int k=0;k<bcnt;k++){
+        if (mato.at(bd[k].a).hidden||mato.at(bd[k].e).hidden)continue;
         beg=mato[bd[k].a].kart(t,&out1);
         end=mato[bd[k].e].kart(t,&out2);
         if ((!ccc.isEmpty())&&(!zelle.commensurate)&&(out1)) continue;
@@ -3039,8 +3041,8 @@ void molekul::makeLissajous(QList<Modulat> mato,int proba, bool gay, bool adps,d
           if (gay) Farbverlauf(t,0.0,1.0,o);
           glVertex3d(p0.x, p0.y, p0.z);
           V3 p1=mato[i].kart(t+st);
-          glColor4d(Acol[mato.at(i).OrdZahl][0], Acol[mato.at(i).OrdZahl][1], Acol[mato.at(i).OrdZahl][2],o);
-          if (gay) Farbverlauf(t,0.0,1.0,o);
+          glColor4d(Acol[mato.at(i).OrdZahl][0], Acol[mato.at(i).OrdZahl][1], Acol[mato.at(i).OrdZahl][2],o1);
+          if (gay) Farbverlauf(t,0.0,1.0,o1);
           glVertex3d(p1.x, p1.y, p1.z);
         }
       }

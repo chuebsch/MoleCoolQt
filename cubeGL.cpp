@@ -67,6 +67,9 @@ CubeGL::CubeGL(QWidget *parent) : QGLWidget(parent) {
    mil.y=-0.0103448275862069*vangle;
    noWaitLabel=true;
 }
+int scrx=0,scry=0;
+int scrx0=0,scry0=0;
+bool rectangle=false;
 
 #ifndef POStO2d
 #define POStO2d 1
@@ -160,6 +163,7 @@ void CubeGL::setViewAngle(double ang){
     if ((ang>0.001)&&(ang<160.0)){
       //printf("View angle = %g degrees. %10.8f %f\n",ang,ang/vangle,vangle);
       glScaled(ang/vangle,ang/vangle,ang/vangle);
+      mlsc=vangle/ang;
       vangle=ang;
       milsize=0.03448275862068966*vangle;
       if (!horizont){
@@ -1514,6 +1518,10 @@ void CubeGL::setRotCenter(){
 }
 
 void CubeGL::mousePressEvent(QMouseEvent *event) {
+  if (rectangle){
+      rectangle=false;
+      updateGL();
+  }
   double nahda=200.0,da=0;
   int nahdai=-1;
   extern QList<INP> xdinp;
@@ -1556,6 +1564,8 @@ void CubeGL::mousePressEvent(QMouseEvent *event) {
   }
   if((reSe | moveLab| invEditAble | atomsClickable| xdSetupMode) && (event->buttons() & Qt::LeftButton)){
 
+      scrx0=lastPos.x();
+      scry0=lastPos.y();
     if (nahdai<xdinp.size()) {
 //      extern QList<INP> xdinp;
       extern molekul mol;
@@ -3748,8 +3758,13 @@ void CubeGL::setAtomsClickable(bool on){
 }
 
 void CubeGL::mouseMoveEvent(QMouseEvent *event) {
+
+  rectangle=false;
   double nahda=200.0,da=0;
   int nahdai=-1;
+
+  scrx=event->x();
+  scry=event->y();
   extern QList<INP> xdinp;
   extern QList<Modulat> matoms;
   for (int j=0; j<xdinp.size();j++){
@@ -3783,7 +3798,39 @@ void CubeGL::mouseMoveEvent(QMouseEvent *event) {
     glTranslateL(dx*vangle*3,-dy*vangle*3,0);
     updateGL();
   }
-  if ((event->buttons() & Qt::LeftButton)) {
+  if ((event->buttons() & Qt::LeftButton && (event->modifiers()==(Qt::ShiftModifier|Qt::ControlModifier)))) {
+    rectangle=true;
+    int minxp=_win_width,minyp=_win_height,maxxp=0,maxyp=0;
+    minxp=qMin(scrx0,scrx);
+    minyp=qMin(scry0,scry);
+    maxxp=qMax(scrx0,scrx);
+    maxyp=qMax(scry0,scry);
+    selectedAtoms.clear();
+    for (int j=0; j<matoms.size();j++){
+      //if (mol->showatoms.at(j).hidden) continue;
+      if ((matoms.at(j).screenX>minxp)&&
+          (matoms.at(j).screenX<maxxp)&&
+          (matoms.at(j).screenY>minyp)&&
+          (matoms.at(j).screenY<maxyp)){
+
+        selectedAtoms.append(matoms[j].toINP(tvalue));
+        selectedAtoms.last().GLname=j;
+      }
+    }
+    for (int j=0; j<xdinp.size();j++){
+      //if (mol->showatoms.at(j).hidden) continue;
+      if ((xdinp.at(j).screenX>minxp)&&
+          (xdinp.at(j).screenX<maxxp)&&
+          (xdinp.at(j).screenY>minyp)&&
+          (xdinp.at(j).screenY<maxyp)){
+
+        selectedAtoms.append(xdinp[j]);
+        selectedAtoms.last().GLname=j;
+      }
+    }
+    updateBondActions();
+    updateGL();
+  }else if ((event->buttons() & Qt::LeftButton)) {
       if (!noWaitLabel)moving->start(80);
     if ((!xdinp.isEmpty())&&(moveLab)){
       GLdouble ML[16];
@@ -3915,7 +3962,7 @@ void CubeGL::showMatrix(){
  // qDebug()<<QCoreApplication::libraryPaths () <<QImageWriter::supportedImageFormats ();
 #endif   
 #ifdef _WIN32
-#else
+//#else
   QList<QByteArray> supo = QImageWriter::supportedImageFormats ();
   for (int i=0; i<supo.size();i++) printf("%s\n",QString(supo.at(i)).toStdString().c_str());
   printf("Die MMATRIX ist:\n%9.6f %9.6f %9.6f %9.6f\n%9.6f %9.6f %9.6f %9.6f\n%9.6f %9.6f %9.6f %9.6f\n%9.6f %9.6f %9.6f %9.6f\n",
@@ -3952,31 +3999,80 @@ void CubeGL::showMatrix(){
 void CubeGL::along001(){
   double va=vangle;
   setViewAngle(29.0);
-  MM[0]=1.0;
-  MM[1]=0.0;
-  MM[2]=0.0;
-  MM[4]=0.0;
-  MM[5]=-1.0;
-  MM[6]=0.0;
-  MM[8]=0.0;
-  MM[9]=0.0;
-  MM[10]=-1.0;
+
+  extern molekul mol;
+  V3 azk,a1,az=V3(0,0,1);
+  mol.frac2kart(az,azk);
+  azk = Normalize(azk);
+  double c =(az.x*azk.x + az.y*azk.y + az.z*azk.z);
+  double s= sin(acos(c));
+  double t = 1.0 - c;
+  a1=Normalize(az%azk);
+  MM[0]  = c + a1.x*a1.x*t;
+  MM[5]  = c + a1.y*a1.y*t;
+  MM[10] = c + a1.z*a1.z*t;
+
+
+    double tmp1 = a1.x*a1.y*t;
+    double tmp2 = a1.z*s;
+    MM[4]  = tmp1 + tmp2;
+    MM[1]  = tmp1 - tmp2;
+    tmp1 = a1.x*a1.z*t;
+    tmp2 = a1.y*s;
+    MM[8] = tmp1 - tmp2;
+    MM[2] = tmp1 + tmp2;
+
+    tmp1 = a1.y*a1.z*t;
+    tmp2 = a1.x*s;
+    MM[9] = tmp1 + tmp2;
+    MM[6] = tmp1 - tmp2;
+
+  /*
+
+
+
+  double w=100.0/g2r;//mol.winkel(V3(0,0,1),az)/g2r;
+  qDebug()<<az.x<<az.y<<az.z<<mol.winkel(V3(0,0,1),az)<<mol.winkel(V3(0,1,0),az)<<mol.winkel(V3(1,0,0),az);
+  MM[0] = 1.0;
+  MM[1] = 0.0;
+  MM[2] = 0.0;
+
+  MM[4] = 0.0;
+  MM[5] = cos(w);
+  MM[6] = sin(w);
+
+  MM[8] = 0.0;
+  MM[9] =-sin(w);
+  MM[10]= cos(w);
+
+  MM[0]=  sin(mol.zelle.be/g2r)/sc;
+  MM[1]=  cos(mol.zelle.ga/g2r)/sc;
+  MM[2]=  cos(mol.zelle.be/g2r)/sc;
+
+  MM[4]= -cos(mol.zelle.ga/g2r)/sc;
+  MM[5]=  sin(mol.zelle.al/g2r)/sc;
+  MM[6]= -cos(mol.zelle.al/g2r)/sc;
+
+  MM[8]= -cos(mol.zelle.be/g2r)/sc;
+  MM[9]=  cos(mol.zelle.al/g2r)/sc;
+  MM[10]= sin(mol.zelle.be/g2r)*sin(mol.zelle.al/g2r);
+  */
   glMatrixMode(GL_MODELVIEW);
   glLoadMatrixd(MM);
   setViewAngle(va);
 }
 
-void CubeGL::along010(){
+void CubeGL::along010(){//name ist falsch?! sollte 100 sein
     double va=vangle;
     setViewAngle(29.0);
-  MM[0]=0.0;
-  MM[1]=0.0;
+  MM[0]= 0.0;
+  MM[1]= 0.0;
   MM[2]=-1.0;
   MM[4]=-1.0;
-  MM[5]=0.0;
-  MM[6]=0.0;
-  MM[8]=0.0;
-  MM[9]=1.0;
+  MM[5]= 0.0;
+  MM[6]= 0.0;
+  MM[8]= 0.0;
+  MM[9]= 1.0;
   MM[10]=0.0;
   glLoadMatrixd(MM);
   setViewAngle(va);
@@ -3984,16 +4080,17 @@ void CubeGL::along010(){
 
 void CubeGL::along100(){
     double va=vangle;
-    setViewAngle(29.0);
-  MM[0]=0.0;
-  MM[1]=-1.0;
-  MM[2]=0.0;
-  MM[4]=0.0;
-  MM[5]=0.0;
-  MM[6]=-1.0;
-  MM[8]=1.0;
-  MM[9]=0.0;
-  MM[10]=0.0;
+    setViewAngle(29.0);    extern molekul mol;
+    const double g2r=180.0/M_PI;
+  MM[0]=0.0;// 0.0;
+  MM[1]=-sin(mol.zelle.ga/g2r);// 0.0;
+  MM[2]=-cos(mol.zelle.ga/g2r);//-1.0;
+  MM[4]=0.0;//-1.0;
+  MM[5]= cos(mol.zelle.ga/g2r);// 0.0;
+  MM[6]=-sin(mol.zelle.ga/g2r);// 0.0;
+  MM[8]=1.0;// 0.0;
+  MM[9]=0.0;// 1.0;
+  MM[10]=0.0;//0.0;
   glLoadMatrixd(MM);
   setViewAngle(va);
 }
@@ -4003,6 +4100,9 @@ void CubeGL::draw() {
     if (pause) return;
   if (depthCueing) glEnable(GL_FOG);
   else glDisable(GL_FOG);
+
+  glPopMatrix();
+
   V3 auge=V3(0,0,206);
   int drawopt=(drawAt&1)|(drawBo<<1)|(drawUz<<2)|(elli<<3)|(drawLa<<4);
   static int Pers;
@@ -4116,6 +4216,8 @@ void CubeGL::draw() {
 
   QFont nonAtomFont=QFont(myFont);
   nonAtomFont.setPointSize(myFont.pointSize()/2);
+
+
   glPushMatrix();
   if (back_grad&&(rmode==GL_RENDER)){ 
     glPushMatrix();
@@ -4218,6 +4320,42 @@ void CubeGL::draw() {
     glEnable( GL_DEPTH_TEST );
     glPopMatrix();
   }
+  if (rectangle){
+      //printf("ja %d %d %d %d,%d %d\n",scrx0,scrx,scry0,scry,_win_width,_win_height);
+    glPushMatrix();
+     glMatrixMode(GL_PROJECTION);
+     glLoadIdentity();
+     glOrtho(0.0,_win_width,_win_height,0.0,0.0,1.0);
+     glMatrixMode(GL_MODELVIEW);
+     glPushMatrix();
+
+     glLoadIdentity();
+      glDisable( GL_DEPTH_TEST );
+      glDisable(GL_CULL_FACE);
+      glEnable(GL_LINE_STIPPLE);
+      glEnable(GL_BLEND);
+      glLineWidth(0.5);
+      glDisable(GL_LIGHTING);
+      glLineStipple(3,21845);
+      glBegin(GL_LINE_STRIP);
+      glColor4f(tCR,tCG,tCB,1.0f);
+      glVertex3f(scrx0,scry0,0.0f);
+      glVertex3f(scrx,scry0,0.0f);
+      glVertex3f(scrx,scry,0.0f);
+      glVertex3f(scrx0,scry,0.0f);
+      glVertex3f(scrx0,scry0,0.0f);
+      glEnd();
+      glDisable(GL_LINE_STIPPLE);
+      glDisable(GL_BLEND);
+      glEnable(GL_LIGHTING);
+      glEnable( GL_DEPTH_TEST );
+     glPopMatrix();
+     glMatrixMode(GL_PROJECTION);
+     glLoadIdentity();
+     gluPerspective( vangle, (double)_win_width/_win_height, 5.0, 8000.0 );
+     glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+  }
 /*{
     double mat[16];
     //  else
@@ -4243,7 +4381,7 @@ void CubeGL::draw() {
     glEnable( GL_LIGHTING ); 
     glEnable( GL_DEPTH_TEST ); 
     glLoadMatrixd(mat);
-  }*/  
+  }*/
   glDisable(GL_TEXTURE_2D);
   glPopMatrix();
   glPushMatrix();
@@ -4551,6 +4689,7 @@ if (!selectedAtoms.isEmpty()){
 	    }
 	  }    
 	  for (int j=0;j<matoms.size();j++){
+        if (matoms[j].hidden)continue;
 	    if (imFokus==j) qglColor(Qt::yellow); else  glColor4f(tCR,tCG,tCB,tCA);
             if ((imFokus==j)||(!(mol.aStyle[matoms[j].OrdZahl]&ATOM_STYLE_NOLABEL))){
               bool out=false;
@@ -4599,8 +4738,7 @@ if (!selectedAtoms.isEmpty()){
         glPopMatrix();
     }
     } 
-  
-    glPopMatrix();
+
 }
 
 void CubeGL::dieDiPole(V3 org){
@@ -4653,8 +4791,11 @@ void CubeGL::dieDiPole(V3 org){
 
 
 void CubeGL::updateBondActions(){
+    extern QList<Modulat> matoms;
   clearSelection->setVisible(!selectedAtoms.isEmpty());
   centerSelection->setVisible(!selectedAtoms.isEmpty());
+  hidSelected->setVisible((!matoms.isEmpty())&&(!selectedAtoms.isEmpty()));
+  hidUnSelected->setVisible((!matoms.isEmpty())&&(!selectedAtoms.isEmpty()));
   extern molekul mol;
   delCoordi->setVisible(!mol.cBonds.isEmpty());
 
@@ -4692,6 +4833,43 @@ void CubeGL::disSelection(){
   updateGL();
 }
 
+
+void CubeGL::hidSelection(){
+    extern QList<Modulat> matoms;
+    if (matoms.isEmpty()) return;
+    for (int i=0; i<selectedAtoms.size();i++){
+        matoms[selectedAtoms.at(i).GLname].hidden=true;
+    }
+    selectedAtoms.clear();
+    showall->setVisible(true);
+    updateBondActions();
+    updateGL();
+}
+
+void CubeGL::hidUnSelection(){
+    extern QList<Modulat> matoms;
+    if (matoms.isEmpty()) return;
+    for (int i=0; i<matoms.size();i++)
+        matoms[i].hidden=true;
+    for (int i=0; i<selectedAtoms.size();i++){
+        matoms[selectedAtoms.at(i).GLname].hidden=false;
+    }selectedAtoms.clear();
+
+    showall->setVisible(true);
+    updateBondActions();
+    updateGL();
+}
+
+void CubeGL::unHide(){
+    extern QList<Modulat> matoms;
+    if (matoms.isEmpty()) return;
+    for (int i=0; i<matoms.size();i++)
+        matoms[i].hidden=false;
+    showall->setVisible(false);
+    updateBondActions();
+    updateGL();
+
+}
 
 void CubeGL::connectSelection(){
   if (selectedAtoms.size()!=2) return;

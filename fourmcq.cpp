@@ -128,6 +128,539 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
     //  printf(line);
     if (!strncmp(line,"title",5)) {
       sscanf(line,"title %[^!\r\n]",titl);
+      trimm(titl);
+      title=QString(titl);
+    }
+    if (!strncmp(line,"phase",5)) {
+      phcnt++;
+      //      printf("%s phase=>%d %d\n",line,phcnt,ok);
+      if (curentPhase!=phcnt) continue;
+    }
+    if (((!phcnt)||((phcnt)&&(curentPhase==phcnt)))&&(!strncmp(line,"cell ",5))) {
+      sscanf(line,"cell %lf %lf %lf %lf %lf %lf",&C[0],&C[1],&C[2],&C[3],&C[4],&C[5]);
+
+      for (i=0;i<3;i++){
+        if (C[i]<0.1) return 0;
+        T=.0174533*C[i+3];
+        if (T<0.001) return 0;
+        D[i]=sin(T);
+        D[i+3]=cos(T);
+        C[i+6]=(D[i]/(C[i]*C[i]));
+      }
+      V=1.0-D[3]*D[3]-D[4]*D[4]-D[5]*D[5]+2.0*D[3]*D[4]*D[5];
+      C[6]/=V;
+      C[7]/=V;
+      C[8]/=V;
+      C[9]= 2.*sqrt(C[7]*C[8])*(D[4]*D[5]-D[3])/(D[2]*D[2]);
+      C[10]=2.*sqrt(C[6]*C[8])*(D[3]*D[5]-D[4])/(D[0]*D[2]);
+      C[11]=2.*sqrt(C[6]*C[7])*(D[3]*D[4]-D[5])/(D[0]*D[1]);
+      C[14]=C[1]*C[2]*C[0]*sqrt(V);//V
+      D[6]=C[1]*C[2]*D[0]/C[14];//a*
+      D[7]=C[2]*C[0]*D[1]/C[14];//b*
+      D[8]=C[0]*C[1]*D[2]/C[14];//c*
+      cral=(D[4]*D[5]-D[3])/(D[1]*D[2]);
+      crbe=(D[5]*D[3]-D[4])/(D[2]*D[0]);
+      crga=(D[3]*D[4]-D[5])/(D[0]*D[1]);
+      /*printf("\nC:\n1:%g 2:%g 3:%g\n  4:%g 5:%g 6:%g\n  7:%g 8:%g 9:%g\n  10:%g 11:%g 12:%g   %g\n",
+        C[0],C[1],C[2],C[3],C[4],C[5],C[6],C[7],C[8],C[9],C[10],C[11],C[14]
+        );
+        printf("\nD:\n1:%g 2:%g 3:%g\n  4:%g 5:%g 6:%g\n  7:%g 8:%g 9:%g\n ",
+        D[0],D[1],D[2],D[3],D[4],D[5],D[6],D[7],D[8]
+        );// */
+    }
+    //    if (!strncmp(line,"WAVE",4)){
+    //      sscanf(line,"WAVE %lf",&wave);
+    //      /* printf("wavelength = %g\n",wave);*/
+    //    }
+    if (((!phcnt)||((phcnt)&&(curentPhase==phcnt)))&&(!strncmp(line,"lattice ",8))){
+      sscanf(line,"lattice %1c",&git);
+      //nc=(cen=='C')?1:0;
+      nc=0;
+      //       printf("Structure is %scentrosymmetric and %c.\n",(nc)?"":"non-",git);
+    }
+    if (((!phcnt)||((phcnt)&&(curentPhase==phcnt)))&&(!strncmp(line,"symmetry ",9))){
+      decodeSymm2(line);
+      /*      fprintf(stderr,"%4.0f%4.0f%4.0f %4f\n%4.0f%4.0f%4.0f %4f\n%4.0f%4.0f%4.0f %4f\n",
+              sy[0][ns], sy[3][ns],sy[6][ns],sy[9][ns],
+              sy[1][ns], sy[4][ns],sy[7][ns],sy[10][ns],
+              sy[2][ns], sy[5][ns],sy[8][ns],sy[11][ns]);// */
+      ns++;
+    }
+    if (((!phcnt)||((phcnt)&&(curentPhase==phcnt)))&&(!strncmp(line,"unitsnumb",9))) {ok=1;  }
+  }while ((!ok)&&(!feof(mapin)));
+
+  fclose(mapin);
+
+  //from drawxtl ...>
+  if ((mapin = fopen (filename, "r")) == NULL) {
+    fprintf (stderr, "Cannot open Fo/Fc (JANA m80) file %s\n", filename);
+    return false;
+  }
+  // <...
+  //from drawxtl ...>
+  if (fgets (line, 199, mapin)) {
+    i = sscanf (line, "%hd %hd %hd %hd %hd %hd %hd %f", &ih0, &ik0, &il0, &im, &in, &io, &is, &fo0);
+    if (i > 4)
+      dimension = i - 2;
+  } else {
+    fprintf (stderr, "Error reading M80 file %s!\n",filename);
+    //    Error_Box (string);
+    //    free (fo);
+    //    free (fc);
+    //    free (f2);
+    //    free (ih);
+    //    free (ik);
+    //    free (il);
+    fclose (mapin);
+    return false;
+  }
+  printf("We have %d Dimensions\n",dimension);
+ // qDebug()<<dimension<<"dimensions";
+  // <...
+  //
+  nr=0;
+//  FILE *test=fopen("test1234.hkl","wt");
+
+  do {
+    skip = 0;
+    fsig = 0.1;
+    if (dimension > 3) {
+      switch (dimension) {
+        case 4:
+          im = 0;
+          i = sscanf (line, "%4hd%4hd%4hd%4hd%4hd%12f%*12f%12f%12f%12f", &ih0, &ik0, &il0, &im, &iphid, &fo0,&fc1, &fc0, &f20);
+          // fprintf(test,"%d %d %d %d %d %f %f %f \n",ih0,ik0,il0,im,iphid,fo0,fc0,f20);
+
+          if (im != 0){
+            skip = 1;
+          }
+          break;
+        case 5:
+          im = in = 0;
+          i = sscanf (line, "%4hd%4hd%4hd%4hd%4hd%4hd%12f%*12f%12f%12f%12f", &ih0,
+              &ik0, &il0, &im, &in, &iphid, &fo0,&fc1, &fc0, &f20);
+          if (im != 0 || in != 0)
+            skip = 1;
+          break;
+        case 6:
+          im = in = io = 0;
+          i = sscanf (line, "%4hd%4hd%4hd%4hd%4hd%4hd%4hd%12f%*12f%12f%12f%12f",
+              &ih0, &ik0, &il0, &im, &in, &io, &iphid, &fo0,&fc1, &fc0, &f20);
+          if (im != 0 || in != 0 || io != 0)
+            skip = 1;
+          break;
+      }
+    } else {
+      i = sscanf (line, "%4hd%4hd%4hd%4hd%12f%*12f%12f%12f%12f%*12f%*12f%*12f%*12f%*12f%*12f%12f",
+      //i = sscanf (line, "%4hd%4hd%4hd%4hd%12f %*12f %12f %12f %12f %*12f %*12f %*12f %*12f %*12f %*12f %12f",
+          &ih0, &ik0, &il0, &iphid,
+          &fo0,&fc1, &fc0, &f20, &fsig);
+          //float www=atan2f (f20 , fc0 );
+   /*     fprintf(test,"%4d%4d%4d fo%9f fc%9f=%9f a%9f b%9f sig%9f #%d phang%f A%f B%f\n",ih0,ik0,il0,fo0,
+          fc1-sqrt(fc0*fc0+f20*f20),
+          fc1,fc0,f20,fsig,i,www,cosf(www)*(fo0-fc1),sinf(www)*(fo0-fc1));// */
+    }
+
+    if (iphid!=curentPhase) skip=1;
+    if (i < dimension + 3)
+      break;
+
+    if (skip == 1) {	// satellite reflection of modulated structure
+      fgets (line, 199, mapin);
+      continue;
+    }
+//    fc1 = (float) sqrtf (fc0 * fc0 + f20 * f20);
+//    if (fc1 == 0.)          // happens with data generated by superflip
+//      f20 = 0.;
+//    else
+    f20 = (float) atan2f (f20 , fc0 );
+    //f20 = (float) atan2f (fc0 , f20 );
+    lr[nr].ih=ih0;
+    lr[nr].ik=ik0;
+    lr[nr].il=il0;
+    lr[nr].d1=fo0;
+    lr[nr].d2=fsig;
+    lr[nr].d4=fc1;//abs fc
+    lr[nr].d3=f20;//fc phase
+    lr[nr].d5=lr[nr].d6=lr[nr].d7=0;//not there afaik
+    //    fprintf(test,"%4d%4d%4d %9f %9f %9f #%d\n",lr[nr].ih,lr[nr].ik,lr[nr].il,lr[nr].d1,lr[nr].d2,lr[nr].d3,nr);
+    nr++;
+    fgets (line, 199, mapin);
+  }while (i > 0 && !feof (mapin));
+  fclose(mapin);
+
+  printf("%d Reflections read from %s.\n",nr,filename);
+  for (int i=0;i<ns;i++){
+    /*fprintf(test,"SYMM: %d\n%9.6f %9.6f %9.6f %5.2f\n%9.6f %9.6f %9.6f %5.2f\n%9.6f %9.6f %9.6f %5.2f\n",i+1,
+      sy[0][i], sy[1][i], sy[2][i], sy[9][i],
+      sy[3][i], sy[4][i], sy[5][i], sy[10][i],
+      sy[6][i], sy[7][i], sy[8][i], sy[11][i]);// */
+  }
+  for (int i=0;i<nr;i++){
+    double u=lr[i].ih,v=lr[i].ik,w=lr[i].il;
+    int mh=lr[i].ih,mk=lr[i].ik,ml=lr[i].il;
+    double p,q=lr[i].d3;
+    lr[i].d3=fmod(4*M_PI+q,2*M_PI);
+    for (int k=0; k<ns; k++){
+      int nh,nk,nl;
+      double t=1.0;
+      nh=(int) (u*sy[0][k]+ v*sy[3][k] + w*sy[6][k]);
+      nk=(int) (u*sy[1][k]+ v*sy[4][k] + w*sy[7][k]);
+      nl=(int) (u*sy[2][k]+ v*sy[5][k] + w*sy[8][k]);
+      //fprintf(test,"== %d %d %d s%d ml%d ==\n",nh,nk,nl,k, ml);
+
+      if((nl<0)||((nl==0)&&(nk<0))||((nl==0)&&(nk==0)&&(nh<0)))
+      {nh*=-1;nk*=-1;nl*=-1;t=-1.0;
+        //fprintf(test,"%d %d %d s%d ml%d\n",nh,nk,nl,k, ml);
+      }
+      if ((nl<ml)||((nl==ml)&&(nk<mk))||((nl==ml)&&(nk==mk)&&(nh<=mh))) continue;
+      mh=nh;mk=nk;ml=nl;
+      p=u*sy[9][k]+v*sy[10][k]+w*sy[11][k];
+      lr[i].d3=fmod(4*M_PI+t*fmod(q-2*M_PI*p,2*M_PI)-0.01,2*M_PI)+0.01;
+    }
+    lr[i].ih=mh;
+    lr[i].ik=mk;
+    lr[i].il=ml;
+    /*fprintf(test ,"%4d%4d%4d fo: %12.5f sfo: %10.5f phase: %10.6f a1: %12g b1: %12g f2c %12.5f f2cphase: %10.6f %f %f %f\n",
+      lr[i].ih,
+      lr[i].ik,
+      lr[i].il,
+      lr[i].d1,
+      lr[i].d2,
+      lr[i].d3,
+      lr[i].d4,
+      lr[i].d5,
+      lr[i].d6,
+      lr[i].d7,u,v,w); // */
+
+
+  }
+//  fclose(test);
+
+  sorthkl(nr,lr);
+  int n=-1;
+  /*
+     FILE *unmerg=fopen("unmerged.jana-mcq.hkl","wt");*/
+//     FILE *merg=fopen("merged.jana-mcq.hkl","wt");
+  //  */
+  {int i=0;
+    while(i<nr){
+      double t=0.;
+      double u=0.;
+      double v=0.;
+      double z=0.;
+  //    double y=0.;
+      //      double z2=0.;
+      //      double y2=0.;
+      double p=0.;
+
+      int m;
+      int k=i;
+      while ((i<nr)&&(lr[i].ih==lr[k].ih)&&(lr[i].ik==lr[k].ik)&&(lr[i].il==lr[k].il)) {
+        /*
+           fprintf(unmerg,"%4d%4d%4d fo: %12.5f sfo: %10.5f phase: %10.6f a1: %12g b1: %12g f2c %12.5f f2cphase: %10.6f #%d\n",lr[i].ih,lr[i].ik,lr[i].il,
+           lr[i].d1,
+           lr[i].d2,
+           lr[i].d3,
+           lr[i].d4,
+           lr[i].d5,
+           lr[i].d6,
+           lr[i].d7,
+
+           i);
+        // */
+        t=t+1.;
+        u+=lr[i].d1;
+        z=lr[i].d4;
+//        y+=z;
+//        printf("merg\n");
+        //v+=1./(lr[i].d2*lr[i].d2);
+        v+=(lr[i].d2);
+        p=lr[i].d3;
+        i++;
+      }
+      m=n+1;
+      lr[m].d1=fmax(0.,u/t);
+      lr[m].d4=z;
+      lr[m].d2=v/(t*sqrt(t));
+      lr[m].d3=p;
+      n=m;
+      lr[n].ih=lr[k].ih;
+      lr[n].ik=lr[k].ik;
+      lr[n].il=lr[k].il;
+     /*
+         fprintf(merg,"%4d%4d%4d fo: %12.5f sfo: %10.5f phase: %10.6f a1: %12g b1: %12g  #%d\n",
+         lr[n].ih,
+         lr[n].ik,
+         lr[n].il,
+         lr[n].d1,
+         lr[n].d2,
+         lr[n].d3/M_PI*180.0,
+         lr[n].d4,
+         lr[n].d1-lr[n].d4,
+
+         n);
+      // */
+      if ((lr[n].ih|lr[n].ik|lr[n].il)==0) printf("%4d%4d%4d fo: %12.5f sfo: %10.5f\n",lr[n].ih,lr[n].ik,lr[n].il,lr[n].d1,lr[n].d2);
+
+    }
+  }
+  /*
+     fclose(merg);
+     fclose(unmerg);
+  // */
+  n++;
+  fprintf(stderr,"%d %d \n",nr,n);
+  nr=n;
+
+  {
+    float DX;
+    float DY;
+    float DZ;
+
+
+    {
+      int mh=0, mk=0, ml=0,j;
+      for (int n=0; n<nr; n++){
+        double u=lr[n].ih,v=lr[n].ik,w=lr[n].il;
+        double a,b,c;
+        for (int k=0; k<ns;k++){
+          a=abs((int)(u*sy[0][k]+v*sy[3][k]+w*sy[6][k]));
+          b=abs((int)(u*sy[1][k]+v*sy[4][k]+w*sy[7][k]));
+          c=abs((int)(u*sy[2][k]+v*sy[5][k]+w*sy[8][k]));
+          mh=(mh<a)?a:mh;
+          mk=(mk<b)?b:mk;
+          ml=(ml<c)?c:ml;
+        }
+      }
+      printf("max hkl = %d %d %d\n",mh,mk,ml);
+      j=(int)(rr*mh+.5);
+      for (int i=0; it[i]< j; i++)n1=it[i+1];
+      j=(int)(rr*mk+.5);
+      for (int i=0; it[i]< j; i++)n2=it[i+1];
+      j=(int)(rr*ml+.5);
+      for (int i=0; (it[i]< j)||((nc)&&(it[i]%2)); i++) n3=it[i+1];
+      n4=n2*n1;
+      n5=n3*n4;
+      datfo=(float*) malloc(sizeof(float)*n5);
+      datfo_fc=(float*) malloc(sizeof(float)*n5);
+      datf1_f2=NULL;//(float*) malloc(sizeof(float)*n5);
+      DX=1.0/n1;
+      DY=1.0/n2;
+      DZ=1.0/n3;
+    }
+    for (int typ=0; typ<2;typ++){
+      B=(fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*n5);
+      for (int i=0; i<n5; i++){B[i][0]=0;B[i][1]=0;}
+      for (int i=0; i<nr;i++){
+        float  u,v,w;
+        u=lr[i].ih;
+        v=lr[i].ik;
+        w=lr[i].il;
+        float  ss,s=0,t=0,q,p;
+        for (int n=0; n<ns;n++){
+          int j,k,l;
+          j=(int) (u*sy[0][n]+ v*sy[3][n] + w*sy[6][n]);
+          k=(int) (u*sy[1][n]+ v*sy[4][n] + w*sy[7][n]);
+          l=(int) (u*sy[2][n]+ v*sy[5][n] + w*sy[8][n]);
+          if((abs(j-lr[i].ih)+abs(k-lr[i].ik)+abs(l-lr[i].il))==0)s+=1.0;
+          if(abs(j+lr[i].ih)+abs(k+lr[i].ik)+abs(l+lr[i].il)==0)t+=1.0;
+        }
+        //sintl=(lr[i].ih*lr[i].ih*D[6]*D[6] + lr[i].ik*lr[i].ik*D[7]*D[7] + lr[i].il*lr[i].il*D[8]*D[8] + 2*lr[i].ih*lr[i].il*D[6]*D[8]*crbe+ 2*lr[i].ik*lr[i].il*D[7]*D[8]*cral+ 2*lr[i].ih*lr[i].ik*D[6]*D[7]*crga)*-M_PI;//this is -4*pi*(sin(theta) / lambda)^2
+        //       if (abs(lr[i].ih)+abs(lr[i].ik)+abs(lr[i].il)<7) printf("%4d%4d%4d %g %g %g\n",lr[i].ih,lr[i].ik,lr[i].il ,sintl,sqrt(sintl),1.0/sintl);
+        sintl=1.0;
+   //     if (sintl<0.00000001)sintl=0.000000001;
+        if(typ==0) ss=(lr[i].d1-lr[i].d4)/(C[14]*(s+t)*sintl);//diff
+        //if(typ==0) {ss=(lr[i].d1)/(C[14]*(s+t));ss*=ss;}
+        //	if(typ==0) ss=(fmod1)/(C[14]*(s+t)*sintl);
+        else if (typ==1) ss=(lr[i].d1)/(C[14]*(s+t)*sintl);
+        if ((lr[i].d2>1.E-6)&&(lr[i].d4>1.E-6)) ss=ss/(1.+rw*pow(lr[i].d2/lr[i].d4,4));
+//        if(lr[i].d2>1.E-6) ss=ss/(1.+rw*pow(lr[i].d2,4));
+        for (int n=0; n<ns;n++){
+          int j,k,l,m;
+          j=(int) (u*sy[0][n]+ v*sy[3][n] + w*sy[6][n]);
+          k=(int) (u*sy[1][n]+ v*sy[4][n] + w*sy[7][n]);
+          l=(int) (u*sy[2][n]+ v*sy[5][n] + w*sy[8][n]);
+          q=(lr[i].d3-2*M_PI*(u*sy[9][n]+v*sy[10][n]+w*sy[11][n]))-M_PI*(j*DX+k*DY+l*DZ);
+//              printf("%4d %4d %4d ss%12g %12g %d %12g %12g %12g %d %f %f %f\n",j,k,l,ss,q,n,sy[9][n],sy[10][n],sy[11][n],typ,lr[i].d1,lr[i].d4,C[14]);
+          j=(999*n1+j)%n1;
+          k=(999*n2+k)%n2;
+          l=(999*n3+l)%n3;
+          m=j+n1*(k+n2*l);
+          p=ss*cosf(q);
+          B[m][0]=p;
+          q=ss*sinf(q);
+          B[m][1]=q;
+          j*=-1;
+          if(j<0)j=n1+j;
+          k*=-1;
+          if(k<0)k=n2+k;
+          l*=-1;
+          if(l<0)l=n3+l;
+          m=j+n1*(k+n2*l);
+          B[m][0]=p;
+          B[m][1]=-q;
+        }
+      }
+      if (typ==0) {
+        FILE *OOO=fopen("123.hkl","wt");
+        for (int i=0; i<n5;i++){
+          if ((B[i][0]!=0.0)||(B[i][1]!=0.0))fprintf(OOO,"%8d %18.9e %18.9e \n",i,B[i][0],B[i][1]);
+        }
+        fclose(OOO);
+      }
+      fprintf(stderr,"Starting Fourier %d %d %d!\n",n1,n2,n3);
+      fwd_plan = fftwf_plan_dft_3d(n3,n2,n1,B,B,FFTW_FORWARD,FFTW_ESTIMATE);
+      fftwf_execute(fwd_plan);
+      fftwf_destroy_plan(fwd_plan);
+      float t=0;
+      double DM=0.,  DS=0., DD  ;
+      for (int i=0; i<n5;i++){
+        DD=B[i][0];
+        DM+=DD;
+        DS+=DD*DD;
+        if (typ==0) datfo_fc[i]=DD;
+        else if (typ==1) datfo[i]=DD;
+      }
+      sigma[typ]=t=sqrt((DS/n5)-((DM/n5)*(DM/n5)));
+      fftwf_free(B);
+      fprintf(stderr,"Finished! sigma %g %g %g %d\n",t,DS,DM,n5);
+    }//1
+  }//2
+  sigma[2]=9*sigma[0];
+  extern QList<INP> xdinp;
+  extern QList<Modulat> matoms;
+  urs=V3(0,0,0);int gt=0;
+  if (xdinp.isEmpty()){
+    for (int i=0; i<matoms.size();i++) {
+      urs+=matoms.at(i).frac0;
+      gt++;
+    }
+  }else{
+    for (int i=0; i<xdinp.size();i++) {
+      urs+=xdinp.at(i).frac;
+      gt++;
+    }
+  }
+  gt=(gt>0)?gt:1;
+  urs*=1.0/gt;
+  urs=V3(1,1,1)-1.0*urs;
+  mole->frac2kart(urs,urs);
+  //printf("ursprung %g %g %g %d\n",urs.x,urs.y,urs.z,gt);
+  nodex= (FNode*)malloc(sizeof(FNode)*n5);
+  nodey= (FNode*)malloc(sizeof(FNode)*n5);
+  nodez= (FNode*)malloc(sizeof(FNode)*n5);
+  for (int o=0; o<n5;o++){
+    nodex[o].flag=0;
+    nodey[o].flag=0;
+    nodez[o].flag=0;
+  }
+  dx=V3(1.0/(n1),0,0);
+  dy=V3(0,1.0/(n2),0);
+  dz=V3(0,0,1.0/(n3));
+  mole->frac2kart(dx,dx);
+  mole->frac2kart(dy,dy);
+  mole->frac2kart(dz,dz);
+  delDA[ 0]=  -n1*dx -n2*dy -n3*dz;//nx ny,nz??
+  delDA[ 1]=         -n2*dy -n3*dz;
+  delDA[ 2]=   n1*dx -n2*dy -n3*dz;
+  delDA[ 3]=  -n1*dx        -n3*dz;
+  delDA[ 4]=                -n3*dz;
+  delDA[ 5]=   n1*dx        -n3*dz;
+  delDA[ 6]=  -n1*dx +n2*dy -n3*dz;
+  delDA[ 7]=          n2*dy -n3*dz;
+  delDA[ 8]=   n1*dx +n2*dy -n3*dz;
+  delDA[ 9]=  -n1*dx -n2*dy       ;
+  delDA[10]=         -n2*dy       ;
+  delDA[11]=   n1*dx -n2*dy       ;
+  delDA[12]=  -n1*dx              ;
+  delDA[13]=  V3(0,0,0)           ;
+  delDA[14]=   n1*dx              ;
+  delDA[15]=  -n1*dx +n2*dy       ;
+  delDA[16]=          n2*dy       ;
+  delDA[17]=   n1*dx +n2*dy       ;
+  delDA[18]=  -n1*dx -n2*dy +n3*dz;
+  delDA[19]=         -n2*dy +n3*dz;
+  delDA[20]=   n1*dx -n2*dy +n3*dz;
+  delDA[21]=  -n1*dx        +n3*dz;
+  delDA[22]=                +n3*dz;
+  delDA[23]=   n1*dx        +n3*dz;
+  delDA[24]=  -n1*dx +n2*dy +n3*dz;
+  delDA[25]=          n2*dy +n3*dz;
+  delDA[26]=   n1*dx +n2*dy +n3*dz;
+  gen_surface(neu,0,3);
+  return true;
+}
+
+
+
+bool FourMCQ::loadDimensionm80AndPerform(const char filename[],bool neu){
+  const int it[480]= {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 20, 21, 22, 24, 25, 26, 27,
+    28, 30, 32, 33, 35, 36, 39, 40, 42, 44, 45, 48, 49, 50, 52, 54, 55, 56, 60, 63, 64, 65, 66, 70, 72, 75, 77,
+    78, 80, 81, 84, 88, 90, 91, 96, 98, 99, 100, 104, 105, 108, 110, 112, 117, 120, 125, 126, 128, 130, 132, 135,
+    140, 143, 144, 147, 150, 154, 156, 160, 162, 165, 168, 175, 176, 180, 182, 189, 192, 195, 196, 198, 200, 208,
+    210, 216, 220, 224, 225, 231, 234, 240, 243, 245, 250, 252, 256, 260, 264, 270, 273, 275, 280, 286, 288, 294,
+    297, 300, 308, 312, 315, 320, 324, 325, 330, 336, 343, 350, 351, 352, 360, 364, 375, 378, 384, 385, 390, 392,
+    396, 400, 405, 416, 420, 429, 432, 440, 441, 448, 450, 455, 462, 468, 480, 486, 490, 495, 500, 504, 512, 520,
+    525, 528, 539, 540, 546, 550, 560, 567, 572, 576, 585, 588, 594, 600, 616, 624, 625, 630, 637, 640, 648, 650,
+    660, 672, 675, 686, 693, 700, 702, 704, 715, 720, 728, 729, 735, 750, 756, 768, 770, 780, 784, 792, 800, 810,
+    819, 825, 832, 840, 858, 864, 875, 880, 882, 891, 896, 900, 910, 924, 936, 945, 960, 972, 975, 980, 990, 1000,
+    1001, 1008, 1024, 1029, 1040, 1050, 1053, 1056, 1078, 1080, 1092, 1100, 1120, 1125, 1134, 1144, 1152, 1155,
+    1170, 1176, 1188, 1200, 1215, 1225, 1232, 1248, 1250, 1260, 1274, 1280, 1287, 1296, 1300, 1320, 1323, 1344,
+    1350, 1365, 1372, 1375, 1386, 1400, 1404, 1408, 1430, 1440, 1456, 1458, 1470, 1485, 1500, 1512, 1536, 1540,
+    1560, 1568, 1575, 1584, 1600, 1617, 1620, 1625, 1638, 1650, 1664, 1680, 1701, 1715, 1716, 1728, 1750, 1755,
+    1760, 1764, 1782, 1792, 1800, 1820, 1848, 1872, 1875, 1890, 1911, 1920, 1925, 1944, 1950, 1960, 1980, 2000,
+    2002, 2016, 2025, 2048, 2058, 2079, 2080, 2100, 2106, 2112, 2145, 2156, 2160, 2184, 2187, 2200, 2205, 2240,
+    2250, 2268, 2275, 2288, 2304, 2310, 2340, 2352, 2376, 2400, 2401, 2430, 2450, 2457, 2464, 2475, 2496, 2500,
+    2520, 2548, 2560, 2574, 2592, 2600, 2625, 2640, 2646, 2673, 2688, 2695, 2700, 2730, 2744, 2750, 2772, 2800,
+    2808, 2816, 2835, 2860, 2880, 2912, 2916, 2925, 2940, 2970, 3000, 3003, 3024, 3072, 3080, 3087, 3120, 3125,
+    3136, 3150, 3159, 3168, 3185, 3200, 3234, 3240, 3250, 3276, 3300, 3328, 3360, 3375, 3402, 3430, 3432, 3456,
+    3465, 3500, 3510, 3520, 3528, 3564, 3575, 3584, 3600, 3640, 3645, 3675, 3696, 3744, 3750, 3773, 3780, 3822,
+    3840, 3850, 3861, 3888, 3900, 3920, 3960, 3969, 4000, 4004, 4032, 4050, 4095, 4096, 4116, 4125, 4158, 4160,
+    4200, 4212, 4224, 4290, 4312, 4320, 4368, 4374, 4375, 4400, 4410, 4455, 4459, 4480, 4500, 4536, 4550, 4576,
+    4608, 4620, 4680, 4704, 4725, 4752, 4800, 4802, 4851, 4860, 4875, 4900, 4914, 4928, 4950, 4992, 5000};
+  if (!doMaps->isChecked()) return false;
+  killmaps();
+  double T,V;
+  path=filename;
+  datfo_f2=NULL;
+  char line[200];
+  FILE *mapin;
+  int dimension=0;
+  int i,ok=0;
+  short int ih0, ik0, il0, im, in,io, is, iphid;//iphid stucture-phase-id
+  float fo0,fc0,fc1,f20,fsig;
+  ns=0;
+  sy[0][ns]=1.0;
+  sy[1][ns]=0.0;
+  sy[2][ns]=0.0;
+
+  sy[3][ns]=0.0;
+  sy[4][ns]=1.0;
+  sy[5][ns]=0.0;
+
+  sy[6][ns]=0.0;
+  sy[7][ns]=0.0;
+  sy[8][ns]=1.0;
+
+  sy[9][ns]=0.0;
+  sy[10][ns]=0.0;
+  sy[11][ns]=0.0;
+  int phcnt=0;
+  char m50name[1024];
+  strcpy(m50name,filename);
+  i=strlen(m50name);
+  //  printf("Current Phase %d\n",curentPhase);
+  m50name[i-2]='5';
+  if ((mapin = fopen (m50name, "rt")) == NULL){
+    fprintf (stderr, "Cannot open (JANA m50) file %s\n", m50name);
+    return false;
+  }
+  do{
+    fgets(line,120,mapin);
+    //  printf(line);
+    if (!strncmp(line,"title",5)) {
+      sscanf(line,"title %[^!\r\n]",titl);
       trimm(titl);      
       title=QString(titl);
     }
@@ -222,7 +755,6 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
 //  FILE *test=fopen("test1234.hkl","wt");
 
   do {
-    skip = 0;
     fsig = 0.1;
     if (dimension > 3) {
       switch (dimension) {
@@ -231,23 +763,16 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
           i = sscanf (line, "%4hd%4hd%4hd%4hd%4hd%12f%*12f%12f%12f%12f", &ih0, &ik0, &il0, &im, &iphid, &fo0,&fc1, &fc0, &f20);
           // fprintf(test,"%d %d %d %d %d %f %f %f \n",ih0,ik0,il0,im,iphid,fo0,fc0,f20);
 
-          if (im != 0){
-            skip = 1;
-          }
           break;
         case 5:
           im = in = 0;
           i = sscanf (line, "%4hd%4hd%4hd%4hd%4hd%4hd%12f%*12f%12f%12f%12f", &ih0,
               &ik0, &il0, &im, &in, &iphid, &fo0,&fc1, &fc0, &f20);
-          if (im != 0 || in != 0)
-            skip = 1;
           break;
         case 6:
           im = in = io = 0;
           i = sscanf (line, "%4hd%4hd%4hd%4hd%4hd%4hd%4hd%12f%*12f%12f%12f%12f",
               &ih0, &ik0, &il0, &im, &in, &io, &iphid, &fo0,&fc1, &fc0, &f20);
-          if (im != 0 || in != 0 || io != 0)
-            skip = 1;
           break;
       }
     } else {
@@ -261,40 +786,40 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
           fc1,fc0,f20,fsig,i,www,cosf(www)*(fo0-fc1),sinf(www)*(fo0-fc1));// */
     }
 
-    if (iphid!=curentPhase) skip=1;
+    if (iphid!=curentPhase) {(fgets (line, 199, mapin));continue;}
     if (i < dimension + 3)
       break;
 
-    if (skip == 1) {	// satellite reflection of modulated structure
-      fgets (line, 199, mapin);
-      continue;
-    }
 //    fc1 = (float) sqrtf (fc0 * fc0 + f20 * f20);
 //    if (fc1 == 0.)          // happens with data generated by superflip
 //      f20 = 0.;
 //    else
-    f20 = (float) atan2f (f20 , fc0 );
+    f20 =
     //f20 = (float) atan2f (fc0 , f20 );
-    lr[nr].ih=ih0;
-    lr[nr].ik=ik0;
-    lr[nr].il=il0;
-    lr[nr].d1=fo0;
-    lr[nr].d2=fsig;
-    lr[nr].d4=fc1;//abs fc
-    lr[nr].d3=f20;//fc phase
-    lr[nr].d5=lr[nr].d6=lr[nr].d7=0;//not there afaik
-    //    fprintf(test,"%4d%4d%4d %9f %9f %9f #%d\n",lr[nr].ih,lr[nr].ik,lr[nr].il,lr[nr].d1,lr[nr].d2,lr[nr].d3,nr);
+    m80r[nr].h=ih0;
+    m80r[nr].k=ik0;
+    m80r[nr].l=il0;
+    m80r[nr].m=im;
+    m80r[nr].n=in;
+    m80r[nr].o=io;
+    m80r[nr].fo=fo0;
+    m80r[nr].sig=fsig;
+    m80r[nr].fc=fc1;//abs fc
+    m80r[nr].fca=fc0;
+    m80r[nr].fca=f20;
+    m80r[nr].phase=(float) atan2f (f20 , fc0 );
     nr++;
     fgets (line, 199, mapin);
   }while (i > 0 && !feof (mapin));
   fclose(mapin);
 
   printf("%d Reflections read from %s.\n",nr,filename);
+  /*
   for (int i=0;i<ns;i++){
-    /*fprintf(test,"SYMM: %d\n%9.6f %9.6f %9.6f %5.2f\n%9.6f %9.6f %9.6f %5.2f\n%9.6f %9.6f %9.6f %5.2f\n",i+1,
+    / *fprintf(test,"SYMM: %d\n%9.6f %9.6f %9.6f %5.2f\n%9.6f %9.6f %9.6f %5.2f\n%9.6f %9.6f %9.6f %5.2f\n",i+1,
       sy[0][i], sy[1][i], sy[2][i], sy[9][i],
       sy[3][i], sy[4][i], sy[5][i], sy[10][i],
-      sy[6][i], sy[7][i], sy[8][i], sy[11][i]);// */
+      sy[6][i], sy[7][i], sy[8][i], sy[11][i]);// * /
   }
   for (int i=0;i<nr;i++){
     double u=lr[i].ih,v=lr[i].ik,w=lr[i].il;
@@ -321,7 +846,7 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
     lr[i].ih=mh;
     lr[i].ik=mk;
     lr[i].il=ml;
-    /*fprintf(test ,"%4d%4d%4d fo: %12.5f sfo: %10.5f phase: %10.6f a1: %12g b1: %12g f2c %12.5f f2cphase: %10.6f %f %f %f\n",
+    / *fprintf(test ,"%4d%4d%4d fo: %12.5f sfo: %10.5f phase: %10.6f a1: %12g b1: %12g f2c %12.5f f2cphase: %10.6f %f %f %f\n",
       lr[i].ih,
       lr[i].ik,
       lr[i].il,
@@ -331,18 +856,16 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
       lr[i].d4,
       lr[i].d5,
       lr[i].d6,
-      lr[i].d7,u,v,w); // */
+      lr[i].d7,u,v,w); // * /
 
 
   }
 //  fclose(test);
 
   sorthkl(nr,lr);
-  int n=-1;
-  /*
-     FILE *unmerg=fopen("unmerged.jana-mcq.hkl","wt");*/ 
-//     FILE *merg=fopen("merged.jana-mcq.hkl","wt");
-  //  */
+  //int n=-1;
+  //  FILE *unmerg=fopen("unmerged.jana-mcq.hkl","wt");
+  //  FILE *merg=fopen("merged.jana-mcq.hkl","wt");
   {int i=0;
     while(i<nr){
       double t=0.;
@@ -357,7 +880,7 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
       int m;
       int k=i;
       while ((i<nr)&&(lr[i].ih==lr[k].ih)&&(lr[i].ik==lr[k].ik)&&(lr[i].il==lr[k].il)) {
-        /*
+        / *
            fprintf(unmerg,"%4d%4d%4d fo: %12.5f sfo: %10.5f phase: %10.6f a1: %12g b1: %12g f2c %12.5f f2cphase: %10.6f #%d\n",lr[i].ih,lr[i].ik,lr[i].il,
            lr[i].d1,
            lr[i].d2,
@@ -368,7 +891,7 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
            lr[i].d7,
 
            i);
-        // */
+        // * /
         t=t+1.;
         u+=lr[i].d1;
         z=lr[i].d4;
@@ -388,7 +911,7 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
       lr[n].ih=lr[k].ih;
       lr[n].ik=lr[k].ik;
       lr[n].il=lr[k].il;
-     /* 
+     / *
          fprintf(merg,"%4d%4d%4d fo: %12.5f sfo: %10.5f phase: %10.6f a1: %12g b1: %12g  #%d\n",
          lr[n].ih,
          lr[n].ik,
@@ -400,18 +923,18 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
          lr[n].d1-lr[n].d4,
          
          n); 
-      // */
+      // * /
       if ((lr[n].ih|lr[n].ik|lr[n].il)==0) printf("%4d%4d%4d fo: %12.5f sfo: %10.5f\n",lr[n].ih,lr[n].ik,lr[n].il,lr[n].d1,lr[n].d2);
 
     }
   }
-  /*
+  / *
      fclose(merg);
      fclose(unmerg);
-  // */
+  // * /
   n++;
   fprintf(stderr,"%d %d \n",nr,n);
-  nr=n;
+  nr=n;*/
 
   {
     float DX;
@@ -421,8 +944,8 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
 
     {
       int mh=0, mk=0, ml=0,j;
-      for (int n=0; n<nr; n++){
-        double u=lr[n].ih,v=lr[n].ik,w=lr[n].il;
+      for (int ni=0; ni<nr; ni++){
+        double u=lr[ni].ih,v=lr[ni].ik,w=lr[ni].il;
         double a,b,c;
         for (int k=0; k<ns;k++){
           a=abs((int)(u*sy[0][k]+v*sy[3][k]+w*sy[6][k]));
@@ -435,19 +958,20 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
       }
       printf("max hkl = %d %d %d\n",mh,mk,ml);
       j=(int)(rr*mh+.5);
-      for (int i=0; it[i]< j; i++)n1=it[i+1];
+      for (int i=0; it[i]< j; i++)nn[0]=it[i+1];
       j=(int)(rr*mk+.5);
-      for (int i=0; it[i]< j; i++)n2=it[i+1];
+      for (int i=0; it[i]< j; i++)nn[1]=it[i+1];
       j=(int)(rr*ml+.5);
-      for (int i=0; (it[i]< j)||((nc)&&(it[i]%2)); i++) n3=it[i+1];
-      n4=n2*n1;
-      n5=n3*n4;
+      for (int i=0; (it[i]< j)||((nc)&&(it[i]%2)); i++) nn[2]=it[i+1];
+
+      n5=1;
+      for(int ii=0; ii<dimension;ii++)n5*=nn[ii];
       datfo=(float*) malloc(sizeof(float)*n5);
       datfo_fc=(float*) malloc(sizeof(float)*n5);
       datf1_f2=NULL;//(float*) malloc(sizeof(float)*n5);
-      DX=1.0/n1;
-      DY=1.0/n2;
-      DZ=1.0/n3;
+      DX=1.0/nn[0];
+      DY=1.0/nn[1];
+      DZ=1.0/nn[2];
     } 
     for (int typ=0; typ<2;typ++){
       B=(fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*n5);
@@ -479,7 +1003,7 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
         for (int n=0; n<ns;n++){ 
           int j,k,l,m;
           j=(int) (u*sy[0][n]+ v*sy[3][n] + w*sy[6][n]);
-          k=(int) (u*sy[1][n]+ v*sy[4][n] + w*sy[7][n]);
+          k=(int)  (u*sy[1][n]+ v*sy[4][n] + w*sy[7][n]);
           l=(int) (u*sy[2][n]+ v*sy[5][n] + w*sy[8][n]);
           q=(lr[i].d3-2*M_PI*(u*sy[9][n]+v*sy[10][n]+w*sy[11][n]))-M_PI*(j*DX+k*DY+l*DZ);
 //              printf("%4d %4d %4d ss%12g %12g %d %12g %12g %12g %d %f %f %f\n",j,k,l,ss,q,n,sy[9][n],sy[10][n],sy[11][n],typ,lr[i].d1,lr[i].d4,C[14]);
@@ -510,7 +1034,9 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
         fclose(OOO);
       }
       fprintf(stderr,"Starting Fourier %d %d %d!\n",n1,n2,n3);
-      fwd_plan = fftwf_plan_dft_3d(n3,n2,n1,B,B,FFTW_FORWARD,FFTW_ESTIMATE);
+      //fwd_plan = fftwf_plan_dft_3d(n3,n2,n1,B,B,FFTW_FORWARD,FFTW_ESTIMATE);
+      fwd_plan = fftwf_plan_dft(dimension,nn,B,B,FFTW_FORWARD,FFTW_ESTIMATE);
+      //(int rank, const int *n, C *in, C *out, int sign, unsigned flags)
       fftwf_execute(fwd_plan);
       fftwf_destroy_plan(fwd_plan);
       float t=0;
@@ -858,8 +1384,7 @@ void FourMCQ::map4dto3d(const double t,const  V3 q, const int n[4],const double 
         c = ((int) a)%n123;
         cp1 = (c+1)%n123;
         idx3=ix+(iy+iz*n[1])*n[0];
-        B[idx3]=D[idx3+c*n123]*(1.0-b)+D[idx3+cp1*n123]*(b);
-            
+        B[idx3]=D[idx3+c*n123]*(1.0-b)+D[idx3+cp1*n123]*(b);            
       }
 }
 
