@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=548;
+int rev=549;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -10484,43 +10484,49 @@ void MyWindow::mgrowSymm(int packart,int packatom){
       xdinp.clear();
       matoms.clear();
       V3 p,g0;
+            for (int s=0; s<mol.zelle.symmops.size(); s++){
+              for (int i=0; i<masymmUnit.size(); i++) {
+//                Modulat *newAt = NULL;
+                Modulat nat=((masymmUnit[i].iamcomp>1))?
+//                if (masymmUnit[i].iamcomp>1)
+                  //newAt = new Modulat(masymmUnit[i].applySymm(
+                  masymmUnit[i].applySymm(
+                        mol.ccc[masymmUnit[i].iamcomp-2].nuCell.symmops.at(s),
+                        mol.ccc[masymmUnit[i].iamcomp-2].nuCell.trans.at(s),
+                        mol.ccc[masymmUnit[i].iamcomp-2].nuCell.x4sym.at(s),
+                        mol.ccc[masymmUnit[i].iamcomp-2].nuCell.x4.at(s),
+                        mol.ccc[masymmUnit[i].iamcomp-2].nuCell.x4tr.at(s))
+  //              else
+                  //newAt = new Modulat(masymmUnit[i].applySymm(
+                  :masymmUnit[i].applySymm(
+                        mol.zelle.symmops.at(s),
+                        mol.zelle.trans.at(s), 
+                        mol.zelle.x4sym.at(s), 
+                        mol.zelle.x4.at(s),
+                        mol.zelle.x4tr.at(s));
       for (int h=-11; h< 12; h++){
         for (int k=-11; k< 12; k++){
           for (int l=-11; l< 12; l++){
-            for (int s=0; s<mol.zelle.symmops.size(); s++){
-              for (int i=0; i<masymmUnit.size(); i++) {
-                Modulat *newAt = NULL;
-                if (masymmUnit[i].iamcomp>1)
-                  newAt = new Modulat(masymmUnit[i].applySymm(
-                        mol.ccc[masymmUnit[i].iamcomp-2].nuCell.symmops.at(s),
-                        mol.ccc[masymmUnit[i].iamcomp-2].nuCell.trans.at(s)+V3(h,k,l),
-                        mol.ccc[masymmUnit[i].iamcomp-2].nuCell.x4sym.at(s),
-                        mol.ccc[masymmUnit[i].iamcomp-2].nuCell.x4.at(s),
-                        mol.ccc[masymmUnit[i].iamcomp-2].nuCell.x4tr.at(s)));
-                else
-                  newAt = new Modulat(masymmUnit[i].applySymm(
-                        mol.zelle.symmops.at(s),
-                        mol.zelle.trans.at(s)+V3(h,k,l), 
-                        mol.zelle.x4sym.at(s), 
-                        mol.zelle.x4.at(s),
-                        mol.zelle.x4tr.at(s)));
-                V3 ppp=newAt->frac(cubeGL->tvalue);
-                if ((ppp.x)<aminlim->value()) continue;
-                if ((ppp.y)<bminlim->value()) continue;
-                if ((ppp.z)<cminlim->value()) continue;
-                if ((ppp.x)>amaxlim->value()) continue;
-                if ((ppp.y)>bmaxlim->value()) continue;
-                if ((ppp.z)>cmaxlim->value()) continue;
+                V3 ppp=nat.frac(cubeGL->tvalue)+V3(h,k,l);
+                if ((ppp.x)<aminlim->value()) {continue;}
+                if ((ppp.y)<bminlim->value()) {continue;}
+                if ((ppp.z)<cminlim->value()) {continue;}
+                if ((ppp.x)>amaxlim->value()) {continue;}
+                if ((ppp.y)>bmaxlim->value()) {continue;}
+                if ((ppp.z)>cmaxlim->value()) {continue;}
                 bool gibscho=false;
                 for(int gbt=0;gbt<matoms.size();gbt++){
-                  if (matoms.at(gbt).OrdZahl<0) continue;
+                  if (matoms.at(gbt).OrdZahl<0) {continue;}
                   g0=matoms[gbt].frac(cubeGL->tvalue);
-                  p=newAt->frac(cubeGL->tvalue);
-                  if ((matoms[gbt].OrdZahl>-1)&&(fl(p.x-g0.x,p.y-g0.y,p.z-g0.z)<0.2)) gibscho=true; 
+                  //p=newAt->frac(cubeGL->tvalue);
+                  if ((matoms[gbt].OrdZahl>-1)&&(fl(ppp.x-g0.x,ppp.y-g0.y,ppp.z-g0.z)<0.2)) gibscho=true; 
                 }
                 if (!gibscho) { 
 
-                  matoms.append(*newAt);
+//                  matoms.append(*newAt);
+                  Modulat neu= nat;
+                  neu.frac0+=V3(h,k,l);
+                  matoms.append(neu);
                   //V3 r=newAt->frac(cubeGL->tvalue);
                   //printf("%s %f %f %f  \n",newAt->atomname,r.x,r.y,r.z);
                 }//gbt

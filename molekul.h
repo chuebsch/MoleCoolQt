@@ -960,6 +960,16 @@ class Modulat{
       polytype=0;
       //printf("modulat konstr\n");
     };
+    ~Modulat(){
+      os.clear();
+      oc.clear();
+      hidden=false;
+      possin.clear();
+      poscos.clear();
+      usin.clear();
+      ucos.clear();
+
+    }
     void setWaveOccPar(int w, double _o,double s, double c){
       o=_o;
       //      qDebug()<<"Occ"<<w<<wo<<os.size();
