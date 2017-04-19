@@ -3741,6 +3741,12 @@ void CubeGL::rotX(double speed){
   updateGL();  
 }
 
+void CubeGL::rotZ(double speed){
+    if (!noWaitLabel)moving->start(80);
+  glRotateL(-20.0*speed,0.0f,0.0f,1.0f);
+  updateGL();  
+}
+
 void CubeGL::fontSizeUp() {
   myFont.setPointSize(myFont.pointSize()+1);
   updateGL();
@@ -3854,9 +3860,12 @@ void CubeGL::mouseMoveEvent(QMouseEvent *event) {
 	mil.y-=dy*sc41;
       }
      //printf("legend x %g  y %g",mil.x,mil.y); 
-    }else{
-      glRotateL(dy*360.0,1.0f,0.0f,0.0f);
-      glRotateL(dx*360.0,0.0f,1.0f,0.0f);
+    }else
+      if (event->modifiers()==(Qt::ShiftModifier)){
+        glRotateL((dx+dy)*360.0,0.0f,0.0f,1.0f);
+      }else {
+        glRotateL(dy*360.0,1.0f,0.0f,0.0f);
+        glRotateL(dx*360.0,0.0f,1.0f,0.0f);
     }
     updateGL();
   }

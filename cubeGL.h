@@ -61,6 +61,7 @@ public:
   void zoom(double speed);
   void rotY(double speed);
   void rotX(double speed);
+  void rotZ(double speed);
   void rotate(double dang,double x,double y,double z);
   void moveX(double speed);
   void moveY(double speed);

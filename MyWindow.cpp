@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=551;
+int rev=552;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -839,6 +839,8 @@ createRenameWgd();
   workMenu->addAction(rotRightAct);
   workMenu->addAction(rotUpAct );
   workMenu->addAction(rotDownAct);
+  workMenu->addAction("rotate clockwise",this,SLOT(rotCw()));
+  workMenu->addAction("rotate counterclockwise",this,SLOT(rotCcw()));
   workMenu->addAction(mveLeftAct );
   workMenu->addAction(mveRightAct);
   workMenu->addAction(mveUpAct   );
@@ -9359,6 +9361,14 @@ void MyWindow::moveD(){
 
 void MyWindow::rotUp() {
   cubeGL->rotX(0.1);
+}
+
+void MyWindow::rotCw() {
+  cubeGL->rotZ(0.1);
+}
+
+void MyWindow::rotCcw() {
+  cubeGL->rotZ(-0.1);
 }
 
 void MyWindow::rotDown() {

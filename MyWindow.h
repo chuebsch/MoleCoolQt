@@ -167,6 +167,8 @@ class MyWindow : public QMainWindow {
     void moveL();
     void moveU();
     void moveD();
+    void rotCw();
+    void rotCcw();
     void rotUp();
     void rotDown();
     void openMapControl();
