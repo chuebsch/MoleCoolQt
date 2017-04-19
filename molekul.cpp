@@ -3007,6 +3007,7 @@ void molekul::makeLissajous(QList<Modulat> mato,int proba, bool gay, bool adps,d
   glDisable(GL_CULL_FACE);
   glLineWidth(1.5);
   for (int i=0; i<mato.size();i++){
+        if (mato.at(i).hidden) continue;
     t=t0-st;
     t=fmod(t,1.0);
     glBegin(GL_LINES);

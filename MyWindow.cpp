@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=545;
+int rev=546;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -290,12 +290,12 @@ MyWindow::MyWindow( QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(pa
 	  cubeGL, SLOT(togglReSe(bool)));
   ModulationMenu = new QMenu("Modulation");
   ModulationMenu->setEnabled(false);
-  QAction *MIA;
+  QAction *MIA,*dgm;
   seReAct->setVisible(false);
   menuBar()->addMenu(fileMenu);
   menuBar()->addMenu(workMenu);   
   menuBar()->addMenu(viewMenu);
-  menuBar()->addMenu(dialogMenu);
+  dgm=menuBar()->addMenu(dialogMenu);
   menuBar()->addMenu(invariomMenu);
   menuBar()->addMenu(xdMenu);
   menuBar()->addMenu(ModulationMenu);
@@ -437,8 +437,8 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
   donTGrow->setCheckable ( true );
   donTGrow->setChecked ( false );  
   cubeGL->back_grad=true;
-  QMenu *packMenu=new QMenu("Pack the moleule");
-  QAction *dntpck=packMenu->addAction("Only asymmetric unit");
+  QMenu *packMenu=new QMenu("Pack");
+  QAction *dntpck=packMenu->addAction("Only asymmetric unit (AU)");
   grdpckAct=packMenu->addAction(QString("Pack shortest distances and complete"));
   QAction *molpck=packMenu->addAction("Complete molecules");
   QAction *cctpck=packMenu->addAction("Pack inside unit cell");
@@ -460,7 +460,10 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
   connect(ccmpck,SIGNAL(triggered()),signalMapper,SLOT(map()));
   connect(grdpckAct,SIGNAL(triggered()),signalMapper,SLOT(map()));
   connect(signalMapper, SIGNAL(mapped(int)), this, SLOT(setPackArt2(int)));
-  packAct                  = new QAction(QIcon(":/images/compmol.png"),tr("Show pack dialog "),this);
+  QAction *boxpck=packMenu->addAction("Pack inside given limits",signalMapper,SLOT(map()));
+  signalMapper->setMapping(boxpck,  7);
+  menuBar()->insertMenu(dgm, packMenu);
+  packAct = new QAction(QIcon(":/images/compmol.png"),tr("Show pack dialog "),this);
   packAct->setStatusTip("Pack the molecule in the unit cell");
   packAct->setMenu(packMenu);
   packAct->setVisible(false);
@@ -10425,6 +10428,109 @@ void MyWindow::mgrowSymm(int packart,int packatom){
     }
     statusBar()->showMessage(tr("Neighbor search is finished"));
   } //6 
+  if (packart==7){
+    QDialog *boxpack= new QDialog(this);
+    QDoubleSpinBox 
+      *aminlim,*amaxlim,
+      *bminlim,*bmaxlim,
+      *cminlim,*cmaxlim;
+
+    aminlim = new QDoubleSpinBox(boxpack);
+    amaxlim = new QDoubleSpinBox(boxpack);
+    bminlim = new QDoubleSpinBox(boxpack);
+    bmaxlim = new QDoubleSpinBox(boxpack);
+    cminlim = new QDoubleSpinBox(boxpack);
+    cmaxlim = new QDoubleSpinBox(boxpack);
+
+    aminlim->setMinimum(-10.0);
+    amaxlim->setMinimum(0.0);
+    bminlim->setMinimum(-10.0);
+    bmaxlim->setMinimum(0.0);
+    cminlim->setMinimum(-10.0);
+    cmaxlim->setMinimum(0.0);
+
+    aminlim->setMaximum(0.0);
+    amaxlim->setMaximum(10.0);
+    bminlim->setMaximum(0.0);
+    bmaxlim->setMaximum(10.0);
+    cminlim->setMaximum(0.0);
+    cmaxlim->setMaximum(10.0);
+
+    aminlim->setValue(0.0);
+    amaxlim->setValue(1.0);
+    bminlim->setValue(0.0);
+    bmaxlim->setValue(1.0);
+    cminlim->setValue(0.0);
+    cmaxlim->setValue(1.0);
+
+    QDialogButtonBox *buttonBox = new QDialogButtonBox( QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+    // QPushButton *ok = buttonBoxMC->button(QDialogButtonBox::Ok);
+    connect(buttonBox, SIGNAL(rejected()), boxpack, SLOT(reject())); 
+    connect(buttonBox, SIGNAL(accepted()), boxpack, SLOT(accept())); 
+
+    QGridLayout *g = new QGridLayout(boxpack);
+    g->addWidget(new QLabel("pack range along a "),0,0);
+    g->addWidget(aminlim,1,0);
+    g->addWidget(amaxlim,2,0);
+    g->addWidget(new QLabel("pack range along b "),0,1);
+    g->addWidget(bminlim,1,1);
+    g->addWidget(bmaxlim,2,1);
+    g->addWidget(new QLabel("pack range along c "),0,2);
+    g->addWidget(cminlim,1,2);
+    g->addWidget(cmaxlim,2,2);
+    g->addWidget(buttonBox,10,0,1,3);
+    if (QDialog::Accepted==boxpack->exec()){
+
+      xdinp.clear();
+      matoms.clear();
+      V3 p,g0;
+      for (int h=-11; h< 12; h++){
+        for (int k=-11; k< 12; k++){
+          for (int l=-11; l< 12; l++){
+            for (int s=0; s<mol.zelle.symmops.size(); s++){
+              for (int i=0; i<masymmUnit.size(); i++) {
+                Modulat *newAt = NULL;
+                if (masymmUnit[i].iamcomp>1)
+                  newAt = new Modulat(masymmUnit[i].applySymm(
+                        mol.ccc[masymmUnit[i].iamcomp-2].nuCell.symmops.at(s),
+                        mol.ccc[masymmUnit[i].iamcomp-2].nuCell.trans.at(s)+V3(h,k,l),
+                        mol.ccc[masymmUnit[i].iamcomp-2].nuCell.x4sym.at(s),
+                        mol.ccc[masymmUnit[i].iamcomp-2].nuCell.x4.at(s),
+                        mol.ccc[masymmUnit[i].iamcomp-2].nuCell.x4tr.at(s)));
+                else
+                  newAt = new Modulat(masymmUnit[i].applySymm(
+                        mol.zelle.symmops.at(s),
+                        mol.zelle.trans.at(s)+V3(h,k,l), 
+                        mol.zelle.x4sym.at(s), 
+                        mol.zelle.x4.at(s),
+                        mol.zelle.x4tr.at(s)));
+                V3 ppp=newAt->frac(cubeGL->tvalue);
+                if ((ppp.x)<aminlim->value()) continue;
+                if ((ppp.y)<bminlim->value()) continue;
+                if ((ppp.z)<cminlim->value()) continue;
+                if ((ppp.x)>amaxlim->value()) continue;
+                if ((ppp.y)>bmaxlim->value()) continue;
+                if ((ppp.z)>cmaxlim->value()) continue;
+                bool gibscho=false;
+                for(int gbt=0;gbt<matoms.size();gbt++){
+                  if (matoms.at(gbt).OrdZahl<0) continue;
+                  g0=matoms[gbt].frac(cubeGL->tvalue);
+                  p=newAt->frac(cubeGL->tvalue);
+                  if ((matoms[gbt].OrdZahl>-1)&&(fl(p.x-g0.x,p.y-g0.y,p.z-g0.z)<0.2)) gibscho=true; 
+                }
+                if (!gibscho) { 
+
+                  matoms.append(*newAt);
+                  //V3 r=newAt->frac(cubeGL->tvalue);
+                  //printf("%s %f %f %f  \n",newAt->atomname,r.x,r.y,r.z);
+                }//gbt
+              }//i++
+            }//s++
+          }//l++
+        }//k++
+      }//h++
+    }//exec
+  }//packart==7
   //////////////////
 
   V3 uz0f,uz1f,uz2f,uz3f,uz4f,uz5f,uz6f,uz7f;
@@ -10852,8 +10958,111 @@ void MyWindow::growSymm(int packart,int packatom){
       }
       statusBar()->showMessage(tr("Neighbor search is finished"));
     }  
-  }
+    
+    if (packart==7){
+      QDialog *boxpack= new QDialog(this);
+      QDoubleSpinBox 
+        *aminlim,*amaxlim,
+        *bminlim,*bmaxlim,
+        *cminlim,*cmaxlim;
 
+      aminlim = new QDoubleSpinBox(boxpack);
+      amaxlim = new QDoubleSpinBox(boxpack);
+      bminlim = new QDoubleSpinBox(boxpack);
+      bmaxlim = new QDoubleSpinBox(boxpack);
+      cminlim = new QDoubleSpinBox(boxpack);
+      cmaxlim = new QDoubleSpinBox(boxpack);
+
+      aminlim->setMinimum(-10.0);
+      amaxlim->setMinimum(0.0);
+      bminlim->setMinimum(-10.0);
+      bmaxlim->setMinimum(0.0);
+      cminlim->setMinimum(-10.0);
+      cmaxlim->setMinimum(0.0);
+
+      aminlim->setMaximum(1.0);
+      amaxlim->setMaximum(10.0);
+      bminlim->setMaximum(1.0);
+      bmaxlim->setMaximum(10.0);
+      cminlim->setMaximum(1.0);
+      cmaxlim->setMaximum(10.0);
+
+      aminlim->setValue(0.0);
+      amaxlim->setValue(1.0);
+      bminlim->setValue(0.0);
+      bmaxlim->setValue(1.0);
+      cminlim->setValue(0.0);
+      cmaxlim->setValue(1.0);
+
+      QDialogButtonBox *buttonBox = new QDialogButtonBox( QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+      // QPushButton *ok = buttonBoxMC->button(QDialogButtonBox::Ok);
+      connect(buttonBox, SIGNAL(rejected()), boxpack, SLOT(reject())); 
+      connect(buttonBox, SIGNAL(accepted()), boxpack, SLOT(accept())); 
+
+      QGridLayout *g = new QGridLayout(boxpack);
+      g->addWidget(new QLabel("pack range along a "),0,0);
+      g->addWidget(aminlim,1,0);
+      g->addWidget(amaxlim,2,0);
+      g->addWidget(new QLabel("pack range along b "),0,1);
+      g->addWidget(bminlim,1,1);
+      g->addWidget(bmaxlim,2,1);
+      g->addWidget(new QLabel("pack range along c "),0,2);
+      g->addWidget(cminlim,1,2);
+      g->addWidget(cmaxlim,2,2);
+      g->addWidget(buttonBox,10,0,1,3);
+      if (QDialog::Accepted==boxpack->exec()){
+        xdinp.clear();
+
+        V3 prime,floorD;
+        double dawars=1000.0,dl;
+        for (int n=0; n<mol.zelle.symmops.size();n++){
+          for (int i=0; i<asymmUnit.size();i++){
+            if ((asymmUnit.at(i).OrdZahl>-1)&&(asymmUnit.at(i).molindex>0)){
+              prime=mol.zelle.symmops.at(n) * asymmUnit.at(i).frac + mol.zelle.trans.at(n) ;//+ V3(-0.0050,-0.0050,-0.0050)
+              floorD=V3(floor(prime.x),floor(prime.y),floor(prime.z));
+              prime=prime -floorD;	  
+              dawars=1000.0;
+              for (int g=0; g<xdinp.size();g++){
+                if ((asymmUnit[i].OrdZahl*xdinp[g].OrdZahl<0)) continue;
+                dl=fl(prime.x-xdinp[g].frac.x, prime.y-xdinp[g].frac.y, prime.z-xdinp[g].frac.z);
+                dawars=(dl<dawars)?dl:dawars;
+              }
+              if (dawars<0.01) continue; // */
+              for (int hh=-11; hh<12; hh++)
+                for (int kk=-11; kk<12; kk++)
+                  for (int ll=-11; ll<12; ll++){
+                    if ((prime.x+hh)<aminlim->value()) continue;
+                    if ((prime.y+kk)<bminlim->value()) continue;
+                    if ((prime.z+ll)<cminlim->value()) continue;
+                    if ((prime.x+hh)>amaxlim->value()) continue;
+                    if ((prime.y+kk)>bmaxlim->value()) continue;
+                    if ((prime.z+ll)>cmaxlim->value()) continue;
+                    newAtom.part=asymmUnit[i].part;
+                    newAtom.frac=prime+V3((double)hh,(double)kk,(double)ll);
+                    newAtom.OrdZahl=asymmUnit[i].OrdZahl;
+                    newAtom.molindex=asymmUnit[i].molindex;
+                    newAtom.amul=asymmUnit[i].amul;
+                    sprintf(newAtom.atomname,"%s",asymmUnit[i].atomname);
+                    newAtom.sg=1;
+                    if ((asymmUnit[i].u.m12==0.0)&&(asymmUnit[i].u.m23==0.0)&&(asymmUnit[i].u.m13==0.0)){
+                      newAtom.uf.m11=newAtom.u.m11=newAtom.u.m22=newAtom.u.m33=asymmUnit[i].uf.m11;
+                      newAtom.u.m12=newAtom.u.m13=newAtom.u.m23=newAtom.u.m21=newAtom.u.m31=newAtom.u.m32=0.0;
+                    }
+                    else {
+                      Usym(asymmUnit[i].uf,mol.zelle.symmops[n],newAtom.uf);
+                      mol.Uf2Uo(newAtom.uf,newAtom.u);
+                    }
+                    //printf("%-10s %9.5f %9.5f %9.5f\n",newAtom.atomname,newAtom.frac.x,newAtom.frac.y,newAtom.frac.z);
+                    xdinp.append(newAtom);
+
+                  }//ll
+            }//packable 
+          }//i++
+        }//n++
+      }//exec
+    }//packart==7
+  
+  }
 
   smx=xdinp.size();
   balken->hide();      
