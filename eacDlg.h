@@ -57,6 +57,7 @@ Q_OBJECT
   void spheA(int st);//!< spheA changes the state of the ellipsoid surface. @param st is the checkbox state of the calling QCheckBox. 
   void soldA(int st);//!< soldA changes the transparence state of the ellipsoid surface. @param st is the checkbox state of the calling QCheckBox.
   void nolaA(int st);//!< nolaA changes the state of the atom labels @param st is the checkbox state of the calling QCheckBox.
+  void noLis(int st);
   void whitA(int st);//!< whitA changes the color of the principal ellipses from black to white. @param st is the checkbox state of the calling QCheckBox.
 //  void metalA(int st);//!< metalA changes the state of the bond to without this feature checked on into stipled style @param st is the checkbox state of the calling QCheckBox.
  private:
@@ -137,6 +138,7 @@ Q_OBJECT
   QCheckBox *sphbx;
   QCheckBox *sldbx;
   QCheckBox *nlabx;
+  QCheckBox *nolis;
  // QCheckBox *metalic;
 
   QCheckBox *noadp;

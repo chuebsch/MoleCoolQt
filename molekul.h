@@ -18,6 +18,7 @@
 #define ATOM_STYLE_NOADP 64
 #define ATOM_STYLE_PLAID 128
 #define ATOM_STYLE_METAL 256
+#define ATOM_STYLE_NOLISSAJOUS 512
 struct V3 {
   double x, y, z;
   int rc;

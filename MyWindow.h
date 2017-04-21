@@ -65,7 +65,7 @@ class MyWindow : public QMainWindow {
     QAction *xdRestoreAct;
     QAction *Start;
     QAction *exportShelxAtTvalueAct;
-    QAction *filterAct , *packAct;
+    QAction *filterAct ;//, *packAct;
     QAction *ignorant,*hFilter,*dFilter;
     QAction *atomClickAct  ;
     QAction *unfilterAct;
@@ -105,7 +105,7 @@ class MyWindow : public QMainWindow {
     void syncMconf();
     void changeGD();
     void expandAround();
-    void showPackDlg();
+//    void showPackDlg();
     void genMoliso(QString isoname="",QString mapname="",QString lfcename="",QString sfcename="",int check=0,QString adpname="");
     void destroyMoliso();
     void toggleTubes(bool b);
@@ -264,7 +264,7 @@ class MyWindow : public QMainWindow {
     QLineEdit *ffmpegedt,*mp4file;
     QAction  *searchAtomCancel,*orthoAct;
     QDialog *sfdlg;
-    QDialog *packdlg;
+//    QDialog *packdlg;
     int maxResi,filtered;
     char CID[80];
     double isomax,isomin;

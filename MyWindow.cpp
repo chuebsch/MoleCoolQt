@@ -40,7 +40,7 @@ double fl(double x,double y,double z){
 
 void MyWindow::setup_zelle(){
 
-  packAct->setVisible(true);
+//  packAct->setVisible(true);
 /*
   double
           cs_al=(mol.zelle.al==90)?0:cos(mol.zelle.al/g2r),
@@ -463,11 +463,11 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
   QAction *boxpck=packMenu->addAction("Pack inside given limits",signalMapper,SLOT(map()));
   signalMapper->setMapping(boxpck,  7);
   menuBar()->insertMenu(dgm, packMenu);
-  packAct = new QAction(QIcon(":/images/compmol.png"),tr("Show pack dialog "),this);
-  packAct->setStatusTip("Pack the molecule in the unit cell");
-  packAct->setMenu(packMenu);
-  packAct->setVisible(false);
-  connect(packAct,SIGNAL(triggered()),this,SLOT(showPackDlg()));
+//  packAct = new QAction(QIcon(":/images/compmol.png"),tr("Show pack dialog "),this);
+//  packAct->setStatusTip("Pack the molecule in the unit cell");
+//  packAct->setMenu(packMenu);
+//  packAct->setVisible(false);
+//  connect(packAct,SIGNAL(triggered()),this,SLOT(showPackDlg()));
   filterAct->setIcon(QIcon(":/images/filter.png") );
 
   filterAct->setWhatsThis("<img src=\":/images/filter.png\"><p>Click here to <b>filter</b> some of the atoms out of the structure."
@@ -1089,7 +1089,7 @@ createRenameWgd();
   toolSettings->addAction(seReAct);
   toolSettings->addAction(movLeg);
   toolSettings->addAction(mildir);
-  toolSettings->addAction(packAct);
+//  toolSettings->addAction(packAct);
 
   toolMove = addToolBar(tr("Move"));
   toolMove->setIconSize(QSize(23,23));
@@ -2213,7 +2213,7 @@ void MyWindow::genMoliso(QString isoname, QString mapname, QString lfcename, QSt
  //   togLuft->setVisible(false);
     togAxen->setEnabled (true );
     togUnit->setEnabled (true );
-    packAct->setVisible(false);
+//    packAct->setVisible(false);
     mol.zelle.a=1.0;
     mol.zelle.b=1.0;
     mol.zelle.c=1.0;
@@ -3442,7 +3442,7 @@ void MyWindow::load_fchk(QString fileName){
     asymmUnit[i].kart.y-=ys;
     asymmUnit[i].kart.z-=zs;  
   }*/
-  packAct->setVisible(false);
+//  packAct->setVisible(false);
   mol.zelle.a=1.0;
   mol.zelle.b=1.0;
   mol.zelle.c=1.0;
@@ -7836,7 +7836,7 @@ void MyWindow::load_gaus(QString fileName){
 */
   fclose(adp);
 
-  packAct->setVisible(false);
+//  packAct->setVisible(false);
   mol.zelle.a=1.0;
   mol.zelle.b=1.0;
   mol.zelle.c=1.0;
@@ -8335,7 +8335,7 @@ bool MySortFilterProxyModel::valInRange(const double &val) const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void MyWindow::setPackArt(int pa){
   if (pa==1) mol.gd=gdedit->value();
-  packdlg->accept();
+//  packdlg->accept();
   mol.bonds_made=0;
   mol.knopf_made=0;
   growSymm(pa);
@@ -8363,7 +8363,7 @@ void MyWindow::changeGD(){
   if (ok) mol.gd=GD;
   cubeGL->changeGDAct->setText(tr("Search radius is %1 Ang.  Change it").arg(mol.gd));
 }
-
+/*
 void MyWindow::showPackDlg(){
   packdlg = new QDialog(this);
   QToolButton *molpck,*cctpck,*ccmpck,*grdpck;
@@ -8391,11 +8391,7 @@ void MyWindow::showPackDlg(){
   cctpck->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
   ccmpck->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
   grdpck->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-  dntpck->setDefault (true);/*
-			       molpck->setAutoRaise(true);
-			       cctpck->setAutoRaise(true);
-			       ccmpck->setAutoRaise(true);
-			       grdpck->setAutoRaise(true);*/
+  dntpck->setDefault (true);
   dntpck->setText("Do not pack!");
   molpck->setText("Complete molecules");
   cctpck->setText("Pack inside unit cell");
@@ -8425,7 +8421,7 @@ void MyWindow::showPackDlg(){
   packdlg->setWindowTitle("Apply Symetry");
   packdlg->exec();
 }
-
+*/
 void MyWindow::loadFile(QString fileName,double GD){//empty
 //  printf("loadFILe %d\n",__LINE__);
   cubeGL->pause=true;
@@ -8515,7 +8511,7 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
   if (fileName.endsWith(".pth", Qt::CaseInsensitive)) {
     
     mol.readXDPath(fileName);
-    packAct->setVisible(false);
+//    packAct->setVisible(false);
     mol.zelle.a=1.0;
     mol.zelle.b=1.0;
     mol.zelle.c=1.0;
@@ -9250,8 +9246,9 @@ void MyWindow::initLists(QList<INP> xd){
     }glEndList();
   }
   else togAxen->setVisible(false);
-  togUnit->setVisible(packAct->isVisible());
-  if (packAct->isVisible()) {
+//  togUnit->setVisible(packAct->isVisible());
+//  if (packAct->isVisible()) 
+  {
 
     statusBar()->showMessage(tr("Draw unit cell.") );
     glNewList(cubeGL->bas+3, GL_COMPILE );{                          //Unit Zell
@@ -11027,7 +11024,7 @@ void MyWindow::growSymm(int packart,int packatom){
       g->addWidget(cmaxlim,2,2);
       g->addWidget(buttonBox,10,0,1,3);
       if (QDialog::Accepted==boxpack->exec()){
-        xdinp.clear();
+        if (!hatlokale) xdinp.clear();
 
         V3 prime,floorD;
         double dawars=1000.0,dl;

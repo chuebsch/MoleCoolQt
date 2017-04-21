@@ -588,6 +588,13 @@ void EacGLW::nolaA(int st){
   else if (mol->aStyle[xd.at(0).an]&ATOM_STYLE_NOLABEL) mol->aStyle[xd.at(0).an]-=ATOM_STYLE_NOLABEL;
 }
 
+void EacGLW::noLis(int st){
+  if (st) {
+    mol->aStyle[xd.at(0).an]|=ATOM_STYLE_NOLISSAJOUS;
+  }
+  else if (mol->aStyle[xd.at(0).an]&ATOM_STYLE_NOLISSAJOUS) mol->aStyle[xd.at(0).an]-=ATOM_STYLE_NOLISSAJOUS;
+}
+
 /*
 void EacGLW::metalA(int st){
   if (st) {
@@ -614,6 +621,7 @@ void EacDlg::updateLEs(int OZ){
   sldbx->setCheckState((eacGLW->mol->aStyle[OZ]&ATOM_STYLE_SOLID)?Qt::Checked:Qt::Unchecked);
   walbx->setCheckState((eacGLW->mol->aStyle[OZ]&ATOM_STYLE_WALLS)?Qt::Checked:Qt::Unchecked);
   nlabx->setCheckState((eacGLW->mol->aStyle[OZ]&ATOM_STYLE_NOLABEL)?Qt::Checked:Qt::Unchecked);
+  nolis->setCheckState((eacGLW->mol->aStyle[OZ]&ATOM_STYLE_NOLISSAJOUS)?Qt::Checked:Qt::Unchecked);
   //metalic->setCheckState((eacGLW->mol->aStyle[OZ]&ATOM_STYLE_METAL)?Qt::Checked:Qt::Unchecked);
   noadp->setChecked((eacGLW->mol->aStyle[OZ]&ATOM_STYLE_NOADP)?true:false);
   woADP(noadp->isChecked());
@@ -987,6 +995,8 @@ EacDlg::EacDlg(molekul *externMole){
   //metalic = new QCheckBox("Dashed Bonds to others");
   nlabx = new QCheckBox("No label!");
   //metalic->setCheckState ( Qt::Unchecked);
+  nolis = new QCheckBox("No Lissajous track");
+  nolis->setCheckState ( Qt::Unchecked);
   walbx->setCheckState ( Qt::Checked);
   rinbx->setCheckState ( Qt::Checked);
   rinbx->setWhatsThis("If this check box is half selected <font color=gray><b>white</b></font> <b>outer lines</b> will be drawn around the ellipsoid which looks nice when the atom has a dark color.<br> If this is fully selected <b>black outer lines</b> will be drawn around the ellipsoid.");
@@ -1047,6 +1057,7 @@ EacDlg::EacDlg(molekul *externMole){
   eacGLO->addWidget(eacKRAD,4,6);
   eacGLO->addWidget(colorbut,2,6,1,3);
   eacGLO->addWidget(nlabx,5,6);
+  eacGLO->addWidget(nolis,5,7);
   eacGLO->addWidget(multi,4,8);
   eacGLO->addWidget(expbut,7,8);
   eacGLO->addWidget(impbut,7,7);
@@ -1067,6 +1078,7 @@ EacDlg::EacDlg(molekul *externMole){
   connect(walbx,SIGNAL(stateChanged(int)),eacGLW,SLOT(wallA(int)));
 
   connect(nlabx,SIGNAL(stateChanged(int)),eacGLW,SLOT(nolaA(int)));
+  connect(nolis,SIGNAL(stateChanged(int)),eacGLW,SLOT(noLis(int)));
   connect(walbx,SIGNAL(stateChanged(int)),this,SLOT(checkSolid()));
   connect(pcentr,SIGNAL(stateChanged(int)),this,SLOT(checkPolyCentr()));
   connect(rinbx,SIGNAL(stateChanged(int)),eacGLW,SLOT(ringA(int)));

@@ -2376,9 +2376,9 @@ void molekul::make_bonds(QList<Modulat> xdinp,double t){
       //printf("i=%d sg=%d part=%d\n",i,xdinp[i].sg,xdinp[i].part);
     for (int j=i+1;j<xdinp.size();j++) {
       if (i==j) continue;
-      if((xdinp[i].OrdZahl<0)||(xdinp[j].OrdZahl<0)) continue;
-      if((xdinp[i].OrdZahl==0)&&(xdinp[j].OrdZahl==0)) continue;
-
+      if ((xdinp[i].OrdZahl<0)||(xdinp[j].OrdZahl<0)) continue;
+      if ((xdinp[i].OrdZahl==0)&&(xdinp[j].OrdZahl==0)) continue;
+      if ((xdinp[i].hidden)||(xdinp[j].hidden)) continue;
       if ((!bondsBetweenSGs->isChecked())&&(xdinp[i].sg!=xdinp[j].sg))continue;
 //      if (((xdinp[i].part<0)||(xdinp[j].part<0))&&((xdinp[i].sg!=xdinp[j].sg)||((xdinp[i].part*xdinp[j].part)&&(xdinp[i].part!=xdinp[j].part)))) continue; //part negative
 //      if ((xdinp[i].part>0)&&(xdinp[j].part>0)&&(xdinp[i].part!=xdinp[j].part)) continue; //different part
@@ -3007,7 +3007,9 @@ void molekul::makeLissajous(QList<Modulat> mato,int proba, bool gay, bool adps,d
   glDisable(GL_CULL_FACE);
   glLineWidth(1.5);
   for (int i=0; i<mato.size();i++){
-        if (mato.at(i).hidden) continue;
+    if (mato.at(i).hidden) continue;
+    int myStyle=aStyle[mato[i].OrdZahl];
+    if (myStyle&ATOM_STYLE_NOLISSAJOUS) continue;
     t=t0-st;
     t=fmod(t,1.0);
     glBegin(GL_LINES);
