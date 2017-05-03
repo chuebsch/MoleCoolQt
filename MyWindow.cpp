@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=556;
+int rev=557;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -3946,7 +3946,7 @@ void MyWindow::load_Jana(QString fileName){
     if (cubeGL->isModulated){
         ModulationMenu->setEnabled(true);
         fmcq->doMaps->setChecked(false);
-  modScale->show();
+        modScale->show();
 
     mol.zelle.qvec=mol.zelle.qr+mol.zelle.qi;
     if (mol.zelle.commensurate){
@@ -4510,6 +4510,8 @@ void MyWindow::load_Jana(QString fileName){
 //  fprintf(stderr,"%d\n",__LINE__);
   growSymm(6);
   fmcq->curentPhase=curentPhase;
+  if (cubeGL->isModulated) fmcq->loadDimensionm80AndPerform(m80n.toStdString().c_str());
+  else
   if (!fmcq->loadm80AndPerform(m80n.toStdString().c_str())) {
     if (fmcq->doMaps->isChecked()) infoKanalNews(QString("<font color=red>Could not load %1!</font><br>").arg(m80n));
     fmcq->deleteLists();
@@ -6985,7 +6987,7 @@ void MyWindow::load_sheldrick(QString fileName){
 	else line2[0]='\0';
 	sprintf(llin,"%s%s",line,line2);
 	if (line2[0]){
-	  sscanf(line,"%s %d %lf %lf %lf %lf %lf %lf",
+	  sscanf(llin,"%s %d %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf",
 		 newAtom.atomname,
 		 &newAtom.atomtype,
 		 &newAtom.frac.x,
@@ -6993,8 +6995,7 @@ void MyWindow::load_sheldrick(QString fileName){
 		 &newAtom.frac.z,
 		 &newAtom.amul,
 		 &newAtom.uf.m11,
-		 &newAtom.uf.m22);
-	  sscanf(line2,"%lf %lf %lf %lf",
+		 &newAtom.uf.m22,
 		 &newAtom.uf.m33,
 		 &newAtom.uf.m32,//32 ==23
 		 &newAtom.uf.m31,//31 == 13 
@@ -7046,7 +7047,7 @@ void MyWindow::load_sheldrick(QString fileName){
         if ((pda==7)&&(newAtom.atomname[0]=='L')) newAtom.OrdZahl=-2;
 	if (!strcmp(dv,"Q")) dummax++;
 	else atmax++;
-        printf("pda=%d[%s] %d atom{%s}\n",pda,line,newAtom.OrdZahl,newAtom.atomname);
+//        printf("pda=%d[%s] %d atom{%s}\n",pda,line,newAtom.OrdZahl,newAtom.atomname);
 	asymmUnit.append(newAtom);
 	acnt++;
       }

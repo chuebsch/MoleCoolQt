@@ -3281,8 +3281,10 @@ void CubeGL::exportXDFiles(){
       inp.rename(QString("InvariomTransfer/xd_%1.inp").arg(datum));
       inp.setFileName("InvariomTransfer/xd.inp");
     }
+    CID=CID.toUpper();
+    CID= CID.remove(QRegExp("[^A-Z0-9+-]*"));
     CID.truncate(8);
-    if (inp.open(QIODevice::WriteOnly)){
+      if (inp.open(QIODevice::WriteOnly)){
       inp.write("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
       inp.write(QString("! <<< X D PARAMETER FILE >>> $Revision: 5.34 (Mar 05 2007)$          %1!\n")
 		      .arg(QDate::currentDate().toString("dd-MMM-yy")).toLatin1());

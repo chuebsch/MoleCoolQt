@@ -40,6 +40,35 @@ typedef struct {
     int h,k,l,m,n,o;
     float fo,sig,fc,fca,fcb,phase;
 }fcf6d;
+typedef struct {
+  float m[6][6];
+  float t[6];
+}Mat6;
+
+typedef struct {
+  float v[6];
+
+}V6;
+inline float operator * (const V6 &a, const V6 &b){
+  float erg=0.0f;
+  for (int i=0; i<6; i++) erg+=a.v[i]*b.v[i];
+  return erg;
+}
+inline float operator % (const Mat6 &a, const V6 &b){
+  float erg=0.0f;
+  for (int i=0; i<6; i++) erg+=a.t[i]*b.v[i];
+  return erg;
+}
+inline V6 operator * (const Mat6 &a, const V6 &b){
+  V6 erg;
+  erg.v[0] = a.m[0][0]*b.v[0] + a.m[1][0]*b.v[1] + a.m[2][0]*b.v[2]+ a.m[3][0]*b.v[3]+ a.m[4][0]*b.v[4]+ a.m[5][0]*b.v[5];
+  erg.v[1] = a.m[0][1]*b.v[0] + a.m[1][1]*b.v[1] + a.m[2][1]*b.v[2]+ a.m[3][1]*b.v[3]+ a.m[4][1]*b.v[4]+ a.m[5][1]*b.v[5];
+  erg.v[2] = a.m[0][2]*b.v[0] + a.m[1][2]*b.v[1] + a.m[2][2]*b.v[2]+ a.m[3][2]*b.v[3]+ a.m[4][2]*b.v[4]+ a.m[5][2]*b.v[5];
+  erg.v[3] = a.m[0][3]*b.v[0] + a.m[1][3]*b.v[1] + a.m[2][3]*b.v[2]+ a.m[3][3]*b.v[3]+ a.m[4][3]*b.v[4]+ a.m[5][3]*b.v[5];   
+  erg.v[4] = a.m[0][4]*b.v[0] + a.m[1][4]*b.v[1] + a.m[2][4]*b.v[2]+ a.m[3][4]*b.v[3]+ a.m[4][4]*b.v[4]+ a.m[5][4]*b.v[5];  
+  erg.v[5] = a.m[0][5]*b.v[0] + a.m[1][5]*b.v[1] + a.m[2][5]*b.v[2]+ a.m[3][5]*b.v[3]+ a.m[4][5]*b.v[4]+ a.m[5][5]*b.v[5];  
+  return erg;
+}
 #pragma pack(pop)   /* restore original alignment from stack */
 #define LM 2000000
 
@@ -69,7 +98,7 @@ Q_OBJECT
           bool loadFouAndPerform(const char filename[],bool neu=true,int maxmap=3);
           bool loadm80AndPerform(const char filename[],bool neu=true);
           bool loadDimensionm80AndPerform(const char filename[],bool neu=true);
-          void map4dto3d(double t, V3 q, const int n[4],const double *D,double *B);
+          void map4dto3d(double t, V3 q, const int n[4],const float *D, float *B);
           void temp(INP atom, int h, int k, int  l, double &eij, double &TA, double &TB);
           void PDFbyFFT(int i, int options=14,double proba=50.0);
           void exportMaps(int na, const char filename[], const char atomlist[]);
@@ -127,6 +156,7 @@ char titl[80];/*fcmax=0,f000=0,resmax=99999.0,*/
 void trimm(char s[]);
 void decodeSymm(QString symmCard);
 void decodeSymm2(QString symmCard);
+Mat6 decodeSymm6d(QString symmCard);
 void deletes(char *s, int count);
 int readMas(const char *filename);
 void sorthkl(int nr, rec64 r[]);

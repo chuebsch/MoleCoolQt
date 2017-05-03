@@ -4684,6 +4684,14 @@ bool molekul::applyLatticeCentro(const QChar latt,const bool centro){
   //                  break;
 	  default: return false;
   }
+  for (int i=z; i<zelle.symmops.size(); i++){
+    Matrix sm=zelle.symmops.at(i);
+    V3 x4sym=zelle.x4sym.at(i);
+    V3 t=zelle.trans.at(i);
+    double x4=zelle.x4.at(i),x4tr=zelle.x4tr.at(i);
+    printf("SM\n%2g %2g %2g %2g, %g\n%2g %2g %2g %2g, %g\n%2g %2g %2g %2g, %g\n%2g %2g %2g %2g, %g\n\n", 
+        sm.m11,sm.m21,sm.m31,0.,t.x,sm.m12,sm.m22,sm.m32,0.,t.y,sm.m13,sm.m23,sm.m33,0.,t.z,x4sym.x,x4sym.y,x4sym.z,x4,x4tr);
+  }
   return true;
 }
 
