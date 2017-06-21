@@ -7,6 +7,7 @@
 #include <QtGui>
 #include <math.h>
 
+
 struct Vector3 {
   GLfloat x, y, z;
   inline Vector3( void ){}

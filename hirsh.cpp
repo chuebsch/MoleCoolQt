@@ -177,6 +177,7 @@ void Hirshfeld::fillUnitCell(QList<INP> xdinp){
  atomsInCell.clear();
  sfacstr.clear();
  double aiz=0.0;
+ scats=1;
 // FILE *xyz=fopen("test.xyz","wt");
 // for (int n=0; n<mol->zelle.symmops.size(); n++){
    for (int i=0; i< xdinp.size();i++){
@@ -208,7 +209,12 @@ void Hirshfeld::fillUnitCell(QList<INP> xdinp){
          , atm.Bij.m31, atm.Bij.m32, atm.Bij.m33
          );*/
      atm.iscat=findSFAC(xdinp.at(i).OrdZahl);
-     if (!sfacstr.contains(formfactors[atm.iscat].lab)) {sfacstr.append(formfactors[atm.iscat].lab); sfacstr.append(" ");isfac.append("0 ");} 
+     if (!sfacstr.contains(formfactors[atm.iscat].lab)) {
+       sfacstr.append(formfactors[atm.iscat].lab); 
+       sfacstr.append(" ");
+       isfac.append("0 ");
+       scat[xdinp.at(i).OrdZahl]=scats++;
+     } 
      if (atm.iscat<0){
        qDebug()<<"Scattering factor not found !\n";
        return;
@@ -896,7 +902,7 @@ void Hirshfeld::expandBox(){
         if ((au->at(i).jtf<2)||(au->at(i).uf.m22==0.0)) { 
           fprintf(esx,"%-4s %4d %9.5f %9.5f %9.5f %9.5f %9.5f\n",
               au->at(i).atomname,
-              au->at(i).atomtype,
+              scat.value(au->at(i).OrdZahl),//au->at(i).atomtype,
               atm.frac.x,//
               atm.frac.y,//
               atm.frac.z,//
@@ -911,7 +917,7 @@ void Hirshfeld::expandBox(){
         else {
           fprintf(esx,"%-4s %4d %9.5f %9.5f %9.5f %9.5f %9.5f %9.5f = \n  %9.5f %9.5f %9.5f %9.5f\n",
               au->at(i).atomname,
-              au->at(i).atomtype,
+              scat.value(au->at(i).OrdZahl),//au->at(i).atomtype,
               atm.frac.x,//
               atm.frac.y,//
               atm.frac.z,//
@@ -955,7 +961,7 @@ void Hirshfeld::expandBox(){
       if ((selectedAtoms->at(i).jtf<2)||(selectedAtoms->at(i).uf.m22==0.0)) { 
         fprintf(esx,"%-4s %4d %9.5f %9.5f %9.5f %9.5f %9.5f\n",
             selectedAtoms->at(i).atomname,
-            selectedAtoms->at(i).atomtype,
+             scat.value(selectedAtoms->at(i).OrdZahl),//selectedAtoms->at(i).atomtype,
             atm.frac.x,//
             atm.frac.y,//
             atm.frac.z,//
@@ -970,7 +976,7 @@ void Hirshfeld::expandBox(){
         else {
           fprintf(esx,"%-4s %4d %9.5f %9.5f %9.5f %9.5f %9.5f %9.5f = \n  %9.5f %9.5f %9.5f %9.5f\n",
           selectedAtoms->at(i).atomname,
-          selectedAtoms->at(i).atomtype,
+          scat.value(selectedAtoms->at(i).OrdZahl),//selectedAtoms->at(i).atomtype,
           atm.frac.x,//
           atm.frac.y,//
           atm.frac.z,//

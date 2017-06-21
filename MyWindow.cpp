@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=558;
+int rev=559;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -21,6 +21,7 @@ molekul mol;
 int hatlokale=0;
 int pdfOnAtom=-1;
 int curentPhase=1;
+FILE *polifile=NULL;
 const double g2r=180.0/M_PI;
 const double twologtwo=2.0*log(2.0);
 double cfac=1.0;//(M_PI*M_PI*M_PI*8)/6;
@@ -1446,6 +1447,15 @@ createRenameWgd();
         i++;
         if (i<=argc) isomax = QCoreApplication::arguments().at(i).toDouble(); else isomax = 666.666; 
       }
+      if (QCoreApplication::arguments().at(i).contains("-scale")) {
+        i++;
+        if (i<=argc) scalePic = QCoreApplication::arguments().at(i).toDouble(); else scalePic= 1.0;
+      }
+      if (QCoreApplication::arguments().at(i).contains("-pt")){
+        i++;
+        if (i<=argc) { polifile=fopen(QCoreApplication::arguments().at(i).toStdString().c_str(),"at"); }
+      }
+      
       if (QCoreApplication::arguments().at(i).contains("-f")){
 //	**33##
 	fmcq->doMaps->setChecked(false); 

@@ -1279,7 +1279,7 @@ void FourMCQ::temp(INP atom, int h, int k,int  l, double &eij, double &TA, doubl
   if (atom.jtf<2) {
     arg =atom.uf.m11 * rapi * rapi * h * h * 2;
     arg+=atom.uf.m11 * rbpi * rbpi * k * k * 2;
-    arg+=atom.uf.m11 * rcpi * rcpi * l * l * 2;//this might be incorrect.
+    arg+=atom.uf.m11 * rcpi * rcpi * l * l * 2;
     eij=exp(-arg);
     TA=eij;
     TB=0;
@@ -1297,33 +1297,33 @@ void FourMCQ::temp(INP atom, int h, int k,int  l, double &eij, double &TA, doubl
   if (atom.jtf<3) return;
   arg=0;
   double C=p3*(8.0/6.0)/1000.0;
-  arg =atom.c111  * h * h * h * 1 * C; // * rapi * rapi * rapi
-  arg+=atom.c112  * h * h * k * 3 * C; // * rapi * rapi * rbpi
-  arg+=atom.c113  * h * h * l * 3 * C; // * rapi * rapi * rcpi
-  arg+=atom.c122  * h * k * k * 3 * C; // * rapi * rbpi * rbpi
-  arg+=atom.c123  * h * k * l * 6 * C; // * rapi * rbpi * rcpi
-  arg+=atom.c133  * h * l * l * 3 * C; // * rapi * rcpi * rcpi
-  arg+=atom.c222  * k * k * k * 1 * C; // * rbpi * rbpi * rbpi
-  arg+=atom.c223  * k * k * l * 3 * C; // * rbpi * rbpi * rcpi
-  arg+=atom.c233  * k * l * l * 3 * C; // * rbpi * rcpi * rcpi
-  arg+=atom.c333  * l * l * l * 1 * C; // * rcpi * rcpi * rcpi
+  arg =atom.c111  * h * h * h * 1 * C;
+  arg+=atom.c112  * h * h * k * 3 * C;
+  arg+=atom.c113  * h * h * l * 3 * C;
+  arg+=atom.c122  * h * k * k * 3 * C;
+  arg+=atom.c123  * h * k * l * 6 * C;
+  arg+=atom.c133  * h * l * l * 3 * C;
+  arg+=atom.c222  * k * k * k * 1 * C;
+  arg+=atom.c223  * k * k * l * 3 * C;
+  arg+=atom.c233  * k * l * l * 3 * C;
+  arg+=atom.c333  * l * l * l * 1 * C;
   C=p4*(16.0/24.0)/10000.0;
   if (atom.jtf==4){
-    arg4 = atom.d1111  * h * h * h * h *  1 * C;// * rapi * rapi * rapi * rapi
-    arg4+= atom.d1112  * h * h * h * k *  4 * C;// * rapi * rapi * rapi * rbpi
-    arg4+= atom.d1113  * h * h * h * l *  4 * C;// * rapi * rapi * rapi * rcpi
-    arg4+= atom.d1122  * h * h * k * k *  6 * C;// * rapi * rapi * rbpi * rbpi
-    arg4+= atom.d1123  * h * h * k * l * 12 * C;// * rapi * rapi * rbpi * rcpi
-    arg4+= atom.d1133  * h * h * l * l *  6 * C;// * rapi * rapi * rcpi * rcpi
-    arg4+= atom.d1222  * h * k * k * k *  4 * C;// * rapi * rbpi * rbpi * rbpi
-    arg4+= atom.d1223  * h * k * k * l * 12 * C;// * rapi * rbpi * rbpi * rcpi
-    arg4+= atom.d1233  * h * k * l * l * 12 * C;// * rapi * rbpi * rcpi * rcpi
-    arg4+= atom.d1333  * h * l * l * l *  4 * C;// * rapi * rcpi * rcpi * rcpi
-    arg4+= atom.d2222  * k * k * k * k *  1 * C;// * rbpi * rbpi * rbpi * rbpi
-    arg4+= atom.d2223  * k * k * k * l *  4 * C;// * rbpi * rbpi * rbpi * rcpi
-    arg4+= atom.d2233  * k * k * l * l *  6 * C;// * rbpi * rbpi * rcpi * rcpi
-    arg4+= atom.d2333  * k * l * l * l *  4 * C;// * rbpi * rcpi * rcpi * rcpi
-    arg4+= atom.d3333  * l * l * l * l *  1 * C;// * rcpi * rcpi * rcpi * rcpi
+    arg4 = atom.d1111  * h * h * h * h *  1 * C;
+    arg4+= atom.d1112  * h * h * h * k *  4 * C;
+    arg4+= atom.d1113  * h * h * h * l *  4 * C;
+    arg4+= atom.d1122  * h * h * k * k *  6 * C;
+    arg4+= atom.d1123  * h * h * k * l * 12 * C;
+    arg4+= atom.d1133  * h * h * l * l *  6 * C;
+    arg4+= atom.d1222  * h * k * k * k *  4 * C;
+    arg4+= atom.d1223  * h * k * k * l * 12 * C;
+    arg4+= atom.d1233  * h * k * l * l * 12 * C;
+    arg4+= atom.d1333  * h * l * l * l *  4 * C;
+    arg4+= atom.d2222  * k * k * k * k *  1 * C;
+    arg4+= atom.d2223  * k * k * k * l *  4 * C;
+    arg4+= atom.d2233  * k * k * l * l *  6 * C;
+    arg4+= atom.d2333  * k * l * l * l *  4 * C;
+    arg4+= atom.d3333  * l * l * l * l *  1 * C;
   }
   TA=(1.0+arg4)*eij;
   TB=-arg*eij;
@@ -1332,6 +1332,9 @@ void FourMCQ::temp(INP atom, int h, int k,int  l, double &eij, double &TA, doubl
 }
 
 double prob(double p){
+  /*  Table values taken from D.B. Owen, "Handbook of Statistical Tables", Addison-Wesley, Reading, Mass., 1962. page 203
+   *  B values in table where used in equation piso=exp(-0.5*B*B) interpolation between values from 1 to 99 %
+   */  
   int ip=(int)p;
   double fp=(p)-ip;
   const double piso[101]={

@@ -206,6 +206,9 @@ void MolIso::loadMI(QString fname, bool om, bool mima){
     //potsigminus/=fmax(nm,1);
     //potsigplus/=fmax(np,1);
     api/=fmax(np+nm,1);
+    extern FILE *polifile;
+    if (polifile!=NULL) fprintf(polifile,"%9d %9d %6.3f %6.3f %6.3f %6.4f %6.4f %6.4f %8.6f %6.3f %6.3f\n"
+        ,np,nm,dmp,dmm,api,sigmap,sigmam,sigmam+sigmap,sigmap*sigmam/((sigmam+sigmap)*(sigmam+sigmap)),min,max);
     emit bigmessage(QString(
                         "Average of positive surface values V<sub>S</sub><sup>+</sup><sub>av.</sub> = <b>%1</b><br>"
                         "Average of negative surface values V<sub>S</sub><sup>-</sup><sub>av.</sub> = <b>%2</b><br>"
@@ -217,16 +220,16 @@ void MolIso::loadMI(QString fname, bool om, bool mima){
                         "&nu; = (&sigma;<sup>2</sup><sub>+</sub>&sdot;&sigma;<sup>2</sup><sub>-</sub>)/(&sigma;<sup>2</sup><sub>tot</sub>)<sup>2</sup> = <b>%11</b><br>Please see: <br>"
                         "Politzer, P., Murray, J. S., Peralta-Inga, Z.,<br>"
                         "<em>Int. J. Quantum. Chem.</em> <b>85</b> (2001), 676-684.<br>for details about these numbers.")
-                    .arg(dmp,0,'f',3)
-            .arg(dmm,0,'f',3)
-            .arg(sigmap,0,'f',4)
-            .arg(sigmam,0,'f',4)
-            .arg(sigmam+sigmap,0,'f',4)
-            .arg(sigma,0,'f',4)
-            .arg(np)
-            .arg(nm)
-            .arg(api,0,'f',3)
-                    .arg(sigmap*sigmam/((sigmam+sigmap)*(sigmam+sigmap))));
+      .arg(dmp,0,'f',3)
+      .arg(dmm,0,'f',3)
+      .arg(sigmap,0,'f',4)
+      .arg(sigmam,0,'f',4)
+      .arg(sigmam+sigmap,0,'f',4)
+      .arg(sigma,0,'f',4)
+      .arg(np)
+      .arg(nm)
+      .arg(api,0,'f',3)
+      .arg(sigmap*sigmam/((sigmam+sigmap)*(sigmam+sigmap))));
 //    printf("\nAverage of positive surface values VS+= %f\nAverage of negative surface values VS-= %f\nsigma square + = %f\nsigma square - = %f\n%f %f n+ %d n- %d\n%g  \n"
     /*potnu=potsigplus*potsigminus/(potsigtot*potsigtot);
       printf("\nAverage of positive surface values VS+= %f %s\n Average of negative surface values VS-= %f %s\n Average deviation from the average surface value PI= %f %s\n sigma square + = %f (%s)^2\n sigma square - = %f (%s)^2\n sigma square total = %f (%s)^2\n nu = %f \n\n",

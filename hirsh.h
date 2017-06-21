@@ -168,6 +168,8 @@ private:
   double *C,*_C;
   double *expandetrho2;
   double *density_out;
+  QMap<int,int> scat;
+  int scats;
   QSpinBox *nxs, *nys, *nzs;
   QLabel *xSpacing, *ySpacing, *zSpacing;
   QCheckBox *staticBx;
