@@ -1541,7 +1541,9 @@ void MyWindow::openMapControl(){
   fomaps->setValue(fmcq->iso[0]);
   fomaps->setSingleStep(fmcq->iso[0]/10.0);
   maprad->setValue(fmcq->map_radius);
+  if (fmcq->datfo6!=NULL) fmcq->maptrunc =0;
   mapSchnitt->setCurrentIndex(fmcq->maptrunc);
+  mapSchnitt->setEnabled(fmcq->datfo6==NULL);
   md->show();
 }
 
@@ -1644,11 +1646,23 @@ void MyWindow::doMapsNow(bool b){
   } else {
     QString fouName;
     fouName=dirName;
-    fouName.chop(3);
-    fouName.append("fou");
-    if (!fmcq->loadFouAndPerform(fouName.toStdString().c_str(),false)){
-      infoKanalNews(QString("<font color=red>Could not load %1!</font><br>").arg(fouName));
-      fmcq->deleteLists();
+    bool good=true;
+    if (fouName.contains(QRegExp("m\\d\\d$"))) {
+      fouName.chop(3);
+      fouName.append("m80");
+      if (cubeGL->isModulated) good=fmcq->loadDimensionm80AndPerform(fouName.toStdString().c_str());
+      else good=fmcq->loadm80AndPerform(fouName.toStdString().c_str(),false);
+      if (!good){
+        infoKanalNews(QString("<font color=red>Could not load %1!</font><br>").arg(fouName));
+        fmcq->deleteLists();
+      }
+    }else{
+      fouName.chop(3);
+      fouName.append("fou");
+      if (!fmcq->loadFouAndPerform(fouName.toStdString().c_str(),false)){
+        infoKanalNews(QString("<font color=red>Could not load %1!</font><br>").arg(fouName));
+        fmcq->deleteLists();
+      }
     }  
     cubeGL->updateGL();
   }
@@ -1665,10 +1679,12 @@ void MyWindow::controlMap(){
       fouName=dirName;
       fouName.chop(3);
       fouName.append("m80");
-      if (!fmcq->loadm80AndPerform(fouName.toStdString().c_str(),false)){
+      bool good=true;
+      if (cubeGL->isModulated) good=fmcq->loadDimensionm80AndPerform(fouName.toStdString().c_str());
+      else good=fmcq->loadm80AndPerform(fouName.toStdString().c_str(),false);
+      if (!good){
         infoKanalNews(QString("<font color=red>Could not load %1!</font><br>").arg(fouName));
         fmcq->deleteLists();
-
       }
     }else{
       fouName=dirName;
@@ -2856,6 +2872,7 @@ void MyWindow::incT(){
       }
     }  
   }
+  cubeGL->emitnewt();
   cubeGL->updateGL(); 
 }
 
@@ -3764,15 +3781,16 @@ void MyWindow::load_Jana(QString fileName){
   mol.zelle.symmops.clear();
   mol.zelle.trans.clear();
   mol.ccc.clear();
+  cubeGL->isModulated=false;
   sprintf(CID,"no title");
-  QString fileBase,m40n,m50n,m80n;
+  QString fileBase,m40n,m50n,fouName;
   fileBase=fileName;
   mol.dimensions=3; 
   mol.ncomp=1; 
   if  (fileBase.contains(QRegExp(".m\\d\\d$"))) fileBase.chop(4);
   m40n=fileBase+(".m40");
   m50n=fileBase+(".m50");
-  m80n=fileBase+(".m80");
+  fouName=fileBase+(".m80");
   QFile m50(m50n);
   if (!m50.open(QIODevice::ReadOnly|QIODevice::Text)  ) {qDebug()<< "can't open "<<m50n; return;}
   QStringList tok;
@@ -3955,7 +3973,6 @@ void MyWindow::load_Jana(QString fileName){
       }
     if (cubeGL->isModulated){
         ModulationMenu->setEnabled(true);
-        fmcq->doMaps->setChecked(false);
         modScale->show();
 
     mol.zelle.qvec=mol.zelle.qr+mol.zelle.qi;
@@ -4060,6 +4077,7 @@ void MyWindow::load_Jana(QString fileName){
         if ((all.at(li).length()>16)&&(all.at(li)[16]!=' ')) 
         iread=sscanf(all.at(li).toStdString().c_str(),"%8s%3d%3d%3d %9lf%9lf%9lf%9lf",newAtom.atomname,&newAtom.atomtype,&newAtom.jtf, &newAtom.lmax, &newAtom.amul, &newAtom.frac.x, &newAtom.frac.y, &newAtom.frac.z);
         else iread=sscanf(all.at(li).toStdString().c_str(),"%8s%3d%3d    %9lf%9lf%9lf%9lf     %1d%1d%1d%3d%3d%3d",newAtom.atomname,&newAtom.atomtype,&newAtom.jtf,  &newAtom.amul, &newAtom.frac.x, &newAtom.frac.y, &newAtom.frac.z,&so,&sp,&st,&wo,&wp,&wt);
+        if (iread<13) {so=0;sp=0;st=0;wo=0;wp=0;wt=0;}
         printf("so%d sp%d st%d wo%d wp%d wt%d\n",so,sp,st,wo,wp,wt);
    //     qDebug()<<all.at(li)<<all.at(li)[16];
    //     printf("'11111111222333444 555555555666666666777777777888888888'\n");
@@ -4234,8 +4252,15 @@ void MyWindow::load_Jana(QString fileName){
       }
         }
       }
+ // printf("line %d\n",__LINE__);
 
       if ((currentMolekule!=NULL)&&(currentMolekule->atoms.size()<currentMolekule->na())&&(all.at(li).contains(QRegExp("^[A-z]+")))){
+        printf("hallo\n");
+        qDebug()
+          <<currentMolekule->atoms.size()
+          <<currentMolekule->na()
+          <<all.at(li)
+          <<__LINE__;
        int so,sp,st,wo,wp,wt;
        sscanf(all.at(li).toStdString().c_str(),"%*8s%*3d%*3d    %*9f%*9f%*9f%*9f     %1d%1d%1d%3d%3d%3d",
                            &so,&sp,&st,&wo,&wp,&wt);
@@ -4296,12 +4321,16 @@ void MyWindow::load_Jana(QString fileName){
        currentMolekule->atoms.append(*molat);
       }
       if ((currentMolekule!=NULL)&&(all.at(li).contains("pos#"))&&(currentMolekule->positions.size()<currentMolekule->np())){
+        qDebug()<<all.at(li)<<"line->"<<__LINE__;
         int so,sp,st,wo,wp,wt;
-        sscanf(all.at(li).toStdString().c_str(),"%*8s%*3d%*3d%*f %1d%1d%1d%3d%3d%3d",&so,&sp,&st,&wo,&wp,&wt);
+        int iread=sscanf(all.at(li).toStdString().c_str(),"%*8s%*3d%*3d%*f %1d%1d%1d%3d%3d%3d",&so,&sp,&st,&wo,&wp,&wt);
+        if (iread<6) {so=0;sp=0;st=0;wo=0;wp=0;wt=0;}
+
         currentMolekule->positions.append(JmPos(tok.at(0),tok.at(1).toInt(),tok.at(2).toInt(),tok.at(3).toDouble(),
             so,sp,st,wo,wp,wt));
         li++;
         tok.clear();
+        qDebug()<<iread<<so<<sp<<st<<wo<<wp<<wt<<all.at(li);
         tok=all.at(li).split(" ",QString::SkipEmptyParts);
         currentMolekule->positions.last().phi=tok.at(0).toDouble();
         currentMolekule->positions.last().chi=tok.at(1).toDouble();
@@ -4380,7 +4409,7 @@ void MyWindow::load_Jana(QString fileName){
           //modat->setWaveTemPar(tk,u11s,u22s,u33s, u12s,u13s,u23s,u11c,u22c,u33c, u12c,u13c,u23c);
           }
         }
-          qDebug()<<all.at(li)<<currentMolekule->positions.last().aimol<<"LINE::"<<__LINE__;
+          qDebug()<<currentMolekule->positions.last().aimol<<"LINE::"<<__LINE__;
           QList<Modulat> ma;
           if (currentMolekule->positions.size()==currentMolekule->np()) currentMolekule->printpos(0.0,ma);
           masymmUnit.append(ma);
@@ -4458,6 +4487,9 @@ void MyWindow::load_Jana(QString fileName){
   }
   }
   if (lavec.isEmpty()){
+//    printf("line %d %c\n",__LINE__,gitt);
+    mol.applyLatticeCentro(gitt,false);
+ //   printf("line %d %c\n",__LINE__,gitt);
     mol.applyLatticeCentro(gitt,false);
   }else{
     int z=mol.zelle.symuncent=mol.zelle.symmops.size();
@@ -4508,6 +4540,7 @@ void MyWindow::load_Jana(QString fileName){
   }
   }
 //    fprintf(stderr,"3ok\n");
+ // printf("line %d\n",__LINE__);
   for (int i=0;i<asymmUnit.size();i++) { 
 //    mol.frac2kart(asymmUnit[i].frac,asymmUnit[i].kart);
 //    printf("%-10s %4d %12.6f%12.6f%12.6f\n",asymmUnit[i].atomname,asymmUnit[i].OrdZahl,asymmUnit[i].kart.x,asymmUnit[i].kart.y,asymmUnit[i].kart.z);
@@ -4515,17 +4548,18 @@ void MyWindow::load_Jana(QString fileName){
       asymmUnit[i].u.m11=asymmUnit[i].u.m22=asymmUnit[i].u.m33=asymmUnit[i].uf.m11;
       asymmUnit[i].u.m12=asymmUnit[i].u.m13=asymmUnit[i].u.m23=asymmUnit[i].u.m21=asymmUnit[i].u.m31=asymmUnit[i].u.m32=0.0;}
     else mol.Uf2Uo(asymmUnit[i].uf,asymmUnit[i].u);
-  printf("%12.6f%12.6f%12.6f%12.6f%12.6f%12.6f\n",asymmUnit[i].u.m11,asymmUnit[i].u.m22,asymmUnit[i].u.m33, asymmUnit[i].u.m12, asymmUnit[i].u.m13,asymmUnit[i].u.m23);
+  printf("Ucart%12.6f%12.6f%12.6f%12.6f%12.6f%12.6f\n",asymmUnit[i].u.m11,asymmUnit[i].u.m22,asymmUnit[i].u.m33, asymmUnit[i].u.m12, asymmUnit[i].u.m13,asymmUnit[i].u.m23);
   }
 //  fprintf(stderr,"%d\n",__LINE__);
   growSymm(6);
   fmcq->curentPhase=curentPhase;
-  if (cubeGL->isModulated) fmcq->loadDimensionm80AndPerform(m80n.toStdString().c_str());
-  else
-  if (!fmcq->loadm80AndPerform(m80n.toStdString().c_str())) {
-    if (fmcq->doMaps->isChecked()) infoKanalNews(QString("<font color=red>Could not load %1!</font><br>").arg(m80n));
+  bool good=true;
+//  printf("line %d\n",__LINE__);
+  if (cubeGL->isModulated) good=fmcq->loadDimensionm80AndPerform(fouName.toStdString().c_str(),true);
+  else good=fmcq->loadm80AndPerform(fouName.toStdString().c_str(),true);
+  if (!good){
+    infoKanalNews(QString("<font color=red>Could not load %1!</font><br>").arg(fouName));
     fmcq->deleteLists();
-    fmcq->doMaps->hide();
   }
   fmcq->doMaps->show();
   //xdMenu->setEnabled(true);

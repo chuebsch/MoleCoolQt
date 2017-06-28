@@ -164,12 +164,14 @@ public slots:
   void delCoordinative();
   void zoomin();
   void zoomout();
+  void emitnewt(){emit tnew();}
 signals:
   void message(const QString &);
   void bigmessage(const QString &);
   void reloadXD();
   void reloadFile();
   void mconf();
+  void tnew();
   void neuemitte(V3 mitte);
   void diffscroll(int numsteps,int diff);
   void inimibas();

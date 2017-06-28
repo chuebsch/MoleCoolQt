@@ -16,6 +16,8 @@ FourMCQ::FourMCQ(molekul *mole_, CubeGL *chgl_,QToolBar *toolView, double resol,
   chgl->foubas[4]=0;
   curentPhase=1;
   datfo_fc=datf1_f2=datfo=NULL;
+  datfo6=NULL;
+  datfo_fc6=NULL;
   nodex=nodey=nodez=NULL;
   urs=V3(0,0,0);
   nr=0;
@@ -49,8 +51,13 @@ void FourMCQ::killmaps(){
   if (datfo_fc!=NULL) free(datfo_fc);
   if (datf1_f2!=NULL) free(datf1_f2);
   if (datfo_f2!=NULL) free(datfo_f2);
+  if (datfo6!=NULL) free(datfo6);
+  if (datfo_fc6) free(datfo_fc6);
   datfo=datfo_fc=datf1_f2=datfo_f2=NULL;
+  datfo6=NULL;
+  datfo_fc6=NULL;
   deleteLists();
+  n1=n2=n3=n4=n5=0;
   if (nodex!=NULL) free(nodex);
   if (nodey!=NULL) free(nodey);
   if (nodez!=NULL) free(nodez);
@@ -291,7 +298,7 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
   }while (i > 0 && !feof (mapin));
   fclose(mapin);
 
-  printf("%d Reflections read from %s.\n",nr,filename);
+  printf("%d Reflections read from %s .\n",nr,filename);
   for (int i=0;i<ns;i++){
     /*fprintf(test,"SYMM: %d\n%9.6f %9.6f %9.6f %5.2f\n%9.6f %9.6f %9.6f %5.2f\n%9.6f %9.6f %9.6f %5.2f\n",i+1,
       sy[0][i], sy[1][i], sy[2][i], sy[9][i],
@@ -412,7 +419,7 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
      fclose(unmerg);
   // */
   n++;
-  fprintf(stderr,"%d %d \n",nr,n);
+  fprintf(stderr,"!!%d %d \n",nr,n);
   nr=n;
 
   {
@@ -444,6 +451,8 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
       for (int i=0; (it[i]< j)||((nc)&&(it[i]%2)); i++) n3=it[i+1];
       n4=n2*n1;
       n5=n3*n4;
+      datfo6=NULL;
+      datfo_fc6=NULL;
       datfo=(float*) malloc(sizeof(float)*n5);
       datfo_fc=(float*) malloc(sizeof(float)*n5);
       datf1_f2=NULL;//(float*) malloc(sizeof(float)*n5);
@@ -529,6 +538,7 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
       fprintf(stderr,"Finished! sigma %g %g %g %d\n",t,DS,DM,n5);
     }//1
   }//2
+//  printf("line %d\n",__LINE__);
   sigma[2]=9*sigma[0];
   extern QList<INP> xdinp;
   extern QList<Modulat> matoms;
@@ -548,7 +558,7 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
   urs*=1.0/gt;
   urs=V3(1,1,1)-1.0*urs;
   mole->frac2kart(urs,urs);
-  //printf("ursprung %g %g %g %d\n",urs.x,urs.y,urs.z,gt);
+//  printf("ursprung %g %g %g %d\n",urs.x,urs.y,urs.z,gt);
   nodex= (FNode*)malloc(sizeof(FNode)*n5);
   nodey= (FNode*)malloc(sizeof(FNode)*n5);
   nodez= (FNode*)malloc(sizeof(FNode)*n5);
@@ -590,6 +600,7 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
   delDA[24]=  -n1*dx +n2*dy +n3*dz;
   delDA[25]=          n2*dy +n3*dz;
   delDA[26]=   n1*dx +n2*dy +n3*dz;
+//  printf("Now: gen_surface!\n");
   gen_surface(neu,0,3);
   return true;
 }
@@ -622,16 +633,17 @@ bool FourMCQ::loadDimensionm80AndPerform(const char filename[],bool neu){
     3840, 3850, 3861, 3888, 3900, 3920, 3960, 3969, 4000, 4004, 4032, 4050, 4095, 4096, 4116, 4125, 4158, 4160,
     4200, 4212, 4224, 4290, 4312, 4320, 4368, 4374, 4375, 4400, 4410, 4455, 4459, 4480, 4500, 4536, 4550, 4576,
     4608, 4620, 4680, 4704, 4725, 4752, 4800, 4802, 4851, 4860, 4875, 4900, 4914, 4928, 4950, 4992, 5000};
-  //if (!doMaps->isChecked()) return false;
+  if (!doMaps->isChecked()) return false;
+  maptrunc=0;
   killmaps();
   double T,V;
   path=filename;
   datfo_f2=NULL;
-  float* datfo6=NULL;
-  float* datfo_fc6=NULL;
+  datfo6=NULL;
+  datfo_fc6=NULL;
   char line[200];
   FILE *mapin;
-  int dimension=0;
+  int dimension=3;
   int i,ok=0;
   short int ih0, ik0, il0, im, in,io, is, iphid;//iphid stucture-phase-id
   float fo0,fc0,fc1,f20,fsig;
@@ -823,6 +835,8 @@ bool FourMCQ::loadDimensionm80AndPerform(const char filename[],bool neu){
 
   //from drawxtl ...>
   if ((mapin = fopen (filename, "r")) == NULL) {
+    datfo6=NULL;
+    datfo_fc6=NULL;
     fprintf (stderr, "Cannot open Fo/Fc (JANA m80) file %s\n", filename);
     return false;
   }
@@ -859,7 +873,7 @@ bool FourMCQ::loadDimensionm80AndPerform(const char filename[],bool neu){
         case 4:
           im = 0;
           i = sscanf (line, "%4hd%4hd%4hd%4hd%4hd%12f%*12f%12f%12f%12f", &ih0, &ik0, &il0, &im, &iphid, &fo0,&fc1, &fc0, &f20);
-          // fprintf(test,"%d %d %d %d %d %f %f %f \n",ih0,ik0,il0,im,iphid,fo0,fc0,f20);
+          if (nr==0) printf("%d %d %d %d %d %f %f %f \n",ih0,ik0,il0,im,iphid,fo0,fc0,f20);
 
           break;
         case 5:
@@ -1096,7 +1110,7 @@ bool FourMCQ::loadDimensionm80AndPerform(const char filename[],bool neu){
         D6.v[ii]=1.0/nn[ii];
         M6.v[ii]=(ii==0)?1:M6.v[ii-1]*nn[ii-1];
         n5*=nn[ii];
-        printf("dim %d steps %d mulm%g\n",ii,nn[ii],M6.v[ii]);
+        printf("dim %d steps %d mulm %g\n",ii,nn[ii],M6.v[ii]);
       }
       printf("n5=%d\n",n5);
       datfo6=(float*) malloc(sizeof(float)*n5);
@@ -1140,6 +1154,7 @@ bool FourMCQ::loadDimensionm80AndPerform(const char filename[],bool neu){
           for (int iq=dimension-1; iq>=0; iq--){
             m+=ykl.v[iq]*M6.v[iq];          
           }
+//         if (typ==1) printf("%4g%4g%4g%4g (%1d) \n%4g%4g%4g%4g %d %4g%4g %g %f %f\n\n",xkl.v[0],xkl.v[1],xkl.v[2],xkl.v[3],n,ykl.v[0],ykl.v[1],ykl.v[2],ykl.v[3],m ,ykl.v[4],ykl.v[5],ss, q/M_PI*180,s+t);
           nzer++;
 //          if (m>30000) { printf("%g %g %g %g %g %g \n",ykl.v[0],ykl.v[1],ykl.v[2],ykl.v[3],ykl.v[4],ykl.v[5]); }
           mmx=(mmx>m)?mmx:m;
@@ -1148,6 +1163,7 @@ bool FourMCQ::loadDimensionm80AndPerform(const char filename[],bool neu){
           B[m][0]=p;
           q=ss*sinf(q);        
           B[m][1]=q;
+          
           zkl=ykl;
           for (int iq=0; iq < dimension; iq++){
             ykl.v[iq]*=-1;
@@ -1165,16 +1181,32 @@ bool FourMCQ::loadDimensionm80AndPerform(const char filename[],bool neu){
           B[m][1]=-q;
         }
       }
- //     if (typ==0) {
- //       FILE *OOO=fopen("123.hkl","wt");
-  //      for (int i=0; i<n5;i++){
- //         if ((B[i][0]!=0.0)||(B[i][1]!=0.0))fprintf(OOO,"%8d %18.9e %18.9e \n",i,B[i][0],B[i][1]);
- //       }
- //       fclose(OOO);
- //     }
+/*      if (typ==1) {
+        FILE *OOO=fopen("1234.hkl","wt");
+        int zj=0;
+        for (int i=0; i<n5;i++){
+          if ((B[i][0]!=0.0)||(B[i][1]!=0.0)){int zh,zk,zl,zm,zi; 
+            zm=i/M6.v[3];
+            zi=i-zm*M6.v[3];
+            zl=zi/M6.v[2];
+            zi=i-zm*M6.v[3]-zl*M6.v[2];
+            zk=zi/M6.v[1];
+            zh=zi=i-zm*M6.v[3]-zl*M6.v[2]-zk*M6.v[1];
+            fprintf(OOO,"%8d %18.9e %18.9e !%4d%4d%4d%4d  %d\n",i,B[i][0],B[i][1],zh,zk,zl,zm,zj);zj++;}
+        }
+        fclose(OOO);
+      }*/
       fprintf(stderr,"Starting Fourier %d %d %d!\n",mmx,mmn,nzer);
+
       //fwd_plan = fftwf_plan_dft_3d(n3,n2,n1,B,B,FFTW_FORWARD,FFTW_ESTIMATE);
-      fwd_plan = fftwf_plan_dft(dimension,nn,B,B,FFTW_FORWARD,FFTW_ESTIMATE);
+      int rnn[6];
+      for (int nii=0; nii<dimension;nii++) {
+        rnn[dimension-nii-1]=nn[nii];
+        fprintf(stderr,"%8d ",nn[nii]);
+      }
+      fprintf(stderr,"\n");
+
+      fwd_plan = fftwf_plan_dft(dimension,rnn,B,B,FFTW_FORWARD,FFTW_ESTIMATE);
       //(int rank, const int *n, C *in, C *out, int sign, unsigned flags)
       fftwf_execute(fwd_plan);
       fftwf_destroy_plan(fwd_plan);
@@ -1193,18 +1225,17 @@ bool FourMCQ::loadDimensionm80AndPerform(const char filename[],bool neu){
     }//1
   }//2
   sigma[2]=9*sigma[0];
-  printf("x\n");
+  //printf("x __LINE__ %d\n",__LINE__);
 //map4dto3d(const double t,const  V3 q, const int n[4],const double *D,double *B)
   n1=nn[0];
   n2=nn[1];
   n3=nn[2];
 
-  map4dto3d(0.5,qvec,nn,datfo6,datfo);
-  map4dto3d(0.5,qvec,nn,datfo_fc6,datfo_fc);
-  n5=nn[0]*nn[2]*nn[1];
-  printf("x\n");
+  n4=n2*n1;
+  n5=n4*n3;
+  printf("n1=%d n2=%d n3=%d n4%d n5=%d \n",n1,n2,n3,n4,n5 );
 
-  return false;
+  //return false;
   extern QList<INP> xdinp;      
   extern QList<Modulat> matoms;      
   urs=V3(0,0,0);int gt=0;
@@ -1222,9 +1253,10 @@ bool FourMCQ::loadDimensionm80AndPerform(const char filename[],bool neu){
   gt=(gt>0)?gt:1;
   urs*=1.0/gt;
   urs=V3(1,1,1)-1.0*urs;
+  printf("origin fractional %g %g %g %d\n",urs.x,urs.y,urs.z,gt);
   mole->frac2kart(urs,urs);
-  printf("ursprung %g %g %g %d\n",urs.x,urs.y,urs.z,gt);
-  return false;
+  printf("origin Cartesian %g %g %g %d\n",urs.x,urs.y,urs.z,gt);
+//  return false;
   nodex= (FNode*)malloc(sizeof(FNode)*n5);
   nodey= (FNode*)malloc(sizeof(FNode)*n5);
   nodez= (FNode*)malloc(sizeof(FNode)*n5);
@@ -1523,24 +1555,33 @@ double FourMCQ::proba(double max, double prob){
 }
 
 void FourMCQ::map4dto3d(const double t,const  V3 q, const int n[4],const float *D, float *B){
+ // printf("FourMCQ::map4dto3d t=%f q %f %f %f idim %d %d %d %d\n",t,q.x,q.y,q.z,n[0],n[1],n[2],n[3]);
   double a,b;
   int c,idx3,n123=n[0]*n[1]*n[2],cp1;
-  int m=n[0]*n[1]*n[2]*n[3]*999;
+  int nt=n123*n[3],idx4,idx4p1;
+  long unsigned int m=nt*4;
+  double dxx=1.0/n[0],dyy=1.0/n[1],dzz=1.0/n[2];
+
   for (int ix=0; ix<n[0]; ix++)
     for (int iy=0; iy<n[1]; iy++)
       for (int iz=0; iz<n[2]; iz++){
         a=
-          ix*dx.x*q.x + iy*dy.x*q.x + iz*dz.x*q.x +
+/*          ix*dx.x*q.x + iy*dy.x*q.x + iz*dz.x*q.x +
           ix*dx.y*q.y + iy*dy.y*q.y + iz*dz.y*q.y +
-          ix*dx.z*q.z + iy*dy.z*q.z + iz*dz.z*q.z + t;
+          ix*dx.z*q.z + iy*dy.z*q.z + iz*dz.z*q.z + t;*/
+          ix*dxx*q.x + iy*dyy*q.y + iz*dzz*q.z + t;
         a = (a+m) - ((int) (a+m));//0.0---0.9999999
         a*=n[3];
         b = (a+m) - ((int) (a+m));
-        c = ((int) a)%n123;
-        cp1 = (c+1)%n123;
+        c = ((int) a)%n[3];
+        cp1 = (c+1)%n[3];
         idx3=ix+(iy+iz*n[1])*n[0];
-        B[idx3]=D[idx3+c*n123]*(1.0-b)+D[idx3+cp1*n123]*(b);            
+//        printf("a%f b%f,c%d cp1 %d %d<%d %d< %d\n",a,b,c,cp1,idx3,n123,idx3+cp1*n123,nt);
+        idx4=(idx3+c*n123)%nt;
+        idx4p1=(idx3+cp1*n123)%nt;
+        B[idx3]=D[idx4]*(1.0-b)+D[idx4p1]*(b);            
       }
+ // printf("FourMCQ::map4dto3d t=%f q %f %f %f idim %d %d %d %d\n",t,q.x,q.y,q.z,n[0],n[1],n[2],n[3]);
 }
 
 void FourMCQ::PDFbyFFT(int i, int options,double probab){
@@ -2244,6 +2285,8 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu, int maxmap){
       datf1_f2=(float*) malloc(sizeof(float)*n5);
       if (maxmap>3) datfo_f2=(float*) malloc(sizeof(float)*n5);
       else datfo_f2=NULL;
+      datfo6=NULL;
+      datfo_fc6=NULL;
       DX=1.0/n1;
       DY=1.0/n2;
       DZ=1.0/n3;
@@ -3230,6 +3273,10 @@ void FourMCQ::sorthkl(int nr, rec64 r[]){
   free(hilf);free(hilf2);
 }
 
+void FourMCQ::newt(){
+  gen_surface(false);
+}
+
 void FourMCQ::bewegt(V3 nm){
   V3 v , alturs=urs;
   mole->kart2frac(nm,v);
@@ -3285,11 +3332,18 @@ void FourMCQ::gen_surface(bool neu,int imin,int imax){
     return ;
     }
     */
+//  printf("gen surf is new? %d\n",neu);
   if (!n5) return;
+  static float isoo=-iso[0];
   disconnect(chgl,SIGNAL(diffscroll(int ,int )),0,0);
   disconnect(chgl,SIGNAL(neuemitte(V3)),0,0);
   disconnect(chgl,SIGNAL(inimibas()),0,0);
+  disconnect(chgl,SIGNAL(tnew()),0,0);
   if (datf1_f2==NULL)imax=qMin(3,imax);
+  if (datfo6!=NULL){
+  map4dto3d(chgl->tvalue, mole->zelle.qvec, nn, datfo6, datfo);
+  map4dto3d(chgl->tvalue, mole->zelle.qvec, nn, datfo_fc6, datfo_fc);
+  }
   /*
      if ((mode==0)&&(!scroller)) chgl->mibas=glGenLists(2);
      scroller=false;*/
@@ -3339,7 +3393,7 @@ void FourMCQ::gen_surface(bool neu,int imin,int imax){
     //    QTime t;
     //   t.start();
     //balken->setValue(balkenstep++);
-    //printf("iso=%g e/A^3 %s %10.5f %10.5f %10.5f\n",iso,(!mode)?"difference map":"Fo-map",urs.x,urs.y,urs.z);
+    //printf("iso=%g e/A^3 %s %10.5f %10.5f %10.5f %d %d %d %d\n",iso[mtyp],(mtyp)?"difference map":"Fo-map",urs.x,urs.y,urs.z,n1,n2,n3,n5);
 #pragma omp parallel shared(chunk)
     {
       int ix,iy,iz;
@@ -3401,10 +3455,12 @@ void FourMCQ::gen_surface(bool neu,int imin,int imax){
       .arg(iso[0],6,'g',2)
       .arg(QKeySequence(Qt::ShiftModifier).toString(QKeySequence::NativeText))
       ;
-  emit bigmessage(info);
+  if (isoo!=iso[0]) emit bigmessage(info);
+  isoo=iso[0];
   connect(chgl,SIGNAL(inimibas()),this,SLOT(inimap()));
   connect(chgl,SIGNAL(neuemitte(V3)),this, SLOT(bewegt(V3)));
   connect(chgl,SIGNAL(diffscroll(int ,int )),this,SLOT(change_iso(int ,int )));
+  connect(chgl,SIGNAL(tnew()),this,SLOT(newt()));
   chgl->fofcact->setVisible(((chgl->foubas[0])&&(glIsList(chgl->foubas[0]))));
   chgl->foact->setVisible(((chgl->foubas[2])&&(glIsList(chgl->foubas[2]))));
   chgl->f1f2act->setVisible(((chgl->foubas[3])&&(glIsList(chgl->foubas[3]))));
@@ -3466,12 +3522,14 @@ void FourMCQ::CalcVertex( int ix, int iy, int iz) {
 
   if (Intersect(vo,vx)) {
     o=dx*((vo/(vo-vx))+ix) + dy*iy + dz*iz+urs;
+    if (datfo6==NULL){
     mole->kart2frac(o,o);
     o+=V3(-0.5,-0.5,-0.5);
     fl=V3(floor(o.x),floor(o.y),floor(o.z));
     o+=-1.0*fl;
     o+=V3(0.5,0.5,0.5);
     mole->frac2kart(o,o);
+    }
     o+=-1.0*urs;
     o+=mdz;
     //    orte.append(o);
@@ -3480,28 +3538,34 @@ void FourMCQ::CalcVertex( int ix, int iy, int iz) {
   }
   if (Intersect(vo,vy)) {
     o=dx*ix + dy*((vo/(vo-vy))+iy) + dz*iz+urs;
+    if (datfo6==NULL){
     mole->kart2frac(o,o);
     o+=V3(-0.5,-0.5,-0.5);
     fl=V3(floor(o.x),floor(o.y),floor(o.z));
     o+=-1.0*fl;
     o+=V3(0.5,0.5,0.5);
     mole->frac2kart(o,o);
+    }
     o+=-1.0*urs;
     o+=mdz;
+    
     //    orte.append(o);
     nodey[ind].vertex=o;
     nodey[ind].flag=1;
   }
   if (Intersect(vo,vz)) {
     o=dx*ix + dy*iy + dz*((vo/(vo-vz))+iz)+urs;
+    if (datfo6==NULL){
     mole->kart2frac(o,o);
     o+=V3(-0.5,-0.5,-0.5);
     fl=V3(floor(o.x),floor(o.y),floor(o.z));
     o+=-1.0*fl;
     o+=V3(0.5,0.5,0.5);
     mole->frac2kart(o,o);
+    }
     o+=-1.0*urs;
     o+=mdz;
+    
     //    orte.append(o);
     nodez[ind].vertex=o;
     nodez[ind].flag=1;
@@ -3561,13 +3625,17 @@ void FourMCQ::makeFaces(int n, FNode poly[] ){
       glBegin(GL_TRIANGLE_FAN);
       glVertex3f( mid_ver.x+delDA[w].x,mid_ver.y+delDA[w].y,mid_ver.z+delDA[w].z);
       for (int k=0; k<n;k++){
-        glVertex3f(     poly[k%n].vertex.x+delDA[w].x,
+        glVertex3f(     
+            poly[k%n].vertex.x+delDA[w].x,
             poly[k%n].vertex.y+delDA[w].y,
-            poly[k%n].vertex.z+delDA[w].z);
+            poly[k%n].vertex.z+delDA[w].z
+            );
       }
-      glVertex3f(     poly[0].vertex.x+delDA[w].x,
+      glVertex3f(     
+          poly[0].vertex.x+delDA[w].x,
           poly[0].vertex.y+delDA[w].y,
-          poly[0].vertex.z+delDA[w].z);
+          poly[0].vertex.z+delDA[w].z
+          );
       glEnd();
     }
     if (maptrunc==0) w=27;
@@ -3681,7 +3749,7 @@ void FourMCQ::MakeElement( int ix, int iy, int iz ,int s1, int s2) {//das ist de
         for (int polni=1; polni<=n; polni++){
           dis+=Distance(polygon[polni-1].vertex , polygon[polni%n].vertex);
         }
-        if (dis<5)
+        if ((dis<5)&&(datfo==NULL))
           makeFaces( n, polygon );
       }
     }

@@ -93,6 +93,8 @@ class FourMCQ:public QObject{
 Q_OBJECT
   public:
           float *datfo,*datfo_fc,*datf1_f2,*datfo_f2;
+          float* datfo6;
+          float* datfo_fc6;
           FourMCQ(molekul *mole_, CubeGL *chgl_,QToolBar *toolView, double resol=2.5, double wght=1.0);
 	  ~FourMCQ();
           bool loadFouAndPerform(const char filename[],bool neu=true,int maxmap=3);
@@ -124,6 +126,7 @@ Q_OBJECT
 
           void bewegt(V3 v);
           void inimap();
+          void newt();
           void change_iso(int numsteps,int diff);
   signals:
   void bigmessage(const QString &);
