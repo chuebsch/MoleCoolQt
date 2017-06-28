@@ -3005,7 +3005,7 @@ void molekul::makeLissajous(QList<Modulat> mato,int proba, bool gay, bool adps,d
   //  glDisable( GL_DEPTH_TEST ); 
   glEnable(GL_BLEND);
   glDisable(GL_CULL_FACE);
-  glLineWidth(1.5);
+  glLineWidth(Lissajous_line_width);
   for (int i=0; i<mato.size();i++){
     if (mato.at(i).hidden) continue;
     int myStyle=aStyle[mato[i].OrdZahl];

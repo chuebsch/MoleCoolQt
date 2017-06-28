@@ -535,6 +535,7 @@ class molekul {
   Cell zelle;
   int LOD;
   double modscal;
+  double Lissajous_line_width;
   Matrix jacobi(Matrix A, V3 &D);
   double * jacobi2(const Matrix &uij, V3 &ev);
   int adp,intern;
@@ -582,6 +583,7 @@ class molekul {
   void readXDPath(QString fname);
   molekul(void) {
     modscal=1.0;
+    Lissajous_line_width=1.5;
     dratom=false;
     qPeakRad=0.05;
     CPRad=0.025;

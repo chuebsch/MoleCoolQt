@@ -161,6 +161,7 @@ class MyWindow : public QMainWindow {
     void rotLeft();
     void rotRight();
     void updateOutput();
+    void lisisfat();
     void makeRotMovi();
     void makeTMovi();
     void moveR();

@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=564;
+int rev=565;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -865,6 +865,7 @@ createRenameWgd();
   cubeGL->lissajous=ModulationMenu->addAction("Show Lissajous traces",cubeGL,SLOT(updateGL()));
   cubeGL->lissajous->setCheckable(true);
   cubeGL->lissajous->setChecked(false);
+  ModulationMenu->addAction("Change Lissajous-trace-thicknes",this,SLOT(lisisfat()));
   cubeGL->lissajousGay=ModulationMenu->addAction("rainbow color map t-value on Lissajous traces",cubeGL,SLOT(updateGL()));
   cubeGL->lissajousGay->setCheckable(true);
   cubeGL->lissajousGay->setChecked(false);
@@ -9794,7 +9795,13 @@ void MyWindow::plotSDM(int steps){
 
   }
 }
-
+void MyWindow::lisisfat(){
+    double v;
+    bool ok=true;
+    v= QInputDialog::getDouble ( this, "Lissajous_line_width", "Lissajous_line_width", mol.Lissajous_line_width, 0.1, 10.0, 1, &ok );
+    if (ok) mol.Lissajous_line_width=v;
+    cubeGL->updateGL();
+}
 
 void MyWindow::mSDM(QStringList &brauchSymm,int packart){
   // George Sheldrick Seminar ideas
