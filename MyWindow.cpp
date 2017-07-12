@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=567;
+int rev=568;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -2967,7 +2967,7 @@ bool ok;
 double d=mol.bondStrength*100.0;
 d=QInputDialog::getDouble(this,"Change Bond Strength","thicknes in pm:" ,mol.bondStrength*100.0,1.00,90,4,&ok);
 if (ok) {mol.bondStrength=d/100.0;
-  initLists(xdinp);
+ if (!xdinp.isEmpty()) initLists(xdinp);
 update();
 }
 }
@@ -8056,7 +8056,22 @@ void MyWindow::unFilter(){
     if (oxd.size()){
       xdinp= oxd;
       oxd.clear();}
-      mol.bonds_made=0;
+    for (int i = 0; i<xdinp.size(); i++)
+      printf("%-10s %3d %9.5f %9.5f %9.5f jtf%d uc:%9.5f %9.5f %9.5f %9.5f %9.5f %9.5f \n",
+          xdinp.at(i).atomname,
+          xdinp.at(i).OrdZahl,
+          xdinp.at(i).kart.x,
+          xdinp.at(i).kart.y,
+          xdinp.at(i).kart.z,
+          xdinp.at(i).jtf,
+          xdinp.at(i).u.m11,
+          xdinp.at(i).u.m22,
+          xdinp.at(i).u.m33,
+          xdinp.at(i).u.m23,
+          xdinp.at(i).u.m13,
+          xdinp.at(i).u.m12
+          );
+    mol.bonds_made=0;
       mol.knopf_made=0;
       initLists( xdinp);
       filtered=0;

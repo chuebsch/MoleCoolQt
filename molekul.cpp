@@ -2940,9 +2940,10 @@ void molekul::modulated(double t,QList<Modulat> mato,int draw,double steps) {
     glPushMatrix();
     glEnable(GL_BLEND);
     glDisable(GL_LIGHTING);
-    glLineWidth(1.5);
+    glLineWidth(bondStrength*150.0);
+    qDebug()<<bondStrength*15.0<<bondStrength;
     glBegin(GL_LINES);
-    glColor3f(0.5,0.3,0.3);
+    glColor4d(bondColor.red()/255.0,bondColor.green()/255.0,bondColor.blue()/255.0,bondColor.alpha()/255.0);
 //    printf("bonds_made %d t-mbonds_last_t %g t= %g\n",bonds_made,t-mbonds_last_t,t);
     if ((!bonds_made)||(fabs(t-mbonds_last_t)>=(steps)))
       make_bonds(mato,t);

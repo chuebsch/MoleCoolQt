@@ -1285,6 +1285,14 @@ void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &st
       }
     }
     isoF.close(); 
+    {
+      double minv=1e37,maxv=-1e38;
+    for(int ii=0; ii<data.size();ii++) {
+      minv=qMin(data.at(ii),minv);
+      maxv=qMax(data.at(ii),maxv);
+    }
+    printf("minmax grd: %g %g\n",minv,maxv);
+    }
   }else if ((fileType==321)||(fileType==125)){// ein cube file hoffentlich oder ein ?ed file 
     isoF.open(QIODevice::ReadOnly);
     if (fileType==321) for (int i=0; i<3 ;i++) isoF.readLine();
@@ -1318,6 +1326,16 @@ void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &st
   //  printf("%f %f %f\n",floatdat[0],floatdat[1],floatdat[2]);
       for (int j=0;j<bh;j++)
           data.append(floatdat[j]);// */
+    }
+    {
+    extern molekul mol;
+      double minv=1e37,maxv=-1e38,meanv=0.0;
+    for(int ii=0; ii<data.size();ii++) {
+      meanv+=data.at(ii);
+      minv=qMin(data.at(ii),minv);
+      maxv=qMax(data.at(ii),maxv);
+    }
+    printf("minmax m81: %g %g mean: %g %g %g \n",minv,maxv,meanv/data.size(),meanv/data.size()*mol.zelle.V,meanv/data.size()*mol.zelle.V*M_PI);
     }
     free(floatdat);
     cubeiso=true;
@@ -1400,6 +1418,16 @@ void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &st
   //  printf("%f %f %f\n",floatdat[0],floatdat[1],floatdat[2]);
       for (int j=0;j<bh;j++)
           mdata.append(floatdat[j]);// */
+    }
+    {
+    extern molekul mol;
+      double minv=1e37,maxv=-1e38,meanv=0.0;
+    for(int ii=0; ii<mdata.size();ii++) {
+      meanv+=mdata.at(ii);
+      minv=qMin(mdata.at(ii),minv);
+      maxv=qMax(mdata.at(ii),maxv);
+    }
+    printf("minmax m81: %g %g mean: %g %g %g \n",minv,maxv,meanv/data.size(),meanv/data.size()*mol.zelle.V,meanv/data.size()*mol.zelle.V*M_PI);
     }
     cubeiso=true;
     mapF.close(); 
