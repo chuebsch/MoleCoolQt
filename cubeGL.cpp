@@ -4895,6 +4895,7 @@ void CubeGL::connectSelection(){
   mol.bd[idx].e=selectedAtoms.at(0).GLname;
   mol.bd[idx].a=selectedAtoms.at(1).GLname;
   bool vorher=mol.bondColorStyle;
+ int adpst=mol.adp;
   glNewList(bas+1, GL_COMPILE );{      //BONDS
     glPushMatrix();{
       glScaled( L, L, L );
@@ -4913,6 +4914,7 @@ void CubeGL::connectSelection(){
     }glPopMatrix();
   }glEndList();
   mol.bondColorStyle=vorher;
+  mol.adp=adpst;      
   selectedAtoms.clear();
   updateBondActions();
   updateGL();
@@ -4939,6 +4941,101 @@ void CubeGL::disConnectSelection(){
  mol.bcnt-=2;
  mol.bd = nbd;
  free(abd);
+ int adpst=mol.adp;
+ bool vorher=mol.bondColorStyle;
+  glNewList(bas+1, GL_COMPILE );{      //BONDS
+    glPushMatrix();{
+      glScaled( L, L, L );
+      mol.adp=0;      
+      mol.bondColorStyle=false;
+      mol.bonds(xdinp);
+    }glPopMatrix();    
+  }glEndList();
+  glNewList(bas+8, GL_COMPILE );{       //bonds in single color
+    glPushMatrix();{
+      glScaled( L, L, L );
+      mol.intern=1;
+
+      mol.bondColorStyle=true;
+      mol.bonds(xdinp);
+    }glPopMatrix();
+  }glEndList();
+  mol.bondColorStyle=vorher;
+  mol.adp=adpst;      
+
+  selectedAtoms.clear();
+  updateBondActions();
+  updateGL();
+
+}
+
+
+void CubeGL::saveCbondList(){
+  extern QList<INP> xdinp;
+  extern molekul mol;
+  QString cbfn=QFileDialog::getSaveFileName(this,"save coordinative bond list");
+  if (cbfn.isEmpty()) return; 
+  QFile cbf(cbfn);
+  if (!cbf.open(QIODevice::WriteOnly|QIODevice::Text)) return;
+  for (int i=0; i<mol.cBonds.size();i++){
+      bindi bond=mol.cBonds.at(i);
+      cbf.write(QString("%1 %2 %3 # %4---%5 cbond\n").arg(bond.a).arg(bond.e).arg(xdinp.size()).arg(xdinp.at(bond.a).atomname).arg(xdinp.at(bond.e).atomname).toLatin1());
+  }
+  cbf.close();
+
+}
+
+void CubeGL::loadCbondList(){
+  extern QList<INP> xdinp;
+  extern molekul mol;
+  static bindi *nbd,*abd;
+  abd=mol.bd;
+  int j=0;
+  if (NULL==(nbd=(bindi*)malloc(sizeof(bindi)*mol.bcnt))) return;
+  QString cbfn=QFileDialog::getOpenFileName(this,"load coordinative bond list");
+  if (cbfn.isEmpty()) return; 
+  QFile cbf(cbfn);
+  if (!cbf.open(QIODevice::ReadOnly|QIODevice::Text)) return;
+  QStringList line=QString(cbf.readAll()).split('\n',QString::SkipEmptyParts);
+  cbf.close();
+
+  for (int i=0; i<line.size();i++){
+    QStringList tok = line.at(i).split(' ',QString::SkipEmptyParts);
+    if (tok.size()>2) {
+      int a,e,z;
+      a=tok.at(0).toInt();
+      e=tok.at(1).toInt();
+      z=tok.at(2).toInt();
+      bindi bond;
+      if (z==xdinp.size()){
+      bond.a=a;
+      bond.e=e;
+      mol.cBonds.append(bond);
+      j=0;
+      for (int i=0; i<mol.bcnt;i++){
+      if (((a==mol.bd[i].a)|| (a==mol.bd[i].e))&& ((e==mol.bd[i].a)|| (e==mol.bd[i].e))) ; else {
+	nbd[j].a=mol.bd[i].a;
+	nbd[j].e=mol.bd[i].e;
+        j++;
+      }  
+      }
+      mol.bcnt=j;
+      mol.bd = nbd;
+      }else {qDebug()<<"Number of atoms/objects missmatch list will be ignored"; free(nbd);return;}
+    }
+  }
+  if (!cbas) cbas=glGenLists(1);
+  glNewList(cbas, GL_COMPILE );
+  glPushMatrix();
+  glScaled( L, L, L );
+  mol.cbonds(xdinp);
+  glPopMatrix();
+  glEndList();
+  selectedAtoms.clear();
+  mol.bd = nbd;
+  free(abd);
+  abd=NULL;
+  int adpst=mol.adp;
   bool vorher=mol.bondColorStyle;
   glNewList(bas+1, GL_COMPILE );{      //BONDS
     glPushMatrix();{
@@ -4958,10 +5055,9 @@ void CubeGL::disConnectSelection(){
     }glPopMatrix();
   }glEndList();
   mol.bondColorStyle=vorher;
-  selectedAtoms.clear();
+  mol.adp=adpst;      
   updateBondActions();
   updateGL();
-
 }
 
 void CubeGL::coordinativeBonds(){
@@ -4971,6 +5067,7 @@ void CubeGL::coordinativeBonds(){
   extern QList<INP> xdinp;
   bond.a=selectedAtoms.at(0).GLname;
   bond.e=selectedAtoms.at(1).GLname;
+  printf("%6d %6d %6d# %s---%s cbond\n",bond.a,bond.e,xdinp.size(),selectedAtoms.at(0).atomname,selectedAtoms.at(1).atomname);
   mol.cBonds.append(bond);
   if (!cbas) cbas=glGenLists(1);
   glNewList(cbas, GL_COMPILE );

@@ -151,6 +151,8 @@ public slots:
   void editInv(const QUrl & link );
   void loadDataBase();
   void loadDataBase(QString filename);
+  void saveCbondList();
+  void loadCbondList();
   void exportMoProFiles();
   void exportXDFiles();
   void updateBondActions();

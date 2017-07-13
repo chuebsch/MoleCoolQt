@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=570;
+int rev=571;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -570,6 +570,8 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
   QAction *changeBondStrengthAct= bondMenu->addAction("change bond strength");
   connect(changeBondStrengthAct,SIGNAL(triggered()),
 		  this,SLOT(changeBondStrength()));
+  bondMenu->addAction("load coordinative bond list",cubeGL,SLOT(loadCbondList()));
+  bondMenu->addAction("save coordinative bond list",cubeGL,SLOT(saveCbondList()));
   togBond->setMenu(bondMenu);
 
   togLabel->setShortcut(tr("L"));
@@ -8056,7 +8058,7 @@ void MyWindow::unFilter(){
     if (oxd.size()){
       xdinp= oxd;
       oxd.clear();}
-    for (int i = 0; i<xdinp.size(); i++)
+/*    for (int i = 0; i<xdinp.size(); i++)
       printf("%-10s %3d %9.5f %9.5f %9.5f jtf%d uc:%9.5f %9.5f %9.5f %9.5f %9.5f %9.5f \n",
           xdinp.at(i).atomname,
           xdinp.at(i).OrdZahl,
@@ -8070,7 +8072,7 @@ void MyWindow::unFilter(){
           xdinp.at(i).u.m23,
           xdinp.at(i).u.m13,
           xdinp.at(i).u.m12
-          );
+          );*/
     mol.bonds_made=0;
       mol.knopf_made=0;
       initLists( xdinp);
@@ -9213,9 +9215,7 @@ void MyWindow::initLists(QList<INP> xd){
 
   for (int j=0;j<mx;j++)               
     xd[j].labPos=xd[j].kart;
-
-  if (cubeGL->bas) glDeleteLists(cubeGL->bas,10);
-  cubeGL->bas=glGenLists(10);
+  if (!cubeGL->bas) cubeGL->bas=glGenLists(10);
 
 
 //qDebug()<<"1";
