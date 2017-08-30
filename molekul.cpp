@@ -2941,7 +2941,7 @@ void molekul::modulated(double t,QList<Modulat> mato,int draw,double steps) {
     glEnable(GL_BLEND);
     glDisable(GL_LIGHTING);
     glLineWidth(bondStrength*150.0);
-    qDebug()<<bondStrength*15.0<<bondStrength;
+//    qDebug()<<bondStrength*15.0<<bondStrength;
     glBegin(GL_LINES);
     glColor4d(bondColor.red()/255.0,bondColor.green()/255.0,bondColor.blue()/255.0,bondColor.alpha()/255.0);
 //    printf("bonds_made %d t-mbonds_last_t %g t= %g\n",bonds_made,t-mbonds_last_t,t);
@@ -4788,6 +4788,14 @@ void molekul::Uf2Uo(const Matrix x, Matrix & y) {
   y=(transponse(zelle.f2c)*m)*(zelle.f2c);
 }
 
+void molekul::Uc2Uf(const Matrix x, Matrix & y) {
+  Matrix c2f=inverse(zelle.f2c);
+  Matrix n=inverse(Matrix(zelle.as,0,0,0,zelle.bs,0,0,0,zelle.cs));
+  Matrix m=transponse(c2f)*x*c2f;
+  y=n*m*n;
+  
+}
+
 double molekul::fl(double x,double y,double z){
   double a,b,c;
   a=(zelle.ga==90.0)?0.0:2.0*x*y*zelle.a*zelle.b*zelle.cs_ga;
@@ -5433,8 +5441,11 @@ INP Modulat::toINP(double t){
     atom.imul=imul;
     atom.frac=frac(t);
     atom.kart=kart(t);
+    atom.u=u(t);
+    atom.uf=uf(t);
     atom.OrdZahl=OrdZahl;
     atom.part=atom.resiNr=0;  
+    atom.part=part;
     atom.sg=sg;
     atom.molindex=molindex;
     atom.screenX=screenX;
@@ -5583,12 +5594,109 @@ QString Modulat::plotT(int steps){
       }
       return text;
     }
+/*
+      subroutine EM40GetAngles(rot,irot,euler)
+      include 'fepc.cmn'
+      dimension rot(9),euler(3),rotp(9)
+      call matinv(rot,rotp,pom,3)
+      if(pom.ge.0.) then
+        zn=1.
+      else
+        zn=-1.
+      endif
+      if(irot.eq.0) then
+        if(abs(zn*rot(9)).gt..99995) then
+          euler(2)=90.-sign(90.,zn*rot(9))
+          euler(3)=0.
+          ps=zn*rot(2)
+          pc=zn*rot(1)
+        else
+          euler(2)=acos(zn*rot(9))/torad
+          if(abs(rot(3)).le..0001.and.abs(rot(6)).le..0001) then
+            euler(3)=0.
+          else
+            euler(3)=atan2(zn*rot(3),zn*rot(6))/torad
+          endif
+          ps= zn*rot(7)
+          pc=-zn*rot(8)
+        endif
+      else
+        if(abs(zn*rot(3)).gt..99995) then
+          euler(2)=-sign(90.,zn*rot(3))
+          euler(3)=0.
+          ps=-zn*rot(4)
+          pc= zn*rot(5)
+        else
+          euler(2)=-asin(zn*rot(3))/torad
+          if(abs(rot(6)).le..0001.and.abs(rot(9)).le..0001) then
+            euler(3)=0.
+          else
+            euler(3)=atan2(zn*rot(6),zn*rot(9))/torad
+          endif
+          ps=zn*rot(2)
+          pc=zn*rot(1)
+        endif
+      endif
+      euler(1)=atan2(ps,pc)/torad
+      return
+      end
+      */
+void getAngles(Matrix rot,int lrot){
+  double det = determinant(rot);
+  det=(det>=0)?1:-1;
+  V3 euler;
+  double ps,pc,torad=M_PI/180.0;
+  if (lrot==0){
+    if (abs(det*rot.m33)>0.99995){
+      euler.y=((det*rot.m33)>0)?0.0:180.0;
+      euler.z=0;
+      ps=det*rot.m12;
+      pc=det*rot.m11;
+    }else{
+      euler.y=acos(det*rot.m33)/torad;
+      if((abs(rot.m13)<=0.0001)&&(abs(rot.m23)<=0.0001))euler.z=0;
+      else euler.z=atan2(det*rot.m13,det*rot.m23)/torad;
+      ps = det*rot.m31;
+      pc =-det*rot.m32;
+    }
+  }else{
+    if(abs(det*rot.m13)>0.99995){
+      euler.y=((det*rot.m13)>0)?-90.0:90.0;
+      euler.z=0;
+      ps=-det*rot.m21;
+      pc= det*rot.m22;
+    }else{
+      euler.y=asin(det*rot.m13)/torad;
+      if ((abs(rot.m23)<0.001)&&((abs(rot.m33)<0.0001))) 
+        euler.z=0; 
+      else
+        euler.z=atan2(det*rot.m23,det*rot.m33)/torad;
+      ps = det*rot.m12;
+      pc = det*rot.m11;
 
+    }
+  }
+  euler.x=atan2(ps,pc)/torad;
+  printf("!!phi = %f chi = %f psi = %f \n",euler.x,euler.y,euler.z);
+
+}
+void printm(Matrix m){
+  printf("Matrix:\n%12.6f%12.6f%12.6f\n%12.6f%12.6f%12.6f\n%12.6f%12.6f%12.6f\n\n",
+      m.m11,m.m12,m.m13,m.m21,m.m22,m.m23,m.m31,m.m32,m.m33
+      );
+}
 void JanaMolecule::printpos(const double t,QList<Modulat> &ma){
   const double g2r=180.0/M_PI;
-  Matrix f2c=atoms.at(0).mol->zelle.f2c;
+  Matrix f2c=transponse(atoms.at(0).mol->zelle.f2c);
+  f2c=atoms.at(0).mol->zelle.f2c;
   Matrix c2f=inverse(f2c);
-  Matrix R;
+ // printf("%f %f??\n", determinant(f2c),determinant(c2f));
+//  printm(f2c);
+//  printm(c2f);
+//  printm(f2c*c2f);
+
+  Matrix PSI,CHI,PHI;
+//  qDebug()<<refp;
   if (!refp.isEmpty()) 
     for(int j=0;j<atoms.size();j++){
       if (refp==QString(atoms.at(j).atomname)) {
@@ -5597,36 +5705,27 @@ void JanaMolecule::printpos(const double t,QList<Modulat> &ma){
       }
     }
   for (int i=0; i<positions.size();i++){
-    R=(lrot==0)?
+    PHI=
       Matrix(
-          cos(positions.at(i).phi/g2r),     -sin(positions.at(i).phi/g2r),0.,
-          sin(positions.at(i).phi/g2r),      cos(positions.at(i).phi/g2r),0.,
-          0.,0.,1.0)*
-      Matrix(
-          1.0,0.,0.,
-          0., cos(positions.at(i).chi/g2r),    -sin(positions.at(i).chi/g2r),
-          0., sin(positions.at(i).chi/g2r),     cos(positions.at(i).chi/g2r))*
-      Matrix(
-          cos(positions.at(i).psi/g2r),     -sin(positions.at(i).psi/g2r),0.,
-          sin(positions.at(i).psi/g2r),      cos(positions.at(i).psi/g2r),0., 
-          0.,0.,1.0)*f2c
-      :
-      Matrix(
-          cos(positions.at(i).phi/g2r),     -sin(positions.at(i).phi/g2r),0.,
-          sin(positions.at(i).phi/g2r),      cos(positions.at(i).phi/g2r),0.,
-          0.,0.,1.0)*
-      Matrix(
-          cos(positions.at(i).chi/g2r), 0.,    sin(positions.at(i).chi/g2r),
-          0.,1.0,0.,
-          -sin(positions.at(i).chi/g2r), 0.,   cos(positions.at(i).chi/g2r))*
-      Matrix(
-          1.0,0.,0.,
-          0.,cos(positions.at(i).psi/g2r),     -sin(positions.at(i).psi/g2r),
-          0.,sin(positions.at(i).psi/g2r),      cos(positions.at(i).psi/g2r))*f2c;
+          cos(positions.at(i).phi/g2r),      sin(positions.at(i).phi/g2r),0.,
+         -sin(positions.at(i).phi/g2r),      cos(positions.at(i).phi/g2r),0.,
+          0.,0.,1.0)
+      ;
+    CHI=(lrot==0)?
+      Matrix(1.0, 0.0, 0.0, 0.0, cos(positions.at(i).chi/g2r),-sin(positions.at(i).chi/g2r),0.0,sin(positions.at(i).chi/g2r),cos(positions.at(i).chi/g2r)):
+      Matrix(cos(positions.at(i).chi/g2r), 0., -sin(positions.at(i).chi/g2r), 0.,1.0,0., sin(positions.at(i).chi/g2r), 0., cos(positions.at(i).chi/g2r)) ;
+    PSI=(lrot==0)?
+      Matrix(cos(positions.at(i).psi/g2r),-sin(positions.at(i).psi/g2r),0.0,sin(positions.at(i).psi/g2r),cos(positions.at(i).psi/g2r),0.0,0.0,0.0,1.0):
+      Matrix(1.0,0.,0., 0., cos(positions.at(i).psi/g2r), sin(positions.at(i).psi/g2r), 0.,-sin(positions.at(i).psi/g2r), cos(positions.at(i).psi/g2r))
+      ;
     for(int j=0;j<atoms.size();j++){
       Modulat m=Modulat(atoms[j]);
-      V3 r=R*(atoms[j].frac(t)-ref);
-      r=(c2f*r)+ref+positions.at(i).trans;
+      m.part=i+1;
+      V3 r= atoms[j].frac(t)-ref;
+      r=r*f2c;      
+      r=r*PSI*CHI*PHI;
+      r=r*c2f;
+      r+=ref+positions.at(i).trans;
       m.frac0=r;
       if (atoms.at(j).jtf==0){
         V3 loc=(r-(ref+positions.at(i).trans));
@@ -5716,12 +5815,21 @@ void JanaMolecule::printpos(const double t,QList<Modulat> &ma){
             */
         m.uf0=uc;
       }
-      printf("%-8s %f %f %f\n",atoms.at(j).atomname,r.x,r.y,r.z);
+      else{
+        Matrix uc;
+        m.uf0.m21=m.uf0.m12;
+        m.uf0.m31=m.uf0.m13;
+        m.uf0.m32=m.uf0.m23;
+        atoms.at(0).mol->Uf2Uo(m.uf0,uc);
+        Matrix R = transponse(PSI*CHI*PHI);
+        uc=(R*uc)*transponse(R);
+        atoms.at(0).mol->Uc2Uf(uc,m.uf0);
+      }
       ma.append(m);
 
-    }
-  }
-}
+    }//atoms
+  }//pos i
+}//pritpos
 
   /* AUSKOMMENT
    *

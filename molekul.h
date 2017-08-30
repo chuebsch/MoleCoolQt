@@ -153,13 +153,13 @@ inline Matrix inverse (Matrix A){
   D=1.0/D;
   return Matrix(
           D*(A.m22*A.m33-A.m23*A.m32),//x11
-          D*(A.m13*A.m32-A.m12*A.m33),//x21
-          D*(A.m21*A.m23-A.m13*A.m22),//x31
           D*(A.m23*A.m31-A.m21*A.m33),//x12
-          D*(A.m11*A.m33-A.m13*A.m31),//x22
-          D*(A.m13*A.m21-A.m11*A.m23),//x32
           D*(A.m21*A.m32-A.m22*A.m31),//x13
+          D*(A.m13*A.m32-A.m12*A.m33),//x21
+          D*(A.m11*A.m33-A.m13*A.m31),//x22
           D*(A.m12*A.m31-A.m11*A.m32),//x23
+          D*(A.m21*A.m23-A.m13*A.m22),//x31
+          D*(A.m13*A.m21-A.m11*A.m23),//x32
           D*(A.m11*A.m22-A.m12*A.m21)//x33
           );
 }
@@ -756,6 +756,7 @@ class molekul {
   void SDMprint(QList<SdmItem> sdm,QList<INP> au);
   void multiplicity(QList<INP> &au);
   void Uf2Uo(const Matrix x, Matrix & y);
+  void Uc2Uf(const Matrix x, Matrix & y);
   void copyAcol(GLfloat _Acol[108][4],GLfloat _arad[108],int _aStyle[108]);
   void atoms(QList<INP> xdinp,const int proba);
   void modulated(double t, QList<Modulat> mato, int draw, double steps);
@@ -886,6 +887,7 @@ class Modulat{
     int      OrdZahl;
     V3 x4sym;
     int x4;
+    int part;
     double x4trans;
     int   imul;
     int jtf;
