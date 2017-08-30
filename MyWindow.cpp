@@ -4054,7 +4054,7 @@ void MyWindow::load_Jana(QString fileName){
       if (((li-cmdli)<=(curentPhase+nmol1-1))&&(nmol1)&&(tok.size()==2)) {
           nAtm1.append(tok.at(0).toInt());
           nPos1.append(tok.at(1).toInt());
-          qDebug()<<__LINE__<<"molecule 1 has "<<nAtm1<<" atoms and exists on "<<nPos1<<" positions";
+          //qDebug()<<__LINE__<<"molecule 1 has "<<nAtm1<<" atoms and exists on "<<nPos1<<" positions";
       }
       if (((li-cmdli)<=(curentPhase+nmol2+nmol1-1))&&(nmol2)&&(tok.size()==2)) {
           nAtm2.append(tok.at(0).toInt());
@@ -4259,11 +4259,11 @@ void MyWindow::load_Jana(QString fileName){
 
       if ((currentMolekule!=NULL)&&(currentMolekule->atoms.size()<currentMolekule->na())&&(all.at(li).contains(QRegExp("^[A-z]+")))){
         printf("Molekule definition!\n");
-        qDebug()
+        /*qDebug()
           <<currentMolekule->atoms.size()
           <<currentMolekule->na()
           <<all.at(li)
-          <<__LINE__;
+          <<__LINE__;*/
        int so,sp,st,wo,wp,wt;
        sscanf(all.at(li).toStdString().c_str(),"%*8s%*3d%*3d    %*9f%*9f%*9f%*9f     %1d%1d%1d%3d%3d%3d",
                            &so,&sp,&st,&wo,&wp,&wt);
@@ -4322,10 +4322,10 @@ void MyWindow::load_Jana(QString fileName){
          }
        }
        currentMolekule->atoms.append(*molat);
-       qDebug()<<currentMolekule->atoms.size();
+       //qDebug()<<currentMolekule->atoms.size();
       }
       if ((currentMolekule!=NULL)&&(all.at(li).contains("pos#"))&&(currentMolekule->positions.size()<currentMolekule->np())){
-        qDebug()<<all.at(li)<<"line->"<<__LINE__<<currentMolekule->positions.size()<<currentMolekule->np();
+        //qDebug()<<all.at(li)<<"line->"<<__LINE__<<currentMolekule->positions.size()<<currentMolekule->np();
         int so,sp,st,wo,wp,wt;
         int iread=sscanf(all.at(li).toStdString().c_str(),"%*8s%*3d%*3d%*f %1d%1d%1d%3d%3d%3d",&so,&sp,&st,&wo,&wp,&wt);
         if (iread<6) {so=0;sp=0;st=0;wo=0;wp=0;wt=0;}
@@ -4336,7 +4336,7 @@ void MyWindow::load_Jana(QString fileName){
         tok.clear();
         all[li].replace("-"," -");
         tok=all.at(li).split(" ",QString::SkipEmptyParts);
-        qDebug()<<iread<<so<<sp<<st<<wo<<wp<<wt<<all.at(li)<<__LINE__<<tok.size();
+        //qDebug()<<iread<<so<<sp<<st<<wo<<wp<<wt<<all.at(li)<<__LINE__<<tok.size();
         currentMolekule->positions.last().phi=tok.at(0).toDouble();
         currentMolekule->positions.last().chi=tok.at(1).toDouble();
         currentMolekule->positions.last().psi=tok.at(2).toDouble();
@@ -4415,7 +4415,7 @@ void MyWindow::load_Jana(QString fileName){
           //modat->setWaveTemPar(tk,u11s,u22s,u33s, u12s,u13s,u23s,u11c,u22c,u33c, u12c,u13c,u23c);
           }
         }
-          qDebug()<<currentMolekule->positions.last().aimol<<"LINE::"<<__LINE__<<use_tls<<wo<<wp<<wt<<all.at(li);
+          //qDebug()<<currentMolekule->positions.last().aimol<<"LINE::"<<__LINE__<<use_tls<<wo<<wp<<wt<<all.at(li);
           li--;
           if (currentMolekule->positions.size()==currentMolekule->np()){ 
             printf("X\n");
@@ -4439,7 +4439,7 @@ void MyWindow::load_Jana(QString fileName){
       if (((currentMolekule!=NULL)&&(currentMolekule->positions.size()==currentMolekule->np()))||(currentMolekule==NULL)) if (((masymmUnit.size()==na)||(asymmUnit.size()==na))&&((tok.size()==4)||(tok.size()==6))&&(all.at(li).contains(QRegExp("^[A-z]+")))){
          // qDebug()<<all.at(li);
 //anaMolecule(QString name,int ir,QString pg,QString M,int na,int np,int lr)
-          qDebug()<<"line: "<<__LINE__<<all.at(li)<<nmol1<<tok.at(0)<<tok.at(1).toInt()<<tok.at(2)<<tok.at(3)<<nAtm1.at(0)<<nPos1.at(0)<<lrot;
+          //qDebug()<<"line: "<<__LINE__<<all.at(li)<<nmol1<<tok.at(0)<<tok.at(1).toInt()<<tok.at(2)<<tok.at(3)<<nAtm1.at(0)<<nPos1.at(0)<<lrot;
           currentMolekule = new JanaMolecule(tok.at(0),tok.at(1).toInt(),tok.at(2),tok.at(3),nAtm1.at(0),nPos1.at(0),lrot);
       }
       if ((asymmUnit.size()<=na)&&(all.at(li).contains(QRegExp("^ [A-z]+")))&&(tok.size()>1)){
