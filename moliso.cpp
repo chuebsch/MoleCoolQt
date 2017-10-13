@@ -44,8 +44,11 @@ void MolIso::Pzsort( void) {
 
 MolIso::MolIso(){
   //Constructor
+  calcextrema=false;
   cubeiso=false;
   cubemap=false;
+  untersumme=obersumme=0;
+  deV=0.0;
   fixmin=666.666;
   fixmax=666.666;
   Farben=6;    
@@ -73,12 +76,12 @@ MolIso::MolIso(){
   farbe[4][1]=0;    
   farbe[4][2]=0.9;    
   farbe[4][3]=0.5;
-    
+
   farbe[5][0]=0.6;    
   farbe[5][1]=0;    
   farbe[5][2]=0.9;    
   farbe[5][3]=0.5;
-    
+
   farbe[6][0]=0.6;    
   farbe[6][1]=0;    
   farbe[6][2]=0;    
@@ -113,151 +116,251 @@ void MolIso::legende(){
 }
 
 void MolIso::loadMI(QString fname, bool om, bool mima){
- printf("mima %s  OM = %s\n",(mima)?"true":"false",(om)?"true":"false");
+  printf("mima %s  OM = %s\n",(mima)?"true":"false",(om)?"true":"false");
   for (int i=0;i<6;i++){
     if ((mibas)&&(glIsList(mibas+i))) {
-//      printf("NOT deleting list #%d\n",mibas+i);
-;
+      //      printf("NOT deleting list #%d\n",mibas+i);
+      ;
     }else{
-    printf("deleting %d\n",mibas+i);
+      printf("deleting %d\n",mibas+i);
       if (mibas) glDeleteLists(mibas+i,1);
     }
   }
-//  mibas=0;
-//  mibas=glGenLists(6);*/
+  //  mibas=0;
+  //  mibas=glGenLists(6);*/
   extern QProgressBar *balken;
+  Vector3 minV,maxV;
   if (orte.isEmpty()){
-  QFile sf(fname);
-  if (!sf.exists()) {qDebug()<<"The File "<<fname<<" does not exist!"; exit(0);}
-  if (!sf.open(QIODevice::ReadOnly)) {qDebug()<<"Can not open "<<fname<<" for reading. Please check your rights."; exit(0);}
+    QFile sf(fname);
+    if (!sf.exists()) {qDebug()<<"The File "<<fname<<" does not exist!"; exit(0);}
+    if (!sf.open(QIODevice::ReadOnly)) {qDebug()<<"Can not open "<<fname<<" for reading. Please check your rights."; exit(0);}
 
-  Ort v;
-  Polygn p;
-  QString all =sf.readAll();
-  if (all.isEmpty()) {qDebug()<<"Can not read  "<<fname<<". may be it is empty or corrupt!"; exit(0);}
-  QStringList lines = all.split(QRegExp("[\n\r]{1,2}")); 
-  all.clear();
-  if (mima){
-  min=1e99;
-  max=-1e99;
-  }
- mima=true;
-  if (lines.size()){
+    Ort v;
+    Polygn p;
+    QString all =sf.readAll();
+    if (all.isEmpty()) {qDebug()<<"Can not read  "<<fname<<". may be it is empty or corrupt!"; exit(0);}
+    QStringList lines = all.split(QRegExp("[\n\r]{1,2}")); 
+    all.clear();
+    if (mima){
+      min=1e99;
+      max=-1e99;
+    }
+    mima=true;
+    if (lines.size()){
 
-    balken->setMinimum(0);
-    balken->setMaximum(7);
-    balken->show();
-    double dm=0,ds=0,sigma=0,dmp=0,dmm=0,dsp=0,dsm=0,sigmap=0,sigmam=0,api;//,potsigplus=0,potsigminus=0;
-    int np=0,nm=0;
-    for (int i = 1; i <= lines[0].toInt();i++){
-      QStringList tok = lines[i].split(' ',QString::SkipEmptyParts);
-      if (tok.size()==8){
+      balken->setMinimum(0);
+      balken->setMaximum(7);
+      balken->show();
+      double dm=0,ds=0,sigma=0,dmp=0,dmm=0,dsp=0,dsm=0,sigmap=0,sigmam=0,api;//,potsigplus=0,potsigminus=0;
+      int np=0,nm=0;
+      minV=Vector3(0,0,0);
+      maxV=minV;
+      for (int i = 1; i <= lines[0].toInt();i++){
+        QStringList tok = lines[i].split(' ',QString::SkipEmptyParts);
+        if (tok.size()==8){
 
-	balken->setValue(i);
-	
-	v.vertex.x = tok.at(1).toFloat();
-	v.vertex.y = tok.at(2).toFloat();
-	v.vertex.z = tok.at(3).toFloat();
-	if (om) {
-	  v.vertex.y += (float) orig.y;
-	  v.vertex.x += (float) orig.x;
-	  v.vertex.z += (float) orig.z;
-	}
-	//
-	v.normal.x = tok.at(4).toFloat();
-	v.normal.y = tok.at(5).toFloat();
-	v.normal.z = tok.at(6).toFloat();
-	dm += v.color = tok.at(7).toFloat();
-	ds += v.color*v.color;
-	if (v.color>0){
-	  dmp += v.color;
-	  dsp += (v.color* v.color);
-	  np++;
-	}else{
-	  dmm += v.color;
-	  dsm += v.color* v.color;
-	  nm++;
-	}
+          balken->setValue(i);
 
-	v.direct=0;
-        if(mima){
-	min=(min>v.color)?v.color:min;
-	max=(max<v.color)?v.color:max;
+          v.vertex.x = tok.at(1).toFloat();
+          v.vertex.y = tok.at(2).toFloat();
+          v.vertex.z = tok.at(3).toFloat();
+          if (om) {
+            v.vertex.y += (float) orig.y;
+            v.vertex.x += (float) orig.x;
+            v.vertex.z += (float) orig.z;
+          }
+          //
+          v.normal.x = tok.at(4).toFloat();
+          v.normal.y = tok.at(5).toFloat();
+          v.normal.z = tok.at(6).toFloat();
+          dm += v.color = tok.at(7).toFloat();
+          ds += v.color*v.color;
+          if (v.color>0){
+            dmp += v.color;
+            dsp += (v.color* v.color);
+            np++;
+          }else{
+            dmm += v.color;
+            dsm += v.color* v.color;
+            nm++;
+          }
+
+          v.direct=0;
+          if(mima){
+            minV=(v.color<min)?v.vertex:minV;
+            maxV=(v.color>max)?v.vertex:maxV;
+            min=(min>v.color)?v.color:min;
+            max=(max<v.color)?v.color:max;
+          }
+          orte.append(v);
         }
-	orte.append(v);
       }
-    }
-    ds/=fmax(np+nm,1.0);;
-    dm/=fmax(np+nm,1.0);;
-    dmp/=fmax(np,1.0);
-    dsp/=fmax(np,1.0);
-    dmm/=fmax(nm,1.0);
-    dsm/=fmax(nm,1.0);
+      ds/=fmax(np+nm,1.0);;
+      dm/=fmax(np+nm,1.0);;
+      dmp/=fmax(np,1.0);
+      dsp/=fmax(np,1.0);
+      dmm/=fmax(nm,1.0);
+      dsm/=fmax(nm,1.0);
 
-    sigma=(ds-(dm*dm));
-    sigmap=(dsp-(dmp*dmp));
-    sigmam=(dsm-(dmm*dmm));
-    api=0;
-    for (int i=0; i< orte.size(); i++){
-//        if (orte.at(i).color>0) potsigplus+=pow(orte.at(i).color-dm,2);
-//        else potsigminus+=pow(orte.at(i).color-dm,2);
-       api+=fabs(orte.at(i).color-dm);
-    }
-    //potsigminus/=fmax(nm,1);
-    //potsigplus/=fmax(np,1);
-    api/=fmax(np+nm,1);
-    extern FILE *polifile;
-    if (polifile!=NULL) fprintf(polifile,"%9d %9d %6.3f %6.3f %6.3f %6.4f %6.4f %6.4f %8.6f %6.3f %6.3f\n"
-        ,np,nm,dmp,dmm,api,sigmap,sigmam,sigmam+sigmap,sigmap*sigmam/((sigmam+sigmap)*(sigmam+sigmap)),min,max);
-    emit bigmessage(QString(
-                        "Average of positive surface values V<sub>S</sub><sup>+</sup><sub>av.</sub> = <b>%1</b><br>"
-                        "Average of negative surface values V<sub>S</sub><sup>-</sup><sub>av.</sub> = <b>%2</b><br>"
-                        "Average deviation from the average surface value &Pi; = <b>%10</b><br>"
-                        "&sigma;<sup>2</sup><sub>+</sub> = &sum; (V<sub>S</sub><sup>+</sup> - V<sub>S</sub><sup>+</sup><sub>av.</sub>)<sup>2</sup> = <b>%3</b><br>"
-                        "&sigma;<sup>2</sup><sub>-</sub> = &sum; (V<sub>S</sub><sup>-</sup> - V<sub>S</sub><sup>-</sup><sub>av.</sub>)<sup>2</sup> = <b>%4</b><br>"
-                        "&sigma;<sup>2</sup><sub>tot</sub> = &sigma;<sup>2</sup><sub>+</sub> + &sigma;<sup>2</sup><sub>-</sub> = <b>%5</b><br>"
-                        "&sigma;<sup>2</sup> = &sum; (V<sub>S</sub> - V<sub>Sav.</sub>)<sup>2</sup> = <b>%6</b><br>n+ = <b>%7</b><br>n- = <b>%9</b><br>"
-                        "&nu; = (&sigma;<sup>2</sup><sub>+</sub>&sdot;&sigma;<sup>2</sup><sub>-</sub>)/(&sigma;<sup>2</sup><sub>tot</sub>)<sup>2</sup> = <b>%11</b><br>Please see: <br>"
-                        "Politzer, P., Murray, J. S., Peralta-Inga, Z.,<br>"
-                        "<em>Int. J. Quantum. Chem.</em> <b>85</b> (2001), 676-684.<br>for details about these numbers.")
-      .arg(dmp,0,'f',3)
-      .arg(dmm,0,'f',3)
-      .arg(sigmap,0,'f',4)
-      .arg(sigmam,0,'f',4)
-      .arg(sigmam+sigmap,0,'f',4)
-      .arg(sigma,0,'f',4)
-      .arg(np)
-      .arg(nm)
-      .arg(api,0,'f',3)
-      .arg(sigmap*sigmam/((sigmam+sigmap)*(sigmam+sigmap))));
-//    printf("\nAverage of positive surface values VS+= %f\nAverage of negative surface values VS-= %f\nsigma square + = %f\nsigma square - = %f\n%f %f n+ %d n- %d\n%g  \n"
-    /*potnu=potsigplus*potsigminus/(potsigtot*potsigtot);
-      printf("\nAverage of positive surface values VS+= %f %s\n Average of negative surface values VS-= %f %s\n Average deviation from the average surface value PI= %f %s\n sigma square + = %f (%s)^2\n sigma square - = %f (%s)^2\n sigma square total = %f (%s)^2\n nu = %f \n\n",
-      avpotplus,lul,avpotminus,lul,avdevPI,lul,potsigplus,lul,potsigminus,lul,potsigtot,lul,potnu);*/
-    if ((max-min)<0.001){
-    max+=0.00001;
-    min-=0.00001;
-    }
-    if (fixmin!=666.666) min=fixmin;
-    if (fixmax!=666.666) max=fixmax;
-    for (int i=lines[0].toInt()+1;i<lines.size();i++){
-      QStringList tok = lines[i].split(' ',QString::SkipEmptyParts);
-      if (tok.size()){
-	p.vertex.x=0;
-	p.vertex.y=0;
-	p.vertex.z=0;
-	for (p.n=0; p.n<tok.size();p.n++){
-	  p.ii[p.n]=tok.at(p.n).toInt();
-	  p.vertex+=orte.at(p.ii[p.n]).vertex;
-	}	
-	p.vertex*=1.0/p.n;
-	pgns.append(p);
+      sigma=(ds-(dm*dm));
+      sigmap=(dsp-(dmp*dmp));
+      sigmam=(dsm-(dmm*dmm));
+      api=0;/*
+               if  ((minV.x!=maxV.x)&&(minV.y!=maxV.y)&&(minV.z!=maxV.z)){
+               INP newAtom;
+               extern QList<INP> xdinp;
+               newAtom.molindex=0;
+               newAtom.part=0;
+               newAtom.sg=0;
+               sprintf(newAtom.atomname,"%s","CP_Smin");
+               newAtom.OrdZahl=-2;
+               newAtom.cptype=-3;
+               newAtom.kart.x=minV.x;
+               newAtom.kart.y=minV.y;
+               newAtom.kart.z=minV.z;
+               newAtom.peakHeight=min;
+               xdinp.append(newAtom);
+               sprintf(newAtom.atomname,"%s","CP_Smax");
+               newAtom.cptype=3;
+               newAtom.kart.x=maxV.x;
+               newAtom.kart.y=maxV.y;
+               newAtom.kart.z=maxV.z;
+               newAtom.peakHeight=max;
+               xdinp.append(newAtom);
+               printf("%f %f %f (%f)  %f %f %f (%f)\n",minV.x,minV.y,minV.z,min,maxV.x,maxV.y,maxV.z,max);
+               }*/
+      for (int i=0; i< orte.size(); i++){
+        //        if (orte.at(i).color>0) potsigplus+=pow(orte.at(i).color-dm,2);
+        //        else potsigminus+=pow(orte.at(i).color-dm,2);
+        api+=fabs(orte.at(i).color-dm);
+      }
+      //potsigminus/=fmax(nm,1);
+      //potsigplus/=fmax(np,1);
+      api/=fmax(np+nm,1);
+      extern FILE *polifile;
+      if (polifile!=NULL) {
+        int nt=np+nm;
+        fprintf(polifile,"#   alpha      beta    VS+    VS-     PI   sig+   sig- sigtot       nu    min    max\n");
+        fprintf(polifile,"%9.1f %9.1f %6.3f %6.3f %6.3f %6.4f %6.4f %6.4f %8.6f %6.3f %6.3f\n"
+            ,(double)np/(nt)*100.0,(double) nm/(nt)*100.0,dmp,dmm,api,sigmap,sigmam,sigmam+sigmap,sigmap*sigmam/((sigmam+sigmap)*(sigmam+sigmap)),min,max);
+      }
+      emit bigmessage(QString(
+            "Average of positive surface values V<sub>S</sub><sup>+</sup><sub>av.</sub> = <b>%1</b><br>"
+            "Average of negative surface values V<sub>S</sub><sup>-</sup><sub>av.</sub> = <b>%2</b><br>"
+            "Average deviation from the average surface value &Pi; = <b>%10</b><br>"
+            "&sigma;<sup>2</sup><sub>+</sub> = &sum; (V<sub>S</sub><sup>+</sup> - V<sub>S</sub><sup>+</sup><sub>av.</sub>)<sup>2</sup> = <b>%3</b><br>"
+            "&sigma;<sup>2</sup><sub>-</sub> = &sum; (V<sub>S</sub><sup>-</sup> - V<sub>S</sub><sup>-</sup><sub>av.</sub>)<sup>2</sup> = <b>%4</b><br>"
+            "&sigma;<sup>2</sup><sub>tot</sub> = &sigma;<sup>2</sup><sub>+</sub> + &sigma;<sup>2</sup><sub>-</sub> = <b>%5</b><br>"
+            "&sigma;<sup>2</sup> = &sum; (V<sub>S</sub> - V<sub>Sav.</sub>)<sup>2</sup> = <b>%6</b><br>n+ = <b>%7</b><br>n- = <b>%9</b><br>"
+            "&nu; = (&sigma;<sup>2</sup><sub>+</sub>&sdot;&sigma;<sup>2</sup><sub>-</sub>)/(&sigma;<sup>2</sup><sub>tot</sub>)<sup>2</sup> = <b>%11</b><br>Please see: <br>"
+            "Politzer, P., Murray, J. S., Peralta-Inga, Z.,<br>"
+            "<em>Int. J. Quantum. Chem.</em> <b>85</b> (2001), 676-684.<br>for details about these numbers.")
+          .arg(dmp,0,'f',3)
+          .arg(dmm,0,'f',3)
+          .arg(sigmap,0,'f',4)
+          .arg(sigmam,0,'f',4)
+          .arg(sigmam+sigmap,0,'f',4)
+          .arg(sigma,0,'f',4)
+          .arg(np)
+          .arg(nm)
+          .arg(api,0,'f',3)
+          .arg(sigmap*sigmam/((sigmam+sigmap)*(sigmam+sigmap))));
+      //    printf("\nAverage of positive surface values VS+= %f\nAverage of negative surface values VS-= %f\nsigma square + = %f\nsigma square - = %f\n%f %f n+ %d n- %d\n%g  \n"
+      /*potnu=potsigplus*potsigminus/(potsigtot*potsigtot);
+        printf("\nAverage of positive surface values VS+= %f %s\n Average of negative surface values VS-= %f %s\n Average deviation from the average surface value PI= %f %s\n sigma square + = %f (%s)^2\n sigma square - = %f (%s)^2\n sigma square total = %f (%s)^2\n nu = %f \n\n",
+        avpotplus,lul,avpotminus,lul,avdevPI,lul,potsigplus,lul,potsigminus,lul,potsigtot,lul,potnu);*/
+      if ((max-min)<0.001){
+        max+=0.00001;
+        min-=0.00001;
+      }
+      if (fixmin!=666.666) min=fixmin;
+      if (fixmax!=666.666) max=fixmax;
+      for (int i=lines[0].toInt()+1;i<lines.size();i++){
+        QStringList tok = lines[i].split(' ',QString::SkipEmptyParts);
+        if (tok.size()){
+          p.vertex.x=0;
+          p.vertex.y=0;
+          p.vertex.z=0;
+          for (p.n=0; p.n<tok.size();p.n++){
+            p.ii[p.n]=tok.at(p.n).toInt();
+            p.vertex+=orte.at(p.ii[p.n]).vertex;
+          }	
+          p.vertex*=1.0/p.n;
+          pgns.append(p);
+        }
+      }
+    }  
+  }//orte is Empty
+  if  ((calcextrema)&&(minV.x!=maxV.x)&&(minV.y!=maxV.y)&&(minV.z!=maxV.z)){
+    extern molekul mol;
+    int *mimawa=(int*)malloc(sizeof(int)*orte.size());
+    for (int i=0; i<orte.size();i++)mimawa[i]=0;
+    for (int i=0; i<pgns.size();i++){
+      double pgmin=1e99;
+      double pgmax=-1e99;
+      int imi=0,ima=0;
+      for (int j=0; j<pgns.at(i).n; j++){
+        int idx=pgns.at(i).ii[j];
+        imi=(orte.at(idx).color<pgmin)?idx:imi;
+        ima=(orte.at(idx).color>pgmax)?idx:ima;
+
+        pgmin=(orte.at(idx).color<pgmin)?orte.at(idx).color:pgmin;
+        pgmax=(orte.at(idx).color>pgmax)?orte.at(idx).color:pgmax;
+      }
+      for (int j=0; j<pgns.at(i).n; j++){
+        int idx=pgns.at(i).ii[j];
+        if (imi==ima) mimawa[idx]|=1;
+        else {
+          if (idx==imi) mimawa[idx]|=2;
+          if (idx==ima) mimawa[idx]|=4;
+          if ((idx!=ima)&&(idx!=imi)) mimawa[idx]|=1;
+        }
       }
     }
-  }  
-  }//orte is Empty
+    int minza=1;
+    FILE *sfmm=fopen("sufaceminmax.log","wt");
+    for (int i=0; i<orte.size();i++){
+
+      INP newAtom;
+      extern QList<INP> xdinp;
+      newAtom.molindex=0;
+      newAtom.part=0;
+      newAtom.sg=0;
+      newAtom.OrdZahl=-2;
+      if (mimawa[i]==4){
+        sprintf(newAtom.atomname,"%s%d","CP",minza);
+        newAtom.cptype=6;
+        newAtom.kart.x=orte.at(i).vertex.x;
+        newAtom.kart.y=orte.at(i).vertex.y;
+        newAtom.kart.z=orte.at(i).vertex.z;
+        mol.kart2frac(newAtom.kart,newAtom.frac);
+        fprintf(sfmm,"CP%-4d local max at %12.7f %12.7f %12.7f %g   %12.7f %12.7f %12.7f\n",minza,orte.at(i).vertex.x, orte.at(i).vertex.y, orte.at(i).vertex.z, orte.at(i).color,newAtom.frac.x,newAtom.frac.y,newAtom.frac.z);
+        newAtom.peakHeight=orte.at(i).color;
+        xdinp.append(newAtom);
+        minza++;
+      }
+      if (mimawa[i]==2){
+        //   printf("local min at %f %f %f (%f)\n",orte.at(i).vertex.x, orte.at(i).vertex.y, orte.at(i).vertex.z, orte.at(i).color);
+        sprintf(newAtom.atomname,"%s%d","CP",minza);
+        newAtom.cptype=0;
+        newAtom.kart.x=orte.at(i).vertex.x;
+        newAtom.kart.y=orte.at(i).vertex.y;
+        newAtom.kart.z=orte.at(i).vertex.z;
+        mol.kart2frac(newAtom.kart,newAtom.frac);
+        fprintf(sfmm,"CP%-4d local min at %12.7f %12.7f %12.7f %g   %12.7f %12.7f %12.7f\n",minza,orte.at(i).vertex.x, orte.at(i).vertex.y, orte.at(i).vertex.z, orte.at(i).color,newAtom.frac.x,newAtom.frac.y,newAtom.frac.z);
+        newAtom.peakHeight=orte.at(i).color;
+        xdinp.append(newAtom);
+        minza++;
+      }
+  /*  orte[i].color=mimawa[i];
+    min=0;
+    max=8;*/
+    }
+    fclose(sfmm);
+  }
   printf("minmax %f %f %f %f\n",min,max,fixmax,fixmin);
   printf("%d orte.size %d  L%g\n",orte.size(),pgns.size(),L);
+  printf("Area %g Angstrom^2\n",pgnArea()); 
   balken->setValue(1);
   glNewList(mibas, GL_COMPILE );{                       //Isooberfl"ache ::Perspektive 1     
     glPushMatrix();{
@@ -286,9 +389,9 @@ void MolIso::loadMI(QString fname, bool om, bool mima){
     glPushMatrix();{
       glScaled( L, L, L );
       PYsort();
-if (!mima) glDisable( GL_DEPTH_TEST ); 
+      if (!mima) glDisable( GL_DEPTH_TEST ); 
       DrawPlys();
-if (!mima) glEnable( GL_DEPTH_TEST ); 
+      if (!mima) glEnable( GL_DEPTH_TEST ); 
     }glPopMatrix();
   }glEndList();
 
@@ -297,9 +400,9 @@ if (!mima) glEnable( GL_DEPTH_TEST );
     glPushMatrix();{
       glScaled( L, L, L );
       Pysort();
-if (!mima) glDisable( GL_DEPTH_TEST ); 
+      if (!mima) glDisable( GL_DEPTH_TEST ); 
       DrawPlys();
-if (!mima) glEnable( GL_DEPTH_TEST ); 
+      if (!mima) glEnable( GL_DEPTH_TEST ); 
     }glPopMatrix();
   }glEndList();
 
@@ -308,9 +411,9 @@ if (!mima) glEnable( GL_DEPTH_TEST );
     glPushMatrix();{
       glScaled( L, L, L );
       PZsort();
-if (!mima) glDisable( GL_DEPTH_TEST ); 
+      if (!mima) glDisable( GL_DEPTH_TEST ); 
       DrawPlys();
-if (!mima) glEnable( GL_DEPTH_TEST ); 
+      if (!mima) glEnable( GL_DEPTH_TEST ); 
     }glPopMatrix();
   }glEndList();
 
@@ -319,9 +422,9 @@ if (!mima) glEnable( GL_DEPTH_TEST );
     glPushMatrix();{
       glScaled( L, L, L );
       Pzsort();
-if (!mima) glDisable( GL_DEPTH_TEST ); 
+      if (!mima) glDisable( GL_DEPTH_TEST ); 
       DrawPlys();
-if (!mima) glEnable( GL_DEPTH_TEST ); 
+      if (!mima) glEnable( GL_DEPTH_TEST ); 
     }glPopMatrix();
   }glEndList();
 
@@ -332,134 +435,176 @@ if (!mima) glEnable( GL_DEPTH_TEST );
   faceFile=fname;
 }
 
+double MolIso::pgnArea(){
+  double area=0.0;
+  for (int i=0;i<pgns.size();i++){
+    switch (pgns.at(i).n){
+      case 3:
+        area+= 0.5*sqrt(Norm((
+              orte.at(pgns.at(i).ii[1]).vertex-
+              orte.at(pgns.at(i).ii[0]).vertex)%(
+              orte.at(pgns.at(i).ii[2]).vertex-
+              orte.at(pgns.at(i).ii[0]).vertex)));
+        break;
+      case 4:
+        area+=sqrt(Norm((orte.at(pgns.at(i).ii[1]).vertex-orte.at(pgns.at(i).ii[0]).vertex)%(orte.at(pgns.at(i).ii[3]).vertex-orte.at(pgns.at(i).ii[0]).vertex)));
+        break;
+      case 5:
+      case 6:
+      case 7:
+      case  8:
+      case  9:
+      case  10:
+      case  11:
+      case   12:{
+                  Vector3 mO=orte.at(pgns.at(i).ii[0]).vertex;
+                  double a=0;
+                  for (int k=1;k <pgns.at(i).n; k++) {
+                    mO+=orte.at(pgns.at(i).ii[k]).vertex;
+                  }
+                  mO*=(GLfloat)1.0/pgns.at(i).n;
+                  for (int k=0;k<=pgns.at(i).n;k++)
+                    a+=sqrt(Norm((orte.at(pgns.at(i).ii[k%pgns.at(i).n]).vertex-mO)%(orte.at(pgns.at(i).ii[(k+1)%pgns.at(i).n]).vertex-mO)));
+                  area+=0.5*a;
+
+               break;
+                }
+      default : printf("wrong polygonshape! %d\n",pgns.at(i).n);glEnd();break;
+
+
+    }
+  }
+  return area;
+}
 void MolIso::DrawPlys(){
   glLoadName((GLuint)-1);
   for (int i=0;i<pgns.size();i++){
     switch (pgns.at(i).n){
-    case  3:glBegin(GL_TRIANGLES); 
-      for (int k=0;k<3;k++) {
-	Farbverlauf(orte.at(pgns.at(i).ii[k]).color);
-	glTexCoord1f((orte.at(pgns.at(i).ii[k]).color-min)/(max-min));
-	glNormal3fv( (GLfloat*)&orte.at(pgns.at(i).ii[k]).normal);
-	glVertex3fv( (GLfloat*)&orte.at(pgns.at(i).ii[k]).vertex);
-      }          
-      glEnd();
-      break;
-    case  4:  //if (Quad)
-	{
-	glBegin(GL_QUADS);
-	for (int k=0;k<4;k++) {
-	  Farbverlauf(orte.at(pgns.at(i).ii[k]).color);
-	  glTexCoord1f((orte.at(pgns.at(i).ii[k]).color-min)/(max-min));
-	  glNormal3fv( (GLfloat*)&orte.at(pgns.at(i).ii[k]).normal);
-	  glVertex3f(orte.at(pgns.at(i).ii[k]).vertex.x,orte.at(pgns.at(i).ii[k]).vertex.y,orte.at(pgns.at(i).ii[k]).vertex.z);
-	}
-	glEnd();
-	break;
-      }// */
-    case  5:
-    case  6:
-    case  7:
-    case  8:
-    case  9:
-    case  10:
-    case  11:
-    case   12:{
-      Vector3 mO=orte.at(pgns.at(i).ii[0]).vertex,mN=orte.at(pgns.at(i).ii[0]).normal;
-      GLfloat mC=orte.at(pgns.at(i).ii[0]).color;
-      for (int k=1;k <pgns.at(i).n; k++) {
-	mO+=orte.at(pgns.at(i).ii[k]).vertex;
-	mN+=orte.at(pgns.at(i).ii[k]).normal;
-	mC+=orte.at(pgns.at(i).ii[k]).color;}
-      mC/=(GLfloat)pgns.at(i).n;
-      mO*=(GLfloat)1.0/pgns.at(i).n;
-      mN*=(GLfloat)1.0/pgns.at(i).n;         
-      glBegin(GL_TRIANGLE_FAN);
-      Farbverlauf(mC);
-      glTexCoord1f((mC-min)/(max-min));
-      glNormal3fv( (GLfloat*)&mN);
-      glVertex3fv( (GLfloat*)&mO);
-    }
-      for (int k=0;k<=pgns.at(i).n;k++) {Farbverlauf(orte.at(pgns.at(i).ii[k%pgns.at(i).n]).color);
-	glTexCoord1f((orte.at(pgns.at(i).ii[k%pgns.at(i).n]).color-min)/(max-min));
-	glNormal3fv( (GLfloat*)&orte.at(pgns.at(i).ii[k%pgns.at(i).n]).normal);
-	glVertex3fv( (GLfloat*)&orte.at(pgns.at(i).ii[k%pgns.at(i).n]).vertex);
-      }
-      glEnd();
-      break;
-    default : printf("wrong polygonshape! %d\n",pgns.at(i).n);glEnd();break;
+      case  3:glBegin(GL_TRIANGLES); 
+              for (int k=0;k<3;k++) {
+                Farbverlauf(orte.at(pgns.at(i).ii[k]).color);
+                glTexCoord1f((orte.at(pgns.at(i).ii[k]).color-min)/(max-min));
+                glNormal3fv( (GLfloat*)&orte.at(pgns.at(i).ii[k]).normal);
+                glVertex3fv( (GLfloat*)&orte.at(pgns.at(i).ii[k]).vertex);
+              }          
+              glEnd();
+              break;
+      case  4:  //if (Quad)
+              {
+                glBegin(GL_QUADS);
+                for (int k=0;k<4;k++) {
+                  Farbverlauf(orte.at(pgns.at(i).ii[k]).color);
+                  glTexCoord1f((orte.at(pgns.at(i).ii[k]).color-min)/(max-min));
+                  glNormal3fv( (GLfloat*)&orte.at(pgns.at(i).ii[k]).normal);
+                  glVertex3f(orte.at(pgns.at(i).ii[k]).vertex.x,orte.at(pgns.at(i).ii[k]).vertex.y,orte.at(pgns.at(i).ii[k]).vertex.z);
+                }
+                glEnd();
+                break;
+              }// */
+      case  5:
+      case  6:
+      case  7:
+      case  8:
+      case  9:
+      case  10:
+      case  11:
+      case   12:{
+                  Vector3 mO=orte.at(pgns.at(i).ii[0]).vertex,mN=orte.at(pgns.at(i).ii[0]).normal;
+                  GLfloat mC=orte.at(pgns.at(i).ii[0]).color;
+                  for (int k=1;k <pgns.at(i).n; k++) {
+                    mO+=orte.at(pgns.at(i).ii[k]).vertex;
+                    mN+=orte.at(pgns.at(i).ii[k]).normal;
+                    mC+=orte.at(pgns.at(i).ii[k]).color;}
+                  mC/=(GLfloat)pgns.at(i).n;
+                  mO*=(GLfloat)1.0/pgns.at(i).n;
+                  mN*=(GLfloat)1.0/pgns.at(i).n;         
+                  glBegin(GL_TRIANGLE_FAN);
+                  Farbverlauf(mC);
+                  glTexCoord1f((mC-min)/(max-min));
+                  glNormal3fv( (GLfloat*)&mN);
+                  glVertex3fv( (GLfloat*)&mO);
+                }
+                for (int k=0;k<=pgns.at(i).n;k++) {Farbverlauf(orte.at(pgns.at(i).ii[k%pgns.at(i).n]).color);
+                  glTexCoord1f((orte.at(pgns.at(i).ii[k%pgns.at(i).n]).color-min)/(max-min));
+                  glNormal3fv( (GLfloat*)&orte.at(pgns.at(i).ii[k%pgns.at(i).n]).normal);
+                  glVertex3fv( (GLfloat*)&orte.at(pgns.at(i).ii[k%pgns.at(i).n]).vertex);
+                }
+                glEnd();
+                break;
+      default : printf("wrong polygonshape! %d\n",pgns.at(i).n);glEnd();break;
     }
   }		
 }
 
 void MolIso::readBMBinaryHeader(QString fname){
-    QFile bmb(fname);
-    bmb.open(QIODevice::ReadOnly);
-    // OPEN (81, ERR=900, FILE=rhofile, FORM='UNFORMATTED', STATUS='OLD')
-    //READ (81, ERR=17) SDim, RDim, (nNVox(Cnt1), Cnt1=1,ndim), (Cell(Cnt1), Cnt1=1,CellCon)!everything must be read in one read
-    //!                                                                   command so we have to try unil we get the right answer
-    //write (*,*) SDim, RDim, nNVox(1:SDim),Cell
-    //int maxdim=8;
-    int ndim=7;
-    int sdim;
-    //int cellcon=7;
-    //int nvox[8];
-    int xxx;
-    double cell[7];
-    bmb.read((char*)&xxx,sizeof(int));
-    if (xxx!=76) {qDebug()<<"Unsuported Format "<<xxx; exit(0);}
-    //qDebug()<<xxx<<5*sizeof(int)+7*sizeof(double);
-    bmb.read((char*)&sdim,sizeof(int));
+  QFile bmb(fname);
+  bmb.open(QIODevice::ReadOnly);
+  // OPEN (81, ERR=900, FILE=rhofile, FORM='UNFORMATTED', STATUS='OLD')
+  //READ (81, ERR=17) SDim, RDim, (nNVox(Cnt1), Cnt1=1,ndim), (Cell(Cnt1), Cnt1=1,CellCon)!everything must be read in one read
+  //!                                                                   command so we have to try unil we get the right answer
+  //write (*,*) SDim, RDim, nNVox(1:SDim),Cell
+  //int maxdim=8;
+  int ndim=7;
+  int sdim;
+  //int cellcon=7;
+  //int nvox[8];
+  int xxx;
+  double cell[7];
+  bmb.read((char*)&xxx,sizeof(int));
+  if (xxx!=76) {qDebug()<<"Unsuported Format "<<xxx; exit(0);}
+  //qDebug()<<xxx<<5*sizeof(int)+7*sizeof(double);
+  bmb.read((char*)&sdim,sizeof(int));
 
-    if (sdim!=3) {qDebug()<<"Unsuported Format (only 3D!)"<<sdim; exit(0);}
-    //qDebug()<<sdim;
-    bmb.read((char*)&ndim,sizeof(int));
-    bmb.read((char*)&breite,sizeof(int));
-    bmb.read((char*)&hoehe,sizeof(int));
-    bmb.read((char*)&tiefe,sizeof(int));
+  if (sdim!=3) {qDebug()<<"Unsuported Format (only 3D!)"<<sdim; exit(0);}
+  //qDebug()<<sdim;
+  bmb.read((char*)&ndim,sizeof(int));
+  bmb.read((char*)&breite,sizeof(int));
+  bmb.read((char*)&hoehe,sizeof(int));
+  bmb.read((char*)&tiefe,sizeof(int));
 
-    for (int i=0; i<7; i++)
-        bmb.read((char*)&cell[i],sizeof(double));
+  for (int i=0; i<7; i++)
+    bmb.read((char*)&cell[i],sizeof(double));
 
-    extern molekul mol;
-    mol.zelle.a=cell[0];
-    mol.zelle.b=cell[1];
-    mol.zelle.c=cell[2];
-    mol.zelle.al=cell[3];
-    mol.zelle.be=cell[4];
-    mol.zelle.ga=cell[5];
-    mol.setup_zelle();
-    if( fabs(cell[6]-mol.zelle.V)>0.001) {
+  extern molekul mol;
+  mol.zelle.a=cell[0];
+  mol.zelle.b=cell[1];
+  mol.zelle.c=cell[2];
+  mol.zelle.al=cell[3];
+  mol.zelle.be=cell[4];
+  mol.zelle.ga=cell[5];
+  mol.setup_zelle();
+  if( fabs(cell[6]-mol.zelle.V)>0.001) {
 
-        qDebug()<< "File reports Volume "<<cell[6]<<"A^3 which is differnt from expected value "<< mol.zelle.V;
-    }
-    bh=breite*hoehe;
-    capVx=mol.zelle.V/(bh*tiefe);
-    V3 xd,yd,zd,xdk,ydk,zdk;
-   /* qDebug()<<ndim<<breite<<hoehe<<tiefe
-      <<cell[0] 
-      <<cell[1] 
-      <<cell[2] 
-      <<cell[3] 
-      <<cell[4] 
-      <<cell[5] 
-      <<cell[6] 
-      
-      <<capVx;*/
-    double
-      jdx=1.0/(breite),
-      jdy=1.0/(hoehe),
-      jdz=1.0/(tiefe);
+    qDebug()<< "File reports Volume "<<cell[6]<<"A^3 which is differnt from expected value "<< mol.zelle.V;
+  }
+  bh=breite*hoehe;
+  capVx=mol.zelle.V/(bh*tiefe);
+  deV=capVx;
+  V3 xd,yd,zd,xdk,ydk,zdk;
+  /* qDebug()<<ndim<<breite<<hoehe<<tiefe
+     <<cell[0] 
+     <<cell[1] 
+     <<cell[2] 
+     <<cell[3] 
+     <<cell[4] 
+     <<cell[5] 
+     <<cell[6] 
 
-    xd=V3(jdx ,0,0);
-    yd=V3(0, jdy,0);
-    zd=V3(0,0, jdz);
-    mol.frac2kart(xd,xdk);
-    mol.frac2kart(yd,ydk);
-    mol.frac2kart(zd,zdk);
-    x_dim=Vector3(xdk.x,xdk.y,xdk.z);
-    y_dim=Vector3(ydk.x,ydk.y,ydk.z);
-    z_dim=Vector3(zdk.x,zdk.y,zdk.z);
+     <<capVx;*/
+  double
+    jdx=1.0/(breite),
+    jdy=1.0/(hoehe),
+    jdz=1.0/(tiefe);
+
+  xd=V3(jdx ,0,0);
+  yd=V3(0, jdy,0);
+  zd=V3(0,0, jdz);
+  mol.frac2kart(xd,xdk);
+  mol.frac2kart(yd,ydk);
+  mol.frac2kart(zd,zdk);
+  x_dim=Vector3(xdk.x,xdk.y,xdk.z);
+  y_dim=Vector3(ydk.x,ydk.y,ydk.z);
+  z_dim=Vector3(zdk.x,zdk.y,zdk.z);
 
 }
 
@@ -479,19 +624,19 @@ void MolIso::readJanaHeader(QString fname){
   T t;
   jh.read((char*)&t,sizeof(T));
   int idim=0,ups=0,aua=-1;
-    for (int i=0; i<6; i++) {
+  for (int i=0; i<6; i++) {
     idim+=ups=t.iorien[i];
-   printf("%d\n",ups);
+    printf("%d\n",ups);
     if (aua>ups) {
       qDebug()<<"m81 file axis order must be 1 2 3, x y z!";
-    exit(0);  
+      exit(0);  
     }
   }
   if ((idim!=21)&&(idim!=6)) {
-  qDebug()<<".m81 file suport only for 3 Dimensions, sorry"<<idim;
-  exit(0);
+    qDebug()<<".m81 file suport only for 3 Dimensions, sorry"<<idim;
+    exit(0);
   }
-  
+
   //qDebug()<<t.nx[0]<<t.nx[1]<<t.nx[2]<<t.nxny;
   jh.close();
   breite=(t.iorien[0]==1)?t.nx[0]:(t.iorien[1])==1?t.nx[1]:t.nx[2];
@@ -579,87 +724,88 @@ void MolIso::readJanaHeader(QString fname){
     jdx=t.dx[0],
     jdy=t.dx[1], 
     jdz=t.dx[2];
-  xd=V3(jdx ,0,0);
-  yd=V3(0, jdy,0);
-  zd=V3(0,0, jdz);
-  int ic1=t.iorien[0],ic2=t.iorien[1];
-  printf("%d %d %d\n",ic1,ic2,6-ic1-ic2);
-  mol.frac2kart((ic1==1)?xd:(ic2==1)?yd:zd,xdk);
-  mol.frac2kart((ic1==2)?xd:(ic2==2)?yd:zd,ydk);
-  mol.frac2kart((ic1==3)?xd:(ic2==3)?yd:zd,zdk);
-  x_dim=Vector3(xdk.x,xdk.y,xdk.z);
-  y_dim=Vector3(ydk.x,ydk.y,ydk.z);
-  z_dim=Vector3(zdk.x,zdk.y,zdk.z);
-  printf("first voxel vector  %9.6f %9.6f %9.6f\n",x_dim.x,x_dim.y,x_dim.z);
-  printf("second voxel vector %9.6f %9.6f %9.6f\n",y_dim.x,y_dim.y,y_dim.z);
-  printf("third voxel vector  %9.6f %9.6f %9.6f\n\n",z_dim.x,z_dim.y,z_dim.z);
-  printf("%9.6f %9.6f %9.6f\n",x_dim.x*breite,x_dim.y*breite,x_dim.z*breite);
-  printf("%9.6f %9.6f %9.6f\n",y_dim.x*hoehe,y_dim.y*hoehe,y_dim.z*hoehe);
-  printf("%9.6f %9.6f %9.6f\n",z_dim.x*tiefe,z_dim.y*tiefe,z_dim.z*tiefe);
-  printf("%9.6f %9.6f %9.6f %9.6f %9.6f %9.6f %9.6f\n", mol.zelle.a ,mol.zelle.b , mol.zelle.c, mol.zelle.al, mol.zelle.be, mol.zelle.ga, mol.zelle.V);
-  QString M40Name=fname;
-  if (habenatome){
-    M40Name=M40Name.replace(QRegExp(".m81$"),".m40");
-    QFile m40(M40Name);
-    if (m40.open(QIODevice::ReadOnly|QIODevice::Text)){
-      QString all40 = m40.readAll();
-      QStringList lines40 = all40.split(QRegExp("[\n\r]+"));
-      QStringList tok;
-      extern int atmax;
-      extern QList<INP> asymmUnit;
-      INP newAtom;
-      newAtom.part=0;
-      extern int smx;
-      smx=0;
-      int iread=0;
-      for (int li=0; li<lines40.size();li++){
-        tok.clear();
-        tok=lines40.at(li).split(" ",QString::SkipEmptyParts);
-        if (tok.size()){
-          if (li==0) smx=atmax = tok.at(0).toInt();
-          if ((li)&&(!smx)) return;
-          if ((asymmUnit.size()<smx)&&(lines40.at(li).contains(QRegExp("^[A-z]+")))){
-            //C1        1  1     1.000000 0.199051 0.122184 0.071881    
-            //123456789012345678901234567890123456789012345678901234567890
-            //000000000111111111122222222223333333333444444444455555555556
-            //
-            newAtom.lmax=-1;
-            if ((lines40.at(li).length()>16)&&(lines40.at(li)[16]!=' ')) 
-              iread=sscanf(lines40.at(li).toStdString().c_str(),"%8s%3d%3d%3d %9lf%9lf%9lf%9lf",newAtom.atomname,&newAtom.atomtype,&newAtom.jtf, &newAtom.lmax, &newAtom.amul, &newAtom.frac.x, &newAtom.frac.y, &newAtom.frac.z);
-            else iread=sscanf(lines40.at(li).toStdString().c_str(),"%8s%3d%3d    %9lf%9lf%9lf%9lf",newAtom.atomname,&newAtom.atomtype,&newAtom.jtf,  &newAtom.amul, &newAtom.frac.x, &newAtom.frac.y, &newAtom.frac.z);
-            //        qDebug()<<all.at(li)<<all.at(li)[16];
-            //        printf("'11111111222333444 555555555666666666777777777888888888'\n");
-            printf("%3d%3d%3d %-10s %4d %12.6f%12.6f%12.6f%12.6f\n",iread,newAtom.jtf,newAtom.lmax,newAtom.atomname,newAtom.atomtype,newAtom.frac.x,newAtom.frac.y,newAtom.frac.z,newAtom.amul);
-            if (newAtom.jtf>0) {
-              li++;
-              sscanf(lines40.at(li).toStdString().c_str(),"%9lf%9lf%9lf%9lf%9lf%9lf",
-                  &newAtom.uf.m11,
-                  &newAtom.uf.m22,
-                  &newAtom.uf.m33,
-                  &newAtom.uf.m12,
-                  &newAtom.uf.m13,
-                  &newAtom.uf.m23);
+    xd=V3(jdx ,0,0);
+    yd=V3(0, jdy,0);
+    zd=V3(0,0, jdz);
+    int ic1=t.iorien[0],ic2=t.iorien[1];
+    printf("%d %d %d\n",ic1,ic2,6-ic1-ic2);
+    mol.frac2kart((ic1==1)?xd:(ic2==1)?yd:zd,xdk);
+    mol.frac2kart((ic1==2)?xd:(ic2==2)?yd:zd,ydk);
+    mol.frac2kart((ic1==3)?xd:(ic2==3)?yd:zd,zdk);
+    x_dim=Vector3(xdk.x,xdk.y,xdk.z);
+    y_dim=Vector3(ydk.x,ydk.y,ydk.z);
+    z_dim=Vector3(zdk.x,zdk.y,zdk.z);
+    printf("first voxel vector  %9.6f %9.6f %9.6f\n",x_dim.x,x_dim.y,x_dim.z);
+    printf("second voxel vector %9.6f %9.6f %9.6f\n",y_dim.x,y_dim.y,y_dim.z);
+    printf("third voxel vector  %9.6f %9.6f %9.6f\n\n",z_dim.x,z_dim.y,z_dim.z);
+    printf("%9.6f %9.6f %9.6f\n",x_dim.x*breite,x_dim.y*breite,x_dim.z*breite);
+    printf("%9.6f %9.6f %9.6f\n",y_dim.x*hoehe,y_dim.y*hoehe,y_dim.z*hoehe);
+    printf("%9.6f %9.6f %9.6f\n",z_dim.x*tiefe,z_dim.y*tiefe,z_dim.z*tiefe);
+    printf("%9.6f %9.6f %9.6f %9.6f %9.6f %9.6f %9.6f\n", mol.zelle.a ,mol.zelle.b , mol.zelle.c, mol.zelle.al, mol.zelle.be, mol.zelle.ga, mol.zelle.V);
+    QString M40Name=fname;
+    deV=mol.zelle.V/(bh*tiefe);
+    if (habenatome){
+      M40Name=M40Name.replace(QRegExp(".m81$"),".m40");
+      QFile m40(M40Name);
+      if (m40.open(QIODevice::ReadOnly|QIODevice::Text)){
+        QString all40 = m40.readAll();
+        QStringList lines40 = all40.split(QRegExp("[\n\r]+"));
+        QStringList tok;
+        extern int atmax;
+        extern QList<INP> asymmUnit;
+        INP newAtom;
+        newAtom.part=0;
+        extern int smx;
+        smx=0;
+        int iread=0;
+        for (int li=0; li<lines40.size();li++){
+          tok.clear();
+          tok=lines40.at(li).split(" ",QString::SkipEmptyParts);
+          if (tok.size()){
+            if (li==0) smx=atmax = tok.at(0).toInt();
+            if ((li)&&(!smx)) return;
+            if ((asymmUnit.size()<smx)&&(lines40.at(li).contains(QRegExp("^[A-z]+")))){
+              //C1        1  1     1.000000 0.199051 0.122184 0.071881    
+              //123456789012345678901234567890123456789012345678901234567890
+              //000000000111111111122222222223333333333444444444455555555556
+              //
+              newAtom.lmax=-1;
+              if ((lines40.at(li).length()>16)&&(lines40.at(li)[16]!=' ')) 
+                iread=sscanf(lines40.at(li).toStdString().c_str(),"%8s%3d%3d%3d %9lf%9lf%9lf%9lf",newAtom.atomname,&newAtom.atomtype,&newAtom.jtf, &newAtom.lmax, &newAtom.amul, &newAtom.frac.x, &newAtom.frac.y, &newAtom.frac.z);
+              else iread=sscanf(lines40.at(li).toStdString().c_str(),"%8s%3d%3d    %9lf%9lf%9lf%9lf",newAtom.atomname,&newAtom.atomtype,&newAtom.jtf,  &newAtom.amul, &newAtom.frac.x, &newAtom.frac.y, &newAtom.frac.z);
+              //        qDebug()<<all.at(li)<<all.at(li)[16];
+              //        printf("'11111111222333444 555555555666666666777777777888888888'\n");
+              printf("%3d%3d%3d %-10s %4d %12.6f%12.6f%12.6f%12.6f\n",iread,newAtom.jtf,newAtom.lmax,newAtom.atomname,newAtom.atomtype,newAtom.frac.x,newAtom.frac.y,newAtom.frac.z,newAtom.amul);
+              if (newAtom.jtf>0) {
+                li++;
+                sscanf(lines40.at(li).toStdString().c_str(),"%9lf%9lf%9lf%9lf%9lf%9lf",
+                    &newAtom.uf.m11,
+                    &newAtom.uf.m22,
+                    &newAtom.uf.m33,
+                    &newAtom.uf.m12,
+                    &newAtom.uf.m13,
+                    &newAtom.uf.m23);
 
+              }
+
+              newAtom.OrdZahl = mol.Get_OZ(atypen.at(newAtom.atomtype-1));
+              if (newAtom.amul==0) newAtom.OrdZahl = -1;
+              asymmUnit.append(newAtom);
             }
-
-            newAtom.OrdZahl = mol.Get_OZ(atypen.at(newAtom.atomtype-1));
-            if (newAtom.amul==0) newAtom.OrdZahl = -1;
-            asymmUnit.append(newAtom);
           }
         }
-      }
-      for (int i=0;i<asymmUnit.size();i++) { 
-        mol.frac2kart(asymmUnit[i].frac,asymmUnit[i].kart);
-        //    printf("%-10s %4d %12.6f%12.6f%12.6f\n",asymmUnit[i].atomname,asymmUnit[i].OrdZahl,asymmUnit[i].kart.x,asymmUnit[i].kart.y,asymmUnit[i].kart.z);
-        if ((asymmUnit[i].uf.m22==0.0)&&(asymmUnit[i].uf.m33==0.0)){
-          asymmUnit[i].u.m11=asymmUnit[i].u.m22=asymmUnit[i].u.m33=asymmUnit[i].uf.m11;
-          asymmUnit[i].u.m12=asymmUnit[i].u.m13=asymmUnit[i].u.m23=asymmUnit[i].u.m21=asymmUnit[i].u.m31=asymmUnit[i].u.m32=0.0;}
-        else mol.Uf2Uo(asymmUnit[i].uf,asymmUnit[i].u);
-        //    printf("%12.6f%12.6f%12.6f%12.6f%12.6f%12.6f\n",asymmUnit[i].u.m11,asymmUnit[i].u.m22,asymmUnit[i].u.m33, asymmUnit[i].u.m12, asymmUnit[i].u.m13,asymmUnit[i].u.m23);
+        for (int i=0;i<asymmUnit.size();i++) { 
+          mol.frac2kart(asymmUnit[i].frac,asymmUnit[i].kart);
+          //    printf("%-10s %4d %12.6f%12.6f%12.6f\n",asymmUnit[i].atomname,asymmUnit[i].OrdZahl,asymmUnit[i].kart.x,asymmUnit[i].kart.y,asymmUnit[i].kart.z);
+          if ((asymmUnit[i].uf.m22==0.0)&&(asymmUnit[i].uf.m33==0.0)){
+            asymmUnit[i].u.m11=asymmUnit[i].u.m22=asymmUnit[i].u.m33=asymmUnit[i].uf.m11;
+            asymmUnit[i].u.m12=asymmUnit[i].u.m13=asymmUnit[i].u.m23=asymmUnit[i].u.m21=asymmUnit[i].u.m31=asymmUnit[i].u.m32=0.0;}
+          else mol.Uf2Uo(asymmUnit[i].uf,asymmUnit[i].u);
+          //    printf("%12.6f%12.6f%12.6f%12.6f%12.6f%12.6f\n",asymmUnit[i].u.m11,asymmUnit[i].u.m22,asymmUnit[i].u.m33, asymmUnit[i].u.m12, asymmUnit[i].u.m13,asymmUnit[i].u.m23);
+        }
       }
     }
-  }
-  // exit(0);
+    // exit(0);
 }
 
 void MolIso::readGVDHeader(QString fname){
@@ -678,7 +824,7 @@ void MolIso::readGVDHeader(QString fname){
   mol.zelle.be = tok.at(4).toDouble();
   mol.zelle.ga = tok.at(5).toDouble();
   mol.setup_zelle();
-    
+
   tok = lines.at(2).split(" ",QString::SkipEmptyParts);
   breite=tok.at(0).toInt();
   hoehe=tok.at(1).toInt();
@@ -701,8 +847,9 @@ void MolIso::readGVDHeader(QString fname){
   y_dim=Vector3(ydk.x,ydk.y,ydk.z);
   z_dim=Vector3(zdk.x,zdk.y,zdk.z);
   GHName=fname;
-  qDebug()<<breite<<hoehe<<tiefe<<xdk.x<<xdk.y<<xdk.z<<ydk.x<<ydk.y<<ydk.z<<zdk.x<<zdk.y<<zdk.z;
+  //qDebug()<<breite<<hoehe<<tiefe<<xdk.x<<xdk.y<<xdk.z<<ydk.x<<ydk.y<<ydk.z<<zdk.x<<zdk.y<<zdk.z;
   gh.close();
+  deV=mol.zelle.V/(bh*tiefe);
 }
 
 void MolIso::readXDGridHeader(QString fname,int &fileType){
@@ -713,7 +860,7 @@ void MolIso::readXDGridHeader(QString fname,int &fileType){
     return;
   }
   if (fname.contains(QRegExp("\\..ed$"))){
-    qDebug()<<fname<<__LINE__;
+//    qDebug()<<fname<<__LINE__;
     readGVDHeader(fname);
     GHName=fname;
     fileType=321;
@@ -756,6 +903,8 @@ void MolIso::readXDGridHeader(QString fname,int &fileType){
     x_dim = Vector3(tok.at(0).toFloat()/breite,0,0);
     y_dim = Vector3(0,tok.at(1).toFloat()/hoehe,0);
     z_dim = Vector3(0,0,tok.at(2).toFloat()/tiefe);
+    double vol=tok.at(0).toDouble()*tok.at(1).toDouble()*tok.at(2).toDouble();
+    deV=vol/(bh*tiefe);
     while (!lines.at(i).contains("Objects")) i++;
     {
       i++;
@@ -830,7 +979,9 @@ void MolIso::readXDGridHeader(QString fname,int &fileType){
         x_dim *= bohr;
         y_dim *= bohr;
         z_dim *= bohr;
+        deV=(x_dim%y_dim)*z_dim;
         bh = hoehe*breite;
+        deV/=bh*hoehe;
         for (int i=0;i<atmax;i++){
           tok=lines.at(6+i).split(QRegExp("\\s+"),QString::SkipEmptyParts);
           newAtom.OrdZahl=tok.at(0).toInt()-1;
@@ -1030,23 +1181,60 @@ void MolIso::CalcVertex( int ix, int iy, int iz ) {
 }
 
 void MolIso::CalcVertexes( void ) {
-/*  printf("ooo %g %g %g\n",orig.x,orig.y,orig.z);
-  printf("x_dim %g %g %g\n", x_dim.x,  x_dim.y,  x_dim.z);
-  printf("y_dim %g %g %g\n", y_dim.x,  y_dim.y,  y_dim.z);
-  printf("z_dim %g %g %g\n", z_dim.x,  z_dim.y,  z_dim.z);*/
+  /*  printf("ooo %g %g %g\n",orig.x,orig.y,orig.z);
+      printf("x_dim %g %g %g\n", x_dim.x,  x_dim.y,  x_dim.z);
+      printf("y_dim %g %g %g\n", y_dim.x,  y_dim.y,  y_dim.z);
+      printf("z_dim %g %g %g\n", z_dim.x,  z_dim.y,  z_dim.z);*/
   test3= ((breite-1)/-2.0) *  x_dim + ((hoehe-1)/-2.0) * y_dim + ((tiefe-1)/-2.0) * z_dim + orig;
-//  Vector3 test4 = ((breite-1)) *  x_dim + ((hoehe-1)) * y_dim + ((tiefe-1)) * z_dim + orig;
+  double Volumen2=0.0;
+  //  Vector3 test4 = ((breite-1)) *  x_dim + ((hoehe-1)) * y_dim + ((tiefe-1)) * z_dim + orig;
 
   if (cubeiso) test3 =orig;
-//  printf("boq %g %g %g\n",test3.x,test3.y,test3.z);
-//  printf("||| %g %g %g\n",test4.x,test4.y,test4.z);
+  //  printf("boq %g %g %g\n",test3.x,test3.y,test3.z);
+  //  printf("||| %g %g %g\n",test4.x,test4.y,test4.z);
   for( int ix=0; ix<breite; ix++ ){
     for( int iy=0; iy<hoehe; iy++ ){
       for( int iz=0; iz<tiefe; iz++ ){
         CalcVertex(ix,iy,iz);
+        if ((ix<breite-1)&&(iy<hoehe-1)&&(iz<tiefe-1)){
+          double mul;
+          if ((data[(ix)   + (iy*breite)   + (iz*bh) ]   > iso_level)&&
+              (data[(ix)   + (iy*breite)   + (iz*bh+1) ] > iso_level)&&
+              (data[(ix)   + (iy*breite+1) + (iz*bh) ]   > iso_level)&&
+              (data[(ix)   + (iy*breite+1) + (iz*bh+1) ] > iso_level)&&
+              (data[(ix+1) + (iy*breite)   + (iz*bh) ]   > iso_level)&&
+              (data[(ix+1) + (iy*breite)   + (iz*bh+1) ] > iso_level)&&
+              (data[(ix+1) + (iy*breite+1) + (iz*bh) ]   > iso_level)&&
+              (data[(ix+1) + (iy*breite+1) + (iz*bh+1) ] > iso_level)){
+            untersumme+=deV;	    
+          }
+
+          if ((data[(ix)   + (iy*breite)   + (iz*bh) ]   > iso_level)||
+              (data[(ix)   + (iy*breite)   + (iz*bh+1) ] > iso_level)||
+              (data[(ix)   + (iy*breite+1) + (iz*bh) ]   > iso_level)||
+              (data[(ix)   + (iy*breite+1) + (iz*bh+1) ] > iso_level)||
+              (data[(ix+1) + (iy*breite)   + (iz*bh) ]   > iso_level)||
+              (data[(ix+1) + (iy*breite)   + (iz*bh+1) ] > iso_level)||
+              (data[(ix+1) + (iy*breite+1) + (iz*bh) ]   > iso_level)||
+              (data[(ix+1) + (iy*breite+1) + (iz*bh+1) ] > iso_level)){
+            obersumme+=deV;
+            mul=((data[(ix)   + (iy*breite)   + (iz*bh) ]   > iso_level)?0.125:0)+
+              ((data[(ix)   + (iy*breite)   + (iz*bh+1) ] > iso_level)?0.125:0)+
+              ((data[(ix)   + (iy*breite+1) + (iz*bh) ]   > iso_level)?0.125:0)+
+              ((data[(ix)   + (iy*breite+1) + (iz*bh+1) ] > iso_level)?0.125:0)+
+              ((data[(ix+1) + (iy*breite)   + (iz*bh) ]   > iso_level)?0.125:0)+
+              ((data[(ix+1) + (iy*breite)   + (iz*bh+1) ] > iso_level)?0.125:0)+
+              ((data[(ix+1) + (iy*breite+1) + (iz*bh) ]   > iso_level)?0.125:0)+
+              ((data[(ix+1) + (iy*breite+1) + (iz*bh+1) ] > iso_level)?0.125:0);
+            Volumen2+=deV*mul;
+          }
+        }
       }
     }
   }
+  double Volumen=(obersumme+untersumme)/2.0;
+  double fehler=(obersumme-untersumme)/4.0;   
+  printf("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nIntegration of the surface volume[A^3]:\n %f < %5.0f(%.0f) < %f\n%12.2f\n",untersumme,Volumen,fehler,obersumme,Volumen2);
 }
 int MolIso::IndexSelected( Node& node0, Node& node1, Node& node2, Node& node3 ) {
   if( node1 && node2 && node3 ){
@@ -1235,15 +1423,15 @@ void MolIso::MakeElement( int ix, int iy, int iz ,int s1, int s2) {//das ist der
       polygon[n++]= node[i];
       int sol = IndexSelected(node[conn[i][m][0]],node[conn[i][m][1]],
           node[conn[i][m][2]],node[conn[i][m][3]]);
-   //   ai=i;
+      //   ai=i;
       i = conn[i][m][sol];
 
       if( sol == 2 ) m ^= 1;
       node[i].flag = 0;
     }while( (i!=is)&&(n<11) );
-    {
-      makeFaces( n, polygon );
-    }
+      {
+        makeFaces( n, polygon );
+      }
   }
   //  */
 }
@@ -1286,12 +1474,13 @@ void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &st
     }
     isoF.close(); 
     {
-      double minv=1e37,maxv=-1e38;
-    for(int ii=0; ii<data.size();ii++) {
-      minv=qMin(data.at(ii),minv);
-      maxv=qMax(data.at(ii),maxv);
-    }
-    printf("minmax grd: %g %g\n",minv,maxv);
+      double minv=1e37,maxv=-1e38,summ=0.0;
+      for(int ii=0; ii<data.size();ii++) {
+        summ+=data.at(ii);
+        minv=qMin(data.at(ii),minv);
+        maxv=qMax(data.at(ii),maxv);
+      }
+      printf("minmax grd: %g %g %g\n",minv,maxv,summ);
     }
   }else if ((fileType==321)||(fileType==125)){// ein cube file hoffentlich oder ein ?ed file 
     isoF.open(QIODevice::ReadOnly);
@@ -1315,63 +1504,65 @@ void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &st
         for (int k=(breite) -1;k>=0;k--)
           data.append(rewerte[i+j*(tiefe)+k*(tiefe)*(hoehe)]);// */
     cubeiso=true;
-  isoF.close(); 
+    isoF.close(); 
   }else if(fileType==81){
-  
+
     isoF.open(QIODevice::ReadOnly);
     float *floatdat=(float*)malloc(bh*sizeof(float));
     isoF.read((char*) floatdat,sizeof(float)*bh);//skip first record 
     for (int i=0;i<tiefe;i++){
-    isoF.read((char*) floatdat,sizeof(float)*bh);
-  //  printf("%f %f %f\n",floatdat[0],floatdat[1],floatdat[2]);
+      isoF.read((char*) floatdat,sizeof(float)*bh);
+      //  printf("%f %f %f\n",floatdat[0],floatdat[1],floatdat[2]);
       for (int j=0;j<bh;j++)
-          data.append(floatdat[j]);// */
+        data.append(floatdat[j]);// */
     }
     {
-    extern molekul mol;
+      extern molekul mol;
       double minv=1e37,maxv=-1e38,meanv=0.0;
-    for(int ii=0; ii<data.size();ii++) {
-      meanv+=data.at(ii);
-      minv=qMin(data.at(ii),minv);
-      maxv=qMax(data.at(ii),maxv);
-    }
-    printf("minmax m81: %g %g mean: %g %g %g \n",minv,maxv,meanv/data.size(),meanv/data.size()*mol.zelle.V,meanv/data.size()*mol.zelle.V*M_PI);
+      for(int ii=0; ii<data.size();ii++) {
+        meanv+=data.at(ii);
+        minv=qMin(data.at(ii),minv);
+        maxv=qMax(data.at(ii),maxv);
+      }
+      printf("minmax m81: %g %g mean: %g %g\n",minv,maxv,meanv/data.size(),meanv/data.size()*mol.zelle.V);
     }
     free(floatdat);
     cubeiso=true;
     isoF.close(); 
   }else if(fileType==7202){
-      isoF.open(QIODevice::ReadOnly);
-      int head;
+    isoF.open(QIODevice::ReadOnly);
+    int head;
 
-      cubeiso=true;
-      char *headdummy;
-      isoF.read((char*) &head,sizeof(int));
-      headdummy=(char*) malloc(head);
-      isoF.read((char*) headdummy, head);
-      isoF.read((char*) &head,sizeof(int));
-      isoF.read((char*) &head,sizeof(int));
-      double *doubdat=(double*)malloc(head);
-      isoF.read((char*) doubdat,head);
-      isoF.close();
-      head/=sizeof(double);
-      double min=9.0e99,max=-9.0e99;
-      //qDebug()<<head<<bh*tiefe;
-      for (int i = 0; i<head; i++){
+    cubeiso=true;
+    char *headdummy;
+    isoF.read((char*) &head,sizeof(int));
+    headdummy=(char*) malloc(head);
+    isoF.read((char*) headdummy, head);
+    isoF.read((char*) &head,sizeof(int));
+    isoF.read((char*) &head,sizeof(int));
+    double *doubdat=(double*)malloc(head);
+    isoF.read((char*) doubdat,head);
+    isoF.close();
+    head/=sizeof(double);
+    extern molekul mol;
+    double min=9.0e99,max=-9.0e99,meanv=0.0;
+    //qDebug()<<head<<bh*tiefe;
+    for (int i = 0; i<head; i++){
       data.append(doubdat[i]/capVx);
+      meanv+=data.at(i);
       min=fmin(data.at(i),min);
       max=fmax(data.at(i),max);
 
-      }
-      printf("mi%g ma%g\n",min,max);
-      free(headdummy);
-      free(doubdat);
+    }
+    printf("minmax raw: %g %g mean: %g %g\n",min,max,meanv/data.size(),meanv/data.size()*mol.zelle.V);
+    free(headdummy);
+    free(doubdat);
   }
   if (mapFileName==isoFileName) {
     mdata=data;
   }else {
     if (fileType==0){//if (mapFileName.contains("grd")) {
-    mapF.open(QIODevice::ReadOnly);
+      mapF.open(QIODevice::ReadOnly);
       while (!QString(mapF.readLine()).contains("Values")) {;}
       int p=0,pmax=breite*hoehe*tiefe,altb=0,b=0;
       while (!mapF.atEnd () && (p<pmax)) {
@@ -1385,9 +1576,9 @@ void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &st
           altb=b;
         }
       }
-    mapF.close();                                                                              
+      mapF.close();                                                                              
     }else if ((fileType==321)||(fileType==125)){//{ // ein cube file hoffentlich
-    mapF.open(QIODevice::ReadOnly);
+      mapF.open(QIODevice::ReadOnly);
       for (int i=0; i<(atomanzahl+6);i++) mapF.readLine();
       int pmax=breite*hoehe*tiefe,altb=0,b=0;
       int p=pmax-1;
@@ -1409,492 +1600,533 @@ void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &st
       cubemap=true;
       mapF.close();                                                                              
     }else if (fileType==81){
-//      qDebug()<< "Des han I no`it g`schrieba!";
-    mapF.open(QIODevice::ReadOnly);
-    float *floatdat=(float*)malloc(bh*sizeof(float));
-    mapF.read((char*) floatdat,sizeof(float)*bh);//skip first record 
-    for (int i=0;i<tiefe;i++){
-    mapF.read((char*) floatdat,sizeof(float)*bh);
-  //  printf("%f %f %f\n",floatdat[0],floatdat[1],floatdat[2]);
-      for (int j=0;j<bh;j++)
+      //      qDebug()<< "Des han I no`it g`schrieba!";
+      mapF.open(QIODevice::ReadOnly);
+      float *floatdat=(float*)malloc(bh*sizeof(float));
+      mapF.read((char*) floatdat,sizeof(float)*bh);//skip first record 
+      for (int i=0;i<tiefe;i++){
+        mapF.read((char*) floatdat,sizeof(float)*bh);
+        //  printf("%f %f %f\n",floatdat[0],floatdat[1],floatdat[2]);
+        for (int j=0;j<bh;j++)
           mdata.append(floatdat[j]);// */
-    }
-    {
-    extern molekul mol;
-      double minv=1e37,maxv=-1e38,meanv=0.0;
-    for(int ii=0; ii<mdata.size();ii++) {
-      meanv+=mdata.at(ii);
-      minv=qMin(mdata.at(ii),minv);
-      maxv=qMax(mdata.at(ii),maxv);
-    }
-    printf("minmax m81: %g %g mean: %g %g %g \n",minv,maxv,meanv/data.size(),meanv/data.size()*mol.zelle.V,meanv/data.size()*mol.zelle.V*M_PI);
-    }
-    cubeiso=true;
-    mapF.close(); 
-    free(floatdat);
+      }
+      {
+        extern molekul mol;
+        double minv=1e37,maxv=-1e38,meanv=0.0;
+        for(int ii=0; ii<mdata.size();ii++) {
+          meanv+=mdata.at(ii);
+          minv=qMin(mdata.at(ii),minv);
+          maxv=qMax(mdata.at(ii),maxv);
+        }
+        printf("minmax m81: %g %g mean: %g %g %g \n",minv,maxv,meanv/data.size(),meanv/data.size()*mol.zelle.V,meanv/data.size()*mol.zelle.V*M_PI);
+      }
+      cubeiso=true;
+      mapF.close(); 
+      free(floatdat);
     }if(fileType==7202){
-        mapF.open(QIODevice::ReadOnly);
-        int head;
+      mapF.open(QIODevice::ReadOnly);
+      int head;
 
-        //cubeiso=true;
-        char *headdummy;
-        mapF.read((char*) &head,sizeof(int));
-        headdummy=(char*) malloc(head);
-        mapF.read((char*) headdummy, head);
-        mapF.read((char*) &head,sizeof(int));
-        mapF.read((char*) &head,sizeof(int));
-        double *doubdat=(double*)malloc(head);
-        mapF.read((char*) doubdat,head);
-        mapF.close();
-        head/=sizeof(double);
+      //cubeiso=true;
+      char *headdummy;
+      mapF.read((char*) &head,sizeof(int));
+      headdummy=(char*) malloc(head);
+      mapF.read((char*) headdummy, head);
+      mapF.read((char*) &head,sizeof(int));
+      mapF.read((char*) &head,sizeof(int));
+      double *doubdat=(double*)malloc(head);
+      mapF.read((char*) doubdat,head);
+      mapF.close();
+      head/=sizeof(double);
 
-        //qDebug()<<head<<bh*tiefe;
-        for (int i = 0; i<head; i++)
+      //qDebug()<<head<<bh*tiefe;
+      extern molekul mol;
+      double min=9.0e99,max=-9.0e99,meanv=0.0;
+      for (int i = 0; i<head; i++){
         mdata.append(doubdat[i]/capVx);
-        free(headdummy);
-        free(doubdat);
-    }
-  }
-  if (data.size()!=mdata.size()) {
-    qDebug()<<"Map-Grid and Iso-Grid must have the same size!";
-    qApp->quit();
-  }
-  if (( grad =(Vector3*)malloc(sizeof(Vector3)*bh*tiefe))==NULL) {
-    qDebug()<<"Less Memory(grad)";
-    exit(1);
-  }
-  if (( nodex =(Node*)malloc(sizeof(Node)*bh*tiefe*2))==NULL) {
-    qDebug()<<"Less Memory(X) ";
-    exit(1);  
-  } 
-  if (( nodey =(Node*)malloc(sizeof(Node)*bh*tiefe*2))==NULL) { 
-    qDebug()<<"Less Memory(Y)!!";
-    exit(1); 
-  }
-  if (( nodez =(Node*)malloc(sizeof(Node)*bh*tiefe*2))==NULL) {
-    qDebug()<<"Less Memory(Z)!!";
-    exit(1); 
-  }
-  simpelGrad();	
-  balken->setValue(89);
-  for (int k=0; k<isoValues.size(); k++){
-    iso_level=isoValues.at(k);
-    CalcVertexes();
-    CalcNormals();
-    std::cout<<iso_level;
-    tf->open(QIODevice::WriteOnly);
-    tf->write(QString("%1\n").arg(orte.size()).toLatin1());
-    for (int i=0;i<orte.size();i++){
-      orte[i].normal=Normalize(orte.at(i).normal);
-      tf->write(QString("%1  %2 %3 %4   %5 %6 %7  %8\n")
-          .arg(i,-6)
-          .arg(orte.at(i).vertex.x,9,'f',6)
-          .arg(orte.at(i).vertex.y,9,'f',6)
-          .arg(orte.at(i).vertex.z,9,'f',6)
-          .arg(orte.at(i).normal.x,9,'f',6)
-          .arg(orte.at(i).normal.y,9,'f',6)
-          .arg(orte.at(i).normal.z,9,'f',6)
-          .arg(orte.at(i).color,12,'f',7).toLatin1());
-    }
-    for( int ix=0; ix<breite-1; ix++ )
-      for( int iy=0; iy<hoehe-1; iy++ )
-        for( int iz=0; iz<tiefe-1; iz++ )
-          MakeElement(ix,iy,iz,breite,bh);
-
-    PXsort();
-    balken->setValue(90+(10/isoValues.size())*(k+1));
-    QString Line="";
-    for (int i=0; i<pgns.size();i++) {
-      for (int j=0; j<pgns.at(i).n;j++){
-        Line.append(QString("%1 ").arg(pgns.at(i).ii[j],6));
+        meanv+=mdata.at(i);
+        min=fmin(mdata.at(i),min);
+        max=fmax(mdata.at(i),max);
       }
-      if (pgns.at(i).n>0) {
-        Line.append("\n");
-        tf->write(Line.toLatin1());
-        Line.clear();
-      }
+      printf("minmax raw: %g %g mean: %g %g\n",min,max,meanv/mdata.size(),meanv/mdata.size()*mol.zelle.V);
+      free(headdummy);
+      free(doubdat);
     }
-    tf->close();
-  }
-  balken->setValue(100);
-
-  free(grad);grad=NULL;
-  free(nodex);nodex=NULL;
-  free(nodey);nodey=NULL;
-  free(nodez);nodez=NULL;
-  mdata.clear();
-  data.clear();
-  pgns.clear();
-  orte.clear();
-  }
-
-
-double MolIso::aborp(double max,double v){
-  /*
-   * Final set of parameters            Asymptotic Standard Error
-   * =======================            ==========================
-   *
-   * a0              = 52.8343          +/- 0.5022       (0.9505%)
-   * a1              = -4.18442         +/- 0.0556       (1.329%)
-   * a2              = 46.6335          +/- 0.5221       (1.12%)
-   * a3              = 2.39034          +/- 0.01631      (0.6821%)
-   * a4              = -6.14029         +/- 0.1194       (1.945%)
-   *
-   *
-   * correlation matrix of the fit parameters:
-   *
-   *                a0     a1     a2     a3     a4     
-   *                a0              1.000 
-   *                a1              0.991  1.000 
-   *                a2             -0.999 -0.996  1.000 
-   *                a3             -0.889 -0.858  0.880  1.000 
-   *                a4             -0.805 -0.784  0.798  0.971  1.000 
-   *                gnuplot> plot '50',f(x)
-   *                gnuplot>          warning: Warning - difficulty fitting plot titles into key
-   *
-   *                gnuplot> f(x)=a0*exp(a1*x)+a2*exp(-a3*x**2)+a4*x
-   *
-   * */
-  double 
-    a0=52.8343,
-    a1=-4.18442,
-    a2=46.6335,
-    a3= 2.39034,
-    a4=-6.14029,
-    f,x;
-  int sig=(v<0.0)?-1:1;
-  x=fabs(v/max);
-  f=a0*exp(a1*x)+a2*exp(-a3*x*x)+a4*x;
-  return f*sig;
-}
-void MolIso::createSurface(QString &storeFaceName, double proba,double iso99,bool mapping,bool minus99,double maxharm){
-  thisIsPDF=true;
-  if (mapping){
-    Farben=6;    
-    farbe[0][0]=0.6;    
-    farbe[0][1]=0;    
-    farbe[0][2]=0;    
-    farbe[0][3]=0.5;
-    farbe[1][0]=0.6;    
-    farbe[1][1]=0.5;    
-    farbe[1][2]=0;    
-    farbe[1][3]=0.5;
-    farbe[2][0]=0;    
-    farbe[2][1]=0.5;    
-    farbe[2][2]=0;    
-    farbe[2][3]=0.5;
-    farbe[3][0]=0;    
-    farbe[3][1]=0.5;    
-    farbe[3][2]=0.9;    
-    farbe[3][3]=0.5;
-    farbe[4][0]=0;    
-    farbe[4][1]=0;    
-    farbe[4][2]=0.9;    
-    farbe[4][3]=0.5;    
-    farbe[5][0]=0.6;    
-    farbe[5][1]=0;    
-    farbe[5][2]=0.9;    
-    farbe[5][3]=0.5;    
-    farbe[6][0]=0.6;    
-    farbe[6][1]=0;    
-    farbe[6][2]=0;    
-    farbe[6][3]=0.5;  
-  }else{
-    Farben=5;    
-    farbe[0][0]=1.0;    
-    farbe[0][1]=0;    
-    farbe[0][2]=0;    
-    farbe[0][3]=0.6;
-
-    farbe[1][0]=1.0;    
-    farbe[1][1]=0.0;    
-    farbe[1][2]=0.0;    
-    farbe[1][3]=0.5;
-
-    farbe[2][0]=0.3;    
-    farbe[2][1]=0.7;    
-    farbe[2][2]=0.3;    
-    farbe[2][3]=0.6;
-
-    farbe[3][0]=0.0;    
-    farbe[3][1]=0.0;    
-    farbe[3][2]=1.0;    
-    farbe[3][3]=0.5;
-
-    farbe[4][0]=0;    
-    farbe[4][1]=0;    
-    farbe[4][2]=1.0;    
-    farbe[4][3]=0.6;    
-    mdata=data;
-  }
-  QFile *tf = new QFile(storeFaceName);
-  bh=breite*hoehe;
-  extern QProgressBar *balken;
-  balken->setMinimum(0);
-  balken->setMaximum(100);
-  balken->show();
-  balken->setValue(0);
-  if (( grad =(Vector3*)malloc(sizeof(Vector3)*bh*tiefe))==NULL) {
-    qDebug()<<"Less Memory(grad)";
-    exit(1);
-  }
-
-  if (( nodex =(Node*)malloc(sizeof(Node)*bh*tiefe*2))==NULL) {
-    qDebug()<<"Less Memory(X) ";
-    exit(1);  
-  } 
-  if (( nodey =(Node*)malloc(sizeof(Node)*bh*tiefe*2))==NULL) { 
-    qDebug()<<"Less Memory(Y)!!";
-    exit(1); 
-  }
-  if (( nodez =(Node*)malloc(sizeof(Node)*bh*tiefe*2))==NULL) {
-    qDebug()<<"Less Memory(Z)!!";
-    exit(1); 
-  }
-  simpelGrad();
-  if (proba<1) {  
-    CalcVertexes();
-    CalcNormals();
-    for( int ix=0; ix<breite-1; ix++ )
-      for( int iy=0; iy<hoehe-1; iy++ )
-        for( int iz=0; iz<tiefe-1; iz++ )
-          MakeElement(ix,iy,iz,breite,bh);
-    iso_level*=-1.0;
-    CalcVertexes();
-    CalcNormals();
-    tf->open(QIODevice::WriteOnly|QIODevice::Text);
-
-    tf->write(QString("%1\n").arg(orte.size()).toLatin1());
-    for (int i=0;i<orte.size();i++){
-      tf->write(QString("%1  %2 %3 %4   %5 %6 %7  %8\n")
-          .arg(lineNr,-6)
-          .arg(orte.at(i).vertex.x,9,'f',6)
-          .arg(orte.at(i).vertex.y,9,'f',6)
-          .arg(orte.at(i).vertex.z,9,'f',6)
-          .arg(orte.at(i).normal.x,9,'f',6)
-          .arg(orte.at(i).normal.y,9,'f',6)
-          .arg(orte.at(i).normal.z,9,'f',6)
-          .arg(orte.at(i).color,12,'f',7).toLatin1());
-      lineNr++;
     }
-    for( int ix=0; ix<breite-1; ix++ )
-      for( int iy=0; iy<hoehe-1; iy++ )
-        for( int iz=0; iz<tiefe-1; iz++ )
-          MakeElement(ix,iy,iz,breite,bh);
-    PXsort();
-    QString Line="";
-    for (int i=0; i<pgns.size();i++) {
-      for (int j=0; j<pgns.at(i).n;j++){
-        Line.append(QString("%1 ").arg(pgns.at(i).ii[j],6));
-      }
-      if (pgns.at(i).n>0) {
-        Line.append("\n");
-        tf->write(Line.toLatin1());
-        Line.clear();
-      }
+    if (data.size()!=mdata.size()) {
+      qDebug()<<"Map-Grid and Iso-Grid must have the same size!";
+      qApp->quit();
     }
-    tf->close();
-  }else{
-    CalcVertexes();
-    CalcNormals();
-    for( int ix=0; ix<breite-1; ix++ )
-      for( int iy=0; iy<hoehe-1; iy++ )
-        for( int iz=0; iz<tiefe-1; iz++ )
-          MakeElement(ix,iy,iz,breite,bh);
-    if (minus99){
-      iso_level=-iso99;
-      printf("99%% %g %g\n",iso99,iso_level);
+    if (( grad =(Vector3*)malloc(sizeof(Vector3)*bh*tiefe))==NULL) {
+      qDebug()<<"Less Memory(grad)";
+      exit(1);
+    }
+    if (( nodex =(Node*)malloc(sizeof(Node)*bh*tiefe*2))==NULL) {
+      qDebug()<<"Less Memory(X) ";
+      exit(1);  
+    } 
+    if (( nodey =(Node*)malloc(sizeof(Node)*bh*tiefe*2))==NULL) { 
+      qDebug()<<"Less Memory(Y)!!";
+      exit(1); 
+    }
+    if (( nodez =(Node*)malloc(sizeof(Node)*bh*tiefe*2))==NULL) {
+      qDebug()<<"Less Memory(Z)!!";
+      exit(1); 
+    }
+    simpelGrad();	
+    balken->setValue(89);
+    for (int k=0; k<isoValues.size(); k++){
+      iso_level=isoValues.at(k);
       CalcVertexes();
       CalcNormals();
-    }
-    tf->open(QIODevice::WriteOnly|QIODevice::Text);
+      printf("iso_level: %g\n",iso_level);
+//      std::cout<<iso_level;
+/*      
+      tf->open(QIODevice::WriteOnly|QIODevice::Text);
+      tf->write(QString("%1\n").arg(orte.size()).toLatin1());
+      for (int i=0;i<orte.size();i++){
+        orte[i].normal=Normalize(orte.at(i).normal);
+        tf->write(QString("%1  %2 %3 %4   %5 %6 %7  %8\n")
+            .arg(i,-6)
+            .arg(orte.at(i).vertex.x,9,'f',6)
+            .arg(orte.at(i).vertex.y,9,'f',6)
+            .arg(orte.at(i).vertex.z,9,'f',6)
+            .arg(orte.at(i).normal.x,9,'f',6)
+            .arg(orte.at(i).normal.y,9,'f',6)
+            .arg(orte.at(i).normal.z,9,'f',6)
+            .arg(orte.at(i).color,12,'f',7).toLatin1());
+      }*/
+      for( int ix=0; ix<breite-1; ix++ )
+        for( int iy=0; iy<hoehe-1; iy++ )
+          for( int iz=0; iz<tiefe-1; iz++ )
+            MakeElement(ix,iy,iz,breite,bh);
 
-    tf->write(QString("%1\n").arg(orte.size()).toLatin1());
-    for (int i=0;i<orte.size();i++){
-      tf->write(QString("%1  %2 %3 %4   %5 %6 %7  %8\n")
-          .arg(lineNr,-6)
-          .arg(orte.at(i).vertex.x,9,'f',6)
-          .arg(orte.at(i).vertex.y,9,'f',6)
-          .arg(orte.at(i).vertex.z,9,'f',6)
-          .arg(orte.at(i).normal.x,9,'f',6)
-          .arg(orte.at(i).normal.y,9,'f',6)
-          .arg(orte.at(i).normal.z,9,'f',6)
-          .arg((mapping)?aborp(maxharm,orte.at(i).color):
-          ((orte.at(i).color>0)?proba:-99),12,'f',7).toLatin1());
-      lineNr++;
-    }
-    for( int ix=0; ix<breite-1; ix++ )
-      for( int iy=0; iy<hoehe-1; iy++ )
-        for( int iz=0; iz<tiefe-1; iz++ )
-          MakeElement(ix,iy,iz,breite,bh);
-
-    PXsort();
-    QString Line="";
-    for (int i=0; i<pgns.size();i++) {
-      for (int j=0; j<pgns.at(i).n;j++){
-        Line.append(QString("%1 ").arg(pgns.at(i).ii[j],6));
+      PXsort();
+      balken->setValue(90+(10/isoValues.size())*(k+1));
+/*      QString Line="";
+      for (int i=0; i<pgns.size();i++) {
+        for (int j=0; j<pgns.at(i).n;j++){
+          Line.append(QString("%1 ").arg(pgns.at(i).ii[j],6));
+        }
+        if (pgns.at(i).n>0) {
+          Line.append("\n");
+          tf->write(Line.toLatin1());
+          Line.clear();
+        }
       }
-      if (pgns.at(i).n>0) {
-        Line.append("\n");
-        tf->write(Line.toLatin1());
-        Line.clear();
-      }
+      tf->close(); //  */
     }
-    tf->close();
-  }
-  free(grad);grad=NULL;
-  free(nodex);nodex=NULL;
-  free(nodey);nodey=NULL;
-  free(nodez);nodez=NULL;
-  mdata.clear();
-  data.clear();
-  pgns.clear();
-  orte.clear();
-}
-
-void MolIso::createSurface(QString &storeFaceName, bool mapping){//4 hirshfeld surfaces
-  thisIsPDF=false;
-  if (mapping){
-    Farben=6;    
-    farbe[0][0]=0.6;    
-    farbe[0][1]=0.6;    
-    farbe[0][2]=0.6;    
-    farbe[0][3]=0.25;
-    farbe[1][0]=0.75;   
-    farbe[1][1]=0.2;   
-    farbe[1][2]=0.0;  
-    farbe[1][3]=0.25;
-    farbe[2][0]=0.8;  
-    farbe[2][1]=0.7;    
-    farbe[2][2]=0;    
-    farbe[2][3]=0.5;
-    farbe[3][0]=0;    
-    farbe[3][1]=0.5;    
-    farbe[3][2]=0;      
-    farbe[3][3]=0.5;
-    farbe[4][0]=0;    
-    farbe[4][1]=0;    
-    farbe[4][2]=0.9;    
-    farbe[4][3]=0.5;    
-    farbe[5][0]=0.6;    
-    farbe[5][1]=0;    
-    farbe[5][2]=0.9;    
-    farbe[5][3]=0.75;    
-    farbe[6][0]=0.6;    
-    farbe[6][1]=0;    
-    farbe[6][2]=0;    
-    farbe[6][3]=0.75;  
-  }else{
-    Farben=2;    
-
-    farbe[0][0]=0.3;    
-    farbe[0][1]=0.7;    
-    farbe[0][2]=0.3;    
-    farbe[0][3]=0.6;
-
-    farbe[1][0]=0.3;    
-    farbe[1][1]=0.7;    
-    farbe[1][2]=0.3;    
-    farbe[1][3]=0.6;
-
-    mdata=data;
-  }
-  QFile *tf = new QFile(storeFaceName);
-  bh=breite*hoehe;
-  extern QProgressBar *balken;
-  balken->setMinimum(0);
-  balken->setMaximum(100);
-  balken->show();
-  balken->setValue(0);
-  if (( grad =(Vector3*)malloc(sizeof(Vector3)*bh*tiefe))==NULL) {
-    qDebug()<<"Less Memory(grad)";
-    exit(1);
-  }
-
-  if (( nodex =(Node*)malloc(sizeof(Node)*bh*tiefe*2))==NULL) {
-    qDebug()<<"Less Memory(X) ";
-    exit(1);  
-  } 
-  if (( nodey =(Node*)malloc(sizeof(Node)*bh*tiefe*2))==NULL) { 
-    qDebug()<<"Less Memory(Y)!!";
-    exit(1); 
-  }
-  if (( nodez =(Node*)malloc(sizeof(Node)*bh*tiefe*2))==NULL) {
-    qDebug()<<"Less Memory(Z)!!";
-    exit(1); 
-  }
-  simpelGrad();
-  CalcVertexes();
-  CalcNormals();
-    for( int ix=0; ix<breite-1; ix++ )
-      for( int iy=0; iy<hoehe-1; iy++ )
-        for( int iz=0; iz<tiefe-1; iz++ )
-          MakeElement(ix,iy,iz,breite,bh);
-    tf->open(QIODevice::WriteOnly|QIODevice::Text);
-
-    tf->write(QString("%1\n").arg(orte.size()).toLatin1());
-    for (int i=0;i<orte.size();i++){
-      tf->write(QString("%1  %2 %3 %4   %5 %6 %7  %8\n")
-          .arg(lineNr,-6)
-          .arg(orte.at(i).vertex.x,9,'f',6)
-          .arg(orte.at(i).vertex.y,9,'f',6)
-          .arg(orte.at(i).vertex.z,9,'f',6)
-          .arg(orte.at(i).normal.x,9,'f',6)
-          .arg(orte.at(i).normal.y,9,'f',6)
-          .arg(orte.at(i).normal.z,9,'f',6)
-          .arg(orte.at(i).color).toLatin1());
-      lineNr++;
-    }
-    PXsort();
-    QString Line="";
-    for (int i=0; i<pgns.size();i++) {
-      for (int j=0; j<pgns.at(i).n;j++){
-        Line.append(QString("%1 ").arg(pgns.at(i).ii[j],6));
+    /////////////////////////////////////
+      tf->open(QIODevice::WriteOnly|QIODevice::Text);
+      tf->write(QString("%1\n").arg(orte.size()).toLatin1());
+      for (int i=0;i<orte.size();i++){
+        Vector3 v= orte[i].normal;
+        double nn=1.0/sqrt((double)v.x*v.x + v.y*v.y + v.z*v.z);
+        orte[i].normal=nn*orte.at(i).normal;
+        tf->write(QString("%1  %2 %3 %4   %5 %6 %7  %8\n")
+            .arg(i,-6)
+            .arg(orte.at(i).vertex.x,9,'f',6)
+            .arg(orte.at(i).vertex.y,9,'f',6)
+            .arg(orte.at(i).vertex.z,9,'f',6)
+            .arg(orte.at(i).normal.x,9,'f',6)
+            .arg(orte.at(i).normal.y,9,'f',6)
+            .arg(orte.at(i).normal.z,9,'f',6)
+        //    .arg(Norm(orte.at(i).normal),12,'f',7)
+            .arg(orte.at(i).color,12,'f',7)
+            .toLatin1());
       }
-      if (pgns.at(i).n>0) {
-        Line.append("\n");
-        tf->write(Line.toLatin1());
-        Line.clear();
+      QString Line="";
+      for (int i=0; i<pgns.size();i++) {
+        for (int j=0; j<pgns.at(i).n;j++){
+          Line.append(QString("%1 ").arg(pgns.at(i).ii[j],6));
+        }
+        if (pgns.at(i).n>0) {
+          Line.append("\n");
+          tf->write(Line.toLatin1());
+          Line.clear();
+        }
       }
-    }
-    tf->close();
-  
-  free(grad);grad=NULL;
-  free(nodex);nodex=NULL;
-  free(nodey);nodey=NULL;
-  free(nodez);nodez=NULL;
-  mdata.clear();
-  data.clear();
-  pgns.clear();
-  orte.clear();
-}
+      tf->close();
+      ///////////////////////////////
+    balken->setValue(100);
 
-void MolIso::Farbverlauf (GLfloat wrt){
-  static GLclampd ff[4];
-  static GLdouble anf,lang;
-  static int lauf=0;
-  wrt=(wrt-min)/(max-min);
-  wrt=(wrt>=1.0)?0.999999:wrt;
-  wrt=(wrt<=0.0)?0.000001:wrt;
-  lang=1.0/(Farben-1.0);
-  lauf=(int (wrt/lang));
-  anf=lang*lauf;
-  ff[0]=((1.0-(wrt-anf)/lang)*farbe[lauf][0]+((wrt-anf)/lang)*farbe[lauf+1][0]);
-  ff[1]=((1.0-(wrt-anf)/lang)*farbe[lauf][1]+((wrt-anf)/lang)*farbe[lauf+1][1]);
-  ff[2]=((1.0-(wrt-anf)/lang)*farbe[lauf][2]+((wrt-anf)/lang)*farbe[lauf+1][2]);
-  ff[3]=(1.0-(wrt-anf)/lang)*farbe[lauf][3]+((wrt-anf)/lang)*farbe[lauf+1][3];  
-  glColor4dv(ff);
-  return;
-}
-QColor MolIso::qtFarbe(int index){
-  if ((index <0)||(index>6)) return QColor("gray");
-  static QColor c;
-  c.setRgbF(farbe[index][0],farbe[index][1],farbe[index][2],farbe[index][3]);
-  return c;
-}
-MolIso::~MolIso(){
-  if (mdata.size()) mdata.clear();
-  if (data.size())  data.clear();
-  if (orte.size()) orte.clear();
-  if (pgns.size()) pgns.clear();
-}
+    free(grad);grad=NULL;
+    free(nodex);nodex=NULL;
+    free(nodey);nodey=NULL;
+    free(nodez);nodez=NULL;
+    mdata.clear();
+    data.clear();
+    pgns.clear();
+    orte.clear();
+    }
+
+
+    double MolIso::aborp(double max,double v){
+      /*
+       * Final set of parameters            Asymptotic Standard Error
+       * =======================            ==========================
+       *
+       * a0              = 52.8343          +/- 0.5022       (0.9505%)
+       * a1              = -4.18442         +/- 0.0556       (1.329%)
+       * a2              = 46.6335          +/- 0.5221       (1.12%)
+       * a3              = 2.39034          +/- 0.01631      (0.6821%)
+       * a4              = -6.14029         +/- 0.1194       (1.945%)
+       *
+       *
+       * correlation matrix of the fit parameters:
+       *
+       *                a0     a1     a2     a3     a4     
+       *                a0              1.000 
+       *                a1              0.991  1.000 
+       *                a2             -0.999 -0.996  1.000 
+       *                a3             -0.889 -0.858  0.880  1.000 
+       *                a4             -0.805 -0.784  0.798  0.971  1.000 
+       *                gnuplot> plot '50',f(x)
+       *                gnuplot>          warning: Warning - difficulty fitting plot titles into key
+       *
+       *                gnuplot> f(x)=a0*exp(a1*x)+a2*exp(-a3*x**2)+a4*x
+       *
+       * */
+      double 
+        a0=52.8343,
+        a1=-4.18442,
+        a2=46.6335,
+        a3= 2.39034,
+        a4=-6.14029,
+        f,x;
+      int sig=(v<0.0)?-1:1;
+      x=fabs(v/max);
+      f=a0*exp(a1*x)+a2*exp(-a3*x*x)+a4*x;
+      return f*sig;
+    }
+    void MolIso::createSurface(QString &storeFaceName, double proba,double iso99,bool mapping,bool minus99,double maxharm){
+      thisIsPDF=true;
+      if (mapping){
+        Farben=6;    
+        farbe[0][0]=0.6;    
+        farbe[0][1]=0;    
+        farbe[0][2]=0;    
+        farbe[0][3]=0.5;
+        farbe[1][0]=0.6;    
+        farbe[1][1]=0.5;    
+        farbe[1][2]=0;    
+        farbe[1][3]=0.5;
+        farbe[2][0]=0;    
+        farbe[2][1]=0.5;    
+        farbe[2][2]=0;    
+        farbe[2][3]=0.5;
+        farbe[3][0]=0;    
+        farbe[3][1]=0.5;    
+        farbe[3][2]=0.9;    
+        farbe[3][3]=0.5;
+        farbe[4][0]=0;    
+        farbe[4][1]=0;    
+        farbe[4][2]=0.9;    
+        farbe[4][3]=0.5;    
+        farbe[5][0]=0.6;    
+        farbe[5][1]=0;    
+        farbe[5][2]=0.9;    
+        farbe[5][3]=0.5;    
+        farbe[6][0]=0.6;    
+        farbe[6][1]=0;    
+        farbe[6][2]=0;    
+        farbe[6][3]=0.5;  
+      }else{
+        Farben=5;    
+        farbe[0][0]=1.0;    
+        farbe[0][1]=0;    
+        farbe[0][2]=0;    
+        farbe[0][3]=0.6;
+
+        farbe[1][0]=1.0;    
+        farbe[1][1]=0.0;    
+        farbe[1][2]=0.0;    
+        farbe[1][3]=0.5;
+
+        farbe[2][0]=0.3;    
+        farbe[2][1]=0.7;    
+        farbe[2][2]=0.3;    
+        farbe[2][3]=0.6;
+
+        farbe[3][0]=0.0;    
+        farbe[3][1]=0.0;    
+        farbe[3][2]=1.0;    
+        farbe[3][3]=0.5;
+
+        farbe[4][0]=0;    
+        farbe[4][1]=0;    
+        farbe[4][2]=1.0;    
+        farbe[4][3]=0.6;    
+        mdata=data;
+      }
+      QFile *tf = new QFile(storeFaceName);
+      bh=breite*hoehe;
+      extern QProgressBar *balken;
+      balken->setMinimum(0);
+      balken->setMaximum(100);
+      balken->show();
+      balken->setValue(0);
+      if (( grad =(Vector3*)malloc(sizeof(Vector3)*bh*tiefe))==NULL) {
+        qDebug()<<"Less Memory(grad)";
+        exit(1);
+      }
+
+      if (( nodex =(Node*)malloc(sizeof(Node)*bh*tiefe*2))==NULL) {
+        qDebug()<<"Less Memory(X) ";
+        exit(1);  
+      } 
+      if (( nodey =(Node*)malloc(sizeof(Node)*bh*tiefe*2))==NULL) { 
+        qDebug()<<"Less Memory(Y)!!";
+        exit(1); 
+      }
+      if (( nodez =(Node*)malloc(sizeof(Node)*bh*tiefe*2))==NULL) {
+        qDebug()<<"Less Memory(Z)!!";
+        exit(1); 
+      }
+      simpelGrad();
+      if (proba<1) {  
+        CalcVertexes();
+        CalcNormals();
+        for( int ix=0; ix<breite-1; ix++ )
+          for( int iy=0; iy<hoehe-1; iy++ )
+            for( int iz=0; iz<tiefe-1; iz++ )
+              MakeElement(ix,iy,iz,breite,bh);
+        iso_level*=-1.0;
+        CalcVertexes();
+        CalcNormals();
+        tf->open(QIODevice::WriteOnly|QIODevice::Text);
+
+        tf->write(QString("%1\n").arg(orte.size()).toLatin1());
+        for (int i=0;i<orte.size();i++){
+          tf->write(QString("%1  %2 %3 %4   %5 %6 %7  %8\n")
+              .arg(lineNr,-6)
+              .arg(orte.at(i).vertex.x,9,'f',6)
+              .arg(orte.at(i).vertex.y,9,'f',6)
+              .arg(orte.at(i).vertex.z,9,'f',6)
+              .arg(orte.at(i).normal.x,9,'f',6)
+              .arg(orte.at(i).normal.y,9,'f',6)
+              .arg(orte.at(i).normal.z,9,'f',6)
+              .arg(orte.at(i).color,12,'f',7).toLatin1());
+          lineNr++;
+        }
+        for( int ix=0; ix<breite-1; ix++ )
+          for( int iy=0; iy<hoehe-1; iy++ )
+            for( int iz=0; iz<tiefe-1; iz++ )
+              MakeElement(ix,iy,iz,breite,bh);
+        PXsort();
+        QString Line="";
+        for (int i=0; i<pgns.size();i++) {
+          for (int j=0; j<pgns.at(i).n;j++){
+            Line.append(QString("%1 ").arg(pgns.at(i).ii[j],6));
+          }
+          if (pgns.at(i).n>0) {
+            Line.append("\n");
+            tf->write(Line.toLatin1());
+            Line.clear();
+          }
+        }
+        tf->close();
+      }else{
+        CalcVertexes();
+        CalcNormals();
+        for( int ix=0; ix<breite-1; ix++ )
+          for( int iy=0; iy<hoehe-1; iy++ )
+            for( int iz=0; iz<tiefe-1; iz++ )
+              MakeElement(ix,iy,iz,breite,bh);
+        if (minus99){
+          iso_level=-iso99;
+          printf("99%% %g %g\n",iso99,iso_level);
+          CalcVertexes();
+          CalcNormals();
+        }
+        tf->open(QIODevice::WriteOnly|QIODevice::Text);
+
+        tf->write(QString("%1\n").arg(orte.size()).toLatin1());
+        for (int i=0;i<orte.size();i++){
+          tf->write(QString("%1  %2 %3 %4   %5 %6 %7  %8\n")
+              .arg(lineNr,-6)
+              .arg(orte.at(i).vertex.x,9,'f',6)
+              .arg(orte.at(i).vertex.y,9,'f',6)
+              .arg(orte.at(i).vertex.z,9,'f',6)
+              .arg(orte.at(i).normal.x,9,'f',6)
+              .arg(orte.at(i).normal.y,9,'f',6)
+              .arg(orte.at(i).normal.z,9,'f',6)
+              .arg((mapping)?aborp(maxharm,orte.at(i).color):
+                ((orte.at(i).color>0)?proba:-99),12,'f',7).toLatin1());
+          lineNr++;
+        }
+        for( int ix=0; ix<breite-1; ix++ )
+          for( int iy=0; iy<hoehe-1; iy++ )
+            for( int iz=0; iz<tiefe-1; iz++ )
+              MakeElement(ix,iy,iz,breite,bh);
+
+        PXsort();
+        QString Line="";
+        for (int i=0; i<pgns.size();i++) {
+          for (int j=0; j<pgns.at(i).n;j++){
+            Line.append(QString("%1 ").arg(pgns.at(i).ii[j],6));
+          }
+          if (pgns.at(i).n>0) {
+            Line.append("\n");
+            tf->write(Line.toLatin1());
+            Line.clear();
+          }
+        }
+        tf->close();
+      }
+      free(grad);grad=NULL;
+      free(nodex);nodex=NULL;
+      free(nodey);nodey=NULL;
+      free(nodez);nodez=NULL;
+      mdata.clear();
+      data.clear();
+      pgns.clear();
+      orte.clear();
+    }
+
+    void MolIso::createSurface(QString &storeFaceName, bool mapping){//4 hirshfeld surfaces
+      thisIsPDF=false;
+      if (mapping){
+        Farben=6;    
+        farbe[0][0]=0.6;    
+        farbe[0][1]=0.6;    
+        farbe[0][2]=0.6;    
+        farbe[0][3]=0.25;
+        farbe[1][0]=0.75;   
+        farbe[1][1]=0.2;   
+        farbe[1][2]=0.0;  
+        farbe[1][3]=0.25;
+        farbe[2][0]=0.8;  
+        farbe[2][1]=0.7;    
+        farbe[2][2]=0;    
+        farbe[2][3]=0.5;
+        farbe[3][0]=0;    
+        farbe[3][1]=0.5;    
+        farbe[3][2]=0;      
+        farbe[3][3]=0.5;
+        farbe[4][0]=0;    
+        farbe[4][1]=0;    
+        farbe[4][2]=0.9;    
+        farbe[4][3]=0.5;    
+        farbe[5][0]=0.6;    
+        farbe[5][1]=0;    
+        farbe[5][2]=0.9;    
+        farbe[5][3]=0.75;    
+        farbe[6][0]=0.6;    
+        farbe[6][1]=0;    
+        farbe[6][2]=0;    
+        farbe[6][3]=0.75;  
+      }else{
+        Farben=2;    
+
+        farbe[0][0]=0.3;    
+        farbe[0][1]=0.7;    
+        farbe[0][2]=0.3;    
+        farbe[0][3]=0.6;
+
+        farbe[1][0]=0.3;    
+        farbe[1][1]=0.7;    
+        farbe[1][2]=0.3;    
+        farbe[1][3]=0.6;
+
+        mdata=data;
+      }
+      QFile *tf = new QFile(storeFaceName);
+      bh=breite*hoehe;
+      extern QProgressBar *balken;
+      balken->setMinimum(0);
+      balken->setMaximum(100);
+      balken->show();
+      balken->setValue(0);
+      if (( grad =(Vector3*)malloc(sizeof(Vector3)*bh*tiefe))==NULL) {
+        qDebug()<<"Less Memory(grad)";
+        exit(1);
+      }
+
+      if (( nodex =(Node*)malloc(sizeof(Node)*bh*tiefe*2))==NULL) {
+        qDebug()<<"Less Memory(X) ";
+        exit(1);  
+      } 
+      if (( nodey =(Node*)malloc(sizeof(Node)*bh*tiefe*2))==NULL) { 
+        qDebug()<<"Less Memory(Y)!!";
+        exit(1); 
+      }
+      if (( nodez =(Node*)malloc(sizeof(Node)*bh*tiefe*2))==NULL) {
+        qDebug()<<"Less Memory(Z)!!";
+        exit(1); 
+      }
+      simpelGrad();
+      CalcVertexes();
+      CalcNormals();
+      for( int ix=0; ix<breite-1; ix++ )
+        for( int iy=0; iy<hoehe-1; iy++ )
+          for( int iz=0; iz<tiefe-1; iz++ )
+            MakeElement(ix,iy,iz,breite,bh);
+      tf->open(QIODevice::WriteOnly|QIODevice::Text);
+
+      tf->write(QString("%1\n").arg(orte.size()).toLatin1());
+      for (int i=0;i<orte.size();i++){
+        tf->write(QString("%1  %2 %3 %4   %5 %6 %7  %8\n")
+            .arg(lineNr,-6)
+            .arg(orte.at(i).vertex.x,9,'f',6)
+            .arg(orte.at(i).vertex.y,9,'f',6)
+            .arg(orte.at(i).vertex.z,9,'f',6)
+            .arg(orte.at(i).normal.x,9,'f',6)
+            .arg(orte.at(i).normal.y,9,'f',6)
+            .arg(orte.at(i).normal.z,9,'f',6)
+            .arg(orte.at(i).color).toLatin1());
+        lineNr++;
+      }
+      PXsort();
+      QString Line="";
+      for (int i=0; i<pgns.size();i++) {
+        for (int j=0; j<pgns.at(i).n;j++){
+          Line.append(QString("%1 ").arg(pgns.at(i).ii[j],6));
+        }
+        if (pgns.at(i).n>0) {
+          Line.append("\n");
+          tf->write(Line.toLatin1());
+          Line.clear();
+        }
+      }
+      tf->close();
+
+      free(grad);grad=NULL;
+      free(nodex);nodex=NULL;
+      free(nodey);nodey=NULL;
+      free(nodez);nodez=NULL;
+      mdata.clear();
+      data.clear();
+      pgns.clear();
+      orte.clear();
+    }
+
+    void MolIso::Farbverlauf (GLfloat wrt){
+      static GLclampd ff[4];
+      static GLdouble anf,lang;
+      static int lauf=0;
+      wrt=(wrt-min)/(max-min);
+      wrt=(wrt>=1.0)?0.999999:wrt;
+      wrt=(wrt<=0.0)?0.000001:wrt;
+      lang=1.0/(Farben-1.0);
+      lauf=(int (wrt/lang));
+      anf=lang*lauf;
+      ff[0]=((1.0-(wrt-anf)/lang)*farbe[lauf][0]+((wrt-anf)/lang)*farbe[lauf+1][0]);
+      ff[1]=((1.0-(wrt-anf)/lang)*farbe[lauf][1]+((wrt-anf)/lang)*farbe[lauf+1][1]);
+      ff[2]=((1.0-(wrt-anf)/lang)*farbe[lauf][2]+((wrt-anf)/lang)*farbe[lauf+1][2]);
+      ff[3]=(1.0-(wrt-anf)/lang)*farbe[lauf][3]+((wrt-anf)/lang)*farbe[lauf+1][3];  
+      glColor4dv(ff);
+      return;
+    }
+    QColor MolIso::qtFarbe(int index){
+      if ((index <0)||(index>6)) return QColor("gray");
+      static QColor c;
+      c.setRgbF(farbe[index][0],farbe[index][1],farbe[index][2],farbe[index][3]);
+      return c;
+    }
+    MolIso::~MolIso(){
+      if (mdata.size()) mdata.clear();
+      if (data.size())  data.clear();
+      if (orte.size()) orte.clear();
+      if (pgns.size()) pgns.clear();
+    }

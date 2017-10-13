@@ -1,6 +1,6 @@
 #include "gradDlg.h"
 
-GradDlg::GradDlg(MolIso *_mi){
+GradDlg::GradDlg(MolIso *_mi,QString mapFileName){
   mi=_mi;
   loadSettings();
   f1=new QPushButton("Color");
@@ -25,6 +25,10 @@ GradDlg::GradDlg(MolIso *_mi){
   isola->addWidget(isoValuesEdit);
   mmcb = new QCheckBox("Fix Min/Max");
   mmcb->setCheckState((mi->fixmax==mi->fixmin)?Qt::Unchecked:Qt::Checked);
+  cmmcp = new QCheckBox("Calculate local surface extrema");
+  cmmcp->setCheckState(Qt::Unchecked);
+  bool extrno=((mapFileName.contains('!'))||(mapFileName.isEmpty()));
+  cmmcp->setEnabled(!extrno);
   
   mxedit = new QDoubleSpinBox();
   mxedit->setSingleStep(0.1);
@@ -173,6 +177,7 @@ GradDlg::GradDlg(MolIso *_mi){
   connect(sdat,SIGNAL(pressed()),this,SLOT(savegradientpunktdat()));
   gla->addLayout(isola);
   gla->addLayout(mimala);
+  gla->addWidget(cmmcp);
   gla->addLayout(defla);
   gla->addWidget(cmbx);
   gla->addLayout(hla);

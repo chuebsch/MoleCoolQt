@@ -123,6 +123,14 @@ static  V3 erg;
   erg.z=floor(v.z);
   return erg;
 }
+inline V3& fract3(V3 v){
+  static  V3 erg;
+  erg.x=v.x-trunc(v.x);
+  erg.y=v.y-trunc(v.y);
+  erg.z=v.z-trunc(v.z);
+  return erg;
+}
+inline double fract(double d) {return (d-trunc(d));}
 struct Matrix{
 double m11, m21, m31, m12, m22, m32, m13, m23, m33;
  inline Matrix(void){}
@@ -580,6 +588,7 @@ class molekul {
   bool tubifiedAtoms,bondColorStyle;
   int dratom;
   void loadSettings();
+  void printm(Matrix m);
   void readXDPath(QString fname);
   molekul(void) {
     modscal=1.0;
@@ -765,6 +774,7 @@ class molekul {
   void bonds(Connection bond);
   double fl(double x,double y, double z);
   double fl(V3 v);
+  double sintl2(int h,int k, int l);
   void drawVoronoi(V3 auge);
   void voronoij(QList<INP> au, int intat=-1);
   void draw_polyeders(QList<INP> xdinp);
@@ -949,6 +959,7 @@ class Modulat{
     qDebug()<<"non"<<__LINE__<<atomname<<this;
     }*/
     Modulat(int _wo, int _wp, int _wt, int _so, int _sp, int _st):so(_so),sp(_sp),st(_st),wo(_wo),wp(_wp),wt(_wt){
+      //printf("modulat konstr %d %d %d\n",wo, wp, wt);
       os.clear();
       oc.clear();
       hidden=false;

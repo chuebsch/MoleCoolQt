@@ -1,6 +1,7 @@
 #include "molisoStartDlg.h"
 
-MolisoStartDlg::MolisoStartDlg(QString isoname, QString mapname, QString lfcename, QString sfcename, int check, QString adpname){
+MolisoStartDlg::MolisoStartDlg(QWidget *p,QString isoname, QString mapname, QString lfcename, QString sfcename, int check, QString adpname){
+  prnt=p;
   if (isoname.isEmpty()){
       loadSettings();
   }else{
@@ -37,6 +38,8 @@ MolisoStartDlg::MolisoStartDlg(QString isoname, QString mapname, QString lfcenam
   mbrws = new QPushButton("Browse");
   lfbrws = new QPushButton("Browse");
   sfbrws = new QPushButton("Browse");
+  QPushButton *addFaceBut= new QPushButton("Combine surface files");
+  connect(addFaceBut,SIGNAL(pressed()),prnt,SLOT(addFazeDlg()));
   doit = new QPushButton("Make surfaces!");
   doit->setDefault (true);
   connect(doit,SIGNAL(pressed()),this,SLOT(accept()));
@@ -68,6 +71,7 @@ MolisoStartDlg::MolisoStartDlg(QString isoname, QString mapname, QString lfcenam
   gl->addWidget(aedit,4,2,1,1);
   gl->addWidget(abrws,4,3,1,1);
   gl->addWidget(doit,5,3,1,1);
+  gl->addWidget(addFaceBut,6,0,1,1);
   setLayout(gl);
 }
 
@@ -163,7 +167,7 @@ void MolisoStartDlg::accept(){
   else save_face_name.remove('!');
   if (!mcbx->isChecked()) map_grid_name=QString("!%1").arg(map_grid_name);
   else map_grid_name.remove('!');
-  if (!iso_grid_name.isEmpty()){
+  if ((!iso_grid_name.isEmpty())||((!load_face_name.isEmpty())&&(!load_face_name.startsWith("!")))){
     QSettings settings(QSettings::IniFormat,  QSettings::UserScope ,"Christian_B._Huebschle","MoleCoolQt" );
     settings.beginGroup("Version 0.1");    
     settings.setValue("adp_struct_name", adp_struct_name );

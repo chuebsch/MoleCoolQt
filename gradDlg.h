@@ -34,7 +34,8 @@ Q_OBJECT
   QString selectedFilter;
  public:
   void loadSettings();
-  GradDlg(MolIso *mi);
+  GradDlg(MolIso *mi,QString mapFileName);
+  QCheckBox *cmmcp;
   public slots:
   void accept () ;
   void  changeF1();

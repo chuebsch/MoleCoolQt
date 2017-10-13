@@ -2378,6 +2378,7 @@ void molekul::make_bonds(QList<Modulat> xdinp,double t){
       if (i==j) continue;
       if ((xdinp[i].OrdZahl<0)||(xdinp[j].OrdZahl<0)) continue;
       if ((xdinp[i].OrdZahl==0)&&(xdinp[j].OrdZahl==0)) continue;
+      if ((xdinp[i].part!=0)&&(xdinp[j].part!=0)&&(xdinp[i].part!=xdinp[j].part)) continue;
       if ((xdinp[i].hidden)||(xdinp[j].hidden)) continue;
       if ((!bondsBetweenSGs->isChecked())&&(xdinp[i].sg!=xdinp[j].sg))continue;
 //      if (((xdinp[i].part<0)||(xdinp[j].part<0))&&((xdinp[i].sg!=xdinp[j].sg)||((xdinp[i].part*xdinp[j].part)&&(xdinp[i].part!=xdinp[j].part)))) continue; //part negative
@@ -4222,6 +4223,11 @@ QString molekul::encodeSymm(int s){
     return erg;
 }
 
+double molekul::sintl2(int h,int k, int l){
+  V3 H=V3(h,k,l);
+  double s=H*zelle.Gi*H;
+  return s;
+}
 
 void molekul::bonds(Connection bond){
  /*! @params bond list of bonds to be drawn
@@ -5125,6 +5131,7 @@ void printMatrix(Matrix a){
 
 }
 Modulat Modulat::applySymm(Matrix sym3d, V3 trans3d, V3 x4sym, int x4,double x4trans){
+  //printf("xx%d\n",__LINE__);
   if ((x4!=1)&&(x4!=-1)) {
     fprintf(stderr,"shit %d %f %f %f %f \n",x4,x4trans,x4sym.x,x4sym.y,x4sym.z);
     exit(1);
@@ -5680,7 +5687,7 @@ void getAngles(Matrix rot,int lrot){
   printf("!!phi = %f chi = %f psi = %f \n",euler.x,euler.y,euler.z);
 
 }
-void printm(Matrix m){
+void molekul::printm(Matrix m){
   printf("Matrix:\n%12.6f%12.6f%12.6f\n%12.6f%12.6f%12.6f\n%12.6f%12.6f%12.6f\n\n",
       m.m11,m.m12,m.m13,m.m21,m.m22,m.m23,m.m31,m.m32,m.m33
       );
@@ -5704,6 +5711,16 @@ void JanaMolecule::printpos(const double t,QList<Modulat> &ma){
         break;
       }
     }
+  V3 mid=V3(0,0,0);
+  int zoz=0;
+  for(int j=0;j<atoms.size();j++){
+    //mid+=atoms[j].OrdZahl*atoms[j].frac0;
+    //zoz+=atoms[j].OrdZahl;
+    mid+=atoms[j].frac0;
+    zoz+=1;
+  }
+  mid*=1.0/zoz;
+  printf("ref %f %f %f | %f %f %f %d %d\n",ref.x,ref.y,ref.z,mid.x,mid.y,mid.z,atoms.size(),zoz);
   for (int i=0; i<positions.size();i++){
     PHI=
       Matrix(
@@ -5728,14 +5745,18 @@ void JanaMolecule::printpos(const double t,QList<Modulat> &ma){
       r+=ref+positions.at(i).trans;
       m.frac0=r;
       if (atoms.at(j).jtf==0){
-        V3 loc=(r-(ref+positions.at(i).trans));
+        V3 loc=(r-(ref+positions.at(i).trans))-mid;
         V3 cloc;
         atoms.at(0).mol->frac2kart(loc,cloc);
         printf("LOC %9.5f%9.5f%9.5f\n",loc.x,loc.y,loc.z);
         printf("cLOC %9.5f%9.5f%9.5f\n",cloc.x,cloc.y,cloc.z);
+        printf("%f %f\n",sqrt(Norm(loc)),sqrt(Norm(cloc)));
         loc=cloc;
         Matrix uc;
         //U11 =  [0]  +zz [7]  +yy [8]  -2yz [11]  +2z [13]  -2y [14]  
+        printf("L22: %f u11+%f U33+%f  U13+%f\n",positions.at(i).tls[7],positions.at(i).tls[7]*loc.z*loc.z,positions.at(i).tls[7]*loc.x*loc.x,positions.at(i).tls[7]*loc.x*loc.z);
+        double l22=0.617571;
+        printf("ZL22: %f u11+%f U33+%f  U13+%f\n",l22,l22*loc.z*loc.z,l22*loc.x*loc.x,l22*loc.x*loc.z);
         uc.m11=
           positions.at(i).tls[0]*1+
           positions.at(i).tls[7]*loc.z*loc.z+
@@ -5743,9 +5764,9 @@ void JanaMolecule::printpos(const double t,QList<Modulat> &ma){
           -2*loc.y*loc.z*positions.at(i).tls[11]+
           2*loc.z*positions.at(i).tls[15]
           -2*loc.y*positions.at(i).tls[18];
-        printf("%f ",uc.m11);
-        uc.m11*=1.0/(atoms.at(0).mol->zelle.as*atoms.at(0).mol->zelle.as*2.0*M_PI*M_PI);
-        printf("%f \n",uc.m11);
+        printf("u11 %f ",uc.m11);
+        //uc.m11*=1.0/(atoms.at(0).mol->zelle.as*atoms.at(0).mol->zelle.as*2.0*M_PI*M_PI);
+        //printf("%f \n",uc.m11);
         //U22 =  [1]  +zz [6]  +xx [8]  -2xz [10]  -2z [15]  +2x [17]  
         uc.m22=positions.at(i).tls[1]+
           positions.at(i).tls[6]*loc.z*loc.z+
@@ -5753,9 +5774,9 @@ void JanaMolecule::printpos(const double t,QList<Modulat> &ma){
           -2*loc.x*loc.z*positions.at(i).tls[10]
           -2*loc.z*positions.at(i).tls[13]
           +2*loc.x*positions.at(i).tls[19];
-        printf("%f ",uc.m22);
-        uc.m22*=1.0/(atoms.at(0).mol->zelle.bs*atoms.at(0).mol->zelle.bs*2.0*M_PI*M_PI);
-        printf("%f \n",uc.m22);
+        printf("u22 %f ",uc.m22);
+//        uc.m22*=1.0/(atoms.at(0).mol->zelle.bs*atoms.at(0).mol->zelle.bs*2.0*M_PI*M_PI);
+//        printf("%f \n",uc.m22);
         //U33 =  [2]  +yy [6]  +xx [7]  -2xy [9]  +2y [18]  -2x [19]  
         uc.m33=positions.at(i).tls[2]
           +positions.at(i).tls[6]*loc.y*loc.y
@@ -5763,9 +5784,9 @@ void JanaMolecule::printpos(const double t,QList<Modulat> &ma){
           -2*loc.x*loc.y*positions.at(i).tls[9]
           +2*loc.y*positions.at(i).tls[14]
           -2*loc.x*positions.at(i).tls[17];
-        printf("%f ",uc.m33);
-        uc.m33*=1.0/(atoms.at(0).mol->zelle.cs*atoms.at(0).mol->zelle.cs*2.0*M_PI*M_PI);
-        printf("%f \n",uc.m33);
+        printf("u33 %f ",uc.m33);
+//        uc.m33*=1.0/(atoms.at(0).mol->zelle.cs*atoms.at(0).mol->zelle.cs*2.0*M_PI*M_PI);
+ //       printf("%f \n",uc.m33);
         //U12 =  [3]  -xy [8]  -zz [9]  +yz [10]  +xz [11]  -z [12]  +z [16]  +x [14]  -y [17]  
         uc.m12=uc.m21=positions.at(i).tls[3]
           -loc.x*loc.y*positions.at(i).tls[8]
@@ -5776,9 +5797,9 @@ void JanaMolecule::printpos(const double t,QList<Modulat> &ma){
           +loc.z*positions.at(i).tls[16]
           +loc.x*positions.at(i).tls[18]
           -loc.x*positions.at(i).tls[19];
-        printf("%f ",uc.m12);
-        uc.m12*=1.0/(atoms.at(0).mol->zelle.as*atoms.at(0).mol->zelle.bs*2.0*M_PI*M_PI);
-        printf("%f \n",uc.m12);
+        printf("u12 %f ",uc.m12);
+//        uc.m12*=1.0/(atoms.at(0).mol->zelle.as*atoms.at(0).mol->zelle.bs*2.0*M_PI*M_PI);
+//        printf("%f \n",uc.m12);
         uc.m21=uc.m12;
 
         //U13 =  [4]  -xz [7]  +yz [9]  -yy [10]  +xy [11]  +y [12]  -y [20]  -x [13]  +z [19]  
@@ -5791,9 +5812,9 @@ void JanaMolecule::printpos(const double t,QList<Modulat> &ma){
           -loc.y*positions.at(i).tls[20]
           -loc.x*positions.at(i).tls[15]
           +loc.z*positions.at(i).tls[17];
-        printf("%f ",uc.m13);
-        uc.m13*=1.0/(atoms.at(0).mol->zelle.as*atoms.at(0).mol->zelle.cs*2.0*M_PI*M_PI);
-        printf("%f \n",uc.m13);
+        printf("u13 %f ",uc.m13);
+//        uc.m13*=1.0/(atoms.at(0).mol->zelle.as*atoms.at(0).mol->zelle.cs*2.0*M_PI*M_PI);
+//        printf("%f \n",uc.m13);
         uc.m31=uc.m13;
         //U23 =  [5]  -yz [6]  +xz [9]  +xy [10]  -xx [11]  -x [16]  +x [20]  +y [15]  -z [18]  
         uc.m23=uc.m32=positions.at(i).tls[5]
@@ -5805,14 +5826,40 @@ void JanaMolecule::printpos(const double t,QList<Modulat> &ma){
           +loc.x*positions.at(i).tls[20]
           +loc.y*positions.at(i).tls[13]
           -loc.z*positions.at(i).tls[14];
-        printf("%f ",uc.m23);
-        uc.m23*=1.0/(atoms.at(0).mol->zelle.bs*atoms.at(0).mol->zelle.cs*2.0*M_PI*M_PI);
-        printf("%f \n",uc.m23);
+//        printf("%f ",uc.m23);
+//        uc.m23*=1.0/(atoms.at(0).mol->zelle.bs*atoms.at(0).mol->zelle.cs*2.0*M_PI*M_PI);
+        printf("u23 %f \n",uc.m23);
         uc.m32=uc.m23;
         /*  Matrix n=Matrix(zelle.as,0,0,0,zelle.bs,0,0,0,zelle.cs);
             Matrix m=(n*x)*n;
             y=(transponse(c2f)*m)*(c2f);
             */
+          uc.m11*=1.0/(atoms.at(0).mol->zelle.as*atoms.at(0).mol->zelle.as*2.0*M_PI*M_PI);
+          uc.m22*=1.0/(atoms.at(0).mol->zelle.bs*atoms.at(0).mol->zelle.bs*2.0*M_PI*M_PI);
+          uc.m33*=1.0/(atoms.at(0).mol->zelle.cs*atoms.at(0).mol->zelle.cs*2.0*M_PI*M_PI);
+          uc.m12*=1.0/(atoms.at(0).mol->zelle.as*atoms.at(0).mol->zelle.bs*2.0*M_PI*M_PI);
+          uc.m13*=1.0/(atoms.at(0).mol->zelle.as*atoms.at(0).mol->zelle.cs*2.0*M_PI*M_PI);
+          uc.m23*=1.0/(atoms.at(0).mol->zelle.bs*atoms.at(0).mol->zelle.cs*2.0*M_PI*M_PI);
+        Matrix utest=Matrix(
+            positions.at(i).tls[0], positions.at(i).tls[3], positions.at(i).tls[4],
+            positions.at(i).tls[3], positions.at(i).tls[1], positions.at(i).tls[5],
+            positions.at(i).tls[4], positions.at(i).tls[5], positions.at(i).tls[2]);
+        utest.m11*=1.0/(atoms.at(0).mol->zelle.as*atoms.at(0).mol->zelle.as*2.0*M_PI*M_PI);
+        utest.m22*=1.0/(atoms.at(0).mol->zelle.bs*atoms.at(0).mol->zelle.bs*2.0*M_PI*M_PI);
+        utest.m33*=1.0/(atoms.at(0).mol->zelle.cs*atoms.at(0).mol->zelle.cs*2.0*M_PI*M_PI);
+        utest.m12*=1.0/(atoms.at(0).mol->zelle.as*atoms.at(0).mol->zelle.bs*2.0*M_PI*M_PI);
+        utest.m13*=1.0/(atoms.at(0).mol->zelle.as*atoms.at(0).mol->zelle.cs*2.0*M_PI*M_PI);
+        utest.m23*=1.0/(atoms.at(0).mol->zelle.bs*atoms.at(0).mol->zelle.cs*2.0*M_PI*M_PI);
+      
+        printf("%f %f %f %f %f %f\n",uc.m11,uc.m22, uc.m33,uc.m12,uc.m13,uc.m23);
+        atoms.at(0).mol->Uf2Uo(utest,utest);
+        utest.m11+=l22*loc.z*loc.z;
+        utest.m33+=l22*loc.x*loc.x;
+        utest.m13-=l22*loc.x*loc.z;
+        utest.m31=utest.m13;
+        atoms.at(0).mol->Uc2Uf(utest,utest);
+
+        printf("%f %f %f %f %f %f\n",utest.m11,utest.m22, utest.m33,utest.m12,utest.m13,utest.m23);
         m.uf0=uc;
       }
       else{

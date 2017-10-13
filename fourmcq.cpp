@@ -7,6 +7,7 @@ FourMCQ::FourMCQ(molekul *mole_, CubeGL *chgl_,QToolBar *toolView, double resol,
   mole =mole_;
   chgl=chgl_;
   datfo_f2=NULL;
+  voxelstr.clear();
   map_radius=5.0;
   maptrunc = 2;
   chgl->foubas[0]=0;
@@ -449,6 +450,18 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
       for (int i=0; it[i]< j; i++)n2=it[i+1];
       j=(int)(rr*ml+.5);
       for (int i=0; (it[i]< j)||((nc)&&(it[i]%2)); i++) n3=it[i+1];
+      if (!voxelstr.isEmpty()) {
+        if (voxelstr.contains('x')) {
+          QStringList lll=voxelstr.split('x');
+          if (lll.size()==3){
+            n1=lll.at(0).toInt();
+            n2=lll.at(1).toInt();
+            n3=lll.at(2).toInt();
+            printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n %d %d %d \n",n1,n2,n3);
+          }
+        }
+      }
+
       n4=n2*n1;
       n5=n3*n4;
       datfo6=NULL;
@@ -1231,6 +1244,17 @@ bool FourMCQ::loadDimensionm80AndPerform(const char filename[],bool neu){
   n2=nn[1];
   n3=nn[2];
 
+      if (!voxelstr.isEmpty()) {
+        if (voxelstr.contains('x')) {
+          QStringList lll=voxelstr.split('x');
+          if (lll.size()==3){
+            n1=lll.at(0).toInt();
+            n2=lll.at(1).toInt();
+            n3=lll.at(2).toInt();
+            printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n %d %d %d \n",n1,n2,n3);
+          }
+        }
+      }
   n4=n2*n1;
   n5=n4*n3;
   printf("n1=%d n2=%d n3=%d n4%d n5=%d \n",n1,n2,n3,n4,n5 );
@@ -2278,6 +2302,17 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu, int maxmap){
       for (int i=0; it[i]< j; i++)n2=it[i+1];
       j=(int)(rr*ml+.5);
       for (int i=0; (it[i]< j)||((nc)&&(it[i]%2)); i++) n3=it[i+1];
+      if (!voxelstr.isEmpty()) {
+        if (voxelstr.contains('x')) {
+          QStringList lll=voxelstr.split('x');
+          if (lll.size()==3){
+            n1=lll.at(0).toInt();
+            n2=lll.at(1).toInt();
+            n3=lll.at(2).toInt();
+            printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n %d %d %d \n",n1,n2,n3);
+          }
+        }
+      }
       n4=n2*n1;
       n5=n3*n4;
       datfo=(float*) malloc(sizeof(float)*n5);

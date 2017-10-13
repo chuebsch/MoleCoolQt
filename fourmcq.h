@@ -92,6 +92,7 @@ struct FNode
 class FourMCQ:public QObject{ 
 Q_OBJECT
   public:
+          QString voxelstr;
           float *datfo,*datfo_fc,*datf1_f2,*datfo_f2;
           float* datfo6;
           float* datfo_fc6;

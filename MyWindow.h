@@ -111,6 +111,11 @@ class MyWindow : public QMainWindow {
     void toggleTubes(bool b);
     //void toggleOrtho(bool b);
     void jnk();
+    void il();
+    void setfaze1();
+    void setfaze2();
+    void setfaze3();
+    void addFazeDlg();
     void directHirsh();
     void polyColorIng(bool b);
     void changeBondStrength();
@@ -263,6 +268,7 @@ class MyWindow : public QMainWindow {
     QDoubleValidator *qv;
     QLineEdit *searchAtomEdit;
     QLineEdit *ffmpegedt,*mp4file;
+    QLineEdit *faze1,*faze2,*faze3;
     QAction  *searchAtomCancel,*orthoAct;
     QDialog *sfdlg;
 //    QDialog *packdlg;

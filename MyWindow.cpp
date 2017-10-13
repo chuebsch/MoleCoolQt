@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=576;
+int rev=577;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -1458,7 +1458,10 @@ createRenameWgd();
         i++;
         if (i<=argc) { polifile=fopen(QCoreApplication::arguments().at(i).toStdString().c_str(),"at"); }
       }
-      
+      if ((QCoreApplication::arguments().at(i)=="-voxel")) {
+        fmcq->voxelstr = QCoreApplication::arguments().at(i+1); 
+       // qDebug() <<fmcq->voxelstr;
+      }
       if (QCoreApplication::arguments().at(i).contains("-f")){
 //	**33##
 	fmcq->doMaps->setChecked(false); 
@@ -2093,7 +2096,7 @@ void MyWindow::genMoliso(QString isoname, QString mapname, QString lfcename, QSt
   cubeGL->moliso->L=cubeGL->L;
   cubeGL->moliso->orig=Vector3(0.0,0.0,0.0);
   QString isof,mapf,lfaceFile,sfaceFile,adpName;
-  MolisoStartDlg *msgdlg = new MolisoStartDlg(isoname,mapname,lfcename,sfcename,check,adpname);
+  MolisoStartDlg *msgdlg = new MolisoStartDlg(this,isoname,mapname,lfcename,sfcename,check,adpname);
   if (msgdlg->exec()==QDialog::Accepted) {
     isof=msgdlg->iso_grid_name;
     mapf=msgdlg->map_grid_name;
@@ -2108,7 +2111,7 @@ void MyWindow::genMoliso(QString isoname, QString mapname, QString lfcename, QSt
     cubeGL->pause=false;
     return;
   }
-  GradDlg *grdlg = new GradDlg(cubeGL->moliso );
+  GradDlg *grdlg = new GradDlg(cubeGL->moliso,mapf );
   //dock->hide();
   //dock2->hide();
  // cubeGL->setVisible(false);
@@ -2121,6 +2124,7 @@ void MyWindow::genMoliso(QString isoname, QString mapname, QString lfcename, QSt
       cubeGL->pause=false;
       return;
     }
+  cubeGL->moliso->calcextrema=grdlg->cmmcp->isChecked();
   delete grdlg;
 
   dock3 = new QDockWidget("Moliso control area",this);
@@ -2269,10 +2273,10 @@ void MyWindow::genMoliso(QString isoname, QString mapname, QString lfcename, QSt
     if (sfaceFile.contains('!'))sfaceFile.clear();
     setCursor(Qt::BusyCursor);
     statusBar()->showMessage(tr("calculating surfaces") );
-    printf("C\n");
+//    printf("C\n");
     cubeGL->moliso->createSurface(isof,mapf,sfaceFile,fileType);
-    printf("D\n");
-    statusBar()->showMessage(tr("surfaces calculatied" ) );
+//    printf("D\n");
+    statusBar()->showMessage(tr("surfaces calculated" ) );
     lfaceFile=sfaceFile;
   }
   if (cubeGL->moliso->mibas) glDeleteLists(cubeGL->moliso->mibas,6);
@@ -2283,6 +2287,7 @@ void MyWindow::genMoliso(QString isoname, QString mapname, QString lfcename, QSt
      cubeGL->moliso->loadMI(lfaceFile,true);
   }
   else cubeGL->moliso->loadMI(lfaceFile,false);
+  if (cubeGL->moliso->calcextrema) il();
   updateStatusBar();
   statusBar()->showMessage(tr("surfaces loaded") );
   cubeGL->MIS=true;
@@ -3371,6 +3376,10 @@ void MyWindow::editAtomColor(){
 
 }
 
+void MyWindow::il(){
+  if (!xdinp.isEmpty())initLists(xdinp);
+  cubeGL->updateGL();
+}
 void MyWindow::rezi(){
   extern molekul mol;
   EwaldSphereDlg e(dirName,&mol);
@@ -4069,6 +4078,7 @@ void MyWindow::load_Jana(QString fileName){
       //if (all.at(li).contains(QRegExp("^[A-z]+")))qDebug()<<(masymmUnit.size()<na)<<(asymmUnit.size()<na)<<na<<asymmUnit.size()<<masymmUnit.size();
       if ((masymmUnit.size()<na)&&(asymmUnit.size()<na)&&(all.at(li).contains(QRegExp("^[A-z]+")))){
         //qDebug()<<all.at(li)<<skip<<na; 
+        printf("%d\n",__LINE__);
         if (skip>0) skip--;
         else{
         //C1        1  1     1.000000 0.199051 0.122184 0.071881    
@@ -4178,6 +4188,7 @@ void MyWindow::load_Jana(QString fileName){
           modat->mol=&mol;
           strcpy(modat->atomname,newAtom.atomname);
           modat->frac0=newAtom.frac;
+          modat->part=0;
           modat->amul=newAtom.amul;
           modat->uf0=newAtom.uf;
           modat->jtf=newAtom.jtf;
@@ -4252,6 +4263,7 @@ void MyWindow::load_Jana(QString fileName){
         if (newAtom.amul==0) newAtom.OrdZahl=-1;
         atloc[newAtom.atomname]=asymmUnit.size();
         asymmUnit.append(newAtom);
+  printf("line %d\n",__LINE__);
       }
         }
       }
@@ -4259,14 +4271,18 @@ void MyWindow::load_Jana(QString fileName){
 
       if ((currentMolekule!=NULL)&&(currentMolekule->atoms.size()<currentMolekule->na())&&(all.at(li).contains(QRegExp("^[A-z]+")))){
         printf("Molekule definition!\n");
-        /*qDebug()
+       /* qDebug()
           <<currentMolekule->atoms.size()
           <<currentMolekule->na()
           <<all.at(li)
-          <<__LINE__;*/
+          <<__LINE__;// */
        int so,sp,st,wo,wp,wt;
+       ccmp=1;
        sscanf(all.at(li).toStdString().c_str(),"%*8s%*3d%*3d    %*9f%*9f%*9f%*9f     %1d%1d%1d%3d%3d%3d",
                            &so,&sp,&st,&wo,&wp,&wt);
+       if (!cubeGL->isModulated) {
+         wo=wp=wt=so=sp=st=0;
+       }
        Modulat *molat=new Modulat(wo,wp,wt,so,sp,st);
        molat->mol=&mol;
        molat->iamcomp=ccmp;
@@ -4281,6 +4297,7 @@ void MyWindow::load_Jana(QString fileName){
            &molat->uf0.m12,
            &molat->uf0.m13,
            &molat->uf0.m23);
+       //printf("OK%d\n",__LINE__);
        if (wo){
          li++;
          double o,os,oc;
@@ -4322,6 +4339,7 @@ void MyWindow::load_Jana(QString fileName){
          }
        }
        currentMolekule->atoms.append(*molat);
+       //printf("OK%d\n",__LINE__);
        //qDebug()<<currentMolekule->atoms.size();
       }
       if ((currentMolekule!=NULL)&&(all.at(li).contains("pos#"))&&(currentMolekule->positions.size()<currentMolekule->np())){
@@ -4418,11 +4436,11 @@ void MyWindow::load_Jana(QString fileName){
           //qDebug()<<currentMolekule->positions.last().aimol<<"LINE::"<<__LINE__<<use_tls<<wo<<wp<<wt<<all.at(li);
           li--;
           if (currentMolekule->positions.size()==currentMolekule->np()){ 
-            printf("X\n");
+            //printf("X %d\n",__LINE__);
             QList<Modulat> ma;
             currentMolekule->printpos(0.0,ma);
-            printf("X =%d\n",ma.size());
-            if (!asymmUnit.isEmpty()) {
+            //printf("X =%d\n",ma.size());
+            if ((!cubeGL->isModulated)) {
               QList<INP> molek;
               for (int mii=0; mii<ma.size(); mii++){
                 molek.append(ma[mii].toINP(0.0));
@@ -4571,8 +4589,9 @@ void MyWindow::load_Jana(QString fileName){
     else mol.Uf2Uo(asymmUnit[i].uf,asymmUnit[i].u);
 //  printf("Ucart%12.6f%12.6f%12.6f%12.6f%12.6f%12.6f\n",asymmUnit[i].u.m11,asymmUnit[i].u.m22,asymmUnit[i].u.m33, asymmUnit[i].u.m12, asymmUnit[i].u.m13,asymmUnit[i].u.m23);
   }
-//  fprintf(stderr,"%d\n",__LINE__);
+  //fprintf(stderr,"%d\n",__LINE__);
   growSymm(6);
+  //fprintf(stderr,"%d\n",__LINE__);
   fmcq->curentPhase=curentPhase;
   bool good=true;
 //  printf("line %d\n",__LINE__);
@@ -4656,6 +4675,7 @@ void MyWindow::load_BayMEM(QString fileName) {
    // qDebug()<<fileName;
     bool bmat=false;
     bool symo=false;
+    bool centros=false;
     bool centr=false;
     for (int i=0; i<bml.size();i++){
     if (bml.at(i).startsWith("endprioratoms"))bmat=false;
@@ -4718,7 +4738,8 @@ void MyWindow::load_BayMEM(QString fileName) {
       symo=false;
       mol.applyLatticeCentro('P',false);
       for (int si=0; si<mol.zelle.symmops.size(); si++){
-        printf("\n%9g%9g%9g  %9g\n%9g%9g%9g  %9g\n%9g%9g%9g  %9g\n",
+        double det=determinant(mol.zelle.symmops.at(si));
+        printf("\n%9g%9g%9g  %9g\n%9g%9g%9g  %9g\n%9g%9g%9g  %9g det: %9g\n",
             mol.zelle.symmops.at(si).m11,
             mol.zelle.symmops.at(si).m12,
             mol.zelle.symmops.at(si).m13, mol.zelle.trans.at(si).x,
@@ -4727,7 +4748,7 @@ void MyWindow::load_BayMEM(QString fileName) {
             mol.zelle.symmops.at(si).m23, mol.zelle.trans.at(si).y,
             mol.zelle.symmops.at(si).m31,
             mol.zelle.symmops.at(si).m32,
-            mol.zelle.symmops.at(si).m33, mol.zelle.trans.at(si).z
+            mol.zelle.symmops.at(si).m33, mol.zelle.trans.at(si).z,det
 
             );
       }
@@ -4770,6 +4791,9 @@ void MyWindow::load_BayMEM(QString fileName) {
 
     }
     if (bml.at(i).startsWith("symmetry"))symo=true;
+    if (bml.at(i).startsWith("centro ")) {
+      centros = bml.at(i).contains("yes");
+    }
     if (bml.at(i).startsWith("centers")){
   //    printf("centers\n");
       centr=true;}
@@ -5141,8 +5165,10 @@ infoKanal->setHtml(QString("%1<font color=green>reading of xd_rho.cps is done.</
     if (cps) fclose(cps);
   }
   */
-dummax=0;
-smx=atmax=asymmUnit.size();
+    dummax=0;
+  mol.zelle.centro=centros;
+//  qDebug()<<mol.zelle.centro<<centros;
+  smx=atmax=asymmUnit.size();
   if (lavec.size()>1){
     int z=mol.zelle.symuncent=mol.zelle.symmops.size();
     for (int i=0; i<z;i++){
@@ -6480,14 +6506,65 @@ void MyWindow::makePDFGrids(double proba,bool c2,bool c3,bool c4){
   QMainWindow::tabifyDockWidget (dock2,dock);
 }  
 
+void MyWindow::setfaze1(){
+  faze1->setText(QFileDialog::getOpenFileName (this,"open Moliso surfaces file A"));
+}
+void MyWindow::setfaze2(){
+  faze2->setText(QFileDialog::getOpenFileName (this,"open Moliso surfaces file B"));
+}
+void MyWindow::setfaze3(){
+  faze3->setText(QFileDialog::getSaveFileName (this,"save Moliso surfaces file A+B"));
+}
+
+void MyWindow::addFazeDlg(){
+  QDialog *dlg=new QDialog(this);
+  QGridLayout *l=new QGridLayout(dlg);
+  QDialogButtonBox *buttonBox = new QDialogButtonBox( QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+  connect(buttonBox, SIGNAL(accepted()), dlg, SLOT(accept()));
+  connect(buttonBox, SIGNAL(rejected()), dlg, SLOT(reject()));  
+  faze1 = new QLineEdit();
+  QPushButton *f1brs = new QPushButton("Browse");
+  connect(f1brs,SIGNAL(pressed()),this,SLOT(setfaze1())); 
+  faze2 = new QLineEdit();
+  QPushButton *f2brs = new QPushButton("Browse");
+  connect(f2brs,SIGNAL(pressed()),this,SLOT(setfaze2())); 
+  faze3 = new QLineEdit();
+  QPushButton *f3brs = new QPushButton("Browse");
+  connect(f3brs,SIGNAL(pressed()),this,SLOT(setfaze3())); 
+  l->addWidget(new QLabel("input surface file A"), 0,0,1,1);
+  l->addWidget(faze1,0,1,1,18);
+  l->addWidget(f1brs,0,19,1,1);
+  l->addWidget(new QLabel("input surface file B"), 1,0,1,1);
+  l->addWidget(faze2,1,1,1,18);
+  l->addWidget(f2brs,1,19,1,1);
+  l->addWidget(new QLabel("output surface file A+B"), 2,0,1,1);
+  l->addWidget(faze3,2,1,1,18);
+  l->addWidget(f3brs,2,19,1,1);
+
+  l->addWidget(buttonBox,20,0,1,20);
+  bool ok=true;
+  do{
+  if(dlg->exec()==QDialog::Accepted) {
+    if ((!faze1->text().isEmpty())&& (!faze2->text().isEmpty())&& (!faze3->text().isEmpty())) {
+      addfaze(faze1->text(),faze2->text(),faze3->text());
+      ok=true;
+    }
+    else ok=false;
+  }
+  }while (!ok);
+}
+
 void MyWindow::addfaze(const QString afac,const QString fac,const QString nface){
   QFile ONE(afac);
   QFile TWO(fac);
   QFile of(nface);
-
-  ONE.open(QIODevice::ReadOnly|QIODevice::Text);
-  TWO.open(QIODevice::ReadOnly|QIODevice::Text);
-  of.open(QIODevice::WriteOnly|QIODevice::Text);
+  bool ok=false;
+  ok=ONE.open(QIODevice::ReadOnly|QIODevice::Text);
+  if (!ok) {qDebug()<< "File open problem!"; return;}
+  ok=TWO.open(QIODevice::ReadOnly|QIODevice::Text);
+  if (!ok) {qDebug()<< "File open problem!"; return;}
+  ok=of.open(QIODevice::WriteOnly|QIODevice::Text);
+  if (!ok) {qDebug()<< "File open problem!"; return;}
   QStringList one=QString(ONE.readAll()).split('\n');
   QStringList two=QString(TWO.readAll()).split('\n');
   ONE.close();
@@ -10464,7 +10541,7 @@ void MyWindow::mgrowSymm(int packart,int packatom){
           <<mol.zelle.symmops.size()
           <<mol.zelle.trans.size()
           <<mol.zelle.x4sym.size()
-          <<mol.zelle.x4.size()
+          <<mol.zelle.x4.size()<<masymmUnit.size()
           <<mol.zelle.x4tr.size();// */
     int s,h,k,l,gibscho=0,symmgroup;
     matoms=masymmUnit;
@@ -10478,8 +10555,8 @@ void MyWindow::mgrowSymm(int packart,int packatom){
       s--;
       for (int i=0;i<masymmUnit.size();i++){ 
         if ((masymmUnit[i].molindex==symmgroup)&&(masymmUnit[i].OrdZahl>-1)){ 
-          //  V3 r0=masymmUnit[i].frac(cubeGL->tvalue);
-          //  printf("##%s %f %f %f  \n",masymmUnit[i].atomname,r0.x,r0.y,r0.z);
+//          V3 r0=masymmUnit[i].frac(cubeGL->tvalue);
+  //        printf("##%s %f %f %f cmp %d s%d h%d k%d l%d siz%d siz%d siz%d \n",masymmUnit[i].atomname,r0.x,r0.y,r0.z,masymmUnit[i].iamcomp,s,h,k,l, mol.zelle.symmops.size(),mol.zelle.trans.size(),mol.zelle.x4sym.size()<<mol.zelle.x4.size()<<mol.zelle.x4tr.size());
           //Modulat *newAt = new Modulat(masymmUnit[i].applySymm(mol.zelle.symmops.at(s),mol.zelle.trans.at(s)+V3(h,k,l), mol.zelle.x4sym.at(s), mol.zelle.x4.at(s),mol.zelle.x4tr.at(s)));
           Modulat *newAt = NULL;
           if (masymmUnit[i].iamcomp>1)
@@ -10490,12 +10567,15 @@ void MyWindow::mgrowSymm(int packart,int packatom){
                   mol.ccc[masymmUnit[i].iamcomp-2].nuCell.x4.at(s),
                   mol.ccc[masymmUnit[i].iamcomp-2].nuCell.x4tr.at(s)));
           else
+            if (cubeGL->isModulated) 
             newAt = new Modulat(masymmUnit[i].applySymm(
                   mol.zelle.symmops.at(s),
                   mol.zelle.trans.at(s)+V3(h,k,l), 
                   mol.zelle.x4sym.at(s), 
                   mol.zelle.x4.at(s),
                   mol.zelle.x4tr.at(s)));
+            else newAt = new Modulat(masymmUnit[i].applySymm(mol.zelle.symmops.at(s),mol.zelle.trans.at(s)+V3(h,k,l),V3(0,0,0),1,0));
+          //printf("newAtom %p\n",newAt);
           sprintf(newAt->atomname,"%s_%d",masymmUnit[i].atomname,j+1);
           //  newAtom.frac=mol.zelle.symmops.at(s)*asymmUnit[i].frac+mol.zelle.trans.at(s)+V3(h,k,l);
           //  newAtom.part=asymmUnit[i].part;
@@ -10511,9 +10591,10 @@ void MyWindow::mgrowSymm(int packart,int packatom){
             //            if (fl(newAt->frac0.x-matoms[gbt].frac0.x,newAt->frac0.y-matoms[gbt].frac0.y,newAt->frac0.z-matoms[gbt].frac0.z)<0.2) gibscho=1;
           }
           if (!gibscho) {
+            //printf("??\n");
             matoms.append(*newAt);
-//            V3 r=newAt->frac(cubeGL->tvalue);
-//            printf("%s %f %f %f  \n",newAt->atomname,r.x,r.y,r.z);
+            //V3 r=newAt->frac(cubeGL->tvalue);
+            //printf("%s %f %f %f  \n",newAt->atomname,r.x,r.y,r.z);
           }
         }//molindex
       }
@@ -10668,8 +10749,10 @@ void MyWindow::growSymm(int packart,int packatom){
   //  qDebug()<<smx<<atmax <<asymmUnit.size();
   if ((asymmUnit.isEmpty())&&(!masymmUnit.isEmpty())){
     //    qDebug()<<packart<<packatom<<"modul grow";
+    //fprintf(stderr,"%d\n",__LINE__);
     mgrowSymm(packart,packatom);
     //plotSDM(25);
+    //fprintf(stderr,"%d\n",__LINE__);
     return;
   }
   if (packart==0){
@@ -11155,6 +11238,7 @@ void MyWindow::growSymm(int packart,int packatom){
 
                   }//ll
             }//packable 
+            else if ((asymmUnit.at(i).OrdZahl<0)&&(n==0)) xdinp.append(asymmUnit[i]);//non atoms BCPs, Dummys, etc.
           }//i++
         }//n++
       }//exec

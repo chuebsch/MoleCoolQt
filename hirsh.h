@@ -1,5 +1,6 @@
 #include "molekul.h"
 #include "moliso.h"
+#include <fftw3.h>
 
 typedef struct SFAC{
  char lab[12];
@@ -10,6 +11,7 @@ typedef struct SFAC{
 
 typedef struct HiAtom{
   int iscat;
+  int z;
   V3 frac,oros[6];
   Matrix M,Mi[6],Bij;
   double occ,pref[6];
@@ -158,6 +160,9 @@ public:
   int ntot,nx,ny,nz;
   int entot,enx,eny,enz;
   double expansion;
+  void getHKL(V3 &H,int i);
+  void dynESP(QString densityIN, QString espOut);
+  void readres();
 private:
   Matrix u2b(const Matrix u);
   double *iamr;
@@ -165,14 +170,14 @@ private:
   double *mole_rho;
   double *atom_rho;
   double *hirsh_share;
-  double *C,*_C;
+  double *C,*_C,*E,*EE;
   double *expandetrho2;
   double *density_out;
   QMap<int,int> scat;
   int scats;
   QSpinBox *nxs, *nys, *nzs;
   QLabel *xSpacing, *ySpacing, *zSpacing;
-  QCheckBox *staticBx;
+  QCheckBox *staticBx,*totalRhoBx;
   QProgressBar *forts;
   QLabel *aStatusBar;
   QString IAMpriorname;
@@ -180,19 +185,24 @@ private:
   QString DensityIn ;
   QString DensityOut;
   QString HirshShare;
+  QString ESPOut,MolESPOut;
   QLineEdit *iampre;
   QLineEdit *iammol ;
   QLineEdit *densin ;
   QLineEdit *densout;
   QLineEdit *hirshsh;
-  QPushButton *iamp,*loadIamp; 
+  QLineEdit *espout;
+  QLineEdit *mespout;
+  QPushButton *iamp,*loadIamp,*espobrs,*espmobrs; 
   QPushButton *hirp;
+  QPushButton *espb,*mespb;
   Vector3 center;
   QString selectedFilter,sfacstr,isfac;
   QList<int> magic;
   void prepareMagicNumbers();
   int findSFAC(int an);
   void fillUnitCell(QList<INP> xdinp);
+  void fillUnitCell2(QList<INP> xdinp);
   void fillmi(HiAtom &ha);
   double calcRho(HiAtom ha, int ix, int iy, int iz);
   double checkSymmOfMap();
@@ -209,16 +219,26 @@ private:
   void writeRaw2(double *data, QString fileName);
   void writeM81(double *data, QString fileName);
   void writeM812(double *data, QString fileName);
+  int absent(V3 hkl);
+  void genSymmRmap(fftw_complex *map,bool *doneMap, int idx);
 public slots:
  
   void changeExpansion(double d); 
   void priorThere(const QString & text);
   void hirshThere(const QString & text);
+  void espThere();
+  void mespThere();
   void stickyNumbersx(int i);
   void stickyNumbersy(int i);
   void stickyNumbersz(int i);
   void statdyn();
   void iamprior();
+  void calcESP();
+  void raw2xdhkl();
+  double checkSymmOfMap(double *map);
+  double checkSymmOfRMap(fftw_complex *map);
+  double dirESP(double *map);
+  void dynESPmol();
   void loadIAMPrior();
   void expandBox();
   void browseIAMpriorname();
@@ -226,6 +246,8 @@ public slots:
   void browseDensityIn ();
   void browseDensityOut();
   void browseHirshShare();
+  void browseESPOut();
+  void browseMolESPOut();
   void handleIAMpriorname();
   void handleIAMmolname();
   void handleDensityIn ();

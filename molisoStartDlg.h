@@ -8,11 +8,12 @@ Q_OBJECT
   QRadioButton *lfcbx,*sfcbx;
   QCheckBox *mcbx,*acbx;
   QString selectedFilter;
+  QWidget *prnt;
   void loadSettings();
   int checker;
   public:
   QString iso_grid_name,map_grid_name,load_face_name,save_face_name,adp_struct_name;
-  MolisoStartDlg(QString isoname="",QString mapname="",QString lfcename="",QString sfcename="",int check=0,QString adpname="");
+  MolisoStartDlg(QWidget *parent = 0,QString isoname="",QString mapname="",QString lfcename="",QString sfcename="",int check=0,QString adpname="");
   public slots:
   void accept () ;
   void brwsIso();

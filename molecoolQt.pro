@@ -22,7 +22,7 @@ desktop.files = molecoolqt.desktop
 INSTALLS += desktop
 
 QMAKE_CXXFLAGS += -fopenmp
-LIBS += -lfftw3f -fopenmp
+LIBS += -lfftw3f -fopenmp -lfftw3
 !mac{
 unix {
 LIBS += -lGLU
