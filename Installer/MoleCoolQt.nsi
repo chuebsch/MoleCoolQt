@@ -87,6 +87,7 @@ Section "MoleCoolQt" SecMoleCoolQt
   File ..\release\QtNetwork4.dll
   File ..\release\libstdc++-6.dll
   File ..\release\libfftw3f-3.dll
+  File ..\release\libfftw3-3.dll
   File ..\release\libgomp-1.dll
   File ..\release\libwinpthread-1.dll
   File ..\release\libgcc_s_dw2-1.dll
@@ -146,7 +147,8 @@ Section "Uninstall"
   Delete "$INSTDIR\libgomp-1.dll"
   Delete "$INSTDIR\libpthread-2.dll"
   Delete "$INSTDIR\libwinpthread-1.dll"
-  Delete "$INSTDIR\libfftw3f-3.dll"	
+  Delete "$INSTDIR\libfftw3f-3.dll"
+  Delete "$INSTDIR\libfftw3-3.dll"	 	
   Delete "$INSTDIR\QtOpenGL4.dll"
   Delete "$INSTDIR\imageformats\qgif4.dll"
   Delete "$INSTDIR\imageformats\qico4.dll"
