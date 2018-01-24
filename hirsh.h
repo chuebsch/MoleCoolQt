@@ -1,3 +1,5 @@
+#ifndef _HIRSH_H
+#define _HIRSH_H 1
 #include "molekul.h"
 #include "moliso.h"
 #include <fftw3.h>
@@ -146,6 +148,7 @@ const double pi2=M_PI*M_PI;
 const double twopi2=2.0*pi2;
 const double pisqrt3=M_PI*pisqrt;
 const double acc=1e-6;
+ 
 class Hirshfeld: public QDialog{
   Q_OBJECT
 public:
@@ -259,3 +262,4 @@ public slots:
 signals:
   void doface();
 };//class
+#endif

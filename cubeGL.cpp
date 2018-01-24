@@ -3608,6 +3608,7 @@ void CubeGL::contextMenuEvent(QContextMenuEvent *event) {
     extern molekul mol;
     QAction expandAct(tr("mist"),this);
     QAction hideThisAct(tr("mist"),this);
+    QAction hideSelectedAct("Hide selected atoms",this);
     QAction hideThisFragment("Hide this fragment",this);
     QAction hideOtherFragments("Hide other fragments",this);
     QAction *dntpck=new QAction("only asymmetric unit",this);
@@ -3627,6 +3628,7 @@ void CubeGL::contextMenuEvent(QContextMenuEvent *event) {
     connect(signalMapper, SIGNAL(mapped(int)), parent(), SLOT(setPackArt2(int)));
     connect( &expandAct, SIGNAL(triggered () ), parent(), SLOT(expandAround() ));
     connect( &hideThisAct, SIGNAL(triggered () ), parent(), SLOT(filterThisAtom() ));
+    connect( &hideSelectedAct, SIGNAL(triggered () ), parent(), SLOT(filterSelectedAtoms() ));
     connect( &hideThisFragment, SIGNAL(triggered () ), parent(), SLOT(filterThisFragment() ));
     connect( &hideOtherFragments, SIGNAL(triggered () ), parent(), SLOT(filterOtherFragments()));
     QMenu menu(this);
@@ -3637,7 +3639,7 @@ void CubeGL::contextMenuEvent(QContextMenuEvent *event) {
     extern QList<INP> asymmUnit;
     for (int j=0; j<xdinp.size();j++){
       da=(((xdinp.at(j).screenX-event->x())*( xdinp.at(j).screenX-event->x()))+ 
-		      ((xdinp.at(j).screenY-event->y())*( xdinp.at(j).screenY-event->y())));
+          ((xdinp.at(j).screenY-event->y())*( xdinp.at(j).screenY-event->y())));
       nahdai=(da<nahda)?j:nahdai;
       nahda=qMin(nahda,da);
     }
@@ -3649,50 +3651,51 @@ void CubeGL::contextMenuEvent(QContextMenuEvent *event) {
     }
 
     expandatom=nahdai;
-      if (expandatom<xdinp.size()) {
-	if (expandatom<0) {expandatom=-1;return;}
-	expandAct.setText(tr("Expand %1 Ang. arround %2.").arg(mol.gd).arg(xdinp.at(expandatom).atomname));
-	hideThisAct.setText(tr("Hide %1 ").arg(xdinp.at(expandatom).atomname));
-	menu.addAction(&expandAct);
-	menu.addAction(&hideThisAct);
-	menu.addAction(&hideThisFragment);
-	menu.addAction(&hideOtherFragments);
-	menu.addAction("Select this fragment",parent(),SLOT(selectThisFragment()));
-    {QAction *a = menu.addAction("Calculate p.d.f. of an atom",parent(),SLOT(pdfDlg()));
-    a->setData(expandatom);
-    }
-    {QAction *a = menu.addAction("Show ADP parameters",parent(),SLOT(showADPvalues()));
-    a->setData(expandatom);
-    }
-    if (expandatom<asymmUnit.size()){
-    QAction *a = menu.addAction("Draw voronoi polyeder of this atom",parent(),SLOT(makeVoro()));
-    a->setData(expandatom);
-    }
-    menu.addSeparator();
-	menu.addAction(dntpck);
-	menu.addAction(molpck);
-	menu.addAction(cctpck);
-	menu.addAction(ccmpck);
-	menu.addAction(changeGDAct);
-	QAction *a = menu.addAction("edit xd_part.aux",parent(),SLOT(editPartAux()));
-	a->setData(qMax(expandatom,0));
-	menu.exec(event->globalPos());
+    if (!selectedAtoms.isEmpty()) menu.addAction(&hideSelectedAct);
+    if (expandatom<xdinp.size()) {
+      if (expandatom<0) {expandatom=-1;return;}
+      expandAct.setText(tr("Expand %1 Ang. arround %2.").arg(mol.gd).arg(xdinp.at(expandatom).atomname));
+      hideThisAct.setText(tr("Hide %1 ").arg(xdinp.at(expandatom).atomname));
+      menu.addAction(&expandAct);
+      menu.addAction(&hideThisAct);
+      menu.addAction(&hideThisFragment);
+      menu.addAction(&hideOtherFragments);
+      menu.addAction("Select this fragment",parent(),SLOT(selectThisFragment()));
+      {QAction *a = menu.addAction("Calculate p.d.f. of an atom",parent(),SLOT(pdfDlg()));
+        a->setData(expandatom);
       }
-      else if (expandatom<matoms.size()) {
-	if (expandatom<0) {expandatom=-1;return;}
-	expandAct.setText(tr("Expand %1 Ang. arround %2.").arg(mol.gd).arg(matoms.at(expandatom).atomname));
-	menu.addAction(&expandAct);
-        menu.addAction("center this atom",this,SLOT(setRotCenter()));
-        menu.addAction(tr("t-Plot of %1 ").arg(matoms.at(expandatom).atomname),this,SLOT(tplot()));
-        menu.addSeparator();
-	menu.addAction(dntpck);
-	menu.addAction(molpck);
-	menu.addAction(cctpck);
-	menu.addAction(ccmpck);
-	menu.addAction(changeGDAct);
-	menu.exec(event->globalPos());
+      {QAction *a = menu.addAction("Show ADP parameters",parent(),SLOT(showADPvalues()));
+        a->setData(expandatom);
       }
-      else{expandatom=-1;}
+      if (expandatom<asymmUnit.size()){
+        QAction *a = menu.addAction("Draw voronoi polyeder of this atom",parent(),SLOT(makeVoro()));
+        a->setData(expandatom);
+      }
+      menu.addSeparator();
+      menu.addAction(dntpck);
+      menu.addAction(molpck);
+      menu.addAction(cctpck);
+      menu.addAction(ccmpck);
+      menu.addAction(changeGDAct);
+      QAction *a = menu.addAction("edit xd_part.aux",parent(),SLOT(editPartAux()));
+      a->setData(qMax(expandatom,0));
+      menu.exec(event->globalPos());
+    }
+    else if (expandatom<matoms.size()) {
+      if (expandatom<0) {expandatom=-1;return;}
+      expandAct.setText(tr("Expand %1 Ang. arround %2.").arg(mol.gd).arg(matoms.at(expandatom).atomname));
+      menu.addAction(&expandAct);
+      menu.addAction("center this atom",this,SLOT(setRotCenter()));
+      menu.addAction(tr("t-Plot of %1 ").arg(matoms.at(expandatom).atomname),this,SLOT(tplot()));
+      menu.addSeparator();
+      menu.addAction(dntpck);
+      menu.addAction(molpck);
+      menu.addAction(cctpck);
+      menu.addAction(ccmpck);
+      menu.addAction(changeGDAct);
+      menu.exec(event->globalPos());
+    }
+    else{expandatom=-1;}
   }
 }
 

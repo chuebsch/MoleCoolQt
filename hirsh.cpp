@@ -1166,7 +1166,8 @@ void Hirshfeld::browseDensityIn (){
     ntot=nx*ny*nz;
   }
   priorThere(IAMpriorname);
-  raw2xdhkl();
+  extern bool XPRTHKL;
+  if (XPRTHKL) raw2xdhkl();
   espThere();
 }
 

@@ -12,17 +12,19 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=579;
+int rev=581;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
 QList<Modulat> masymmUnit,matoms;
 molekul mol;
+bool XPRTHKL=false; 
 int hatlokale=0;
 int pdfOnAtom=-1;
 int curentPhase=1;
 FILE *polifile=NULL;
 const double g2r=180.0/M_PI;
+bool symmsalabymm = false; 
 const double twologtwo=2.0*log(2.0);
 double cfac=1.0;//(M_PI*M_PI*M_PI*8)/6;
 double dfac=1.0;//(M_PI*M_PI*M_PI*M_PI*16)/24;
@@ -1472,6 +1474,8 @@ createRenameWgd();
       i++;
       if (i<=argc)pdfOnAtom=QCoreApplication::arguments().at(i).toInt();else i--;
       }
+      if (QCoreApplication::arguments().at(i).contains("-whatsymm")){symmsalabymm =true; }
+      if (QCoreApplication::arguments().at(i).contains("-xdhkl")) {XPRTHKL=true;}
       if (QCoreApplication::arguments().at(i).contains("-HADist")) {
 	i++;	
 	if (i<=argc) mol.HAMax=QCoreApplication::arguments().at(i).toDouble(); 
@@ -8285,6 +8289,39 @@ void MyWindow::filterNonAtoms(bool b){
   cubeGL->updateGL();
 }
 
+void MyWindow::filterSelectedAtoms(){
+  if (cubeGL->selectedAtoms.isEmpty())return;
+    unfilterAct->setVisible(true);
+    if (!filtered){
+      oxd=xdinp;
+    }
+    QList<INP> fltrXdinp;
+//    qDebug()<<"ok"<<__LINE__;
+    for (int i=0;i<xdinp.size();i++){
+      bool issel=false;
+      for (int j=0;j<cubeGL->selectedAtoms.size();j++) 
+        if (cubeGL->selectedAtoms.at(j).kart==xdinp.at(i).kart) {
+        issel=true;
+   //     qDebug()<<cubeGL->selectedAtoms.at(j).atomname;
+      }
+      if (!issel) fltrXdinp.append(xdinp[i]);
+    }
+  //  qDebug()<<"ok"<<__LINE__;
+    xdinp.clear();
+    cubeGL->selectedAtoms.clear();
+    xdinp=fltrXdinp;
+    mol.bonds_made=0;
+    mol.knopf_made=0;
+   // qDebug()<<"ok"<<__LINE__;
+    initLists( fltrXdinp);
+   // qDebug()<<"ok"<<__LINE__;
+    filtered=1;
+    update();
+    qDebug()<<"ok"<<__LINE__;
+    cubeGL->updateGL();
+    qDebug()<<"ok"<<__LINE__;
+}
+
 void MyWindow::filterThisAtom(){
   if (cubeGL->expandatom>-1){
     unfilterAct->setVisible(true);
@@ -8841,6 +8878,7 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
   mol.einstellung->endGroup();
   filtered=0;
 //  printf("loadFILe %d\n",__LINE__);
+  if (symmsalabymm) mol.whatSymm();
   cubeGL->pause=false;
   cubeGL->updateGL();
 }
@@ -9314,7 +9352,7 @@ void MyWindow::initLists(QList<INP> xd){
 
 
 //qDebug()<<"1";
-  glNewList(cubeGL->bas, GL_COMPILE );{                          //ATOME
+ glNewList(cubeGL->bas, GL_COMPILE );{                          //ATOME
 //qDebug()<<"1";
     glPushMatrix();{
 //qDebug()<<"1";
@@ -9328,7 +9366,7 @@ void MyWindow::initLists(QList<INP> xd){
 //qDebug()<<"1";
   }glEndList();
 
-//qDebug()<<"2";
+//Debug()<<"2";
 
 
   glNewList(cubeGL->bas+8, GL_COMPILE );{       //bonds in single color
@@ -9340,7 +9378,7 @@ void MyWindow::initLists(QList<INP> xd){
     }glPopMatrix();    
   }glEndList();
 
-//qDebug()<<"3";
+//Debug()<<"3";
 
   glNewList(cubeGL->bas+7, GL_COMPILE );{                          //ATOME
     glPushMatrix();{
@@ -9350,7 +9388,7 @@ void MyWindow::initLists(QList<INP> xd){
     }glPopMatrix();    
   }glEndList();
 
-//qDebug()<<"4";
+//Debug()<<"4";
 
   glNewList(cubeGL->bas+4, GL_COMPILE );{                          //ATOME
     glPushMatrix();{
@@ -9360,7 +9398,7 @@ void MyWindow::initLists(QList<INP> xd){
     }glPopMatrix();    
   }glEndList();
 
-//qDebug()<<"5";
+//Debug()<<"5";
   glNewList(cubeGL->bas+9, GL_COMPILE );{       //Atome fuer tube syle
     glPushMatrix();{
       glScaled( cubeGL->L, cubeGL->L, cubeGL->L );
@@ -9371,7 +9409,7 @@ void MyWindow::initLists(QList<INP> xd){
   }glEndList();
   mol.tubifiedAtoms=false;
 
-//qDebug()<<"6";
+//Debug()<<"6";
 
   glNewList(cubeGL->bas+1, GL_COMPILE );{                          //BONDS
     glPushMatrix();{
@@ -9383,7 +9421,7 @@ void MyWindow::initLists(QList<INP> xd){
   }glEndList();
 
 
-//qDebug()<<"7";
+//Debug()<<"7";
  mol.adp=adpstate;
 
   if (hatlokale) {

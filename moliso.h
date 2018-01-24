@@ -110,6 +110,7 @@ signals:
   void bigmessage(const QString &);
  private:
   double capVx;
+  double Volumen2,Area; 
   int atomanzahl;
   QVector<Ort> orte;
   QVector<Polygn> pgns;

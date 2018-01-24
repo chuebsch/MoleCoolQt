@@ -2316,6 +2316,7 @@ void molekul::UnitZell(double t) {
 }
 
 void molekul::make_bonds(QList<INP> xdinp){
+  qDebug()<<__LINE__<<xdinp.size();
   if (xdinp.isEmpty()) return;
   double gg,soll_abst;
   bcnt=0;
@@ -2323,7 +2324,7 @@ void molekul::make_bonds(QList<INP> xdinp){
   int msiz=(xdinp.size()*10);
   if (NULL==(bd=(bindi*)malloc(sizeof(bindi)*msiz)))return;
   for (int i=0;i<xdinp.size();i++) {
-      //printf("i=%d sg=%d part=%d\n",i,xdinp[i].sg,xdinp[i].part);
+      printf("i=%d sg=%d part=%d\n",i,xdinp[i].sg,xdinp[i].part);
     for (int j=0;j<xdinp.size();j++) {
       if (i==j) continue;
 
@@ -2587,6 +2588,7 @@ void molekul::make_polyeder(QList<INP> xd){
                       //  printf("\n");
                         if (polyvecs.edge.size())  polyvecs.mid*=1.0/polyvecs.edge.size();
                         polyvecs.norm=Normalize(polyvecs.mid-zent);
+                        //printf("%s ===> %f\n", xd[i].atomname, polyvecs.norm*polyeders[index].norm);
                         polyvecs.umfang=r;
                         polyeders[index]=polyvecs;
                     }else {
@@ -2597,9 +2599,16 @@ void molekul::make_polyeder(QList<INP> xd){
                         for (int m=0;m<polyvecs.edge.size();m++)
                             polyvecs.mid+=xd[polyvecs.edge.at(m)].kart;
                         if (polyvecs.edge.size())  polyvecs.mid*=1.0/polyvecs.edge.size();
-                        polyvecs.norm=Normalize(polyvecs.mid-zent);
+                        V3 nnn=Normalize(polyvecs.mid-zent);
+                        V3 pp=xd[polyvecs.edge.at(0)].kart;
+                        double tt = polyvecs.norm * (zent-pp);
+
+                        //double tt=fabs(polyvecs.norm*nnn);
+                        printf("%s ===>%f %f\n",xd[i].atomname,tt,polyvecs.norm*nnn);
+                        polyvecs.norm=nnn;
                         polyvecs.umfang=r;
-                        polyeders.append(polyvecs);
+                        if ((fabs(tt)>2.0)&&(fabs(tt)<2.1))
+                          polyeders.append(polyvecs);
                     }
 
                 }
@@ -4221,6 +4230,203 @@ QString molekul::encodeSymm(int s){
     erg.replace("4/1","4");
     erg.replace("5/1","5");
     return erg;
+}
+V3 achs(Matrix m){
+  static V3 v=V3(0,0,0);
+  for (int h=-1;h<2;h++){
+    for (int k=-1;k<2;k++){
+      for (int l=-1;l<2;l++){
+        v=V3(h,k,l);
+        V3 u=m*v;
+        if (u==v) return (v);
+      }
+    }
+  }
+return v;
+}
+Matrix dreh(V3 a,double phi){
+  printf("N%g phi%g\n",sqrt(Norm(a)),phi/M_PI*180.0);
+  double c=cos(phi),s=sin(phi);
+  double omc=1.0-c;
+  double a1=a.x,a2=a.y,a3=a.z;
+  return Matrix(
+      c + omc*a1*a1   , omc*a1*a2 - a3*s, omc*a1*a3 + a2*s,
+      omc*a1*a2 + a3*s, c + omc*a2*a2   , omc*a2*a3 - a1*s,
+      omc*a1*a3 - a2*s, omc*a2*a3 + a1*s, c + omc*a3*a3);
+
+}
+QString molekul::whatSymm(){
+  QString answer;
+  const Matrix pointH[24]={//table 11.2.2.2 int tables
+    Matrix( 1, 0, 0,  0, 1, 0,  0, 0, 1),//1
+    Matrix(-1, 0, 0,  0,-1, 0,  0, 0, 1),//2 0 0 z
+    Matrix( 0, 1, 0,  1, 0, 0,  0, 0,-1),//2 x x 0
+    Matrix( 0,-1, 0, -1, 0, 0,  0, 0,-1),//2 x -x 0
+    
+    Matrix( 0,-1, 0,  1,-1, 0,  0, 0, 1),//3+ 0 0 z
+    Matrix( 1,-1, 0,  1, 0, 0,  0, 0, 1),//6+ 0 0 z
+    Matrix( 1,-1, 0,  0,-1, 0,  0, 0,-1),//2 x 0 0
+    Matrix(-1, 1, 0,  0, 1, 0,  0, 0,-1),//2 x 2x 0
+    
+    Matrix(-1, 1, 0, -1, 0, 0,  0, 0, 1),//3- 0 0 z
+    Matrix( 0, 1, 0, -1, 1, 0,  0, 0, 1),//6- 0 0 z
+    Matrix(-1, 0, 0, -1, 1, 0,  0, 0,-1),//2 0 y 0
+    Matrix( 1, 0, 0,  1,-1, 0,  0, 0,-1),//2 2x x 0
+
+    Matrix(-1, 0, 0,  0,-1, 0,  0, 0,-1),//-1
+    Matrix( 1, 0, 0,  0, 1, 0,  0, 0,-1),//m x y 0
+    Matrix( 0,-1, 0, -1, 0, 0,  0, 0, 1),//m x -x z
+    Matrix( 0, 1, 0,  1, 0, 0,  0, 0, 1),//m x x z
+    
+    Matrix( 0, 1, 0, -1, 1, 0,  0, 0,-1),//-3+ 0 0 z
+    Matrix(-1, 1, 0, -1, 0, 0,  0, 0,-1),//-6+ 0 0 z
+    Matrix(-1, 1, 0,  0, 1, 0,  0, 0, 1),//m x 2x z
+    Matrix( 1,-1, 0,  0,-1, 0,  0, 0, 1),//m x 0 z
+    
+    Matrix( 1,-1, 0,  1, 0, 0,  0, 0,-1),//-3- 0 0 z
+    Matrix( 0,-1, 0,  1,-1, 0,  0, 0,-1),//-6- 0 0 z
+    Matrix( 1, 0, 0,  1,-1, 0,  0, 0, 1),//m 2x x z
+    Matrix(-1, 0, 0, -1, 1, 0,  0, 0, 1),//m 0 x z
+  };
+const QString namesH[24]{ "1", "2 0 0 z", "2 x x 0", "2 x -x 0", "3+ 0 0 z", "6+ 0 0 z", "2 x 0 0", "2 x 2x 0", "3- 0 0 z", "6- 0 0 z", "2 0 y 0", "2 2x x 0",
+"-1", "m x y 0", "m x -x z", "m x x z", "-3+ 0 0 z", "-6+ 0 0 z", "m x 2x z", "m x 0 z", "-3- 0 0 z", "-6- 0 0 z", "m 2x x z", "m 0 x z"};
+
+  const Matrix pointNH[48]={//table 11.2.2.1 int tables
+    Matrix( 1, 0, 0,  0, 1, 0,  0, 0, 1),//1
+    Matrix( 0, 0, 1,  1, 0, 0,  0, 1, 0),//3+ x x x
+    Matrix( 0, 1, 0,  0, 0, 1,  1, 0, 0),//3- x x x
+
+    Matrix(-1, 0, 0,  0,-1, 0,  0, 0, 1),//2 0 0 z
+    Matrix( 0, 0,-1, -1, 0, 0,  0, 1, 0),//3+ x -x -x
+    Matrix( 0,-1, 0,  0, 0, 1, -1, 0, 0),//3- x -x -x
+    Matrix( 0, 1, 0,  1, 0, 0,  0, 0,-1),//2 x x 0
+    Matrix( 0,-1, 0, -1, 0, 0,  0, 0,-1),//2 x -x 0
+    Matrix( 0,-1, 0,  1, 0, 0,  0, 0, 1),//4+ 0 0 z
+    Matrix( 0, 1, 0, -1, 0, 0,  0, 0, 1),//4- 0 0 z
+
+    Matrix(-1, 0, 0,  0, 1, 0,  0, 0,-1),//2 0 y 0
+    Matrix( 0, 0, 1, -1, 0, 0,  0,-1, 0),//3+ -x x -x
+    Matrix( 0,-1, 0,  0, 0,-1,  1, 0, 0),//3- -x x -x 
+    Matrix( 0, 0, 1,  0,-1, 0,  1, 0, 0),//2 x 0 x
+    Matrix( 0, 0,-1,  0,-1, 0, -1, 0, 0),//2 -x 0 x
+    Matrix( 0, 0, 1,  0, 1, 0, -1, 0, 0),//4+ 0 y 0
+    Matrix( 0, 0,-1,  0, 1, 0,  1, 0, 0),//4- 0 y 0 
+
+    Matrix( 1, 0, 0,  0,-1, 0,  0, 0,-1),//2 x 0 0
+    Matrix( 0, 0,-1,  1, 0, 0,  0,-1, 0),//3+ -x -x x
+    Matrix( 0, 1, 0,  0, 0,-1, -1, 0, 0),//3- -x -x x
+    Matrix(-1, 0, 0,  0, 0, 1,  0, 1, 0),//2  0 y y
+    Matrix(-1, 0, 0,  0, 0,-1,  0,-1, 0),//2  0 y -y
+    Matrix( 1, 0, 0,  0, 0,-1,  0, 1, 0),//4+ x 0 0
+    Matrix( 1, 0, 0,  0, 0, 1,  0,-1, 0),//4- x 0 0
+
+
+    Matrix(-1, 0, 0,  0,-1, 0,  0, 0,-1),//-1 0 0 0
+    Matrix( 0, 0,-1, -1, 0, 0,  0,-1, 0),//-3+ x x x
+    Matrix( 0,-1, 0,  0, 0,-1, -1, 0, 0),//-3- x x x
+
+    Matrix( 1, 0, 0,  0, 1, 0,  0, 0,-1),//m x y 0
+    Matrix( 0, 0, 1,  1, 0, 0,  0,-1, 0),//-3+ x -x -x
+    Matrix( 0, 1, 0,  0, 0,-1,  1, 0, 0),//-3- x -x -x
+    Matrix( 0,-1, 0, -1, 0, 0,  0, 0, 1),//m x -x z
+    Matrix( 0, 1, 0,  1, 0, 0,  0, 0, 1),//m x x z
+    Matrix( 0, 1, 0, -1, 0, 0,  0, 0,-1),//-4+ 0 0 z
+    Matrix( 0,-1, 0,  1, 0, 0,  0, 0,-1),//-4- 0 0 z
+
+    Matrix( 1, 0, 0,  0,-1, 0,  0, 0, 1),//m x 0 z 
+    Matrix( 0, 0,-1,  1, 0, 0,  0, 1, 0),//-3+ -x x -x
+    Matrix( 0, 1, 0,  0, 0, 1, -1, 0, 0),//-3- -x x -x
+    Matrix( 0, 0,-1,  0, 1, 0, -1, 0, 0),//m -x y x
+    Matrix( 0, 0, 1,  0, 1, 0,  1, 0, 0),//m x y x
+    Matrix( 0, 0,-1,  0,-1, 0,  1, 0, 0),//-4+ 0 y 0
+    Matrix( 0, 0, 1,  0,-1, 0, -1, 0, 0),//-4- 0 y 0 
+
+    Matrix(-1, 0, 0,  0, 1, 0,  0, 0, 1),//m x 0 0
+    Matrix( 0, 0, 1, -1, 0, 0,  0, 1, 0),//-3+ -x -x x
+    Matrix( 0,-1, 0,  0, 0, 1,  1, 0, 0),//-3- -x -x x
+    Matrix( 1, 0, 0,  0, 0,-1,  0,-1, 0),//m 0 y y
+    Matrix( 1, 0, 0,  0, 0, 1,  0, 1, 0),//m 0 y -y
+    Matrix(-1, 0, 0,  0, 0, 1,  0,-1, 0),//-4+ x 0 0
+    Matrix(-1, 0, 0,  0, 0,-1,  0, 1, 0) //-4- x 0 0
+  };
+const QString names[48]={ "1" ,"3+ x x x" ,"3- x x x" ,"2 0 0 z" ,"3+ x -x -x" ,"3- x -x -x" ,"2 x x 0" ,"2 x -x 0" ,"4+ 0 0 z" ,"4- 0 0 z" 
+,"2 0 y 0" ,"3+ -x x -x" ,"3- -x x -x" ,"2 x 0 x" ,"2 -x 0 x" ,"4+ 0 y 0" ,"4- 0 y 0" ,"2 x 0 0" ,"3+ -x -x x" ,"3- -x -x x" ,"2  0 y y"
+,"2  0 y -y" ,"4+ x 0 0" ,"4- x 0 0" ,"-1 0 0 0" ,"-3+ x x x" ,"-3- x x x" ,"m x y 0" ,"-3+ x -x -x" ,"-3- x -x -x" ,"m x -x z" ,"m x x z"
+,"-4+ 0 0 z" ,"-4- 0 0 z" ,"m x 0 z" ,"-3+ -x x -x" ,"-3- -x x -x" ,"m -x y x" ,"m x y x" ,"-4+ 0 y 0" ,"-4- 0 y 0" ,"m x 0 0" ,"-3+ -x -x x"
+,"-3- -x -x x" ,"m 0 y y" ,"m 0 y -y" ,"-4+ x 0 0" ,"-4- x 0 0"
+};
+bool da[48];  
+bool h=false;
+    if ((zelle.a==zelle.b)&&(zelle.ga==120.0))h=true;
+for (int i=0; i<48;i++) da[i]=false;
+/*
+for (int i=0; i<24;i++) {
+  double d=determinant(pointH[i]);
+  printf("hex %d det %g\n",i,d);
+}// */
+/*
+for (int i=1; i<24; i++){
+    Matrix m=pointNH[i];
+    double cosphi=0.5*(m.m11+m.m22+m.m33-1.0);
+    double omc=1.0-cosphi;
+    double sp=sin(-acos(cosphi));
+    V3 w2=V3(0,0,0);
+    if (fabs(sp)>0.1) {
+      w2.x=m.m32-m.m23; 
+      w2.y=m.m13-m.m31;
+      w2.z=m.m21-m.m12;
+      w2*=0.5/sp;}
+    else {
+
+      w2.x=sqrt((m.m11-cosphi)/omc);
+      w2.y=sqrt((m.m22-cosphi)/omc);
+      w2.z=sqrt((m.m33-cosphi)/omc);
+      if ((w2.x+w2.z)!=0.0) w2.y=(m.m12+m.m23)/(omc*(w2.x+w2.z));
+      if ((w2.x+w2.y)!=0.0) w2.z=(m.m13+m.m23)/(omc*(w2.x+w2.y));
+      sp=0.0;
+    }
+    //printm(pointNH[i]);
+    qDebug()<<names[i];
+    printf(" %g  %g %g %g cp %g sp %g %g\n",acos(cosphi)/M_PI*180.0,w2.x,w2.y,w2.z,cosphi,sp,omc);
+    printm(m);
+    printm(dreh(w2,acos(cosphi)));
+  }// */
+int end=1;
+switch (zelle.lattis.toAscii()){
+  case 'P': end=zelle.symmops.size(); break;
+  case 'I': end=zelle.symmops.size()/2; break;
+  case 'R': end=zelle.symmops.size()/3; break;
+  case 'F': end=zelle.symmops.size()/4; break;
+  case 'A': end=zelle.symmops.size()/2; break;
+  case 'B': end=zelle.symmops.size()/2; break;
+  case 'C': end=zelle.symmops.size()/2; break;
+}
+  for(int i=0; i<end; i++){
+    int j=0;
+    if (h){
+      for (j=0; j<24; j++){
+        if (zelle.symmops.at(i)==pointH[j]){
+          da[j]=true;
+          qDebug()<<QString("H%1:%2 ").arg(namesH[j]).arg(encodeSymm(i));
+        }
+      }
+    }else{
+    for (j=0; j<48; j++){
+      if (zelle.symmops.at(i)==pointNH[j]){
+        da[j]=true;
+        qDebug()<<QString("%1:%2 ").arg(names[j]).arg(encodeSymm(i));
+
+//        printm(pointNH[j]);
+        break;
+      }
+    }
+    }
+  }
+  printf("PGRPATT%c ",(h)?'H':'C');
+  for (int i=0; i<48; i++){printf("%c",(da[i])?'1':'0');}
+  printf("\n");
+  return answer;
+
 }
 
 double molekul::sintl2(int h,int k, int l){

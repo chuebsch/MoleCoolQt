@@ -206,6 +206,28 @@ inline Matrix operator * (const Matrix &a,const Matrix &b){
   erg.m33 = a.m13 * b.m31 + a.m23 * b.m32 + a.m33 * b.m33;
   return erg;
 }
+inline Matrix operator - (const Matrix &a,const Matrix &b){
+  Matrix erg;
+  erg.m11 = a.m11 - b.m11 ;
+  erg.m21 = a.m21 - b.m21 ;
+  erg.m31 = a.m31 - b.m31 ;
+
+  erg.m12 = a.m12 - b.m11 ;
+  erg.m22 = a.m32 - b.m21 ;
+  erg.m32 = a.m32 - b.m31 ;
+
+  erg.m13 = a.m13 - b.m11 ;
+  erg.m23 = a.m23 - b.m21 ;
+  erg.m33 = a.m33 - b.m31 ;
+  return erg;
+}
+inline bool operator == (const Matrix &a,const Matrix &b){
+  return (
+      (a.m11==b.m11)&& (a.m12==b.m12)&& (a.m13==b.m13)&&
+      (a.m21==b.m21)&& (a.m22==b.m22)&& (a.m23==b.m23)&&
+      (a.m31==b.m31)&& (a.m32==b.m32)&& (a.m33==b.m33)
+      );
+}
 inline Matrix operator * (const Matrix &a,const double &b){
   Matrix erg;
   erg.m11 = a.m11*b;
@@ -787,6 +809,7 @@ class molekul {
   void cbonds(QList<INP> xdinp);
   void axes(QList<INP> xdinp);
   void UnitZell(double t=0.0);
+  QString whatSymm();//name all symm ops
   static double winkel(V3 a,V3 b);//vector3...
   double dieder(V3 a,V3 b, V3 c);
   static V3 kreuzX(double x1,double y1,double z1,double x2,double y2,double z2) ; 

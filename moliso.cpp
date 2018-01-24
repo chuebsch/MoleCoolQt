@@ -116,6 +116,7 @@ void MolIso::legende(){
 }
 
 void MolIso::loadMI(QString fname, bool om, bool mima){
+  extern FILE *polifile;
   printf("mima %s  OM = %s\n",(mima)?"true":"false",(om)?"true":"false");
   for (int i=0;i<6;i++){
     if ((mibas)&&(glIsList(mibas+i))) {
@@ -237,12 +238,12 @@ void MolIso::loadMI(QString fname, bool om, bool mima){
       //potsigminus/=fmax(nm,1);
       //potsigplus/=fmax(np,1);
       api/=fmax(np+nm,1);
-      extern FILE *polifile;
       if (polifile!=NULL) {
         int nt=np+nm;
-        fprintf(polifile,"#   alpha      beta    VS+    VS-     PI   sig+   sig- sigtot       nu    min    max\n");
-        fprintf(polifile,"%9.1f %9.1f %6.3f %6.3f %6.3f %6.4f %6.4f %6.4f %8.6f %6.3f %6.3f\n"
-            ,(double)np/(nt)*100.0,(double) nm/(nt)*100.0,dmp,dmm,api,sigmap,sigmam,sigmam+sigmap,sigmap*sigmam/((sigmam+sigmap)*(sigmam+sigmap)),min,max);
+        fprintf(polifile,"#   alpha      beta    VS+    VS-     PI     sig+     sig-   sigtot         nu    min    max  Volume enclosed     Area\n");
+        fprintf(polifile,"#     %%         %%      e/A    e/A    e/A  e^2/A^2  e^2/A^2  e^2/A^2               e/A    e/A              A^3      A^2\n");
+        fprintf(polifile,"%9.1f %9.1f %6.3f %6.3f %6.3f   %6.4f   %6.4f   %6.4f   %8.6f %6.3f %6.3f %16.1f"
+,(double)np/(nt)*100.0,(double) nm/(nt)*100.0,dmp,dmm,api,sigmap,sigmam,sigmam+sigmap,sigmap*sigmam/((sigmam+sigmap)*(sigmam+sigmap)),min,max,Volumen2);
       }
       emit bigmessage(QString(
             "Average of positive surface values V<sub>S</sub><sup>+</sup><sub>av.</sub> = <b>%1</b><br>"
@@ -352,15 +353,19 @@ void MolIso::loadMI(QString fname, bool om, bool mima){
         xdinp.append(newAtom);
         minza++;
       }
-  /*  orte[i].color=mimawa[i];
-    min=0;
-    max=8;*/
+      /*  orte[i].color=mimawa[i];
+          min=0;
+          max=8;*/
     }
     fclose(sfmm);
   }
   printf("minmax %f %f %f %f\n",min,max,fixmax,fixmin);
   printf("%d orte.size %d  L%g\n",orte.size(),pgns.size(),L);
-  printf("Area %g Angstrom^2\n",pgnArea()); 
+  Area=pgnArea();
+  printf("Area %g Angstrom^2\n",Area); 
+      if (polifile!=NULL) {
+        fprintf(polifile," %8.0f\n",Area);
+      }
   balken->setValue(1);
   glNewList(mibas, GL_COMPILE );{                       //Isooberfl"ache ::Perspektive 1     
     glPushMatrix();{
@@ -951,7 +956,7 @@ void MolIso::readXDGridHeader(QString fname,int &fileType){
     if (lines.size()>6) {
       QStringList tok;
       tok=lines.at(2).split(QRegExp("\\s+"),QString::SkipEmptyParts);
-      if (tok.size()==4){	
+      if (tok.size()>=4){	
         extern int atmax;
         extern QList<INP> asymmUnit;
         INP newAtom;
@@ -1186,7 +1191,7 @@ void MolIso::CalcVertexes( void ) {
       printf("y_dim %g %g %g\n", y_dim.x,  y_dim.y,  y_dim.z);
       printf("z_dim %g %g %g\n", z_dim.x,  z_dim.y,  z_dim.z);*/
   test3= ((breite-1)/-2.0) *  x_dim + ((hoehe-1)/-2.0) * y_dim + ((tiefe-1)/-2.0) * z_dim + orig;
-  double Volumen2=0.0;
+  Volumen2=0.0;
   //  Vector3 test4 = ((breite-1)) *  x_dim + ((hoehe-1)) * y_dim + ((tiefe-1)) * z_dim + orig;
 
   if (cubeiso) test3 =orig;
