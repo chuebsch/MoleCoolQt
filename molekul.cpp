@@ -4288,7 +4288,7 @@ QString molekul::whatSymm(){
     Matrix( 1, 0, 0,  1,-1, 0,  0, 0, 1),//m 2x x z
     Matrix(-1, 0, 0, -1, 1, 0,  0, 0, 1),//m 0 x z
   };
-const QString namesH[24]{ "1", "2 0 0 z", "2 x x 0", "2 x -x 0", "3+ 0 0 z", "6+ 0 0 z", "2 x 0 0", "2 x 2x 0", "3- 0 0 z", "6- 0 0 z", "2 0 y 0", "2 2x x 0",
+const QString namesH[24]={ "1", "2 0 0 z", "2 x x 0", "2 x -x 0", "3+ 0 0 z", "6+ 0 0 z", "2 x 0 0", "2 x 2x 0", "3- 0 0 z", "6- 0 0 z", "2 0 y 0", "2 2x x 0",
 "-1", "m x y 0", "m x -x z", "m x x z", "-3+ 0 0 z", "-6+ 0 0 z", "m x 2x z", "m x 0 z", "-3- 0 0 z", "-6- 0 0 z", "m 2x x z", "m 0 x z"};
 
   const Matrix pointNH[48]={//table 11.2.2.1 int tables
