@@ -2316,7 +2316,7 @@ void molekul::UnitZell(double t) {
 }
 
 void molekul::make_bonds(QList<INP> xdinp){
-  qDebug()<<__LINE__<<xdinp.size();
+ // qDebug()<<__LINE__<<xdinp.size();
   if (xdinp.isEmpty()) return;
   double gg,soll_abst;
   bcnt=0;
