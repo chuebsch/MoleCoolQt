@@ -1175,7 +1175,7 @@ void CubeGL::loadDataBase(){
              entry.q2m=tok.at(9).toDouble();
 
               } else {
-                qDebug()<<"Error in line:"<<lln<<tok.size()<<"!="<<10<<line;lineCntr=666; allesgut=false; errr+=QString("Error in line: %1 ").arg(lln); 
+                qDebug()<<"Error in line:"<<lln<<tok.size()<<"!="<<10<<line;lineCntr=666; allesgut=false; errr+=QString("Error in line: %1 ").arg(lln);
                 if (!dataBase.isEmpty()) errr+=dataBase.takeLast ();
                 errr+="<br>\n";
               }
@@ -1193,7 +1193,7 @@ void CubeGL::loadDataBase(){
              entry.h1m=tok.at(9).toDouble();
 
               } else {
-                qDebug()<<"Error in line:"<<lln<<tok.size()<<"!="<<10<<line;lineCntr=666; allesgut=false; errr+=QString("Error in line: %1 ").arg(lln);  
+                qDebug()<<"Error in line:"<<lln<<tok.size()<<"!="<<10<<line;lineCntr=666; allesgut=false; errr+=QString("Error in line: %1 ").arg(lln);
                 if (!dataBase.isEmpty()) errr+=dataBase.takeLast ();
                 errr+="<br>\n";
               }break;
@@ -1206,20 +1206,20 @@ void CubeGL::loadDataBase(){
              entry.h4m=tok.at(5).toDouble();
 
               } else {
-                qDebug()<<"Error in line:"<<lln<<tok.size()<<"!="<<6<<line;lineCntr=666; allesgut=false; errr+=QString("Error in line: %1 ").arg(lln);  
+                qDebug()<<"Error in line:"<<lln<<tok.size()<<"!="<<6<<line;lineCntr=666; allesgut=false; errr+=QString("Error in line: %1 ").arg(lln);
                 if (!dataBase.isEmpty()) errr+=dataBase.takeLast ();
                 errr+="<br>\n";
               }break;
         case 4: entry.Symmetry=tok.at(1).trimmed(); break;
         case 5: entry.CoordinateSystem=line; break;
         case 6: if (!line.startsWith("Kappa=")) {
-                  qDebug()<<"Error in line:"<<lln<<line;lineCntr=666; allesgut=false; errr+=QString("Error in line: %1 ('Kappa=; missing) ").arg(lln); 
+                  qDebug()<<"Error in line:"<<lln<<line;lineCntr=666; allesgut=false; errr+=QString("Error in line: %1 ('Kappa=; missing) ").arg(lln);
                   if (!dataBase.isEmpty()) errr+=dataBase.takeLast ();
                   errr+="<br>\n";
                   break; 
                 }
                 line.remove("Kappa=");
-		line.remove(";");
+                line.remove(";");
                 tok = line.split("=",QString::SkipEmptyParts);
                 if (tok.size()>5) {
                 entry.k1=tok.at(0).toDouble();
@@ -1229,7 +1229,7 @@ void CubeGL::loadDataBase(){
                 entry.k5=tok.at(4).toDouble();
                 entry.k6=tok.at(5).toDouble();}
                 else {
-                  qDebug()<<"Error in line:"<<lln<<tok.size()<<"!="<<6<<line;lineCntr=666; allesgut=false; errr+=QString("Error in line: %1").arg(lln);  
+                  qDebug()<<"Error in line:"<<lln<<tok.size()<<"!="<<6<<line;lineCntr=666; allesgut=false; errr+=QString("Error in line: %1").arg(lln);
                   if (!dataBase.isEmpty()) errr+=dataBase.takeLast ();
                   errr+="<br>\n";
                   break;
@@ -1363,7 +1363,7 @@ void CubeGL::loadDataBase(QString fileName){
              entry.q2m=tok.at(9).toDouble();
 
               } else {
-                qDebug()<<"Error in line:"<<lln<<tok.size()<<"!="<<10<<line;lineCntr=666; allesgut=false; errr+=QString("Error in line: %1 ").arg(lln); 
+             //   qDebug()<<"Error in line:"<<lln<<tok.size()<<"!="<<10<<line;lineCntr=666; allesgut=false; errr+=QString("Error in line: %1 ").arg(lln);
                 if (!dataBase.isEmpty()) errr+=dataBase.takeLast ();
                 errr+="<br>\n";
               }
@@ -1381,7 +1381,7 @@ void CubeGL::loadDataBase(QString fileName){
              entry.h1m=tok.at(9).toDouble();
 
               } else {
-                qDebug()<<"Error in line:"<<lln<<tok.size()<<"!="<<10<<line;lineCntr=666; allesgut=false; errr+=QString("Error in line: %1 ").arg(lln);  
+               // qDebug()<<"Error in line:"<<lln<<tok.size()<<"!="<<10<<line;lineCntr=666; allesgut=false; errr+=QString("Error in line: %1 ").arg(lln);
                 if (!dataBase.isEmpty()) errr+=dataBase.takeLast ();
                 errr+="<br>\n";
               }break;
@@ -1394,14 +1394,14 @@ void CubeGL::loadDataBase(QString fileName){
              entry.h4m=tok.at(5).toDouble();
 
               } else {
-                qDebug()<<"Error in line:"<<lln<<tok.size()<<"!="<<6<<line;lineCntr=666; allesgut=false; errr+=QString("Error in line: %1 ").arg(lln);  
+              //  qDebug()<<"Error in line:"<<lln<<tok.size()<<"!="<<6<<line;lineCntr=666; allesgut=false; errr+=QString("Error in line: %1 ").arg(lln);
                 if (!dataBase.isEmpty()) errr+=dataBase.takeLast ();
                 errr+="<br>\n";
               }break;
         case 4: entry.Symmetry=tok.at(1).trimmed(); break;
         case 5: entry.CoordinateSystem=line; break;
         case 6: if (!line.startsWith("Kappa=")) {
-                  qDebug()<<"Error in line:"<<lln<<line;lineCntr=666; allesgut=false; errr+=QString("Error in line: %1 (Kappa= missing) ").arg(lln); 
+                //  qDebug()<<"Error in line:"<<lln<<line;lineCntr=666; allesgut=false; errr+=QString("Error in line: %1 (Kappa= missing) ").arg(lln);
                   if (!dataBase.isEmpty()) errr+=dataBase.takeLast ();
                   errr+="<br>\n";
                   break; 
@@ -1417,7 +1417,7 @@ void CubeGL::loadDataBase(QString fileName){
                 entry.k5=tok.at(4).toDouble();
                 entry.k6=tok.at(5).toDouble();}
                 else {
-                  qDebug()<<"Error in line:"<<lln<<tok.size()<<"!="<<6<<line;lineCntr=666; allesgut=false; errr+=QString("Error in line: %1").arg(lln);  
+               //   qDebug()<<"Error in line:"<<lln<<tok.size()<<"!="<<6<<line;lineCntr=666; allesgut=false; errr+=QString("Error in line: %1").arg(lln);
                   if (!dataBase.isEmpty()) errr+=dataBase.takeLast ();
                   errr+="<br>\n";
                   break;
