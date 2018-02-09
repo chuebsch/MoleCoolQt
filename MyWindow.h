@@ -147,9 +147,12 @@ class MyWindow : public QMainWindow {
     void setMP4();
     void pdfDlg();
     void pdfDlg2();
-    void howOldIsTheLatesDataBase();
-    void replyFinished(QNetworkReply* antwort);
+    void howOldIsTheLatesDataBaseI();
+    void howOldIsTheLatesDataBaseII();
+    void replyFinishedI(QNetworkReply* antwort);
+    void replyFinishedII(QNetworkReply* antwort);
     void replyFinished2(QNetworkReply* antwort);
+    void replyFinished3(QNetworkReply* antwort);
     void idleMoveStart();
     void idleMoveStop();
     void incT();
@@ -287,6 +290,7 @@ class MyWindow : public QMainWindow {
     double mdimension(QList<Modulat> xdinp);
     void loadDipoleMoments(QString fileName);
     void someThingToRestore();
+    void load_vasp(QString fileName);
     void load_pdb(QString fileName);
     void load_sheldrick(QString fileName);
     void load_BayMEM(QString fileName);

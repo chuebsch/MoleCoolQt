@@ -1129,21 +1129,33 @@ void CubeGL::loadDataBase(){
     
     
     QDateTime zeit=QFileInfo(fileName).lastModified(); 
-    Istda->setText(QString("Data base loaded was modified %1 days ago").arg(zeit.daysTo(QDateTime::currentDateTime ())));
     QFile daba(fileName);
     daba.open(QIODevice::ReadOnly);
 
     DABA entry;
-
+    entries.clear();
+    dataBase.clear();
     QString line;
     int lineCntr=-1;
+    QString errr;
+    bool allesgut=true,dadada=true;
+    int lln=0;
     while (!daba.atEnd()){
+      lln++;
       line = QString(daba.readLine(150));
+      if ((dadada)&&(line.startsWith("!!!Path:"))){
+        dadada=false; 
+        Istda->setText(QString("Database (%2) loaded was modified %1 days ago")
+            .arg(zeit.daysTo(QDateTime::currentDateTime ()))
+            .arg(line.section('/',-3,-3))
+            );
+      }
       if (line.contains(QRegExp("^R-|S-|=-|[3-8]{1,3}-|[A-Z]{1,1}[a-z]{0,1}[123#@]{0,1}"))) {
         if ((!line.startsWith("KS"))&&(!line.startsWith("!"))&&(!line.contains(QRegExp("[;:]")))) {
           lineCntr=0;
           line.remove(QRegExp("[ \n\r]"));
           dataBase.append(line);
+
           }
       }
       if ((lineCntr>-1)&&(lineCntr<7)){
@@ -1162,7 +1174,12 @@ void CubeGL::loadDataBase(){
              entry.q2p=tok.at(8).toDouble();
              entry.q2m=tok.at(9).toDouble();
 
-              } break;
+              } else {
+                qDebug()<<"Error in line:"<<lln<<tok.size()<<"!="<<10<<line;lineCntr=666; allesgut=false; errr+=QString("Error in line: %1 ").arg(lln); 
+                if (!dataBase.isEmpty()) errr+=dataBase.takeLast ();
+                errr+="<br>\n";
+              }
+                break;
         case 2: if (tok.size()>9) {
              entry.o0=tok.at(0).toDouble();
              entry.o1p=tok.at(1).toDouble();
@@ -1175,7 +1192,11 @@ void CubeGL::loadDataBase(){
              entry.h1p=tok.at(8).toDouble();
              entry.h1m=tok.at(9).toDouble();
 
-              } break;
+              } else {
+                qDebug()<<"Error in line:"<<lln<<tok.size()<<"!="<<10<<line;lineCntr=666; allesgut=false; errr+=QString("Error in line: %1 ").arg(lln);  
+                if (!dataBase.isEmpty()) errr+=dataBase.takeLast ();
+                errr+="<br>\n";
+              }break;
         case 3: if (tok.size()>5) {
              entry.h2p=tok.at(0).toDouble();
              entry.h2m=tok.at(1).toDouble();
@@ -1184,18 +1205,35 @@ void CubeGL::loadDataBase(){
              entry.h4p=tok.at(4).toDouble();
              entry.h4m=tok.at(5).toDouble();
 
-              } break;
+              } else {
+                qDebug()<<"Error in line:"<<lln<<tok.size()<<"!="<<6<<line;lineCntr=666; allesgut=false; errr+=QString("Error in line: %1 ").arg(lln);  
+                if (!dataBase.isEmpty()) errr+=dataBase.takeLast ();
+                errr+="<br>\n";
+              }break;
         case 4: entry.Symmetry=tok.at(1).trimmed(); break;
         case 5: entry.CoordinateSystem=line; break;
-        case 6: line.remove("Kappa=");
+        case 6: if (!line.startsWith("Kappa=")) {
+                  qDebug()<<"Error in line:"<<lln<<line;lineCntr=666; allesgut=false; errr+=QString("Error in line: %1 ('Kappa=; missing) ").arg(lln); 
+                  if (!dataBase.isEmpty()) errr+=dataBase.takeLast ();
+                  errr+="<br>\n";
+                  break; 
+                }
+                line.remove("Kappa=");
 		line.remove(";");
                 tok = line.split("=",QString::SkipEmptyParts);
+                if (tok.size()>5) {
                 entry.k1=tok.at(0).toDouble();
                 entry.k2=tok.at(1).toDouble();
                 entry.k3=tok.at(2).toDouble();
                 entry.k4=tok.at(3).toDouble();
                 entry.k5=tok.at(4).toDouble();
-                entry.k6=tok.at(5).toDouble();
+                entry.k6=tok.at(5).toDouble();}
+                else {
+                  qDebug()<<"Error in line:"<<lln<<tok.size()<<"!="<<6<<line;lineCntr=666; allesgut=false; errr+=QString("Error in line: %1").arg(lln);  
+                  if (!dataBase.isEmpty()) errr+=dataBase.takeLast ();
+                  errr+="<br>\n";
+                  break;
+                }
                 entries.append(entry);
              break;
         }
@@ -1203,20 +1241,23 @@ void CubeGL::loadDataBase(){
       }
 
     }
-
+if (!allesgut)  bigmessage(QString("<h2><font color=\"red\">%1</font></h2>").arg(errr));
   }
+  emit bigmessage(QString("Read in %1 Invarioms.<br>").arg(dataBase.size()));
 }
 
 void CubeGL::loadDataBase(QString fileName){
   if (!fileName.isEmpty()){
     QDateTime zeit=QFileInfo(fileName).lastModified(); 
-    Istda->setText(QString("Data base loaded was modified %1 days ago").arg(zeit.daysTo(QDateTime::currentDateTime ())));
+    //Istda->setText(QString("Data base loaded was modified %1 days ago").arg(zeit.daysTo(QDateTime::currentDateTime ())));
     QFile daba(fileName);
     daba.open(QIODevice::ReadOnly);
     DABA entry;
-
+    entries.clear();
+    dataBase.clear();
     QString line;
     int lineCntr=-1;
+    /*
     while (!daba.atEnd()){
       line = QString(daba.readLine(150));
       if (line.contains(QRegExp("^R-|S-|=-|[3-8]{1,3}-|[A-Z]{1,1}[a-z]{0,1}[123#@]{0,1}"))) {
@@ -1283,8 +1324,114 @@ void CubeGL::loadDataBase(QString fileName){
       }
 
     }
+*/
+    QString errr;
+    bool allesgut=true,dadada=true;
+    int lln=0;
+    while (!daba.atEnd()){
+      lln++;
+      line = QString(daba.readLine(150));
+      if ((dadada)&&(line.startsWith("!!!Path:"))){
+        dadada=false; 
+        Istda->setText(QString("Database (%2) loaded was modified %1 days ago")
+            .arg(zeit.daysTo(QDateTime::currentDateTime ()))
+            .arg(line.section('/',-3,-3))
+            );
+      }
+      if (line.contains(QRegExp("^R-|S-|=-|[3-8]{1,3}-|[A-Z]{1,1}[a-z]{0,1}[123#@]{0,1}"))) {
+        if ((!line.startsWith("KS"))&&(!line.startsWith("!"))&&(!line.contains(QRegExp("[;:]")))) {
+          lineCntr=0;
+          line.remove(QRegExp("[ \n\r]"));
+          dataBase.append(line);
 
+          }
+      }
+      if ((lineCntr>-1)&&(lineCntr<7)){
+      line.remove(QRegExp("[\n\r]"));
+        QStringList tok=line.split(" ",QString::SkipEmptyParts);
+        switch(lineCntr){
+        case 1: if (tok.size()>9) {
+             entry.m0=tok.at(0).toDouble();
+             entry.m1=tok.at(1).toDouble();
+             entry.d1p=tok.at(2).toDouble();
+             entry.d1m=tok.at(3).toDouble();
+             entry.d0=tok.at(4).toDouble();
+             entry.q0=tok.at(5).toDouble();
+             entry.q1p=tok.at(6).toDouble();
+             entry.q1m=tok.at(7).toDouble();
+             entry.q2p=tok.at(8).toDouble();
+             entry.q2m=tok.at(9).toDouble();
+
+              } else {
+                qDebug()<<"Error in line:"<<lln<<tok.size()<<"!="<<10<<line;lineCntr=666; allesgut=false; errr+=QString("Error in line: %1 ").arg(lln); 
+                if (!dataBase.isEmpty()) errr+=dataBase.takeLast ();
+                errr+="<br>\n";
+              }
+                break;
+        case 2: if (tok.size()>9) {
+             entry.o0=tok.at(0).toDouble();
+             entry.o1p=tok.at(1).toDouble();
+             entry.o1m=tok.at(2).toDouble();
+             entry.o2p=tok.at(3).toDouble();
+             entry.o2m=tok.at(4).toDouble();
+             entry.o3p=tok.at(5).toDouble();
+             entry.o3m=tok.at(6).toDouble();
+             entry.h0=tok.at(7).toDouble();
+             entry.h1p=tok.at(8).toDouble();
+             entry.h1m=tok.at(9).toDouble();
+
+              } else {
+                qDebug()<<"Error in line:"<<lln<<tok.size()<<"!="<<10<<line;lineCntr=666; allesgut=false; errr+=QString("Error in line: %1 ").arg(lln);  
+                if (!dataBase.isEmpty()) errr+=dataBase.takeLast ();
+                errr+="<br>\n";
+              }break;
+        case 3: if (tok.size()>5) {
+             entry.h2p=tok.at(0).toDouble();
+             entry.h2m=tok.at(1).toDouble();
+             entry.h3p=tok.at(2).toDouble();
+             entry.h3m=tok.at(3).toDouble();
+             entry.h4p=tok.at(4).toDouble();
+             entry.h4m=tok.at(5).toDouble();
+
+              } else {
+                qDebug()<<"Error in line:"<<lln<<tok.size()<<"!="<<6<<line;lineCntr=666; allesgut=false; errr+=QString("Error in line: %1 ").arg(lln);  
+                if (!dataBase.isEmpty()) errr+=dataBase.takeLast ();
+                errr+="<br>\n";
+              }break;
+        case 4: entry.Symmetry=tok.at(1).trimmed(); break;
+        case 5: entry.CoordinateSystem=line; break;
+        case 6: if (!line.startsWith("Kappa=")) {
+                  qDebug()<<"Error in line:"<<lln<<line;lineCntr=666; allesgut=false; errr+=QString("Error in line: %1 (Kappa= missing) ").arg(lln); 
+                  if (!dataBase.isEmpty()) errr+=dataBase.takeLast ();
+                  errr+="<br>\n";
+                  break; 
+                }
+                line.remove("Kappa=");
+		line.remove(";");
+                tok = line.split("=",QString::SkipEmptyParts);
+                if (tok.size()>5) {
+                entry.k1=tok.at(0).toDouble();
+                entry.k2=tok.at(1).toDouble();
+                entry.k3=tok.at(2).toDouble();
+                entry.k4=tok.at(3).toDouble();
+                entry.k5=tok.at(4).toDouble();
+                entry.k6=tok.at(5).toDouble();}
+                else {
+                  qDebug()<<"Error in line:"<<lln<<tok.size()<<"!="<<6<<line;lineCntr=666; allesgut=false; errr+=QString("Error in line: %1").arg(lln);  
+                  if (!dataBase.isEmpty()) errr+=dataBase.takeLast ();
+                  errr+="<br>\n";
+                  break;
+                }
+                entries.append(entry);
+             break;
+        }
+        lineCntr++;
+      }
+
+    }
+if (!allesgut)  bigmessage(QString("<h2><font color=\"red\">%1</font></h2>").arg(errr));
   }
+  emit bigmessage(QString("Read in %1 Invarioms.<br>").arg(dataBase.size()));
 }
 
 void CubeGL::resetENV(){
@@ -3654,7 +3801,7 @@ void CubeGL::contextMenuEvent(QContextMenuEvent *event) {
     if (!selectedAtoms.isEmpty()) menu.addAction(&hideSelectedAct);
     if (expandatom<xdinp.size()) {
       if (expandatom<0) {expandatom=-1;return;}
-      expandAct.setText(tr("Expand %1 Ang. arround %2.").arg(mol.gd).arg(xdinp.at(expandatom).atomname));
+      expandAct.setText(tr("Expand %1 Ang. around %2.").arg(mol.gd).arg(xdinp.at(expandatom).atomname));
       hideThisAct.setText(tr("Hide %1 ").arg(xdinp.at(expandatom).atomname));
       menu.addAction(&expandAct);
       menu.addAction(&hideThisAct);
@@ -3683,7 +3830,7 @@ void CubeGL::contextMenuEvent(QContextMenuEvent *event) {
     }
     else if (expandatom<matoms.size()) {
       if (expandatom<0) {expandatom=-1;return;}
-      expandAct.setText(tr("Expand %1 Ang. arround %2.").arg(mol.gd).arg(matoms.at(expandatom).atomname));
+      expandAct.setText(tr("Expand %1 Ang. around %2.").arg(mol.gd).arg(matoms.at(expandatom).atomname));
       menu.addAction(&expandAct);
       menu.addAction("center this atom",this,SLOT(setRotCenter()));
       menu.addAction(tr("t-Plot of %1 ").arg(matoms.at(expandatom).atomname),this,SLOT(tplot()));

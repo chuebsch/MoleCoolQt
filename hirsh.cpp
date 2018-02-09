@@ -175,6 +175,7 @@ Hirshfeld::Hirshfeld(molekul *externMole,QList<INP> *_au,QList<INP> *sel,QString
 void Hirshfeld::statdyn(){
   fillUnitCell(*au);
 }
+
 void Hirshfeld::fillUnitCell(QList<INP> xdinp){
   HiAtom atm;
   /*
@@ -209,7 +210,7 @@ void Hirshfeld::fillUnitCell(QList<INP> xdinp){
   // for (int n=0; n<mol->zelle.symmops.size(); n++){
   for (int i=0; i< xdinp.size();i++){
     if (xdinp.at(i).OrdZahl<0) continue;
-    //   printf("%s an==%d jtf=%d %f\n",xdinp.at(i).atomname,xdinp.at(i).OrdZahl,xdinp.at(i).jtf,xdinp.at(i).uf.m22);
+    //printf("%s an==%d jtf=%d %f\n",xdinp.at(i).atomname,xdinp.at(i).OrdZahl,xdinp.at(i).jtf,xdinp.at(i).uf.m22);
     atm.frac=clamp3(xdinp.at(i).frac);//*mol->zelle.symmops.at(n)+mol->zelle.trans.at(n));
     //     atm.frac=clamp3(mol->zelle.symmops.at(n)*xdinp.at(i).frac+mol->zelle.trans.at(n));
     atm.occ=xdinp.at(i).amul;

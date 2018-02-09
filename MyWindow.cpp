@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=583;
+int rev=584;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -938,7 +938,8 @@ createRenameWgd();
   invariomMenu->addAction(invExpAct);
   invariomMenu->addAction(invEdiAct);
   invariomMenu->addAction(invLoadAct);
-  invariomMenu->addAction("Load latest Invariom-Data-Base from internet",this , SLOT(howOldIsTheLatesDataBase()));
+  invariomMenu->addAction("Load latest (D95++3df3pd) Invariom-Data-Base from internet",this , SLOT(howOldIsTheLatesDataBaseI()));
+  invariomMenu->addAction("Load latest (def2TZVP) Invariom-Data-Base from internet",this , SLOT(howOldIsTheLatesDataBaseII()));
     
   (void*) statusBar ();
   sLabel = new QLabel;
@@ -1432,6 +1433,7 @@ createRenameWgd();
       (QCoreApplication::arguments().at(i).contains(".ent")) ||
       (QCoreApplication::arguments().at(i).contains(".mas")) ||
       (QCoreApplication::arguments().at(i).contains(".pth")) ||
+      (QCoreApplication::arguments().at(i).contains(".vasp")) ||
       (QCoreApplication::arguments().at(i).contains(".BayMEM")) ||
       (QCoreApplication::arguments().at(i).contains(".inp")) ||
       (QCoreApplication::arguments().at(i).contains(QRegExp(".\\d\\d$"))) ||
@@ -4610,16 +4612,22 @@ void MyWindow::load_Jana(QString fileName){
 }
 
 
-void MyWindow::howOldIsTheLatesDataBase(){
-  connect(net, SIGNAL(finished(QNetworkReply*)), this, SLOT(replyFinished(QNetworkReply*)));
+void MyWindow::howOldIsTheLatesDataBaseI(){
+  connect(net, SIGNAL(finished(QNetworkReply*)), this, SLOT(replyFinishedI(QNetworkReply*)));
   reply = net->get(QNetworkRequest(QUrl("http://www.molecoolqt.de/latestDABA.php")));
 }
 
-void MyWindow::replyFinished(QNetworkReply* antwort){
+void MyWindow::howOldIsTheLatesDataBaseII(){
+  connect(net, SIGNAL(finished(QNetworkReply*)), this, SLOT(replyFinishedII(QNetworkReply*)));
+  reply = net->get(QNetworkRequest(QUrl("http://www.molecoolqt.de/latestDABA2.php")));
+}
+
+
+void MyWindow::replyFinishedI(QNetworkReply* antwort){
   QString a=antwort->readAll();
   QDateTime t=  QDateTime::fromString (a,Qt::ISODate);
   int d=t.daysTo(QDateTime::currentDateTime ());
-  invariomMenu->addAction(QString("The latest database on the web is %1 days old.").arg(d));
+  invariomMenu->addAction(QString("The latest (D95++3df3pd) database on the web is %1 days old.").arg(d));
   //QMessageBox::information(this,"DA DA DIE DABA DIE IS DA!",QString("Die neuste Datenbank ist %1 alt.").arg(d)); 
   antwort->close();
   antwort->deleteLater();
@@ -4630,6 +4638,21 @@ void MyWindow::replyFinished(QNetworkReply* antwort){
     reply = net->get(QNetworkRequest(QUrl("http://www.molecoolqt.de/loadDABA.php")));
   }
 }
+void MyWindow::replyFinishedII(QNetworkReply* antwort){
+  QString a=antwort->readAll();
+  QDateTime t=  QDateTime::fromString (a,Qt::ISODate);
+  int d=t.daysTo(QDateTime::currentDateTime ());
+  invariomMenu->addAction(QString("The latest (def2TZVP) database on the web is %1 days old.").arg(d));
+  //QMessageBox::information(this,"DA DA DIE DABA DIE IS DA!",QString("Die neuste Datenbank ist %1 alt.").arg(d)); 
+  antwort->close();
+  antwort->deleteLater();
+  disconnect(net,SIGNAL(finished(QNetworkReply*)),0,0);
+  printf("days %d\n",d);
+  if ((d>0)&&(d<3650)) {
+    connect(net, SIGNAL(finished(QNetworkReply*)), this, SLOT(replyFinished3(QNetworkReply*)));
+    reply = net->get(QNetworkRequest(QUrl("http://www.molecoolqt.de/loadDABA2.php")));
+  }
+}
 
 void MyWindow::replyFinished2(QNetworkReply* antwort){
   QString a=antwort->readAll();
@@ -4637,6 +4660,23 @@ void MyWindow::replyFinished2(QNetworkReply* antwort){
   QString Pfad = mol.einstellung->fileName();
   Pfad=Pfad.section('/',0,-2);
   Pfad.append("/DABA.txt");
+  QFile base(Pfad);
+  if (base.open(QIODevice::WriteOnly | QIODevice::Text)){
+    base.write(a.toLatin1());
+    base.close();
+  } 
+  antwort->close();
+  antwort->deleteLater();
+  cubeGL->loadDataBase(Pfad);
+  disconnect(net,SIGNAL(finished(QNetworkReply*)),0,0);
+}
+
+void MyWindow::replyFinished3(QNetworkReply* antwort){
+  QString a=antwort->readAll();
+  //
+  QString Pfad = mol.einstellung->fileName();
+  Pfad=Pfad.section('/',0,-2);
+  Pfad.append("/DABA_def2TZVP.txt");
   QFile base(Pfad);
   if (base.open(QIODevice::WriteOnly | QIODevice::Text)){
     base.write(a.toLatin1());
@@ -7242,6 +7282,115 @@ void MyWindow::load_sheldrick(QString fileName){
   //printf(">>%f %f\n",mol.pmin,mol.pmax);
 }//shelx
 
+void MyWindow::load_vasp(QString fileName){
+//0V  Cl O                                 
+//1   1.00000000000000     
+//2     7.6217866652000641    0.0304636550647089    0.0002434230125215
+//3     0.0238050005825655    6.6140422338289397    0.0025969675531448
+//4     0.0003355324171574    0.0062253676579804   15.6401045195907553
+//5   V    Cl   O 
+//6    16    16    16
+//7Direct
+//8  0.1263639249449441  0.3762904341218621  0.0592434646581860
+  hatlokale=0;
+  george=true;
+  QFile vasp(fileName);
+  vasp.open(QIODevice::ReadOnly);
+  QString all=vasp.readAll();
+  QStringList lines=all.split('\n',QString::KeepEmptyParts);
+//  qDebug()<<fileName; 
+  if (lines.size()<9) return;
+  strcpy(CID,lines.at(0).toStdString().c_str());
+//  qDebug()<<CID<<lines.size();
+  double scale=1.0;
+  scale=lines.at(1).toDouble();
+  V3 a,b,c;
+  QStringList tok;
+  tok=lines.at(2).split(' ',QString::SkipEmptyParts);
+//  qDebug()<<tok.size()<<tok;
+  if (tok.size()!=3) return; 
+  a.x=tok.at(0).toDouble()*scale;
+  a.y=tok.at(1).toDouble()*scale;
+  a.z=tok.at(2).toDouble()*scale;
+  
+  tok=lines.at(3).split(' ',QString::SkipEmptyParts);
+  if (tok.size()!=3) return; 
+  b.x=tok.at(0).toDouble()*scale;
+  b.y=tok.at(1).toDouble()*scale;
+  b.z=tok.at(2).toDouble()*scale;
+  
+  tok=lines.at(4).split(' ',QString::SkipEmptyParts);
+  if (tok.size()!=3) return; 
+  c.x=tok.at(0).toDouble()*scale;
+  c.y=tok.at(1).toDouble()*scale;
+  c.z=tok.at(2).toDouble()*scale;
+  xdinp.clear();
+  asymmUnit.clear();
+  mol.zelle.symmops.clear();
+  mol.zelle.trans.clear();
+
+  Matrix mg=Matrix(a,b,c);
+  mol.zelle.a=sqrt(Norm(a));
+  mol.zelle.b=sqrt(Norm(b));
+  mol.zelle.c=sqrt(Norm(c));
+  mol.zelle.al=mol.winkel(b,c);
+  mol.zelle.be=mol.winkel(a,c);
+  mol.zelle.ga=mol.winkel(a,b);
+  mol.zelle.V=determinant(mg);
+  mol.zelle.f2c=mg;
+  qDebug()<<mol.zelle.a<<mol.zelle.b<<mol.zelle.c<<mol.zelle.al<<mol.zelle.be<<mol.zelle.ga<<mol.zelle.V;
+//  qDebug()<<determinant(mg);
+  mol.initDir();
+ // mol.adp=0;  
+  QStringList elements;
+  QList<int> unit,su; 
+  elements=lines.at(5).split(' ',QString::SkipEmptyParts);
+  tok=lines.at(6).split(' ',QString::SkipEmptyParts);
+  int na=0;
+  for (int i=0; i<tok.size(); i++){
+    su.append(na);
+    unit.append(na+=tok.at(i).toInt());
+  }
+  su.append(na);
+ // qDebug()<<na;
+  int csfac=-1;
+  INP newAtom;
+  newAtom.part=0;
+  newAtom.sg=0;
+  newAtom.amul=1.0;
+  newAtom.jtf=1;
+  newAtom.OrdZahl=-4;
+  newAtom.uf=Matrix(0.01,0,0, 0,0.01,0, 0,0,0.01);
+  newAtom.u=Matrix(0.01,0,0, 0,0.01,0, 0,0,0.01);
+  for (int i=8; i<na+8;i++){
+  tok=lines.at(i).split(' ',QString::SkipEmptyParts);
+  int j=i-8;
+
+  for (int k=0; k<unit.size(); k++){
+    if ((j>=su.at(k))&&(j<su.at(k+1))) csfac=k;
+  }
+//  V3 frac=V3(tok.at(0).toDouble(),tok.at(1).toDouble(),tok.at(2).toDouble());
+//  V3 cart1=frac.x*a+frac.y*b+frac.z*c;
+//  V3 cart2=mg*frac;
+//  qDebug()<<csfac<<j<<elements.at(csfac)<< cart1.x<< cart1.y<<cart1.z << cart2.x<< cart2.y<<cart2.z ;
+  newAtom.frac=V3(tok.at(0).toDouble(),tok.at(1).toDouble(),tok.at(2).toDouble());
+  newAtom.kart=mg*newAtom.frac;
+  newAtom.OrdZahl=mol.Get_OZ(elements.at(csfac)); 
+  sprintf(newAtom.atomname,"%s",QString("%1%2").arg(elements.at(csfac)).arg(j-su.at(csfac)+1).toStdString().c_str()); 
+  asymmUnit.append(newAtom);
+
+
+  }
+  mol.decodeSymmCard("x, y, z");
+  growSymm(0);
+
+
+
+   
+
+
+}
+
 //--------------------------------------------------------------------------------------------
 // C  I  F  CIF
 void MyWindow::cifcard(const QString v){
@@ -8023,6 +8172,7 @@ void MyWindow::openFile() {
 		  "CIF-Files (*.cif);;"
                   "Jana-Files (*.m*);;"
                   "XYZ-Files (*.xyz);;"
+                  "VASP-Files (*.vasp);;"
 		  "Protein Data Base file (*.pdb *.ent);;",&selectedFilter,QFileDialog::DontUseNativeDialog ); 
   if (!fileName.isEmpty()) {
     loadFile(fileName);
@@ -8680,6 +8830,9 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
   if (!same) togUnit->setEnabled (true );
   QDir::setCurrent ( fileName.left(fileName.lastIndexOf("/") ))  ;
   statusBar()->showMessage(QString(tr("Loading %1").arg(fileName)) );
+  if (fileName.endsWith(".vasp", Qt::CaseInsensitive)) {
+    load_vasp(fileName);
+  }
   if (fileName.endsWith(".BayMEM", Qt::CaseInsensitive)) {
    // qDebug()<<fileName<<fileName.endsWith(".BayMEM");
     load_BayMEM(fileName);
