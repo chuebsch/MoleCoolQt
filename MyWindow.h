@@ -208,6 +208,7 @@ class MyWindow : public QMainWindow {
     void filterHydrogens(bool b);
     void filterNonAtoms(bool b);
     void filterThisAtom();
+    void filterDistant();
     void filterSelectedAtoms();
     void filterGroup(int index);
     void filterThisFragment();

@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=586;
+int rev=587;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -2200,10 +2200,13 @@ void MyWindow::genMoliso(QString isoname, QString mapname, QString lfcename, QSt
   fos->setMaximum(272);
   fos->setValue(cubeGL->MLegendFont.pointSize());
   connect(fos,SIGNAL(valueChanged(int)),cubeGL,SLOT(setMLFontSize(int)));
+  QPushButton *expWFobj= new QPushButton("Export surfaces");
+  connect(expWFobj,SIGNAL(pressed()),  cubeGL->moliso,SLOT(exportObj()));
   zla->addWidget(mlf);
   zla->addWidget(fos);
   zla->addWidget(savset);
   zla->addWidget(lodset);
+  zla->addWidget(expWFobj);
   zla->addStretch(999);
   connect(cubeGL,SIGNAL(mconf()),this,SLOT(syncMconf()));
   cubeGL->togglContours(false);
@@ -6175,6 +6178,9 @@ void MyWindow::directHirsh(){
   zla->addWidget(fos);
   zla->addWidget(savset);
   zla->addWidget(lodset);
+  QPushButton *expWFobj= new QPushButton("Export surfaces");
+  connect(expWFobj,SIGNAL(pressed()),  cubeGL->moliso,SLOT(exportObj()));
+  zla->addWidget(expWFobj);
   zla->addStretch(999);
   connect(cubeGL,SIGNAL(mconf()),this,SLOT(syncMconf()));
   cubeGL->togglContours(false);
@@ -8529,6 +8535,28 @@ void MyWindow::filterThisFragment(){
     QList<INP> fltrXdinp;
     for (int i=0;i<xdinp.size();i++){
       if (!mwi.contains(i)) fltrXdinp.append(xdinp[i]);
+    }
+    xdinp.clear();
+    xdinp=fltrXdinp;
+    mol.bonds_made=0;
+    mol.knopf_made=0;
+    initLists( fltrXdinp);
+    filtered=1;
+    update();
+    cubeGL->updateGL();
+  }
+}
+
+void MyWindow::filterDistant(){
+  if (cubeGL->expandatom>-1){
+    unfilterAct->setVisible(true);
+    if (!filtered){
+      oxd=xdinp;
+    }
+    V3 ego=xdinp[cubeGL->expandatom].frac;
+    QList<INP> fltrXdinp;
+    for (int i=0;i<xdinp.size();i++){
+      if (4.0>fl(xdinp[i].frac.x-ego.x,xdinp[i].frac.y-ego.y,xdinp[i].frac.z-ego.z))fltrXdinp.append(xdinp[i]);
     }
     xdinp.clear();
     xdinp=fltrXdinp;

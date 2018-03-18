@@ -2,6 +2,7 @@
 #include "molekul.h"
 #include <QtGui>
 #include "cubeGL.h"
+#include <QFileDialog>
 
 bool X_cmp(const Polygn &p1,const Polygn &p2){
   return (p1.vertex.x < p2.vertex.x);
@@ -243,7 +244,7 @@ void MolIso::loadMI(QString fname, bool om, bool mima){
         fprintf(polifile,"#   alpha      beta    VS+    VS-     PI     sig+     sig-   sigtot         nu    min    max  Volume enclosed     Area\n");
         fprintf(polifile,"#     %%         %%      e/A    e/A    e/A  e^2/A^2  e^2/A^2  e^2/A^2               e/A    e/A              A^3      A^2\n");
         fprintf(polifile,"%9.1f %9.1f %6.3f %6.3f %6.3f   %6.4f   %6.4f   %6.4f   %8.6f %6.3f %6.3f %16.1f"
-,(double)np/(nt)*100.0,(double) nm/(nt)*100.0,dmp,dmm,api,sigmap,sigmam,sigmam+sigmap,sigmap*sigmam/((sigmam+sigmap)*(sigmam+sigmap)),min,max,Volumen2);
+            ,(double)np/(nt)*100.0,(double) nm/(nt)*100.0,dmp,dmm,api,sigmap,sigmam,sigmam+sigmap,sigmap*sigmam/((sigmam+sigmap)*(sigmam+sigmap)),min,max,Volumen2);
       }
       emit bigmessage(QString(
             "Average of positive surface values V<sub>S</sub><sup>+</sup><sub>av.</sub> = <b>%1</b><br>"
@@ -363,9 +364,9 @@ void MolIso::loadMI(QString fname, bool om, bool mima){
   printf("%d orte.size %d  L%g\n",orte.size(),pgns.size(),L);
   Area=pgnArea();
   printf("Area %g Angstrom^2\n",Area); 
-      if (polifile!=NULL) {
-        fprintf(polifile," %8.0f\n",Area);
-      }
+  if (polifile!=NULL) {
+    fprintf(polifile," %8.0f\n",Area);
+  }
   balken->setValue(1);
   glNewList(mibas, GL_COMPILE );{                       //Isooberfl"ache ::Perspektive 1     
     glPushMatrix();{
@@ -440,16 +441,76 @@ void MolIso::loadMI(QString fname, bool om, bool mima){
   faceFile=fname;
 }
 
+void MolIso::exportObj(){
+  QString wfobj = QFileDialog::getSaveFileName ( this, 
+      "Export Isosurfaces to WaveFront .obj file",
+      QDir::homePath(), "Wavefront (*.obj)");
+  if (wfobj.isEmpty()) return;
+  if (!wfobj.contains (QRegExp(".obj$"))) wfobj.append(".obj");
+  QString wfmtl=wfobj;
+
+  wfmtl=wfmtl.replace(QRegExp("obj$"),"mtl"); 
+  QString wfmtlbase=wfmtl.section('/', -1);
+  QString base= wfmtlbase;
+  base=base.remove(QRegExp("mtl$"));
+  QString path=wfmtl.section('/',0, -2);
+//  qDebug()<<wfmtlbase<<path;
+  QFile of(wfobj);
+  of.open(QIODevice::WriteOnly|QIODevice::Text);
+  of.write(QString("#Created by MoleCoolQt\nmtllib %1\n#%2 vertices %3 faces\nusemtl grad\n").arg(wfmtlbase).arg(orte.size()).arg(pgns.size()).toLatin1());
+  for (int i=0; i<orte.size(); i++){
+    of.write(QString("v  %1 %2 %3\nvn %4 %5 %6\nvt %7     0.0\n")
+        .arg(orte.at(i).vertex.x,12,'f',6) 
+        .arg(orte.at(i).vertex.y,12,'f',6) 
+        .arg(orte.at(i).vertex.z,12,'f',6) 
+        .arg(orte.at(i).normal.x,12,'f',6) 
+        .arg(orte.at(i).normal.y,12,'f',6) 
+        .arg(orte.at(i).normal.z,12,'f',6) 
+        .arg((orte.at(i).color-min)/(max-min),12,'f',6).toLatin1()
+        ); 
+  }
+  for (int i=0; i<pgns.size();i++){
+    of.write("f ");
+    for (int j=0; j<pgns.at(i).n;j++){
+      int n= pgns.at(i).ii[j]+1;
+      of.write(QString(" %1/%1/%1 ").arg(n).toLatin1());
+    }
+    of.write("\n");
+  }
+  of.close();
+  QFile mf(wfmtl);
+  mf.open(QIODevice::WriteOnly|QIODevice::Text);
+  mf.write(QString("newmtl grad\nmap_Kd %1png\n").arg(base).toLatin1());
+  mf.close();
+  QPixmap fmap = QPixmap(512,10);
+  fmap.fill(QColor(128,128,128,0));
+  QPainter *paint = new QPainter(&fmap);
+  QPen pen;
+  for (int i=0; i<512; i++){
+    QColor c=farbverlauf(i/512.0);
+    pen.setBrush(c);
+    paint->setPen(pen);
+    paint->drawLine(i,1,i,9);
+  }
+  paint->end();
+  QString fn2=QString("%1/%2png").arg(path).arg(base);
+  fmap.save(fn2);
+}
+
+
+
+
+
 double MolIso::pgnArea(){
   double area=0.0;
   for (int i=0;i<pgns.size();i++){
     switch (pgns.at(i).n){
       case 3:
         area+= 0.5*sqrt(Norm((
-              orte.at(pgns.at(i).ii[1]).vertex-
-              orte.at(pgns.at(i).ii[0]).vertex)%(
-              orte.at(pgns.at(i).ii[2]).vertex-
-              orte.at(pgns.at(i).ii[0]).vertex)));
+                orte.at(pgns.at(i).ii[1]).vertex-
+                orte.at(pgns.at(i).ii[0]).vertex)%(
+                orte.at(pgns.at(i).ii[2]).vertex-
+                orte.at(pgns.at(i).ii[0]).vertex)));
         break;
       case 4:
         area+=sqrt(Norm((orte.at(pgns.at(i).ii[1]).vertex-orte.at(pgns.at(i).ii[0]).vertex)%(orte.at(pgns.at(i).ii[3]).vertex-orte.at(pgns.at(i).ii[0]).vertex)));
@@ -472,7 +533,7 @@ double MolIso::pgnArea(){
                     a+=sqrt(Norm((orte.at(pgns.at(i).ii[k%pgns.at(i).n]).vertex-mO)%(orte.at(pgns.at(i).ii[(k+1)%pgns.at(i).n]).vertex-mO)));
                   area+=0.5*a;
 
-               break;
+                  break;
                 }
       default : printf("wrong polygonshape! %d\n",pgns.at(i).n);glEnd();break;
 
@@ -865,7 +926,7 @@ void MolIso::readXDGridHeader(QString fname,int &fileType){
     return;
   }
   if (fname.contains(QRegExp("\\..ed$"))){
-//    qDebug()<<fname<<__LINE__;
+    //    qDebug()<<fname<<__LINE__;
     readGVDHeader(fname);
     GHName=fname;
     fileType=321;
@@ -1685,22 +1746,22 @@ void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &st
       CalcVertexes();
       CalcNormals();
       printf("iso_level: %g\n",iso_level);
-//      std::cout<<iso_level;
-/*      
-      tf->open(QIODevice::WriteOnly|QIODevice::Text);
-      tf->write(QString("%1\n").arg(orte.size()).toLatin1());
-      for (int i=0;i<orte.size();i++){
-        orte[i].normal=Normalize(orte.at(i).normal);
-        tf->write(QString("%1  %2 %3 %4   %5 %6 %7  %8\n")
-            .arg(i,-6)
-            .arg(orte.at(i).vertex.x,9,'f',6)
-            .arg(orte.at(i).vertex.y,9,'f',6)
-            .arg(orte.at(i).vertex.z,9,'f',6)
-            .arg(orte.at(i).normal.x,9,'f',6)
-            .arg(orte.at(i).normal.y,9,'f',6)
-            .arg(orte.at(i).normal.z,9,'f',6)
-            .arg(orte.at(i).color,12,'f',7).toLatin1());
-      }*/
+      //      std::cout<<iso_level;
+      /*      
+              tf->open(QIODevice::WriteOnly|QIODevice::Text);
+              tf->write(QString("%1\n").arg(orte.size()).toLatin1());
+              for (int i=0;i<orte.size();i++){
+              orte[i].normal=Normalize(orte.at(i).normal);
+              tf->write(QString("%1  %2 %3 %4   %5 %6 %7  %8\n")
+              .arg(i,-6)
+              .arg(orte.at(i).vertex.x,9,'f',6)
+              .arg(orte.at(i).vertex.y,9,'f',6)
+              .arg(orte.at(i).vertex.z,9,'f',6)
+              .arg(orte.at(i).normal.x,9,'f',6)
+              .arg(orte.at(i).normal.y,9,'f',6)
+              .arg(orte.at(i).normal.z,9,'f',6)
+              .arg(orte.at(i).color,12,'f',7).toLatin1());
+              }*/
       for( int ix=0; ix<breite-1; ix++ )
         for( int iy=0; iy<hoehe-1; iy++ )
           for( int iz=0; iz<tiefe-1; iz++ )
@@ -1708,51 +1769,51 @@ void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &st
 
       PXsort();
       balken->setValue(90+(10/isoValues.size())*(k+1));
-/*      QString Line="";
-      for (int i=0; i<pgns.size();i++) {
-        for (int j=0; j<pgns.at(i).n;j++){
-          Line.append(QString("%1 ").arg(pgns.at(i).ii[j],6));
-        }
-        if (pgns.at(i).n>0) {
-          Line.append("\n");
-          tf->write(Line.toLatin1());
-          Line.clear();
-        }
-      }
-      tf->close(); //  */
+      /*      QString Line="";
+              for (int i=0; i<pgns.size();i++) {
+              for (int j=0; j<pgns.at(i).n;j++){
+              Line.append(QString("%1 ").arg(pgns.at(i).ii[j],6));
+              }
+              if (pgns.at(i).n>0) {
+              Line.append("\n");
+              tf->write(Line.toLatin1());
+              Line.clear();
+              }
+              }
+              tf->close(); //  */
     }
     /////////////////////////////////////
-      tf->open(QIODevice::WriteOnly|QIODevice::Text);
-      tf->write(QString("%1\n").arg(orte.size()).toLatin1());
-      for (int i=0;i<orte.size();i++){
-        Vector3 v= orte[i].normal;
-        double nn=1.0/sqrt((double)v.x*v.x + v.y*v.y + v.z*v.z);
-        orte[i].normal=nn*orte.at(i).normal;
-        tf->write(QString("%1  %2 %3 %4   %5 %6 %7  %8\n")
-            .arg(i,-6)
-            .arg(orte.at(i).vertex.x,9,'f',6)
-            .arg(orte.at(i).vertex.y,9,'f',6)
-            .arg(orte.at(i).vertex.z,9,'f',6)
-            .arg(orte.at(i).normal.x,9,'f',6)
-            .arg(orte.at(i).normal.y,9,'f',6)
-            .arg(orte.at(i).normal.z,9,'f',6)
-        //    .arg(Norm(orte.at(i).normal),12,'f',7)
-            .arg(orte.at(i).color,12,'f',7)
-            .toLatin1());
+    tf->open(QIODevice::WriteOnly|QIODevice::Text);
+    tf->write(QString("%1\n").arg(orte.size()).toLatin1());
+    for (int i=0;i<orte.size();i++){
+      Vector3 v= orte[i].normal;
+      double nn=1.0/sqrt((double)v.x*v.x + v.y*v.y + v.z*v.z);
+      orte[i].normal=nn*orte.at(i).normal;
+      tf->write(QString("%1  %2 %3 %4   %5 %6 %7  %8\n")
+          .arg(i,-6)
+          .arg(orte.at(i).vertex.x,9,'f',6)
+          .arg(orte.at(i).vertex.y,9,'f',6)
+          .arg(orte.at(i).vertex.z,9,'f',6)
+          .arg(orte.at(i).normal.x,9,'f',6)
+          .arg(orte.at(i).normal.y,9,'f',6)
+          .arg(orte.at(i).normal.z,9,'f',6)
+          //    .arg(Norm(orte.at(i).normal),12,'f',7)
+          .arg(orte.at(i).color,12,'f',7)
+          .toLatin1());
+    }
+    QString Line="";
+    for (int i=0; i<pgns.size();i++) {
+      for (int j=0; j<pgns.at(i).n;j++){
+        Line.append(QString("%1 ").arg(pgns.at(i).ii[j],6));
       }
-      QString Line="";
-      for (int i=0; i<pgns.size();i++) {
-        for (int j=0; j<pgns.at(i).n;j++){
-          Line.append(QString("%1 ").arg(pgns.at(i).ii[j],6));
-        }
-        if (pgns.at(i).n>0) {
-          Line.append("\n");
-          tf->write(Line.toLatin1());
-          Line.clear();
-        }
+      if (pgns.at(i).n>0) {
+        Line.append("\n");
+        tf->write(Line.toLatin1());
+        Line.clear();
       }
-      tf->close();
-      ///////////////////////////////
+    }
+    tf->close();
+    ///////////////////////////////
     balken->setValue(100);
 
     free(grad);grad=NULL;
@@ -2123,6 +2184,26 @@ void MolIso::createSurface(QString isoFileName, QString mapFileName, QString &st
       glColor4dv(ff);
       return;
     }
+
+    QColor MolIso::farbverlauf (double wrt){
+      static double anf,lang;
+      static int lauf=0;
+      wrt=(wrt>=1.0)?0.999999:wrt;
+      wrt=(wrt<=0.0)?0.000001:wrt;
+      lang=1.0/(Farben-1.0);
+      lauf=(int (wrt/lang));
+      anf=lang*lauf;
+      double r = ((1.0-(wrt-anf)/lang)*farbe[lauf][0]+((wrt-anf)/lang)*farbe[lauf+1][0]);
+      double g = ((1.0-(wrt-anf)/lang)*farbe[lauf][1]+((wrt-anf)/lang)*farbe[lauf+1][1]);
+      double b = ((1.0-(wrt-anf)/lang)*farbe[lauf][2]+((wrt-anf)/lang)*farbe[lauf+1][2]);
+      double a = ((1.0-(wrt-anf)/lang)*farbe[lauf][3]+((wrt-anf)/lang)*farbe[lauf+1][3]);  
+      //qDebug()<<anf<<lang<<lauf<<wrt<<ff[0]<<ff[1]<<ff[2]<<ff[3];
+      QColor c;
+      c.setRgbF(r,g,b,a);
+      return c ;
+    }
+
+
     QColor MolIso::qtFarbe(int index){
       if ((index <0)||(index>6)) return QColor("gray");
       static QColor c;

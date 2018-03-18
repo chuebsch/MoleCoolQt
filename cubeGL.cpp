@@ -1097,16 +1097,17 @@ void CubeGL::paintGL() {
     glPopMatrix();
   }else  
     if (stereo_mode>1) { //stereo_side by side
+//      qDebug()<<minussign<<"stereo_side by side";
       glPushMatrix();
       glViewport(0, 0, _win_width/2, _win_height);        
       glMatrixMode(GL_PROJECTION);
       glLoadIdentity();
       gluPerspective( vangle, (double)(_win_width/2.0)/_win_height, 5.0, 8000.0 );
       glMatrixMode(GL_MODELVIEW);
-      glPushMatrix();
+     // glPushMatrix();
       glRotateL(1.5*minussign,0,1,0);
       draw();
-      glPopMatrix();
+     // glPopMatrix();
       glPopMatrix();
 
       glPushMatrix();
@@ -1115,10 +1116,10 @@ void CubeGL::paintGL() {
       glLoadIdentity();
       gluPerspective( vangle, (double)(_win_width/2.0)/_win_height, 5.0, 8000.0 );
       glMatrixMode(GL_MODELVIEW);
-      glPushMatrix();
+    //  glPushMatrix();
       glRotateL(-1.5*minussign,0,1,0);
       draw();
-      glPopMatrix();
+    //  glPopMatrix();
       glPopMatrix();
     }
 }
@@ -3804,6 +3805,10 @@ void CubeGL::contextMenuEvent(QContextMenuEvent *event) {
       expandAct.setText(tr("Expand %1 Ang. around %2.").arg(mol.gd).arg(xdinp.at(expandatom).atomname));
       hideThisAct.setText(tr("Hide %1 ").arg(xdinp.at(expandatom).atomname));
       menu.addAction(&expandAct);
+      {QAction *a=menu.addAction(tr("Hide atoms > 5 Ang around %1.").arg(xdinp.at(expandatom).atomname),parent(),SLOT(filterDistant()));
+        a->setData(expandatom);
+      }
+
       menu.addAction(&hideThisAct);
       menu.addAction(&hideThisFragment);
       menu.addAction(&hideOtherFragments);
@@ -4123,7 +4128,7 @@ void CubeGL::showMatrix(){
  // qDebug()<<QCoreApplication::libraryPaths () <<QImageWriter::supportedImageFormats ();
 #endif   
 #ifdef _WIN32
-//#else
+/#else
   QList<QByteArray> supo = QImageWriter::supportedImageFormats ();
   for (int i=0; i<supo.size();i++) printf("%s\n",QString(supo.at(i)).toStdString().c_str());
   printf("Die MMATRIX ist:\n%9.6f %9.6f %9.6f %9.6f\n%9.6f %9.6f %9.6f %9.6f\n%9.6f %9.6f %9.6f %9.6f\n%9.6f %9.6f %9.6f %9.6f\n",
@@ -4905,6 +4910,7 @@ if (!selectedAtoms.isEmpty()){
 void CubeGL::dieDiPole(V3 org){
   int size=pole.size(),fsz=farben.size();
   V3 vec,p,VZ;
+  char xyzla[3][3]={"X","Y","Z"};
   VZ.x=0;VZ.y=0;VZ.z=1;
   QFont nonAtomFont=QFont(myFont);
   nonAtomFont.setPointSize(myFont.pointSize()/2);
@@ -4942,7 +4948,9 @@ void CubeGL::dieDiPole(V3 org){
     gluCylinder(q, 0.06, 0.0003, gg/5.0, 8, 50);
     gluDisk(q2, 0, 0.06, 8, 1);
     glPopMatrix();
-    if (drawLa) renderText( pole.at(i).x,pole.at(i).y,pole.at(i).z,QString("Dipole_%1").arg(i),nonAtomFont);
+
+    //if (drawLa) renderText( pole.at(i).x,pole.at(i).y,pole.at(i).z,QString("Dipole_%1").arg(i),nonAtomFont);
+    if ((drawLa)&&(i<3)) renderText( pole.at(i).x,pole.at(i).y,pole.at(i).z,QString("%1").arg(xyzla[i]),nonAtomFont);
 
     glPopMatrix();
   }

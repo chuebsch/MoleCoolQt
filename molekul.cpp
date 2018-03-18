@@ -2324,7 +2324,7 @@ void molekul::make_bonds(QList<INP> xdinp){
   int msiz=(xdinp.size()*10);
   if (NULL==(bd=(bindi*)malloc(sizeof(bindi)*msiz)))return;
   for (int i=0;i<xdinp.size();i++) {
-      printf("i=%d sg=%d part=%d\n",i,xdinp[i].sg,xdinp[i].part);
+//      printf("i=%d sg=%d part=%d\n",i,xdinp[i].sg,xdinp[i].part);
     for (int j=0;j<xdinp.size();j++) {
       if (i==j) continue;
 
@@ -2518,6 +2518,7 @@ void molekul::planes(QList<INP> xd){
 }
 
 void molekul::make_polyeder(QList<INP> xd){
+  return;
     printf("make_polyeder\n");
     if (!knopf_made) make_knopf(xd);
  //   planes(xd);

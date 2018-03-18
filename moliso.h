@@ -179,6 +179,10 @@ signals:
   void createSurface(QString &storeFaceName, bool mapping);
   void legende();
   void Farbverlauf (GLfloat wrt);
+  QColor farbverlauf (double wrt);
   void cleanUpMem();
+public slots:
+  void exportObj();
+
 };
 #endif
