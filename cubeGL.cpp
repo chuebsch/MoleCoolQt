@@ -4128,7 +4128,7 @@ void CubeGL::showMatrix(){
  // qDebug()<<QCoreApplication::libraryPaths () <<QImageWriter::supportedImageFormats ();
 #endif   
 #ifdef _WIN32
-/#else
+#else
   QList<QByteArray> supo = QImageWriter::supportedImageFormats ();
   for (int i=0; i<supo.size();i++) printf("%s\n",QString(supo.at(i)).toStdString().c_str());
   printf("Die MMATRIX ist:\n%9.6f %9.6f %9.6f %9.6f\n%9.6f %9.6f %9.6f %9.6f\n%9.6f %9.6f %9.6f %9.6f\n%9.6f %9.6f %9.6f %9.6f\n",
