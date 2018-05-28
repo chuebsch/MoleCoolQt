@@ -13,6 +13,7 @@ V3 mil;
 CubeGL::CubeGL(QWidget *parent) : QGLWidget(parent) {
    setFormat(QGLFormat(QGL::SampleBuffers) );
    atomsClickable=true;
+   specialFragment1=false;
    negpdf=true;
    faceCull=0;
    paparazi=false;
@@ -110,6 +111,71 @@ static inline bool  posTo2D(V3 obj,
    return true;
 
 }
+
+static inline bool  mov2D(V3 &obj,
+           const GLdouble model[16], const GLdouble proj[16],
+           const GLint viewport[4],
+           GLdouble dx, GLdouble dy) {
+   GLdouble in[4], out[4];
+
+   in[0] = obj.x;
+   in[1] = obj.y;
+   in[2] = obj.z;
+   qDebug()<<obj.x<<obj.y<<obj.z;
+   in[3] = 1.0;
+   transform_point(out, model, in);
+   transform_point(in, proj, out);
+
+   if (in[3] == 0.0) return false;
+
+   in[0] /= in[3];
+   in[1] /= in[3];
+   in[2] /= in[3];
+   GLdouble winx, winy;
+   int v2=viewport[2] / 2,
+       v3=viewport[3] / 2;
+   winx = (viewport[0] + (1 + in[0]) * v2) + dx;
+   winy = (viewport[1] + (1 - in[1]) * v3) + dy;
+   winx= (winx<viewport[0])?viewport[0]:winx;
+   winy= (winy<viewport[1])?viewport[1]:winy;
+   winx= (winx>viewport[2])?viewport[2]:winx;
+   winy= (winy>viewport[3])?viewport[3]:winy;
+   qDebug()<<viewport[0]<<viewport[1] <<viewport[2]<<viewport[3]<<dx<<dy;
+   in[0]=(winx - viewport[0] )/((GLdouble) v2) - 1.0;
+   in[1]=-1.0*((winy - viewport[1] )/((GLdouble) v3) - 1.0);
+   bool invable=true;
+   QMatrix4x4 mm=QMatrix4x4 (model).inverted(&invable),
+              pm=QMatrix4x4  (proj).inverted(&invable);
+   GLdouble ipj[16],imm[16];
+   for(int i=0; i<4;i++){
+     imm[i*4]  =(double)mm.column(i).x();
+     imm[1+i*4]=(double)mm.column(i).y();
+     imm[2+i*4]=(double)mm.column(i).z();
+     imm[3+i*4]=(double)mm.column(i).w();
+     ipj[i*4]  =(double)pm.column(i).x();
+     ipj[1+i*4]=(double)pm.column(i).y();
+     ipj[2+i*4]=(double)pm.column(i).z();
+     ipj[3+i*4]=(double)pm.column(i).w();
+     
+   }
+   in[0] *= in[3];
+   in[1] *= in[3];
+   in[2] *= in[3];
+   transform_point(out, ipj, in);
+   transform_point(in, imm, out);
+
+   in[0] /= in[3];
+   in[1] /= in[3];
+   in[2] /= in[3];
+   obj.x = in[0];
+   obj.y = in[1];
+   obj.z = in[2];
+   qDebug()<<obj.x<<obj.y<<obj.z;
+   
+   return true;
+
+}
+
 #endif 
 
 void CubeGL::toggleNoWaitLabel(bool b){
@@ -3996,6 +4062,7 @@ void CubeGL::mouseMoveEvent(QMouseEvent *event) {
   }else if ((event->buttons() & Qt::LeftButton)) {
       if (!noWaitLabel)moving->start(80);
     if ((!xdinp.isEmpty())&&(moveLab)){
+      /*
       GLdouble ML[16];
       glGetDoublev(GL_MODELVIEW_MATRIX,ML);
       double V2[3],V1[3];
@@ -4006,7 +4073,14 @@ void CubeGL::mouseMoveEvent(QMouseEvent *event) {
       V2[1]=ML[4] *V1[0]+ML[5] *V1[1]+ML[6] *V1[2];
       V2[2]=ML[8] *V1[0]+ML[9] *V1[1]+ML[10]*V1[2];
 
-      xdinp[labToMove].labPos+=V3(V2[0],V2[1],V2[2]);
+      xdinp[labToMove].labPos+=V3(V2[0],V2[1],V2[2]);*/
+      GLdouble model[16];
+      GLdouble proj[16];
+      GLint viewport[4];
+      glGetIntegerv(GL_VIEWPORT, viewport);
+      glGetDoublev( GL_PROJECTION_MATRIX , (double*)proj );
+      glGetDoublev( GL_MODELVIEW_MATRIX, (double*)model );
+      mov2D(xdinp[labToMove].labPos,model,proj,viewport,dx,dy );
     }else if (moveLeg){
       double sc41=0.1086206896551724*vangle;
       if (horizont) {
@@ -4627,6 +4701,13 @@ void CubeGL::draw() {
 	callList(bas+8);
       }
       else callList(bas+1);
+      if (specialFragment1){
+        glPushMatrix();{
+          glScaled( L, L, L );
+          mol.adp=0;      
+          mol.bondss(xdinp);
+        }glPopMatrix();    
+      }
     }
     if (drawAt) {
       if (elli) {
@@ -4638,6 +4719,17 @@ void CubeGL::draw() {
       }else {
 	if (mol.tubifiedAtoms)callList(bas+9);
 	else callList(bas+4);
+      }
+      if (specialFragment1){
+	glPushMatrix();{
+	  glScaled( L, L, L );
+	  mol.adp=0;
+          bool before=mol.tubifiedAtoms;
+          mol.tubifiedAtoms=false;
+	  mol.atoms(xdinp,-41);
+          mol.tubifiedAtoms=before;
+	}glPopMatrix();    
+
       }
 
 
@@ -4851,7 +4943,8 @@ if (!selectedAtoms.isEmpty()){
 	      if (xdinp[j].OrdZahl<0) renderText( xdinp[j].labPos.x,xdinp[j].labPos.y,xdinp[j].labPos.z, xdinp[j].atomname,nonAtomFont);
 	      else 
 		if ((imFokus==j)||(!(mol.aStyle[xdinp[j].OrdZahl]&ATOM_STYLE_NOLABEL)))
-		  renderText( xdinp[j].labPos.x,xdinp[j].labPos.y,xdinp[j].labPos.z, xdinp[j].atomname,myFont);
+		  renderText( xdinp[j].labPos.x,xdinp[j].labPos.y,xdinp[j].labPos.z, xdinp[j].atomname,
+                      ((specialFragment1)&&(xdinp[j].molindex==1))?myFont:nonAtomFont);
 	    }
 	  }    
 	  for (int j=0;j<matoms.size();j++){

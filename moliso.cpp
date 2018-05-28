@@ -341,7 +341,7 @@ void MolIso::loadMI(QString fname, bool om, bool mima){
         xdinp.append(newAtom);
         minza++;
       }
-      if (mimawa[i]==2){
+      else if (mimawa[i]==2){
         //   printf("local min at %f %f %f (%f)\n",orte.at(i).vertex.x, orte.at(i).vertex.y, orte.at(i).vertex.z, orte.at(i).color);
         sprintf(newAtom.atomname,"%s%d","CP",minza);
         newAtom.cptype=0;
@@ -360,6 +360,7 @@ void MolIso::loadMI(QString fname, bool om, bool mima){
     }
     fclose(sfmm);
   }
+
   printf("minmax %f %f %f %f\n",min,max,fixmax,fixmin);
   printf("%d orte.size %d  L%g\n",orte.size(),pgns.size(),L);
   Area=pgnArea();
@@ -441,6 +442,139 @@ void MolIso::loadMI(QString fname, bool om, bool mima){
   faceFile=fname;
 }
 
+double winkel(Vector3 a,Vector3 b){
+
+  static double erg;
+  erg=(a.x*b.x+a.y*b.y+a.z*b.z)/(sqrt(a.x*a.x+a.y*a.y+a.z*a.z)*sqrt(b.x*b.x+b.y*b.y+b.z*b.z));
+  erg=acos(erg)/M_PI*180.0;
+ return(erg);
+}
+
+bool mimacmp(const Imum &p1,const Imum &p2){
+  return p1.v > p2.v;
+}
+
+void MolIso::exportSTL(){
+  QString stln = QFileDialog::getSaveFileName ( this, 
+      "Export Isosurfaces to stereolithography ASCII .stl file",
+      QDir::homePath(), "ASCII STL (*.stl)");
+  if (stln.isEmpty()) return;
+  if (!stln.contains (QRegExp(".stl$",Qt::CaseInsensitive))) stln.append(".stl");
+  double scale=10.0;
+
+  Vector3 zentrum=Vector3(0.,0.,0.);
+  for (int i=0; i<orte.size();i++) zentrum+=orte.at(i).vertex;
+  zentrum*=1.0/orte.size()*scale;
+
+  QFile of(stln);
+  of.open(QIODevice::WriteOnly|QIODevice::Text);
+  of.write(QString("solid MoleCoolQt surface\n").toLatin1());
+  for (int i=0; i<pgns.size();i++){
+    int n=pgns.at(i).n;
+    Vector3 normale=Vector3(0.0,0.0,0.0);
+    for (int j=0; j<n;j++) normale+=orte.at(pgns.at(i).ii[j]).normal;
+    normale=Normalize(normale);
+    double xxx=sqrt(Norm(normale));
+    normale*=1.0/xxx;
+    if (n==3){
+      of.write(
+          QString("  facet normal %1 %2 %3\n     outer loop\n      vertex %4 %5 %6\n      vertex %7 %8 %9\n      vertex %10 %11 %12\n    endloop\n  endfacet\n")
+          .arg(normale.x).arg(normale.y).arg(normale.z)
+          .arg(orte.at(pgns.at(i).ii[0]).vertex.x*scale).arg(orte.at(pgns.at(i).ii[0]).vertex.y*scale).arg(orte.at(pgns.at(i).ii[0]).vertex.z*scale)
+          .arg(orte.at(pgns.at(i).ii[1]).vertex.x*scale).arg(orte.at(pgns.at(i).ii[1]).vertex.y*scale).arg(orte.at(pgns.at(i).ii[1]).vertex.z*scale)
+          .arg(orte.at(pgns.at(i).ii[2]).vertex.x*scale).arg(orte.at(pgns.at(i).ii[2]).vertex.y*scale).arg(orte.at(pgns.at(i).ii[2]).vertex.z*scale)
+          .toLatin1());
+
+    }else{
+      Vector3 mid=Vector3(0.0,0.0,0.0);
+      for (int j=0; j<n;j++) mid+=orte.at(pgns.at(i).ii[j]).vertex;
+      mid*=1.0/n;
+      for (int k=0;k<n;k++){
+        int kp=(k+1)%n;
+      of.write(
+          QString("  facet normal %1 %2 %3\n     outer loop\n      vertex %4 %5 %6\n      vertex %7 %8 %9\n      vertex %10 %11 %12\n    endloop\n  endfacet\n")
+          .arg(normale.x).arg(normale.y).arg(normale.z)
+          .arg(mid.x*scale).arg(mid.y*scale).arg(mid.z*scale)
+          .arg(orte.at(pgns.at(i).ii[k]).vertex.x*scale).arg(orte.at(pgns.at(i).ii[k]).vertex.y*scale).arg(orte.at(pgns.at(i).ii[k]).vertex.z*scale)
+          .arg(orte.at(pgns.at(i).ii[kp]).vertex.x*scale).arg(orte.at(pgns.at(i).ii[kp]).vertex.y*scale).arg(orte.at(pgns.at(i).ii[kp]).vertex.z*scale)
+          .toLatin1());
+      }
+    }
+
+  }
+  of.write(QString("endsolid name\n").toLatin1());
+  of.close();
+  if  (1){//((calcextrema)){
+    extern molekul mol;
+    int *mimawa=(int*)malloc(sizeof(int)*orte.size());
+    for (int i=0; i<orte.size();i++)mimawa[i]=0;
+    for (int i=0; i<pgns.size();i++){
+      double pgmin=1e99;
+      double pgmax=-1e99;
+      int imi=0,ima=0;
+      for (int j=0; j<pgns.at(i).n; j++){
+        int idx=pgns.at(i).ii[j];
+        imi=(orte.at(idx).color<pgmin)?idx:imi;
+        ima=(orte.at(idx).color>pgmax)?idx:ima;
+
+        pgmin=(orte.at(idx).color<pgmin)?orte.at(idx).color:pgmin;
+        pgmax=(orte.at(idx).color>pgmax)?orte.at(idx).color:pgmax;
+      }
+      for (int j=0; j<pgns.at(i).n; j++){
+        int idx=pgns.at(i).ii[j];
+        if (imi==ima) mimawa[idx]|=1;
+        else {
+          if (idx==imi) mimawa[idx]|=2;
+          if (idx==ima) mimawa[idx]|=4;
+          if ((idx!=ima)&&(idx!=imi)) mimawa[idx]|=1;
+        }
+      }
+    }
+    QString ncad=stln;
+    ncad=ncad.replace(".stl",".scad");
+    QFile scad(ncad);
+    scad.open(QIODevice::WriteOnly|QIODevice::Text);
+    scad.write(QString("/* Change SCALE if you wish to change 1cm=1Angstrom\nCylinders below are for 5mm diameter 2mm height magnets.\nCylinders are sorted by value.\nValue is given behind //.\n You might comment out the lower ones and those overlapping.\n */\nSCALE=%5;\nmag_diameter=5/cos(180/100);//corrected to get outer radius\nmag_height=2;\ntranslate([%2*SCALE,%3*SCALE,%4*SCALE])difference(){\nscale([SCALE,SCALE,SCALE])import(\"%1\");\n")
+        .arg(stln)
+        .arg(-zentrum.x)
+        .arg(-zentrum.y)
+        .arg(-zentrum.z)
+        .arg(scale/10.0)
+
+        .toLatin1());
+    QList<Imum> extrem;
+    for (int i=0; i<orte.size();i++){
+      if ((mimawa[i]==4)||(mimawa[i]==2)){
+        Imum I;
+        I.i=i;
+        I.v=orte.at(i).color;
+        extrem.append(I);
+      }
+    }
+    qSort(extrem.begin(),extrem.end(),mimacmp);
+
+    for (int i=0; i<extrem.size();i++){
+      int j=extrem.at(i).i;
+      Vector3 ax = Normalize(Vector3(0,0,1)%orte.at(j).normal);
+//      double NAX=Norm(ax);
+  //    ax*=1.0/NAX;
+      double angle = winkel(Vector3(0,0,1),orte.at(j).normal);
+        scad.write(QString("translate([%1*SCALE, %2*SCALE, %3*SCALE]) rotate(%4, [%5, %6, %7]) cylinder($fn=100, d=mag_diameter, h=2.5*mag_height, center=true);// %8\n")
+            .arg(orte.at(j).vertex.x*scale)
+            .arg(orte.at(j).vertex.y*scale)
+            .arg(orte.at(j).vertex.z*scale)
+            .arg(angle)
+            .arg(ax.x)
+            .arg(ax.y)
+            .arg(ax.z)
+            .arg(orte.at(j).color)
+            .toLatin1());
+    }
+  scad.write(QString("}\n").toLatin1());
+  scad.close();
+  } 
+}
+
 void MolIso::exportObj(){
   QString wfobj = QFileDialog::getSaveFileName ( this, 
       "Export Isosurfaces to WaveFront .obj file",
@@ -482,7 +616,7 @@ void MolIso::exportObj(){
   mf.open(QIODevice::WriteOnly|QIODevice::Text);
   mf.write(QString("newmtl grad\nmap_Kd %1png\n").arg(base).toLatin1());
   mf.close();
-  QPixmap fmap = QPixmap(512,10);
+  QPixmap fmap = QPixmap(512,8);
   fmap.fill(QColor(128,128,128,0));
   QPainter *paint = new QPainter(&fmap);
   QPen pen;
@@ -490,7 +624,7 @@ void MolIso::exportObj(){
     QColor c=farbverlauf(i/512.0);
     pen.setBrush(c);
     paint->setPen(pen);
-    paint->drawLine(i,1,i,9);
+    paint->drawLine(i,1,i,7);
   }
   paint->end();
   QString fn2=QString("%1/%2png").arg(path).arg(base);

@@ -1938,6 +1938,7 @@ void molekul::atoms(QList<INP> xdinp,const int proba){//ADP Schwingungsellipsoid
   double a[3][3];
   int mylod =lod;
   for (int j=0;j<xdinp.size();j++){//for atmax
+    if ((proba==-41)&&(xdinp[j].molindex!=1)) continue;
     int  nonPositiveDefinite=0;
 //    qDebug()<<__LINE__<<xdinp[j].OrdZahl;
       int myStyle=(xdinp[j].OrdZahl>-1)?aStyle[xdinp[j].OrdZahl]:0;
@@ -1949,7 +1950,7 @@ void molekul::atoms(QList<INP> xdinp,const int proba){//ADP Schwingungsellipsoid
     double rad=(xdinp[j].OrdZahl>-1)?arad[xdinp[j].OrdZahl]:0.15;
 
       if (tubifiedAtoms) rad = bondStrength;
-
+      if (proba==-41) rad *= 1.3;
       if ((myAdp)&&(xdinp[j].OrdZahl>-1)) {//adp
 	a[0][0]=xdinp[j].u.m11;
 	a[0][1]=xdinp[j].u.m12;
@@ -2689,6 +2690,7 @@ void molekul::entknoten(){
   }
 }
 void molekul::countMols(QList<INP> & xdinp){
+  if (!knopf_made) make_knopf(xdinp);
   for (int i=0; i<xdinp.size();i++)
     xdinp[i].molindex=0;
   int maxmol=1;
@@ -3486,6 +3488,44 @@ void molekul::bonds(QList<INP> xdinp){
 
     gluCylinder(q, bondStrength, bondStrength, (float)gg/(200.0f), 5*LOD, 1); 
 
+    glPopMatrix();
+  }	
+  glEnable(GL_CULL_FACE);
+}
+void molekul::bondss(QList<INP> xdinp){
+
+  //BINDUNGEN ab hier
+  double gg;
+  float wink;
+  V3 vec;
+  glDisable(GL_CULL_FACE);
+
+
+
+  if (!knopf_made) make_knopf(xdinp);
+  for (int k=0;k<bcnt;k++){
+    if ((xdinp[bd[k].a].molindex!=xdinp[bd[k].e].molindex)||(xdinp[bd[k].a].molindex!=1)) continue;
+
+    glColor4fv(Acol[xdinp[bd[k].a].OrdZahl]);
+    vec=kreuzX(xdinp[bd[k].a].kart.x-xdinp[bd[k].e].kart.x,xdinp[bd[k].a].kart.y-xdinp[bd[k].e].kart.y,xdinp[bd[k].a].kart.z-xdinp[bd[k].e].kart.z,
+	       0.0f,0.0f,1.0f);                 //Achse senkrecht zur Ebene Ursprung, Bindungs-Ende, Z-Achse 
+
+    if (Norm(vec)==0.0) vec=V3(1.0,0.0,0.0);
+    vec=Normalize(vec);
+    glPushMatrix();	
+    glTranslated (xdinp[bd[k].a].kart.x,xdinp[bd[k].a].kart.y,xdinp[bd[k].a].kart.z);//Anfangspunkt 	    
+    wink=180+winkel(xdinp[bd[k].a].kart-xdinp[bd[k].e].kart,VZ); // Winkel zwischen Bindungs-Richtung und Z-Achse
+    /*printf("Bond %d w%f %f %f %f  dis%f\n",k,wink,xdinp[bd[k].a].kart.x-xdinp[bd[k].e].kart.x,xdinp[bd[k].a].kart.y-xdinp[bd[k].e].kart.y,xdinp[bd[k].a].kart.z-xdinp[bd[k].e].kart.z,
+	   //vec.x,vec.y,vec.z,
+	   Norm(vec));*/
+
+    glRotatef((float)wink,(float)vec.x,(float)vec.y,(float)vec.z); // drehen    
+    GLUquadricObj *q = gluNewQuadric();
+    gluQuadricNormals(q, GL_SMOOTH);   // ein Zylinder
+    gluQuadricTexture(q,GL_TRUE);
+    gg=100.0*sqrt( Distance(xdinp[bd[k].a].kart,xdinp[bd[k].e].kart));
+
+    gluCylinder(q, bondStrength*3, bondStrength*3, (float)gg/(200.0f), 5*LOD, 1); 
     glPopMatrix();
   }	
   glEnable(GL_CULL_FACE);

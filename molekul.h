@@ -793,6 +793,7 @@ class molekul {
   void modulated(double t, QList<Modulat> mato, int draw, double steps);
   void makeLissajous(QList<Modulat> mato,int proba,bool gay, bool adps, double step,double t0);
   void bonds(QList<INP> xdinp);
+  void bondss(QList<INP> xdinp);
   void bonds(Connection bond);
   double fl(double x,double y, double z);
   double fl(V3 v);

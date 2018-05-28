@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=589;
+int rev=590;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -2200,13 +2200,16 @@ void MyWindow::genMoliso(QString isoname, QString mapname, QString lfcename, QSt
   fos->setMaximum(272);
   fos->setValue(cubeGL->MLegendFont.pointSize());
   connect(fos,SIGNAL(valueChanged(int)),cubeGL,SLOT(setMLFontSize(int)));
-  QPushButton *expWFobj= new QPushButton("Export surfaces");
+  QPushButton *expWFobj= new QPushButton("Export surfaces *.obj");
   connect(expWFobj,SIGNAL(pressed()),  cubeGL->moliso,SLOT(exportObj()));
+  QPushButton *expSTL= new QPushButton("Export surfaces *.stl");
+  connect(expSTL,SIGNAL(pressed()),  cubeGL->moliso,SLOT(exportSTL()));
   zla->addWidget(mlf);
   zla->addWidget(fos);
   zla->addWidget(savset);
   zla->addWidget(lodset);
   zla->addWidget(expWFobj);
+  zla->addWidget(expSTL);
   zla->addStretch(999);
   connect(cubeGL,SIGNAL(mconf()),this,SLOT(syncMconf()));
   cubeGL->togglContours(false);
@@ -2996,8 +2999,20 @@ void MyWindow::saveScene(){
   QString selectedFilter;
   for (int i=0; i<supo.size(); i++)
     if ((!QString(supo.at(i)).contains("ps",Qt::CaseInsensitive)) &&
-		    (!QString(supo.at(i)).contains(QRegExp("[A-Z]"))))
-      formats+=QString("%1-file (*.%1)%2").arg(QString(supo.at(i))).arg(((i+1)<supo.size())?";;":"");
+		    (!QString(supo.at(i)).contains(QRegExp("[A-Z]")))){
+      QString str = QString("%1-file (*.%1)%2").arg(QString(supo.at(i))).arg(((i+1)<supo.size())?";;":"");
+      formats+=str;
+      QString endung=saveName;
+      int  qq= endung.lastIndexOf(".");
+      if (qq>0) {
+        qq=endung.length()- qq;
+        endung=endung.right(qq);
+        if (str.contains(endung)){
+        selectedFilter=QString("%1-file (*.%1)").arg(QString(supo.at(i)));
+        }
+      }
+      
+    }
   QString fileName = QFileDialog::getSaveFileName(this,
   QString(tr("Save a screen shot in %1 fold screen resolution").arg(scalePic)), saveName,formats,&selectedFilter,QFileDialog::DontUseNativeDialog );
 /*						  "Joint Photographic Experts Group - file (*.jpg);;"
@@ -3507,6 +3522,9 @@ void MyWindow::load_fchk(QString fileName){
     mol.nListe=0;
   }*/
   cubeGL->resetENV();
+  
+  cubeGL->specialFragment1=true;
+  mol.countMols(xdinp);
   initLists(xdinp);
   cubeGL->setVisible ( true );
 }
@@ -6180,7 +6198,10 @@ void MyWindow::directHirsh(){
   zla->addWidget(lodset);
   QPushButton *expWFobj= new QPushButton("Export surfaces");
   connect(expWFobj,SIGNAL(pressed()),  cubeGL->moliso,SLOT(exportObj()));
+  QPushButton *expSTL= new QPushButton("Export surfaces *.stl");
+  connect(expSTL,SIGNAL(pressed()),  cubeGL->moliso,SLOT(exportSTL()));
   zla->addWidget(expWFobj);
+  zla->addWidget(expSTL);
   zla->addStretch(999);
   connect(cubeGL,SIGNAL(mconf()),this,SLOT(syncMconf()));
   cubeGL->togglContours(false);
@@ -8842,6 +8863,7 @@ void MyWindow::loadFile(QString fileName,double GD){//empty
   asymmUnit.clear();
   masymmUnit.clear();
   matoms.clear();
+  cubeGL->specialFragment1=false;
   mol.zelle.symmops.clear();
   mol.zelle.trans.clear();
   mol.zelle.x4sym.clear();
