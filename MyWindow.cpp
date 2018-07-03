@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=592;
+int rev=593;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -4114,10 +4114,12 @@ void MyWindow::load_Jana(QString fileName){
         //Sm        1  2     0.250000 0.000000 0.000000 0.000106      000  0  1  0
         newAtom.lmax=-1;
         int so,sp,st,wo,wp,wt;
+        for (int i=0; i<40; i++)newAtom.atomname[i]='\0';
         if ((all.at(li).length()>16)&&(all.at(li)[16]!=' ')) 
-        iread=sscanf(all.at(li).toStdString().c_str(),"%8s%3d%3d%3d %9lf%9lf%9lf%9lf",newAtom.atomname,&newAtom.atomtype,&newAtom.jtf, &newAtom.lmax, &newAtom.amul, &newAtom.frac.x, &newAtom.frac.y, &newAtom.frac.z);
-        else iread=sscanf(all.at(li).toStdString().c_str(),"%8s%3d%3d    %9lf%9lf%9lf%9lf     %1d%1d%1d%3d%3d%3d",newAtom.atomname,&newAtom.atomtype,&newAtom.jtf,  &newAtom.amul, &newAtom.frac.x, &newAtom.frac.y, &newAtom.frac.z,&so,&sp,&st,&wo,&wp,&wt);
+        iread=sscanf(all.at(li).toStdString().c_str(),"%8c%3d%3d%3d %9lf%9lf%9lf%9lf",newAtom.atomname,&newAtom.atomtype,&newAtom.jtf, &newAtom.lmax, &newAtom.amul, &newAtom.frac.x, &newAtom.frac.y, &newAtom.frac.z);
+        else iread=sscanf(all.at(li).toStdString().c_str(),"%8c%3d%3d    %9lf%9lf%9lf%9lf     %1d%1d%1d%3d%3d%3d",newAtom.atomname,&newAtom.atomtype,&newAtom.jtf,  &newAtom.amul, &newAtom.frac.x, &newAtom.frac.y, &newAtom.frac.z,&so,&sp,&st,&wo,&wp,&wt);
         if (iread<13) {so=0;sp=0;st=0;wo=0;wp=0;wt=0;}
+        for (int i=8; i>0; i--) {if (newAtom.atomname[i]==' ')newAtom.atomname[i]='\0'; else break;}
 //        printf("so%d sp%d st%d wo%d wp%d wt%d\n",so,sp,st,wo,wp,wt);
    //     qDebug()<<all.at(li)<<all.at(li)[16];
    //     printf("'11111111222333444 555555555666666666777777777888888888'\n");
@@ -11706,6 +11708,7 @@ void MyWindow::growSymm(int packart,int packatom){
   dock->show();
   dock->setMaximumWidth(width()/5);
   printf("growSymm %d milliseconds with packart = %d\n",speedTest.restart(),packart);
+  mol.distfix(asymmUnit);
 }
 
 void MyWindow::changeModScal(double d){

@@ -5103,6 +5103,51 @@ void  molekul::SDMprint(QList<SdmItem> sdm,QList<INP> au){
   }
 }
 
+void  molekul::distfix(QList<INP> au){
+  V3 prime,dp,D,floorD;
+  double dk,range=1.8;
+  QList<SdmItem> sdm;
+  SdmItem sdmItem;
+  sdmItem.a1=0;
+  sdmItem.a2=1;
+  sdmItem.sn=0;
+  //sdmItem.p1=sdmItem.p2=V3(0,0,0);
+  for (int i=0; i<au.size(); i++){ 
+    for (int j=0; j<i; j++ ){
+      if ((au.at(i).sg)||(au.at(j).sg)) continue;
+      //  bool hma=false;
+      for (int n=0;n<zelle.symmops.size();  n++){
+        prime=zelle.symmops.at(n) * au.at(i).frac + zelle.trans.at(n);
+        D=prime - au.at(j).frac+ V3(0.5,0.5,0.5) ;
+        floorD=V3(floor(D.x),floor(D.y),floor(D.z));
+        for (int h=-1; h<2; h++){
+          for (int k=-1; k<2; k++){
+            for (int l=-1; l<2; l++){
+              V3 fD=floorD+V3(h,k,l);  
+              dp=D - fD - V3(0.5,0.5,0.5);
+              dk=fl(dp.x,dp.y,dp.z);
+              if ((dk>0.01)&&((range)>=dk)){
+                sdmItem.d=dk;
+                sdmItem.floorD=fD;
+                sdmItem.a1=i;
+                sdmItem.a2=j;
+                sdmItem.sn=n;
+                sdm.append(sdmItem);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  qSort(sdm.begin(),sdm.end());
+  for (int k=0; k<sdm.size(); k++) {
+    printf("distfix %8.4f 0.01 %s %s;\n",sdm.at(k).d,au.at(sdm.at(k).a1).atomname,au.at(sdm.at(k).a2).atomname);
+  }
+  printf("\n"); 
+
+}
+
 void molekul::voronoij(QList<INP> au, int intat){
   double dk,range=5.0;
   voroMsg.clear();

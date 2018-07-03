@@ -785,6 +785,7 @@ class molekul {
   void setup_zelle();
   void entknoten();
   void SDMprint(QList<SdmItem> sdm,QList<INP> au);
+  void distfix(QList<INP> au);
   void multiplicity(QList<INP> &au);
   void Uf2Uo(const Matrix x, Matrix & y);
   void Uc2Uf(const Matrix x, Matrix & y);
