@@ -900,6 +900,7 @@ void Hirshfeld::dynESPmol(){
   int step=ntot/100;
   double stl2,
          dx=0.0, dy=0.0, dz=0.0, qxx=0.0, qyy=0.0, qzz=0.0, qxya=0.0, qyza=0.0, qzxa=0.0, qxyb=0.0, qyzb=0.0, qzxb=0.0, qxy, qyz, qzx;
+  printf("atomsInCell %d\n",atomsInCell.size());
   for (int m=0; m<ntot; m++){
     if ((m%step)==0) forts->setValue(m);
     V3 H=V3(0,0,0);
@@ -2258,7 +2259,7 @@ void Hirshfeld::writeMap2(double *dat, QString fileName){
 }
 
 void Hirshfeld::writeRaw(double *data, QString fileName){
-  int n6=ntot*sizeof(double);
+  size_t n6=ntot*sizeof(double);
   double *dat=(double*) malloc(n6);
   double capvx=1.0/ntot*mol->zelle.V;
   for(int i=0; i<ntot; i++){
@@ -2278,17 +2279,18 @@ void Hirshfeld::writeRaw(double *data, QString fileName){
   bm.cel[4]=mol->zelle.be;
   bm.cel[5]=mol->zelle.ga;
   bm.cel[6]=mol->zelle.V;
+  printf("writeRaw:: ntot * sizeof(double) =%ld\n",n6);
   fwrite((void*)&bm,sizeof(BMhead)-sizeof(int),1,raw);
   fwrite((void*)&n6,sizeof(int),1,raw);
   //fwrite((void*)expandetrho,n6,1,raw);
   fwrite((void*)dat,n6,1,raw);
   fwrite((void*)&n6,sizeof(int),1,raw);
-  fwrite((void*)dat,n6,1,raw);
+//  fwrite((void*)dat,n6,1,raw);
   fclose(raw);
 }
 
 void Hirshfeld::writeRaw2(double *data, QString fileName){
-  int n6=entot*sizeof(double);
+  size_t n6=entot*sizeof(double);
   double *dat=(double*) malloc(n6);
   double capvx=1.0/entot*expandedCell.V;
   for(int i=0; i<entot; i++){
@@ -2308,6 +2310,7 @@ void Hirshfeld::writeRaw2(double *data, QString fileName){
   bm.cel[4]=expandedCell.be;
   bm.cel[5]=expandedCell.ga;
   bm.cel[6]=expandedCell.V;
+  printf("writeRaw:: ntot * sizeof(double) =%ld\n",n6);
   fwrite((void*)&bm,sizeof(BMhead)-sizeof(int),1,raw);
   fwrite((void*)&n6,sizeof(int),1,raw);
   //fwrite((void*)expandetrho,n6,1,raw);

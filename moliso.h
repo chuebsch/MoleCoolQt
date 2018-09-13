@@ -78,13 +78,17 @@ inline GLfloat operator * ( const Vector3& v1, const Vector3& v2 ) {
 inline GLfloat Norm( const Vector3& v ) {
   return v.x*v.x + v.y*v.y + v.z*v.z;
 }
+
 inline GLfloat Distance( const Vector3& v1, const Vector3& v2 ) {
   return Norm(v1 - v2);
 }
-inline Vector3& Normalize( Vector3 v ) {
+
+inline Vector3 Normalize( Vector3 v ) {
   double nn=1.0/sqrt((double)v.x*v.x + v.y*v.y + v.z*v.z);
-  if (nn==0.0)  return v *= nn;
-  else return v*=1.0;
+//  printf("NORM %g\n",nn);
+//  if (nn==0.0)  return v *= nn;
+//  else 
+    return v*nn;
 }
 struct Polygn {
   Vector3 vertex;

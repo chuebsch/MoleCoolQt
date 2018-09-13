@@ -100,6 +100,7 @@ class MyWindow : public QMainWindow {
     QComboBox *filterColumnComboBox;
     QDoubleSpinBox *modScale;
     public slots:
+      void bubblebub();
       void allowPolyeder();
     void addMoreQPeaks();
     void syncMconf();
@@ -240,6 +241,7 @@ class MyWindow : public QMainWindow {
     void makePDFGrid(INP atom,double proba=50.0,bool c2=true ,bool c3=true,bool c4=true);
     void makePDFGrids(double proba=50.0,bool c2=true ,bool c3=true,bool c4=true);
     void addfaze(const QString afac,const QString fac,const QString nfac);
+    void tidyCPS(QString s);
     QSlider *legendSize,*strikesSldr,*swidthSldr;
     QCheckBox *zebraBox,*mt;
     QComboBox *mapSchnitt, *chargeGroups;
@@ -296,6 +298,8 @@ class MyWindow : public QMainWindow {
     void load_sheldrick(QString fileName);
     void load_BayMEM(QString fileName);
     void load_xdres(QString fileName);
+    void loadCPS(QString masName);
+    void bubble2CPS(QString masName);
     void load_MoPro(QString fileName);
     //void load_Jana(QString fileName);
     void load_Jana(QString filename);

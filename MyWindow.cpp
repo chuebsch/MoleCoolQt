@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=593;
+int rev=595;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -259,6 +259,7 @@ MyWindow::MyWindow( QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(pa
   xdMenu->addAction(xdSetupAct); 
   xdMenu->addAction(xdRestoreAct); 
   xdMenu->addAction(xdEditAct); 
+  xdMenu->addAction("Get CPs from xd_pro.out (bubble search)",this, SLOT(bubblebub()));
   {
     QAction *a=xdMenu->addAction("Edit xd_part.aux ",this,SLOT(editPartAux()));
   a->setData(0);
@@ -2409,6 +2410,55 @@ void MyWindow::infoKanalNews(const QString& s){
   infoKanal->ensureCursorVisible();
   dock->show();
   dock->raise();
+}
+
+void MyWindow::tidyCPS(QString cpsp){
+  QFile cps(cpsp);
+  cps.open(QIODevice::ReadOnly);
+  QString cpsTextall=cps.readAll();
+  QStringList cpsText=cpsTextall.split("\n");
+  QStringList items;
+  QList<V3> points;
+  QString line;
+  for (int i=0; i<cpsText.size();i++){
+    line=cpsText.at(i);
+    items=line.split(" ",QString::SkipEmptyParts);
+    if (items.size()>5){
+      if (items.at(4).contains(QRegExp("[A-Za-z])"))){
+	V3 pt;
+	pt.x=items.at(5).toDouble();
+	pt.y=items.at(6).toDouble();
+	pt.z=items.at(7).toDouble();
+	double dm=10,d;
+	for (int j=0; j<points.size(); j++){
+	  d=sqrt(Distance(points.at(j),pt));
+	  dm=(dm<d)?dm:d;
+	}
+	if (dm <0.05) {
+	  cpsText.removeAt(i);
+          i--;
+	}
+	else points.append(pt);
+      }else if (items.at(3).contains(QRegExp("[A-Za-z])"))){
+	V3 pt;
+	pt.x=items.at(4).toDouble();
+	pt.y=items.at(5).toDouble();
+	pt.z=items.at(6).toDouble();
+	double dm=10,d;
+	for (int j=0; j<points.size(); j++){
+	  d=sqrt(Distance(points.at(j),pt));
+	  dm=(dm<d)?dm:d;
+	}
+	if (dm <0.05) {cpsText.removeAt(i);i--;}
+	else 
+	  points.append(pt);
+      }
+    }
+  }
+  cps.remove();
+  cps.open(QIODevice::WriteOnly);
+  cps.write(cpsText.join("\n").toLatin1(),cpsText.join("\n").length());
+  cps.close();
 }
 
 void MyWindow::tidyCPS(){
@@ -4925,313 +4975,6 @@ void MyWindow::load_BayMEM(QString fileName) {
         }
       }
     }
-    /*
- // printf("loadxd %d\n",__LINE__);fflush(stdout);
-  FILE *adp;
-  double XDVERS=0;
-  {//RES  
-  char line[85]="",dv[20],*dvv;
-  int i=0;
-  mol.initDir();
-  if ((adp=fopen(fileName.toLocal8Bit(),"r"))==NULL) {QMessageBox::critical(this,"Read Error!",QString("read error %1!").arg(fileName),QMessageBox::Ok);exit(2);}  
-  i=0;
-  if (!fastrun) {
-    cubeGL->drawAx=true;
-    hatlokale=1;
-  }
-  while ((!feof(adp))&&(NULL==strstr(line,"Revision"))) {
-    egal=fscanf(adp,"%[^\n\r]\n\r",line);
- }
-  if (NULL!=strstr(line,"Revision"))
-  sscanf(line,"! <<< X D PARAMETER FILE >>> $Revision: %lf",&XDVERS); 
-  printf("REV:=%g\n",XDVERS);
-  rewind(adp);
-  while ((line[0]!='U')||(line[1]!='S')||(line[2]!='A')||(line[3]!='G')) {
-    egal=fscanf(adp,"%[^\n\r]\n\r",line);
- } 
-  ;
-  sscanf(line,"%[^0123456789]%d",dv,&atmax);
-  dvv=strrchr(line,' ');
-  sscanf(dvv,"%d",&dummax);
-      while ((i<atmax)&&(!feof(adp))) {
-    egal=fscanf(adp,"%[^\n\r]\n\r",line ); 
-    if ((line[0]>='A')&&(!((line[0]=='N')&&(line[1]=='a')&&(line[2]=='N'))))  {
-      asymmUnit.append(newAtom);
-      sscanf(line,"%s %d%d%d%d%d%d%d%d%d%d%d%lf%lf%lf%lf",
-	     asymmUnit[i].atomname,
-	     &asymmUnit[i].icor1,
-	     &asymmUnit[i].icor2,
-	     &asymmUnit[i].nax,
-	     &asymmUnit[i].nay1,
-	     &asymmUnit[i].nay2,
-	     &asymmUnit[i].jtf,
-	     &asymmUnit[i].atomtype,
-	     &asymmUnit[i].noofkappa,
-	     &asymmUnit[i].lmax,
-	     &asymmUnit[i].isym,
-	     &asymmUnit[i].ichcon,
-	     &asymmUnit[i].frac.x,
-	     &asymmUnit[i].frac.y,
-             &asymmUnit[i].frac.z,
-	     &asymmUnit[i].amul);
-      asymmUnit[i].lflag =(0>asymmUnit[i].nax)?-1:1;
-      asymmUnit[i].nax =(0>asymmUnit[i].nax)?-asymmUnit[i].nax :asymmUnit[i].nax ;
-//      strcpy(dv,asymmUnit[i].atomname);
-//      strtok(dv,"(1234567890+- ");
-      asymmUnit[i].OrdZahl=mol.Get_OZ(atypen.at(asymmUnit[i].atomtype-1));
-      egal=fscanf(adp,"%lf%lf%lf%lf%lf%lf\n\r",&asymmUnit[i].uf.m11,&asymmUnit[i].uf.m22,&asymmUnit[i].uf.m33,
-		      &asymmUnit[i].uf.m21,//21 == 12
-		      &asymmUnit[i].uf.m31,//31 == 13
-		      &asymmUnit[i].uf.m32);//32 == 23 
-      asymmUnit[i].uf.m23=asymmUnit[i].uf.m32;
-      asymmUnit[i].uf.m13=asymmUnit[i].uf.m31;
-      asymmUnit[i].uf.m12=asymmUnit[i].uf.m21;
-      if (asymmUnit[i].jtf>2){ //      printf("%-8s %d\n",asymmUnit[i].atomname,i);
-      egal=fscanf(adp,"%lf%lf%lf%lf%lf\n\r",
-      &asymmUnit[i].c111,
-      &asymmUnit[i].c222,
-      &asymmUnit[i].c333,
-      &asymmUnit[i].c112,
-      &asymmUnit[i].c122);
-      egal=fscanf(adp,"%lf%lf%lf%lf%lf\n\r",
-      &asymmUnit[i].c113,
-      &asymmUnit[i].c133,
-      &asymmUnit[i].c223,
-      &asymmUnit[i].c233,
-      &asymmUnit[i].c123);
-      if (XDVERS < 4.105){
-	
-	asymmUnit[i].c111*=mol.zelle.as*mol.zelle.as*mol.zelle.as;//Ujkl ->cjkl
-	asymmUnit[i].c222*=mol.zelle.bs*mol.zelle.bs*mol.zelle.bs;
-	asymmUnit[i].c333*=mol.zelle.cs*mol.zelle.cs*mol.zelle.cs;
-	asymmUnit[i].c112*=mol.zelle.as*mol.zelle.as*mol.zelle.bs;
-	asymmUnit[i].c122*=mol.zelle.as*mol.zelle.bs*mol.zelle.bs;
-	asymmUnit[i].c113*=mol.zelle.as*mol.zelle.as*mol.zelle.cs;
-	asymmUnit[i].c133*=mol.zelle.as*mol.zelle.cs*mol.zelle.cs;
-	asymmUnit[i].c223*=mol.zelle.bs*mol.zelle.bs*mol.zelle.cs;
-	asymmUnit[i].c233*=mol.zelle.bs*mol.zelle.cs*mol.zelle.cs;
-	asymmUnit[i].c123*=mol.zelle.as*mol.zelle.bs*mol.zelle.cs;
-      } else{
-	asymmUnit[i].c111/=cfac;//
-	asymmUnit[i].c222/=cfac;//
-	asymmUnit[i].c333/=cfac;//
-	asymmUnit[i].c112/=cfac;//
-	asymmUnit[i].c122/=cfac;//
-	asymmUnit[i].c113/=cfac;//
-	asymmUnit[i].c133/=cfac;//
-	asymmUnit[i].c223/=cfac;//
-	asymmUnit[i].c233/=cfac;//
-	asymmUnit[i].c123/=cfac;//
-      }
-
-      }
-   if (asymmUnit[i].jtf>3){ 
-      egal=fscanf(adp,"%lf%lf%lf%lf%lf\n\r",
-      &asymmUnit[i].d1111,
-      &asymmUnit[i].d2222,
-      &asymmUnit[i].d3333,
-      &asymmUnit[i].d1112,
-      &asymmUnit[i].d1222);
-      egal=fscanf(adp,"%lf%lf%lf%lf%lf\n\r",
-      &asymmUnit[i].d1113,
-      &asymmUnit[i].d1333,
-      &asymmUnit[i].d2223,
-      &asymmUnit[i].d2333,
-      &asymmUnit[i].d1122);
-      egal=fscanf(adp,"%lf%lf%lf%lf%lf\n\r",
-      &asymmUnit[i].d1133,
-      &asymmUnit[i].d2233,
-      &asymmUnit[i].d1123,
-      &asymmUnit[i].d1223,
-      &asymmUnit[i].d1233);
-      if (XDVERS < 4.105){
-          asymmUnit[i].d1111*=mol.zelle.as * mol.zelle.as * mol.zelle.as * mol.zelle.as *dfac;////Djklm's whanted
-          asymmUnit[i].d2222*=mol.zelle.bs * mol.zelle.bs * mol.zelle.bs * mol.zelle.bs *dfac;//
-          asymmUnit[i].d3333*=mol.zelle.cs * mol.zelle.cs * mol.zelle.cs * mol.zelle.cs *dfac;//
-          asymmUnit[i].d1112*=mol.zelle.as * mol.zelle.as * mol.zelle.as * mol.zelle.bs *dfac;//
-          asymmUnit[i].d1222*=mol.zelle.as * mol.zelle.bs * mol.zelle.bs * mol.zelle.bs *dfac;//
-          asymmUnit[i].d1113*=mol.zelle.as * mol.zelle.as * mol.zelle.as * mol.zelle.cs *dfac;//
-          asymmUnit[i].d1333*=mol.zelle.as * mol.zelle.cs * mol.zelle.cs * mol.zelle.cs *dfac;//
-          asymmUnit[i].d2223*=mol.zelle.bs * mol.zelle.bs * mol.zelle.bs * mol.zelle.cs *dfac;//
-          asymmUnit[i].d2333*=mol.zelle.bs * mol.zelle.cs * mol.zelle.cs * mol.zelle.cs *dfac;//
-          asymmUnit[i].d1122*=mol.zelle.as * mol.zelle.as * mol.zelle.bs * mol.zelle.bs *dfac;//
-          asymmUnit[i].d1133*=mol.zelle.as * mol.zelle.as * mol.zelle.cs * mol.zelle.cs *dfac;//
-          asymmUnit[i].d2233*=mol.zelle.bs * mol.zelle.bs * mol.zelle.cs * mol.zelle.cs *dfac;//
-          asymmUnit[i].d1123*=mol.zelle.as * mol.zelle.as * mol.zelle.bs * mol.zelle.cs *dfac;//
-          asymmUnit[i].d1223*=mol.zelle.as * mol.zelle.bs * mol.zelle.bs * mol.zelle.cs *dfac;//
-          asymmUnit[i].d1233*=mol.zelle.as * mol.zelle.bs * mol.zelle.cs * mol.zelle.cs *dfac;//
-      } else{
-    asymmUnit[i].d1111/=  dfac;////Djklm's whanted
-    asymmUnit[i].d2222/=  dfac;//
-    asymmUnit[i].d3333/=  dfac;//
-    asymmUnit[i].d1112/=  dfac;//
-    asymmUnit[i].d1222/=  dfac;//
-    asymmUnit[i].d1113/=  dfac;//
-    asymmUnit[i].d1333/=  dfac;//
-    asymmUnit[i].d2223/=  dfac;//
-    asymmUnit[i].d2333/=  dfac;//
-    asymmUnit[i].d1122/=  dfac;//
-    asymmUnit[i].d1133/=  dfac;//
-    asymmUnit[i].d2233/=  dfac;//
-    asymmUnit[i].d1123/=  dfac;//
-    asymmUnit[i].d1223/=  dfac;//
-    asymmUnit[i].d1233/=  dfac;//
-      }
-   }
-   asymmUnit[i].sg=0;
-      i++;
-    }
-  }
-  
-  rewind(adp);
-  while (line[0]!='U') {egal=fscanf(adp,"%[^\n\r]\n\r",line); };
-  egal=fscanf(adp,"%[^\n\r]\n\r",line);
-  egal=fscanf(adp,"%[^\n\r]\n\r",line);
-  for (int j=i;j<dummax+i;j++){
-    asymmUnit.append(newAtom);
-    sprintf(asymmUnit[j].atomname,"DUM%d",j-i);
-    asymmUnit[j].OrdZahl=-1;
-    egal=fscanf(adp,"%lf%lf%lf\n\r",
-	   &asymmUnit[j].frac.x,
-	   &asymmUnit[j].frac.y,
-	   &asymmUnit[j].frac.z);
-   asymmUnit[j].sg=0;
-  }
-  fclose(adp);
- 
-  smx=atmax+dummax;
-  }
-  {//xd_fft.out
-    QString fftName=masName;
-    fftName.chop(6);
-    fftName.append("xd_fft.out");
-  FILE *fft;
-  char _line[120],_an[15];
-  int ffix=0;
-  int maxxp=0,mima=0;
-  if (NULL!=(fft=fopen(fftName.toLocal8Bit(),"r"))){
-    while ((!feof(fft))&&(NULL==strstr(_line,"HEIGHT"))&&(NULL==strstr(_line,"height"))) {
-      egal=fscanf(fft,"%[^\n\r]\n\r",_line);
-      if (strstr(_line,"THE PROGRAM WILL LOOK FOR")||strstr(_line,"The program will look for")){
-	int maps;
-      egal=sscanf(_line,"%*s %*s %*s %*s %*s %d %*s",&maps);
-      maxxp+=maps;
-      if (mima>0){
-      }
-      mima++;
-      }     
-    }
-    if (!feof(fft)) {
-      egal=fscanf(fft,"%[^\n\r]\n\r",_line);
-      egal=fscanf(fft,"%[^\n\r]\n\r",_line);
-      while ((!feof(fft))&&(NULL==strstr(_line,"----------")) &&(ffix<maxxp)&&((5==sscanf(_line,"%s %*s %*s %*s %*s %*s %lf %lf %lf %lf"
-			,_an
-			,&newAtom.frac.x 
-			,&newAtom.frac.y 
-			,&newAtom.frac.z
-			,&newAtom.peakHeight))||
-	     (5==sscanf(_line,"%*s %s %*s %lf %lf %lf %lf"
-			,_an
-			,&newAtom.frac.x
-			,&newAtom.frac.y
-			,&newAtom.frac.z
-                        ,&newAtom.peakHeight)))) {
-	strncpy(newAtom.atomname,_an,12);
-	newAtom.OrdZahl=-3;
-	asymmUnit.append(newAtom);
-	ffix++;
-	if (!feof(fft))egal=fscanf(fft,"%[^\n\r]\n\r",_line);
-      }      
-    }
-infoKanal->setHtml(QString("%1<font color=green>reading of xd_fft.out is done.</font>").arg(infoKanal->toHtml()));
-  }
-  smx+=ffix;
-  if (fft) fclose(fft);
-  }
-  {//xd_bubble.spf
-    QString spfName=masName;
-    spfName.chop(6);
-    spfName.append("xd_bubble.spf");
-    QFile spff(spfName);
-    spff.open(QIODevice::ReadOnly|QIODevice::Text);
-    QStringList spfs=qstring(spff.readall()).split('\n');
-    for (int i=0; i<spfs.size(); i++){
-      if (spfs.at(i).startsWith("Or")){
-	QStringList ss=spfs.at(i).split(QRegExp("\\s+"));
-	if (ss.size()>3){
-	  newAtom.kart.x = ss.at(1).toDouble();
-	  newAtom.kart.y = ss.at(2).toDouble();
-	  newAtom.kart.z = ss.at(3).toDouble();
-	  strcpy(newAtom.atomname,ss.at(0).toLatin1());
-	  newAtom.OrdZahl=-2;
-	  mol.kart2frac(newAtom.kart,newAtom.frac);
-	  asymmUnit.append(newAtom);
-	}
-      }
-
-    }
-
-
-  
-  }
-  {//xd_rho.cps   
-    QString cpsName=masName;
-    cpsName.chop(6);
-    cpsName.append("xd_rho.cps");
-    char cptp[10],_line[120]="Rho",dummystr[18];
-    FILE *cps;
-    int idxx=0,idx;
-    if (NULL!=(cps=fopen(cpsName.toLocal8Bit(),"r"))){
-      while ((strstr(_line,"Rho"))&&(!feof(cps))) {egals=fgets(_line,92,cps);idxx++;}
-     idxx--;
-      rewind(cps);
-      for (int i=0;i<idxx;i++){
-        egals=fgets(_line,92,cps);
-	if ((6==sscanf(_line,"%d %s %*19c %lf  %lf  %lf  %lf",&idx,cptp,
-		      &newAtom.kart.x,  
-		      &newAtom.kart.y,
-		      &newAtom.kart.z,
-		      &newAtom.peakHeight))||
-	    (5==(sscanf(_line,"%d %s %*19c %lf  %lf  %lf",&idx,cptp,
-				&newAtom.kart.x,  
-				&newAtom.kart.y,
-				&newAtom.kart.z)))){
-	 
-	sprintf(dummystr,"CP%d",idx);
-	strncpy(newAtom.atomname,dummystr,18);
-	newAtom.OrdZahl=-2;
-        mol.kart2frac(newAtom.kart,newAtom.frac);
-	asymmUnit.append(newAtom);
-        }
-      }
-      egals=fgets(_line,92,cps);
-if (!feof(cps)) 
-  for (int i=0; i <idxx;i++) {
-    egals=fgets(_line,92,cps);
-    sscanf(_line,"%*d %*s %*s %lf %lf %lf",
-		    &asymmUnit[smx+i].uf.m21,&asymmUnit[smx+i].uf.m22,&asymmUnit[smx+i].uf.m23);
-    egals=fgets(_line,92,cps);                                                       
-    sscanf(_line,"%*s %lf %lf %lf",                                                  
-		    &asymmUnit[smx+i].uf.m31,&asymmUnit[smx+i].uf.m32,&asymmUnit[smx+i].uf.m33);
-    egals=fgets(_line,92,cps);                                                       
-    sscanf(_line,"%*s %lf %lf %lf",                                                  
-		    &asymmUnit[smx+i].uf.m11,&asymmUnit[smx+i].uf.m12,&asymmUnit[smx+i].uf.m13);
-    asymmUnit[smx+i].uf.m11-=asymmUnit[smx+i].kart.x;
-    asymmUnit[smx+i].uf.m12-=asymmUnit[smx+i].kart.y;
-    asymmUnit[smx+i].uf.m13-=asymmUnit[smx+i].kart.z;
-    asymmUnit[smx+i].uf.m21-=asymmUnit[smx+i].kart.x;
-    asymmUnit[smx+i].uf.m22-=asymmUnit[smx+i].kart.y;
-    asymmUnit[smx+i].uf.m23-=asymmUnit[smx+i].kart.z;
-    asymmUnit[smx+i].uf.m31-=asymmUnit[smx+i].kart.x;
-    asymmUnit[smx+i].uf.m32-=asymmUnit[smx+i].kart.y;
-    asymmUnit[smx+i].uf.m33-=asymmUnit[smx+i].kart.z;
-  }
-smx+=idxx;
-infoKanal->setHtml(QString("%1<font color=green>reading of xd_rho.cps is done.</font>").arg(infoKanal->toHtml()));
-    }
-    if (cps) fclose(cps);
-  }
-  */
     dummax=0;
   mol.zelle.centro=centros;
 //  qDebug()<<mol.zelle.centro<<centros;
@@ -5627,6 +5370,8 @@ infoKanal->setHtml(QString("%1<font color=green>reading of xd_fft.out is done.</
 
   
   }
+  loadCPS(masName);
+  /*
   {//xd_rho.cps   
     QString cpsName=masName;
     cpsName.chop(6);
@@ -5692,7 +5437,7 @@ smx+=idxx;
 infoKanal->setHtml(QString("%1<font color=green>reading of xd_rho.cps is done.</font>").arg(infoKanal->toHtml()));
     }
     if (cps) fclose(cps);
-  }
+  }//  */
 dummax=smx-atmax;
   for (int i=0;i<asymmUnit.size();i++) {
     if ((asymmUnit[i].uf.m22==0.0)&&(asymmUnit[i].uf.m33==0.0)){
@@ -5730,6 +5475,117 @@ dummax=smx-atmax;
   fmcq->doMaps->show();
   if (pdfOnAtom!=-1) makePDFGrid(xdinp[pdfOnAtom]);
   pdfOnAtom=-1;
+}
+
+void MyWindow::bubblebub(){
+  someThingToRestore();
+  QString masName=QDir::currentPath()+"/xd.mas";
+  bubble2CPS (masName);
+  loadFile(masName,mol.gd);
+  updateLabel();
+}
+
+void MyWindow::bubble2CPS(QString masName){
+  QString dn=masName.section('/',0,-2);
+  QFile xdout(dn+"/xd_pro.out");
+  if (!xdout.open(QIODevice::ReadOnly|QIODevice::Text)) return;
+  QStringList lines=QString(xdout.readAll()).split('\n');
+  QString line,prop;
+  bool found=false;
+  QStringList cptyp;
+  QList<double> x,y,z,rho,lap;
+  foreach (line,lines){
+    if (line.contains("Property f =")) {
+      prop = line.section(" ",3,3,QString::SectionSkipEmpty);
+      found=true;
+    }
+    if (line.contains("critical point")) {
+      cptyp.append(line.section(" ",1,1,QString::SectionSkipEmpty));
+    }
+    if (line.contains(QRegExp(" x\\s+="))){x.append(line.section(" ",2,2,QString::SectionSkipEmpty).toDouble());}
+    if (line.contains(QRegExp(" y\\s+="))){y.append(line.section(" ",2,2,QString::SectionSkipEmpty).toDouble());}
+    if (line.contains(QRegExp(" z\\s+="))){z.append(line.section(" ",2,2,QString::SectionSkipEmpty).toDouble());}
+    if (line.contains(QRegExp(" rho\\s+="))){rho.append(line.section(" ",2,2,QString::SectionSkipEmpty).toDouble());}
+//    if (line.contains(QRegExp("|grad rho|\s+="))){x.append(line.section(" ",2,2,QString::SectionSkipEmpty).toDouble());}
+    if (line.contains(QRegExp(" laplacian\\s+="))){lap.append(line.section(" ",2,2,QString::SectionSkipEmpty).toDouble());}
+
+  }
+
+  qDebug()<<x.size()<<y.size()<<z.size()<<rho.size()<<lap.size();
+  QString pth=dn+QString("/xd_%1-.cps").arg(prop.toLower());
+  FILE *cps=fopen(pth.toStdString().c_str(),"at");
+  if (cps!=NULL) {
+  for (int i=0; i<x.size();i++){
+    fprintf(cps,"%6d%9s        -          %s %11.6f%11.6f%11.6f     %11.5f        0.00000        0.00000        0.00000        0.00000  2  3\n"
+        ,i+1
+        ,cptyp.at(i).toStdString().c_str()
+        ,prop.toStdString().c_str()
+        ,x.at(i)
+        ,y.at(i)
+        ,z.at(i)
+        ,rho.at(i)
+        );
+  }
+  fclose(cps);
+  }
+}
+
+void MyWindow::loadCPS(QString masName){
+  INP newAtom;
+  newAtom.part=0;
+  newAtom.sg=0;
+  QString dn=masName.section('/',0,-2);
+  QStringList filter;
+  filter << "xd_*.cps";
+  QDir dir(dn);
+  QStringList files = dir.entryList(filter,QDir::Files|QDir::Readable,QDir::Time|QDir::Reversed);
+  if (files.isEmpty()) return;
+  QString cpsName="";
+  if (files.size()==1) cpsName=files.at(0);
+  else{
+    //dialog
+    QMessageBox *box=new QMessageBox(QMessageBox::Question,"Chose CPS file","Please chose a CPS file to open",QMessageBox::Cancel);
+    
+    //
+    for (int i=0; i<files.size(); i++){
+      QPushButton *ac=box->addButton(QString("load %1").arg(files.at(i)),QMessageBox::ActionRole);
+      ac->setProperty("fil",i);
+    }
+    box->exec(); 
+      QVariant fil=box->clickedButton()->property("fil");
+      if (fil.isValid()){ 
+        int i = fil.toInt();
+      qDebug()<<"I = "<< i;
+      if ((i>-1)&&(i<files.size())) cpsName=files.at(i);  
+      }
+  
+  }//else more tan one cps file
+
+  
+  QFile cps(cpsName);
+  if (!cps.open(QIODevice::ReadOnly|QIODevice::Text)) return;
+  QStringList lines=QString(cps.readAll()).split('\n');
+  int idx=1;
+  for (int i=0; i<lines.size(); i++){
+    if ((lines.at(i).size()>63)&&(lines.at(i).at(23)=='-')){
+      lines[i].replace(18,11,"           ");
+      QStringList tok = lines.at(i).split(QRegExp("\\s+"),QString::SkipEmptyParts);
+      if (tok.size()>5){
+        newAtom.kart.x=tok.at(3).toDouble();
+        newAtom.kart.y=tok.at(4).toDouble();
+        newAtom.kart.z=tok.at(5).toDouble();
+      }
+      if (tok.size()>6){newAtom.peakHeight=tok.at(6).toDouble();}else newAtom.peakHeight=0.0;
+      if (tok.size()>8) {newAtom.lap=tok.at(7).toDouble()+tok.at(8).toDouble()+tok.at(9).toDouble();}else newAtom.lap=0.0;
+      strncpy(newAtom.atomname,QString("CP%1").arg(idx++).toStdString().c_str(),20);
+      newAtom.OrdZahl=-2;
+      mol.kart2frac(newAtom.kart,newAtom.frac);
+      newAtom.cptype=tok.at(1).section(QRegExp("[)(,]+"),2,2).toInt()+3;
+      asymmUnit.append(newAtom);
+    }
+  }
+  infoKanal->setHtml(QString("%1<font color=green>reading of %2 is done.</font>").arg(infoKanal->toHtml()).arg(cpsName));
+  cps.close();
 }
 
 double hermite4(V3 w, Matrix q, 

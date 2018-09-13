@@ -534,7 +534,7 @@ void MolIso::exportSTL(){
     ncad=ncad.replace(".stl",".scad");
     QFile scad(ncad);
     scad.open(QIODevice::WriteOnly|QIODevice::Text);
-    scad.write(QString("/* Change SCALE if you wish to change 1cm=1Angstrom\nCylinders below are for 5mm diameter 2mm height magnets.\nCylinders are sorted by value.\nValue is given behind //.\n You might comment out the lower ones and those overlapping.\n */\nSCALE=%5;\nmag_diameter=5/cos(180/100);//corrected to get outer radius\nmag_height=2;\ntranslate([%2*SCALE,%3*SCALE,%4*SCALE])difference(){\nscale([SCALE,SCALE,SCALE])import(\"%1\");\n")
+    scad.write(QString("/* Change SCALE if you wish to change 1cm=1Angstrom\nCylinders below are for 5mm diameter 2mm height magnets.\nCylinders are sorted by value.\nValue is given behind //.\n You might comment out the lower ones and those overlapping.\n */\nSCALE=%5;\nmag_diameter=5/cos(180/100);//corrected to get outer radius\nmag_height=2;\ntranslate([%2*SCALE,%3*SCALE,%4*SCALE])\ndifference(){\nscale([SCALE,SCALE,SCALE])\nimport(\"%1\");\n\n")
         .arg(stln)
         .arg(-zentrum.x)
         .arg(-zentrum.y)
@@ -559,7 +559,16 @@ void MolIso::exportSTL(){
 //      double NAX=Norm(ax);
   //    ax*=1.0/NAX;
       double angle = winkel(Vector3(0,0,1),orte.at(j).normal);
-        scad.write(QString("translate([%1*SCALE, %2*SCALE, %3*SCALE]) rotate(%4, [%5, %6, %7]) cylinder($fn=100, d=mag_diameter, h=2.5*mag_height, center=true);// %8\n")
+//      printf("norm %f %f %f %f ang %f\n",orte.at(j).normal.x,orte.at(j).normal.y,orte.at(j).normal.z,Norm(orte.at(j).normal),angle);
+       QColor qc=farbverlauf((orte.at(j).color-min)/(max-min));
+       scad.write(QString("color([%1,%2,%3,%4])\n")
+          .arg(qc.redF())
+          .arg(qc.greenF())
+          .arg(qc.blueF())
+          .arg(qc.alphaF())
+          .toLatin1());
+
+        scad.write(QString("translate([%1*SCALE, %2*SCALE, %3*SCALE])\nrotate(%4, [%5, %6, %7])\ncylinder($fn=100, d=mag_diameter, h=2.5*mag_height, center=true);\n// %8\n")
             .arg(orte.at(j).vertex.x*scale)
             .arg(orte.at(j).vertex.y*scale)
             .arg(orte.at(j).vertex.z*scale)
@@ -570,7 +579,7 @@ void MolIso::exportSTL(){
             .arg(orte.at(j).color)
             .toLatin1());
     }
-  scad.write(QString("}\n").toLatin1());
+  scad.write(QString("\\ *\\n}\n").toLatin1());
   scad.close();
   } 
 }

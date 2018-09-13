@@ -5141,10 +5141,13 @@ void  molekul::distfix(QList<INP> au){
     }
   }
   qSort(sdm.begin(),sdm.end());
+  FILE *difi=fopen("mcq-jana-distfix.txt","wt");
+  if (!difi) return;
   for (int k=0; k<sdm.size(); k++) {
-    printf("distfix %8.4f 0.01 %s %s;\n",sdm.at(k).d,au.at(sdm.at(k).a1).atomname,au.at(sdm.at(k).a2).atomname);
+    fprintf(difi,"distfix %8.4f 0.01 %s %s;\n",sdm.at(k).d,au.at(sdm.at(k).a1).atomname,au.at(sdm.at(k).a2).atomname);
   }
-  printf("\n"); 
+  fprintf(difi,"\n"); 
+  fclose(difi);
 
 }
 
