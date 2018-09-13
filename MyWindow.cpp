@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=595;
+int rev=597;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -5380,15 +5380,18 @@ infoKanal->setHtml(QString("%1<font color=green>reading of xd_fft.out is done.</
     FILE *cps;
     int idxx=0,idx;
     if (NULL!=(cps=fopen(cpsName.toLocal8Bit(),"r"))){
-      while ((strstr(_line,"Rho"))&&(!feof(cps))) {egals=fgets(_line,160,cps);idxx++;}
+      while (((strstr(_line,"GRADRHO"))||((strstr(_line,"Rho"))))&&(!feof(cps))) {egals=fgets(_line,160,cps);idxx++;}
      idxx--;
     printf("idx!! %d\n",idxx);
       rewind(cps);
       for (int i=0;i<idxx;i++){
+        char unfg[30];
         egals=fgets(_line,160,cps);
 //1   (3,-1)   O(1) -C(1)      Rho     -0.799877   6.307969  13.264604           2.888
 //2   (3,-1)   C(1) -N(1)      Rho      3.109743   4.772340   4.761444         2.26238      -19.10129      -16.07322       14.61587        0.59290  2  3
-	if ((6==sscanf(_line,"%d %s %*19c %lf  %lf  %lf  %lf %*f %*f %*f %*f %*d %*d",&idx,cptp,
+//1   (3,-1)   O(1) -C(1)    GRADRHO    6.982419   3.403954   2.646129         4.62311      -82.41664       -5.90078       41.37913        0.56183  2 43
+//2   (3,+1)        -        GRADRHO    7.196546   4.202940   3.389596         4.59766      -82.46656        5.45943       46.93281        0.00000  3 43
+	if ((4<sscanf(_line,"%d %s %*19c %lf  %lf  %lf  %lf %*f %*f %*f %*f %*d %*d",&idx,cptp,
 		      &newAtom.kart.x,  
 		      &newAtom.kart.y,
 		      &newAtom.kart.z,
@@ -5402,7 +5405,7 @@ infoKanal->setHtml(QString("%1<font color=green>reading of xd_fft.out is done.</
 				&newAtom.kart.x,  
 				&newAtom.kart.y,
 				&newAtom.kart.z)))){
-//	printf("line:%s",_line); 
+//	printf("line:%s unfg:%s\n",_line,unfg); 
 	sprintf(dummystr,"CP%d",idx);
 	strncpy(newAtom.atomname,dummystr,18);
 	newAtom.OrdZahl=-2;
