@@ -3234,6 +3234,79 @@ void molekul::readXDPath(QString fname){
   }
 }
 
+void molekul::enviSDM(double range){
+  /*! Calculates the shortes distance matrix for the ENVIronment functionality in the given range.
+   * @param range maximal distances around each atom to generate a matrix entry. 
+   */
+
+  // George Sheldrick Seminar ideas
+  double dk,dddd;
+  extern QList<INP> asymmUnit;
+  V3 prime,dp,D,floorD;
+  envi_sdm.clear();
+  SdmItem sdmItem;
+  sdmItem.a1=0;
+  sdmItem.a2=1;
+  sdmItem.sn=0;
+  //sdmItem.p1=sdmItem.p2=V3(0,0,0);
+  for (int i=0; i<asymmUnit.size(); i++){ 
+    for (int j=0; j<asymmUnit.size(); j++ ){
+      //  bool hma=false;
+      for (int n=0;n<zelle.symmops.size();  n++){
+        prime=zelle.symmops.at(n) * asymmUnit.at(i).frac + zelle.trans.at(n);
+        D=prime - asymmUnit.at(j).frac+ V3(0.5,0.5,0.5) ;
+        floorD=V3(floor(D.x),floor(D.y),floor(D.z));
+        for (int h=-1; h<2; h++){
+          for (int k=-1; k<2; k++){
+            for (int l=-1; l<2; l++){
+              V3 fD=floorD+V3(h,k,l);  
+              dp=D - fD - V3(0.5,0.5,0.5);
+              dk=fl(dp.x,dp.y,dp.z);
+              if ((dk>0.01)&&((range)>=dk)){
+                sdmItem.d=dk;
+                sdmItem.floorD=fD;
+                sdmItem.a1=i;
+                sdmItem.a2=j;
+                sdmItem.sn=n;
+                if ((asymmUnit[i].OrdZahl>-1)&&(asymmUnit[j].OrdZahl>-1)&&
+                    ((asymmUnit[i].part*asymmUnit[j].part==0)||
+                     (asymmUnit[i].part==asymmUnit[j].part)))
+                  dddd=(Kovalenz_Radien[asymmUnit[i].OrdZahl]+ Kovalenz_Radien[asymmUnit[j].OrdZahl])*0.012;
+                else dddd=0;
+                if (sdmItem.d<dddd){
+                  sdmItem.covalent=true;
+                }else sdmItem.covalent=false;
+                envi_sdm.append(sdmItem);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  qSort(envi_sdm.begin(),envi_sdm.end());
+  //histogram
+  /*
+     double hmi,hma;
+     hmi=envi_sdm.first().d;
+     hma=envi_sdm.last().d;
+     double hstep=(hma-hmi)/20.0;
+     printf("%g %g %g %d\n",hma,hmi,hstep,envi_sdm.size());
+     if (hstep<0.01) return;
+     int hbox[20]={
+     0,0,0,0,0,
+     0,0,0,0,0,
+     0,0,0,0,0,
+     0,0,0,0,0};
+     for (int i=0; i<envi_sdm.size();i++){
+     int hind=(int) (envi_sdm.at(i).d/hstep);
+     hbox[hind]++;
+     }
+     for (int i=0;i<20;i++){
+     printf("%g-%g %d  (%g)\n",hmi+hstep*i,hmi+i*hstep+hstep,hbox[i],hma);
+     }
+  // */
+}
 
 void molekul::atoms(CEnvironment atom,int proba){
   /*! Draws atoms as spheres or as ellipses cubes or icosahedrons.

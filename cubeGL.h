@@ -22,6 +22,8 @@ public:
   CubeGL(QWidget *parent);
   MolIso *moliso;
   double L;
+
+  double envirange;//!< range in Angstrom around which environmental atoms should be consedered.
   bool pause,negpdf,paparazi;
   int stereo_mode;
   QAction *Istda,*chicken,*quickRot;
@@ -33,7 +35,9 @@ public:
   QAction *showPolys;
   int cdens, cwid,awidth;
   QAction *addBond,*killBond,*clearSelection,*centerSelection,*addCoordi,*delCoordi,*hidSelected,*hidUnSelected,*showall;
-  QAction *lissajous, *lissajousGay, *lissaADP;
+  QAction *lissajous, *lissajousGay, *lissaADP,
+	    *enviNoQ,//!< QAction ENVI only for real atoms
+	    *enviCova;//!< QAction ENVI only for covalent contacts
   bool molisoTransparence;
   bool zebra;
   bool noWaitLabel;
@@ -41,6 +45,7 @@ public:
   double scalePicNow;
   double tvalue,tstep,twait;
   bool isModulated;
+  QList<Vector3> cont;
   double mixdim,miydim,mizdim;
   int wirbas,cbas, bas, ibas, iSel, foubas[5];
   int rotze,minxp,minyp,maxxp,maxyp;
@@ -81,6 +86,11 @@ public:
   QList<QColor> farben;
   int faceCull;
   double vangle;
+  QToolButton *enviButt;//!< Button to clear the envi -ronment.
+  QList<V3>enviPositions;//!<List of atom postions of an envi-ronment.
+  QList<int>enviKat;//!< List of categorie:qs of contacts in an envi-ronment.
+  V3 enviP0;//!< coordinate used for envi.
+  QStringList labs;//!< Labels for an envi-ronment list.
 public slots:
   void rotCenter();
   void zalman();
@@ -88,8 +98,10 @@ public slots:
   void crosseye();
   void nostereo();
   void homeXY();
+  void clearEnvi();
   void saveMISettings();
   void loadMISettings();
+  void envi();
   void noneCull(bool b);
   void backCull(bool b);
   void frontCull(bool b);

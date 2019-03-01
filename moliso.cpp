@@ -365,6 +365,7 @@ void MolIso::loadMI(QString fname, bool om, bool mima){
   printf("%d orte.size %d  L%g\n",orte.size(),pgns.size(),L);
   Area=pgnArea();
   printf("Area %g Angstrom^2\n",Area); 
+
   if (polifile!=NULL) {
     fprintf(polifile," %8.0f\n",Area);
   }
@@ -584,7 +585,7 @@ void MolIso::exportSTL(){
   } 
 }
 
-void MolIso::exportObj(){
+void MolIso::exportObj() {
   QString wfobj = QFileDialog::getSaveFileName ( this, 
       "Export Isosurfaces to WaveFront .obj file",
       QDir::homePath(), "Wavefront (*.obj)");
@@ -640,7 +641,107 @@ void MolIso::exportObj(){
   fmap.save(fn2);
 }
 
+int cutTriangle(GLfloat va, GLfloat vb, GLfloat vc){
+  if ((va<=0.0f)&&(vb<=0.0f)&&(vc<=0.0f)) return 0;
+  if ((va>0.0f)&&(vb>0.0f)&&(vc>0.0f)) return 0;
 
+  if ((va<=0.0f)&&(vb>0.0f)&&(vc>0.0f)) return 1; //A
+  if ((va>0.0f)&&(vb<=0.0f)&&(vc<=0.0f)) return 1;
+
+  if ((va>0.0f)&&(vb<=0.0f)&&(vc>0.0f)) return 2;
+  if ((va<=0.0f)&&(vb>0.0f)&&(vc<=0.0f)) return 2;
+
+  if ((va>0.0f)&&(vb>0.0f)&&(vc<=0.0f)) return 3;
+  if ((va<=0.0f)&&(vb<=0.0f)&&(vc>0.0f)) return 3;
+
+return 4;
+}
+
+void MolIso::findContour(QList<Vector3> &lines, GLfloat value){
+  GLfloat Va,Vb,Vc,mix1,mix2;
+  Vector3 sta,end;
+  for (int i=0; i<pgns.size();i++){
+    int n=pgns.at(i).n;
+    if (n==3){
+      Va=orte.at(pgns.at(i).ii[0]).color-value;
+      Vb=orte.at(pgns.at(i).ii[1]).color-value;
+      Vc=orte.at(pgns.at(i).ii[2]).color-value;
+            glColor3d(0.,0.,0.);
+      switch (cutTriangle(Va, Vb, Vc)){
+        case 1: 
+          mix1=(Va/(Va-Vb));
+          mix2=(Va/(Va-Vc));
+          sta=(1.0f-mix1)*orte.at(pgns.at(i).ii[0]).vertex + (mix1)*orte.at(pgns.at(i).ii[1]).vertex;
+          end=(1.0f-mix2)*orte.at(pgns.at(i).ii[0]).vertex + (mix2)*orte.at(pgns.at(i).ii[2]).vertex;
+          lines.append(sta);
+          lines.append(end);
+          break;
+        case 2: 
+          mix1=(Va/(Va-Vb));
+          mix2=(Vb/(Vb-Vc));
+          sta=(1.0f-mix1)*orte.at(pgns.at(i).ii[0]).vertex + (mix1)*orte.at(pgns.at(i).ii[1]).vertex;
+          end=(1.0f-mix2)*orte.at(pgns.at(i).ii[1]).vertex + (mix2)*orte.at(pgns.at(i).ii[2]).vertex;
+          lines.append(sta);
+          lines.append(end);
+          break;
+        case 3: 
+          mix1=(Vc/(Vc-Vb));
+          mix2=(Va/(Va-Vc));
+          sta=(1.0f-mix1)*orte.at(pgns.at(i).ii[2]).vertex + (mix1)*orte.at(pgns.at(i).ii[1]).vertex;
+          end=(1.0f-mix2)*orte.at(pgns.at(i).ii[0]).vertex + (mix2)*orte.at(pgns.at(i).ii[2]).vertex;
+          lines.append(sta);
+          lines.append(end);
+          break;
+      }
+
+    }else{
+      Vector3 mid=Vector3(0.0,0.0,0.0);
+      for (int j=0; j<n;j++) mid+=orte.at(pgns.at(i).ii[j]).vertex;
+      mid*=1.0/n;
+      GLfloat mixColor=0.0f;
+      for (int j=0; j<n;j++) mixColor+=orte.at(pgns.at(i).ii[j]).color;
+      mixColor*=1.0f/n;
+      Va=mixColor-value;
+
+      for (int k=0;k<n;k++){
+        int kp=(k+1)%n;
+        Vb=orte.at(pgns.at(i).ii[k]).color-value;
+        Vc=orte.at(pgns.at(i).ii[kp]).color-value;
+        switch (cutTriangle(Va, Vb, Vc)){
+          case 1: 
+            mix1=(Va/(Va-Vb));
+            mix2=(Va/(Va-Vc));
+            sta=(1.0f-mix1)*mid + (mix1)*orte.at(pgns.at(i).ii[k]).vertex;
+            end=(1.0f-mix2)*mid + (mix2)*orte.at(pgns.at(i).ii[kp]).vertex;
+            lines.append(sta);
+            lines.append(end);
+            break;
+          case 2: 
+            mix1=(Va/(Va-Vb));
+            mix1=(Va/(Va-Vb));
+            mix2=(Vb/(Vb-Vc));
+            sta=(1.0f-mix1)*mid + (mix1)*orte.at(pgns.at(i).ii[k]).vertex;
+            end=(1.0f-mix2)*orte.at(pgns.at(i).ii[k]).vertex + (mix2)*orte.at(pgns.at(i).ii[kp]).vertex;
+            lines.append(sta);
+            lines.append(end);
+            break;
+          case 3: 
+            mix1=(Vc/(Vc-Vb));
+            mix2=(Va/(Va-Vc));
+            sta=(1.0f-mix1)*orte.at(pgns.at(i).ii[kp]).vertex + (mix1)*orte.at(pgns.at(i).ii[k]).vertex;
+            end=(1.0f-mix2)*mid + (mix2)*orte.at(pgns.at(i).ii[kp]).vertex;
+            lines.append(sta);
+            lines.append(end);
+            break;
+          case 4:
+            printf("@@~~~~ %g %g %g\n",Va,Vb,Vc);
+        }
+
+      }
+    }
+
+  }
+}
 
 
 

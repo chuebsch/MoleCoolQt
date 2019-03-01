@@ -1672,7 +1672,7 @@ void Hirshfeld::raw2xdhkl(){
     stl2=mol->sintl2(h,k,l);
     if (stl2>12.0) continue;//
     double F2=B[m][0]*B[m][0]+B[m][1]*B[m][1];
-    fprintf(f,"%3d%4d%4d%3d %10.3f %8.3f\n",h,k,l,1,F2,0.05*F2);//,sqrt(stl2)/2.0);
+    fprintf(f,"%3d%4d%4d%3d %10.3f %8.3f\n",h,k,l,1,F2,fmax(0.15,0.15*F2));//,sqrt(stl2)/2.0);
   } 
   fclose(f);
   printf("raw2xdhkl end!\n");

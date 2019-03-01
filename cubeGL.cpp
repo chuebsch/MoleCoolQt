@@ -19,9 +19,20 @@ CubeGL::CubeGL(QWidget *parent) : QGLWidget(parent) {
    paparazi=false;
    tvalue=0.0;
    vangle=29.0;
+   envirange=1.7;
+   enviNoQ= new QAction("Exclude Q-peaks from environment listing", this);
+   enviCova = new QAction("List only covalent bonds.",this);
+   enviButt= new QToolButton(this);
+   enviButt->setText("clear ENVI");
+   connect(enviButt,SIGNAL(clicked()),this,SLOT(clearEnvi()));
+   enviButt->setVisible(false);
    chicken= new QAction("Permanent wireframe mode",this);
    chicken->setCheckable(true);
    chicken->setChecked(false);
+   enviNoQ->setCheckable(true);
+   enviNoQ->setChecked(false);
+   enviCova->setCheckable(true);
+   enviCova->setChecked(false);
    connect(chicken,SIGNAL(toggled(bool)),this,SLOT(updateGL()));
    quickRot= new QAction("No change in view while rotation",this );
    quickRot->setCheckable(true);
@@ -220,6 +231,15 @@ void CubeGL::setContourWidth(int width){
     updateGL();
 }
 
+void CubeGL::clearEnvi(){
+  enviPositions.clear();
+  labs.clear();
+  enviKat.clear();
+  enviButt->setVisible(false);
+  //enviSelect->setVisible(false);
+  rotCenter();
+
+}
 void CubeGL::togglContours(bool b){
     zebra=b;
     updateGL();
@@ -835,6 +855,110 @@ bool before=  mol.bondColorStyle;
  // printf("initializeGL %d\n",__LINE__);
   if (!noWaitLabel) moving->start(80);
 
+}
+
+void CubeGL::envi(){
+  /*! Finds neighboring atoms around a ChGL.envirange the spezified atom and passes a html table via ChGL.bigmessage
+   * Feeds ChGL.enviPositions, ChGL.labs  and ChGL.enviKat. 
+   * sets the rotation center to the spezified atom.
+   * */
+  QAction *action = qobject_cast<QAction *>(sender());
+  extern molekul mol;
+  extern QList<INP> asymmUnit;
+  int index=0;
+  if (action)
+    index=action->data().toInt();
+  else return;
+  if (index<0) return;
+  if (index>=asymmUnit.size())return;
+  mol.enviSDM(envirange);
+  enviPositions.clear();
+  enviKat.clear();
+  labs.clear();
+  QList<bool> covs;
+
+  V3 ppc,ppf,p0;
+  // int ssy=0;
+  QString systr;
+  QStringList bs;
+  QString info;
+  enviP0=asymmUnit.at(index).kart;
+  info.append(QString("<hr><b>Environment of %1 </b><table border=\"0\" cellspacing=\"0\" cellpadding=\"5\">").arg(asymmUnit[index].atomname));
+  for (int i = 0; i < mol.envi_sdm.size(); i++){
+    if ((mol.envi_sdm.at(i).a2==index)&&mol.envi_sdm.at(i).d<envirange) {
+      if ((!mol.envi_sdm.at(i).covalent)&&(enviCova->isChecked())) continue;
+      if ((asymmUnit[mol.envi_sdm.at(i).a1].OrdZahl<0)&&(enviNoQ->isChecked())) continue;
+      ppf=mol.zelle.symmops.at(mol.envi_sdm.at(i).sn) *
+        asymmUnit[mol.envi_sdm.at(i).a1].frac +
+        mol.zelle.trans.at(mol.envi_sdm.at(i).sn) -//-
+        mol.envi_sdm.at(i).floorD;
+      mol.frac2kart(ppf,ppc);
+      mol.frac2kart(asymmUnit[index].frac,p0);
+      /*
+         if (fabs(mol.envi_sdm.at(i).d-sqrt(Distance(p0,ppc)))>0.5){
+         ppf=mol->cell.symmops.at(mol.envi_sdm.at(i).sn) *
+         asymmUnit[mol.envi_sdm.at(i).a2].frac -
+         mol->cell.trans.at(mol.envi_sdm.at(i).sn) -
+         mol.envi_sdm.at(i).floorD;
+         mol->frac2kart(ppf,ppc);
+
+         }// */
+      enviPositions.append(ppc);
+      covs.append(mol.envi_sdm.at(i).covalent);
+      enviKat.append((mol.envi_sdm.at(i).covalent)?1:0);
+      if((abs(asymmUnit[mol.envi_sdm.at(i).a1].OrdZahl-7)<2)
+          &&(abs(asymmUnit[mol.envi_sdm.at(i).a2].OrdZahl-7)<2)
+          &&(fabs(mol.envi_sdm.at(i).d-2.725)<0.275)){enviKat.last()=2;}
+
+      if((asymmUnit[mol.envi_sdm.at(i).a1].OrdZahl==0)&&(abs(asymmUnit[mol.envi_sdm.at(i).a2].OrdZahl-7)<2)&&(fabs(mol.envi_sdm.at(i).d-1.875)<0.275)){enviKat.last()=2;}
+      if((asymmUnit[mol.envi_sdm.at(i).a2].OrdZahl==0)&&(abs(asymmUnit[mol.envi_sdm.at(i).a1].OrdZahl-7)<2)&&(fabs(mol.envi_sdm.at(i).d-1.875)<0.275)){enviKat.last()=2;}
+      bool symm=((mol.envi_sdm.at(i).sn)||(!(mol.envi_sdm.at(i).floorD==V3(0,0,0))));
+      if (symm) {
+        QString sss=QString("%1_%2%3%4:%5,").arg(mol.envi_sdm.at(i).sn+1).arg(5-(int)mol.envi_sdm.at(i).floorD.x).arg(5-(int)mol.envi_sdm.at(i).floorD.y).arg(5-(int)mol.envi_sdm.at(i).floorD.z).arg(asymmUnit[mol.envi_sdm.at(i).a1].molindex);
+        if (!bs.contains(sss)){
+          bs.append(sss);
+        }
+
+        systr=QString("%1%2").arg(QString::fromUtf8("»")).arg(bs.indexOf(sss)+1);
+        labs.append(QString(asymmUnit[ mol.envi_sdm.at(i).a1].atomname)+systr);
+      }
+      else labs.append(asymmUnit[ mol.envi_sdm.at(i).a1].atomname);
+      info.append(QString("<tr><th style=\"background:%6\" >%1%4</th><td style=\"background:%5\" >%7<font color=%3> %2&nbsp;&Aring;</font></b></td>")
+          .arg(asymmUnit[ mol.envi_sdm.at(i).a1].atomname)
+          .arg(mol.envi_sdm.at(i).d,8,'f',3)
+          .arg((mol.envi_sdm.at(i).covalent)?"green":"black")
+          .arg(symm?systr:"").arg((labs.size()%2)?"#eeeeee":"white")
+          .arg((labs.size()%2)?"#d4d4e4":"#efefff")
+          .arg((mol.envi_sdm.at(i).covalent)?"<b>":""));
+      for (int j=0; j<enviPositions.size()-1; j++){
+        double w=
+          mol.winkel(p0-enviPositions.at(j),
+              p0-enviPositions.last());
+        //		printf("%s-%s-%s %g   %g %g %g\n",labs.at(j).toStdString().c_str(),asymmUnit[index].Label.toStdString().c_str(),labs.last().toStdString().c_str(),w,enviPositions.at(j).x ,enviPositions.at(j).y,enviPositions.at(j).z);
+        info.append(QString("<td style=\"background:%3\" align=right>%4<font color=%2> %1&deg;</font></b></td>")
+            .arg(w,8,'f',2)
+            .arg(((mol.envi_sdm.at(i).covalent)&&(covs.at(j)))?"green":"black")
+            .arg(((j+1)%2)?(labs.size()%2)?"#d4d4d4":"#e4e4e4":(labs.size()%2)?"#eeeeee":"#ffffff")
+            .arg(((mol.envi_sdm.at(i).covalent)&&(covs.at(j)))?"<b>":""));
+
+      }
+      info.append("</tr>\n");
+    }
+  }
+  info.append("<tr><td style=\"background:#efefff\"></td><td style=\"background:#efefff\"></td>");
+  for (int j=0; j<enviPositions.size()-1; j++){
+    info.append(QString("<th style=\"background:%2\">%1</th>").arg(labs.at(j)).arg(((j+1)%2)?"#d4d4e4":"#efefff"));
+  }
+  /*QString symml="";
+  for (int j=0; j<bs.size(); j++){
+    symml+=mol.symmcode2human(bs.at(j));
+  }*/
+  info.append(QString("</tr>\n</table>%1<hr>\n").arg(mol.symmcode2human(bs)));
+  emit bigmessage(info);
+
+  enviButt->setVisible(true);
+  expandatom=index;
+  setRotCenter();
 }
 
 void CubeGL::callList(int list){
@@ -3823,6 +3947,7 @@ void CubeGL::contextMenuEvent(QContextMenuEvent *event) {
     QAction expandAct(tr("mist"),this);
     QAction hideThisAct(tr("mist"),this);
     QAction hideSelectedAct("Hide selected atoms",this);
+    QAction mhideSelectedAct("Hide selected atoms",this);
     QAction hideThisFragment("Hide this fragment",this);
     QAction hideOtherFragments("Hide other fragments",this);
     QAction *dntpck=new QAction("only asymmetric unit",this);
@@ -3843,6 +3968,7 @@ void CubeGL::contextMenuEvent(QContextMenuEvent *event) {
     connect( &expandAct, SIGNAL(triggered () ), parent(), SLOT(expandAround() ));
     connect( &hideThisAct, SIGNAL(triggered () ), parent(), SLOT(filterThisAtom() ));
     connect( &hideSelectedAct, SIGNAL(triggered () ), parent(), SLOT(filterSelectedAtoms() ));
+    connect( &mhideSelectedAct, SIGNAL(triggered () ), this, SLOT(hidSelection() ));
     connect( &hideThisFragment, SIGNAL(triggered () ), parent(), SLOT(filterThisFragment() ));
     connect( &hideOtherFragments, SIGNAL(triggered () ), parent(), SLOT(filterOtherFragments()));
     QMenu menu(this);
@@ -3865,7 +3991,8 @@ void CubeGL::contextMenuEvent(QContextMenuEvent *event) {
     }
 
     expandatom=nahdai;
-    if (!selectedAtoms.isEmpty()) menu.addAction(&hideSelectedAct);
+    if ((!selectedAtoms.isEmpty())&&(!xdinp.isEmpty())) menu.addAction(&hideSelectedAct);
+    if ((!selectedAtoms.isEmpty())&&(!matoms.isEmpty())) menu.addAction(&mhideSelectedAct);
     if (expandatom<xdinp.size()) {
       if (expandatom<0) {expandatom=-1;return;}
       expandAct.setText(tr("Expand %1 Ang. around %2.").arg(mol.gd).arg(xdinp.at(expandatom).atomname));
@@ -3879,6 +4006,7 @@ void CubeGL::contextMenuEvent(QContextMenuEvent *event) {
       menu.addAction(&hideThisFragment);
       menu.addAction(&hideOtherFragments);
       menu.addAction("Select this fragment",parent(),SLOT(selectThisFragment()));
+      menu.addAction(tr("Show coordinates of %1").arg(xdinp.at(expandatom).atomname),parent(),SLOT(showCoordinatesOfThis()));
       {QAction *a = menu.addAction("Calculate p.d.f. of an atom",parent(),SLOT(pdfDlg()));
         a->setData(expandatom);
       }
@@ -3897,6 +4025,13 @@ void CubeGL::contextMenuEvent(QContextMenuEvent *event) {
       menu.addAction(changeGDAct);
       QAction *a = menu.addAction("edit xd_part.aux",parent(),SLOT(editPartAux()));
       a->setData(qMax(expandatom,0));
+      QMenu *enviMenu = new QMenu("ENVI-Settings");
+ //   enviMenu->addAction("Change envi range", this, SLOT(changeEnviRange()));later
+      enviMenu->addAction(enviNoQ);
+      enviMenu->addAction(enviCova);
+      menu.addMenu(enviMenu);
+      a=menu.addAction(QString("List ENVIronment of %1").arg(xdinp.at(expandatom).atomname),this,SLOT(envi()));
+      a->setData(expandatom);
       menu.exec(event->globalPos());
     }
     else if (expandatom<matoms.size()) {
@@ -4793,98 +4928,113 @@ if (!selectedAtoms.isEmpty()){
       if ((bas)&&(drawAx)) callList(bas+2);
       if ((bas)&&(drawUz)) callList(bas+3);
       if ((MIS)&&(moliso->mibas)) { 
-	glDisable(GL_CULL_FACE);
+        glPushMatrix();{
+          glScaled( L, L, L );
+          glColor3d(0.0,0.0,0.0);
+          glDisable( GL_LIGHTING ); 
+          glDisable( GL_DEPTH_TEST ); 
+          glLineWidth(3);
+          glBegin(GL_LINES);
+          for (int ci=0;ci<cont.size();ci++){
+            glVertex3d(cont.at(ci).x,cont.at(ci).y,cont.at(ci).z);
+          }
+          glEnd();
+          glEnable( GL_LIGHTING ); 
+          glEnable( GL_DEPTH_TEST ); 
+        }glPopMatrix();
+          glLineWidth(0.7);
+        glDisable(GL_CULL_FACE);
         if (moving->isActive()||chicken->isChecked()) {Pers=1; glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);}
-	else glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
-	if (molisoTransparence) glEnable(GL_BLEND);
-	else glDisable(GL_BLEND);
-	if ((!moving->isActive())&&(zebra)){
-	  GLubyte contours[2049];
-	  for (int i=0;i<512;i++){
-	    contours[4*i]=  ((i%cdens)>cwid)?0xff:0x00;
-	    contours[4*i+1]=((i%cdens)>cwid)?0xff:0x00;
-	    contours[4*i+2]=((i%cdens)>cwid)?0xff:0x00;
-	    contours[4*i+3]=((i%cdens)>cwid)?0xff:0xff;
-	  }
-	  glTexParameteri( GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT );
-	  glTexParameteri( GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-	  glTexParameteri( GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-	  glTexImage1D( GL_TEXTURE_1D, 0,GL_RGBA, 512, 0,
-			  GL_RGBA, GL_UNSIGNED_BYTE, contours );
-	  glBindTexture(GL_TEXTURE_1D,contours[0]);
-	  glEnable(GL_TEXTURE_1D);
-	}
-	if (faceCull) glEnable(   GL_CULL_FACE);
-	if (faceCull==2) glCullFace(GL_FRONT);
-	if (faceCull==1) glCullFace(GL_BACK);
-	switch (Pers) {
-		case 1: {callList(moliso->mibas);break;}
-		case 2: {callList(moliso->mibas+1);break;}
-		case 3: {callList(moliso->mibas+2);break;}
-		case 4: {callList(moliso->mibas+3);break;}
-		case 5: {callList(moliso->mibas+4);break;}
-		case 6: {callList(moliso->mibas+5);break;}
-		default: qDebug()<<"Impossible Orientation!!!";exit(1);
-	}      
-	glDisable(GL_TEXTURE_1D);
-	glDisable(   GL_CULL_FACE);
-	glCullFace(GL_BACK);
-	glDisable(GL_BLEND);
+        else glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+        if (molisoTransparence) glEnable(GL_BLEND);
+        else glDisable(GL_BLEND);
+        if ((!moving->isActive())&&(zebra)){
+          GLubyte contours[2049];
+          for (int i=0;i<512;i++){
+            contours[4*i]=  ((i%cdens)>cwid)?0xff:0x00;
+            contours[4*i+1]=((i%cdens)>cwid)?0xff:0x00;
+            contours[4*i+2]=((i%cdens)>cwid)?0xff:0x00;
+            contours[4*i+3]=((i%cdens)>cwid)?0xff:0xff;
+          }
+          glTexParameteri( GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT );
+          glTexParameteri( GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+          glTexParameteri( GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+          glTexImage1D( GL_TEXTURE_1D, 0,GL_RGBA, 512, 0,
+              GL_RGBA, GL_UNSIGNED_BYTE, contours );
+          glBindTexture(GL_TEXTURE_1D,contours[0]);
+          glEnable(GL_TEXTURE_1D);
+        }
+        if (faceCull) glEnable(   GL_CULL_FACE);
+        if (faceCull==2) glCullFace(GL_FRONT);
+        if (faceCull==1) glCullFace(GL_BACK);
+        switch (Pers) {
+          case 1: {callList(moliso->mibas);break;}
+          case 2: {callList(moliso->mibas+1);break;}
+          case 3: {callList(moliso->mibas+2);break;}
+          case 4: {callList(moliso->mibas+3);break;}
+          case 5: {callList(moliso->mibas+4);break;}
+          case 6: {callList(moliso->mibas+5);break;}
+          default: qDebug()<<"Impossible Orientation!!!";exit(1);
+        }      
+        glDisable(GL_TEXTURE_1D);
+        glDisable(   GL_CULL_FACE);
+        glCullFace(GL_BACK);
+        glDisable(GL_BLEND);
         glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
 
-	if (MILe){
-	  GLfloat fw;
-	  glPushMatrix();
-	  double mat[16];
-	  glEnable(GL_COLOR_MATERIAL);
-	  glGetDoublev( GL_MODELVIEW_MATRIX, (double*)mat );
-	  glLoadIdentity();
-	  glDisable( GL_LIGHTING ); 
-	  glDisable( GL_DEPTH_TEST ); 
-	  if (zebra)  glEnable(GL_TEXTURE_1D);
-	  glBegin( GL_TRIANGLE_STRIP );
-	  for (int j=0;j<256;j++){	
-	    moliso->Farbverlauf((0.0039*j*(moliso->max-moliso->min))+moliso->min);
-	    glTexCoord1f(0.0039*j);
-	    if (horizont) {
-	      glVertex3f(mil.y+0.006640625*j*milsize,mil.x+0.05*milsize,-6.1);
-	      glVertex3f(mil.y+0.006640625*j*milsize,mil.x     ,-6.1);
-	    }else{
-	      glVertex3f(mil.x+0.05*milsize,mil.y+0.006640625*j*milsize,-6.1);
-	      glVertex3f(mil.x,mil.y+0.006640625*j*milsize,-6.1);
-	    }
-	  }
-	  glEnd();
-	  QRect R;
-	  QFontMetrics FM(MLegendFont);
-	  QString lab="AAA";
-	  R= FM.boundingRect(lab);
+        if (MILe){
+          GLfloat fw;
+          glPushMatrix();
+          double mat[16];
+          glEnable(GL_COLOR_MATERIAL);
+          glGetDoublev( GL_MODELVIEW_MATRIX, (double*)mat );
+          glLoadIdentity();
+          glDisable( GL_LIGHTING ); 
+          glDisable( GL_DEPTH_TEST ); 
+          if (zebra)  glEnable(GL_TEXTURE_1D);
+          glBegin( GL_TRIANGLE_STRIP );
+          for (int j=0;j<256;j++){	
+            moliso->Farbverlauf((0.0039*j*(moliso->max-moliso->min))+moliso->min);
+            glTexCoord1f(0.0039*j);
+            if (horizont) {
+              glVertex3f(mil.y+0.006640625*j*milsize,mil.x+0.05*milsize,-6.1);
+              glVertex3f(mil.y+0.006640625*j*milsize,mil.x     ,-6.1);
+            }else{
+              glVertex3f(mil.x+0.05*milsize,mil.y+0.006640625*j*milsize,-6.1);
+              glVertex3f(mil.x,mil.y+0.006640625*j*milsize,-6.1);
+            }
+          }
+          glEnd();
+          QRect R;
+          QFontMetrics FM(MLegendFont);
+          QString lab="AAA";
+          R= FM.boundingRect(lab);
 
-	  for (int i=0;i<7;i++) {
-	    fw=(0.1666666666666667*i*(moliso->max-moliso->min)) + moliso->min;
+          for (int i=0;i<7;i++) {
+            fw=(0.1666666666666667*i*(moliso->max-moliso->min)) + moliso->min;
             if (moliso->thisIsPDF)
-	    lab = QString("%1%2").arg(fw,4,'f',0).arg("%");
+              lab = QString("%1%2").arg(fw,4,'f',0).arg("%");
             else lab = QString("%1").arg(fw,7,'f',3);
-	    R= FM.boundingRect(lab);
-	    if (!monochrom)  moliso->Farbverlauf(fw); 
-	    else glColor4f(tCR,tCG,tCB,tCA);
-	    glDisable(GL_BLEND);
-	    if (horizont) renderText(mil.y+0.275*i*milsize+0.00,mil.x+0.07*milsize,-6.1,lab ,MLegendFont);
-	    else{
-	      if (mil.x<0) renderText(mil.x+0.07*milsize,mil.y+0.275*i*milsize+0.0,-6.1,lab,MLegendFont);
-	      else {
-		renderText(mil.x-(0.18*vangle/_win_width *R.width()),mil.y+0.275*i*milsize+0.0,-6.1,lab ,MLegendFont);
-	      }
-	    }	  
-	  }
+            R= FM.boundingRect(lab);
+            if (!monochrom)  moliso->Farbverlauf(fw); 
+            else glColor4f(tCR,tCG,tCB,tCA);
+            glDisable(GL_BLEND);
+            if (horizont) renderText(mil.y+0.275*i*milsize+0.00,mil.x+0.07*milsize,-6.1,lab ,MLegendFont);
+            else{
+              if (mil.x<0) renderText(mil.x+0.07*milsize,mil.y+0.275*i*milsize+0.0,-6.1,lab,MLegendFont);
+              else {
+                renderText(mil.x-(0.18*vangle/_win_width *R.width()),mil.y+0.275*i*milsize+0.0,-6.1,lab ,MLegendFont);
+              }
+            }	  
+          }
 
-	  glEnable( GL_LIGHTING ); 
-	  glEnable( GL_DEPTH_TEST ); 
-	  glLoadMatrixd(mat);
-	  glDisable(GL_TEXTURE_1D);
-	  glPopMatrix();
-	}
-	glEnable(GL_CULL_FACE);
+          glEnable( GL_LIGHTING ); 
+          glEnable( GL_DEPTH_TEST ); 
+          glLoadMatrixd(mat);
+          glDisable(GL_TEXTURE_1D);
+          glPopMatrix();
+        }
+        glEnable(GL_CULL_FACE);
       }
       // */ 
 
@@ -5097,6 +5247,7 @@ void CubeGL::disSelection(){
 
 
 void CubeGL::hidSelection(){
+  qDebug()<<"hidSelection";
     extern QList<Modulat> matoms;
     if (matoms.isEmpty()) return;
     for (int i=0; i<selectedAtoms.size();i++){

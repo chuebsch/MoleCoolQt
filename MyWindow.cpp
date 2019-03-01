@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=597;
+int rev=598;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -414,11 +414,11 @@ You can also specify acolor as RGB after ## or as in HTML after color= in &quot;
 
   nodipAct = fileMenu->addAction(QIcon(":images/nodipole.png"),tr("Remove Dipole moments"),this,SLOT(removeDipoleMoments())); 
   nodipAct->setVisible ( false);
+  fileMenu->addAction("export visible atoms etc",this,SLOT(exportVisible()));
   fileMenu->addSeparator();
   act3 = fileMenu->addAction(QIcon(":/images/cancel.png"), tr("&Quit"),
 			     this, SLOT(close()),
 			     QKeySequence(tr("Q", "File|Quit")) );
-
 
 
   act2->setStatusTip(tr("Opens structure files"));
@@ -965,6 +965,7 @@ createRenameWgd();
   statusBar()->addPermanentWidget(speedSldr);
   statusBar()->addPermanentWidget(modScale);
   statusBar()->addPermanentWidget(sLabel);
+  statusBar()->addPermanentWidget(cubeGL->enviButt);
 
   
   statusBar()->setWhatsThis("This is the status bar. You can hide it in the View menu by unchecking 'toggle Status bar'.");
@@ -2300,6 +2301,13 @@ void MyWindow::genMoliso(QString isoname, QString mapname, QString lfcename, QSt
      cubeGL->moliso->loadMI(lfaceFile,true);
   }
   else cubeGL->moliso->loadMI(lfaceFile,false);
+  cubeGL->moliso->findContour(cubeGL->cont,0.00f);
+  cubeGL->moliso->findContour(cubeGL->cont,0.10f);
+  cubeGL->moliso->findContour(cubeGL->cont,0.20f);
+  cubeGL->moliso->findContour(cubeGL->cont,0.30f);
+  cubeGL->moliso->findContour(cubeGL->cont,0.40f);
+  cubeGL->moliso->findContour(cubeGL->cont,0.50f);
+  printf("Contour has %dlines.\n",cubeGL->cont.size());
   if (cubeGL->moliso->calcextrema) il();
   updateStatusBar();
   statusBar()->showMessage(tr("surfaces loaded") );
@@ -2363,6 +2371,7 @@ void MyWindow::destroyMoliso(){
   mol.wombats.clear();
   asymmUnit.clear();
   mol.entknoten();
+  cubeGL->cont.clear();
   glDeleteLists(cubeGL->moliso->mibas,6);
   if (cubeGL->bas) glDeleteLists(cubeGL->bas,10);
   if (cubeGL->moliso){
@@ -4014,9 +4023,11 @@ void MyWindow::load_Jana(QString fileName){
       tfpsBox->setValue(25);
       if (mol.zelle.commensurate) {
         mol.zelle.qvec=mol.zelle.qr+mol.zelle.qi;
+        qDebug()<<mol.zelle.qvec.x<< mol.zelle.qvec.y<<mol.zelle.qvec.z <<mol.zelle.commen.x<<mol.zelle.commen.y<<mol.zelle.commen.z;
         mol.zelle.qvec.x = round(mol.zelle.qvec.x*mol.zelle.commen.x)/mol.zelle.commen.x;
         mol.zelle.qvec.y = round(mol.zelle.qvec.y*mol.zelle.commen.y)/mol.zelle.commen.y;
         mol.zelle.qvec.z = round(mol.zelle.qvec.z*mol.zelle.commen.z)/mol.zelle.commen.z;
+        qDebug()<<mol.zelle.qvec.x<< mol.zelle.qvec.y<<mol.zelle.qvec.z <<mol.zelle.commen.x<<mol.zelle.commen.y<<mol.zelle.commen.z;
         double qrr = sqrt(Norm(mol.zelle.qvec));
          tstepBox->setDecimals(11);
          tstepBox->setSingleStep(0.000000001);
@@ -4774,6 +4785,11 @@ void MyWindow::load_BayMEM(QString fileName) {
 //  printf("load BayMEM  %d\n",__LINE__);
   newAtom.part=0;
   newAtom.sg=0;
+  newAtom.lam1=0.0;
+  newAtom.lam2=0.0;
+  newAtom.lam3=0.0;
+  newAtom.peakHeight=0.0;
+  newAtom.cptype=0;
   someThingToRestore();
   mol.zelle.symmops.clear();
   mol.zelle.trans.clear();
@@ -4966,7 +4982,9 @@ void MyWindow::load_BayMEM(QString fileName) {
 	newAtom.OrdZahl=-2;
         
         newAtom.cptype=tok.at(3).section(QRegExp("[)(,]+"),2,2).toInt()+3;
-        newAtom.lap=tok.at(5).toDouble()+tok.at(6).toDouble()+tok.at(7).toDouble();
+        newAtom.lam1 = tok.at(5).toDouble();
+        newAtom.lam2 = tok.at(6).toDouble();
+        newAtom.lam3 = tok.at(7).toDouble();
 	newAtom.peakHeight=tok.at(4).toDouble();
         mol.frac2kart(newAtom.frac,newAtom.kart);
         asymmUnit.append(newAtom);
@@ -5494,13 +5512,13 @@ void MyWindow::bubble2CPS(QString masName){
   if (!xdout.open(QIODevice::ReadOnly|QIODevice::Text)) return;
   QStringList lines=QString(xdout.readAll()).split('\n');
   QString line,prop;
-  bool found=false;
+//  bool found=false;
   QStringList cptyp;
   QList<double> x,y,z,rho,lap;
   foreach (line,lines){
     if (line.contains("Property f =")) {
       prop = line.section(" ",3,3,QString::SectionSkipEmpty);
-      found=true;
+//      found=true;
     }
     if (line.contains("critical point")) {
       cptyp.append(line.section(" ",1,1,QString::SectionSkipEmpty));
@@ -5514,7 +5532,7 @@ void MyWindow::bubble2CPS(QString masName){
 
   }
 
-  qDebug()<<x.size()<<y.size()<<z.size()<<rho.size()<<lap.size();
+ // qDebug()<<x.size()<<y.size()<<z.size()<<rho.size()<<lap.size();
   QString pth=dn+QString("/xd_%1-.cps").arg(prop.toLower());
   FILE *cps=fopen(pth.toStdString().c_str(),"at");
   if (cps!=NULL) {
@@ -5579,7 +5597,16 @@ void MyWindow::loadCPS(QString masName){
         newAtom.kart.z=tok.at(5).toDouble();
       }
       if (tok.size()>6){newAtom.peakHeight=tok.at(6).toDouble();}else newAtom.peakHeight=0.0;
-      if (tok.size()>8) {newAtom.lap=tok.at(7).toDouble()+tok.at(8).toDouble()+tok.at(9).toDouble();}else newAtom.lap=0.0;
+      if (tok.size()>8) {
+        newAtom.lam1=tok.at(7).toDouble();
+        newAtom.lam2=tok.at(8).toDouble();
+        newAtom.lam3=tok.at(9).toDouble();
+      }
+      else {
+        newAtom.lam1 = 0.0;
+        newAtom.lam2 = 0.0;
+        newAtom.lam3 = 0.0;
+      }
       strncpy(newAtom.atomname,QString("CP%1").arg(idx++).toStdString().c_str(),20);
       newAtom.OrdZahl=-2;
       mol.kart2frac(newAtom.kart,newAtom.frac);
@@ -6953,7 +6980,7 @@ void MyWindow::load_sheldrick(QString fileName){
   mol.initDir();
   FILE *adp,*aadp=NULL,*incf=NULL; 
   part=0;
-  char line[85],line2[85],llin[166],dv[50],dvv[50],command[8],ext[85],Ami3[5];
+  char line[85],line2[85],llin[172],dv[50],dvv[50],command[8],ext[85],Ami3[5];
   int acnt=0,sorte=0,gitter=0,bfl,sftr[85],resNr=-1;
   int sf,pda=0;
   double fvar[20],Uiso=0.05; 
@@ -7873,7 +7900,10 @@ void MyWindow::load_gaus(QString fileName){
 				      newAtom.atomname,&newAtom.kart.x,&newAtom.kart.y,&newAtom.kart.z)>3)) {
 	cartesian=1;
 	newAtom.OrdZahl=mol.Get_OZ(newAtom.atomname);
-	sprintf(newAtom.atomname,"%s(%d)",newAtom.atomname,atmax+dummax);
+//	sprintf(newAtom.atomname,"%s(%d)",newAtom.atomname,atmax+dummax);
+        char numbstr[20];
+        sprintf(numbstr,"(%d)",atmax+dummax);
+        strncat(newAtom.atomname,numbstr,6);
 	if (newAtom.OrdZahl>-1) atmax++; else dummax++;
 	asymmUnit.append(newAtom);
       }
@@ -8054,7 +8084,7 @@ void MyWindow::openFile() {
 		  "XD-Path-Files (*.pth);;"
                   "BayMEM-Input-Files (*.BayMEM);;"
 		  "SHELX-Files (*.res *.ins);;"
-                  "MoPro-Files (*.0* *.1* *.2*);;"
+                  "MoPro-Files (*.0* *.1* *.2* *.par);;"
 		  "Gaussian COM-Files (*.com);;"
 		  "Gaussian FChk-Files (*.fchk);;"
 		  "CIF-Files (*.cif);;"
@@ -8333,6 +8363,8 @@ void MyWindow::filterSelectedAtoms(){
     if (!filtered){
       oxd=xdinp;
     }
+    qDebug()<<"ok"<<__LINE__<<xdinp.size()<<cubeGL->selectedAtoms.size();
+    if (xdinp.isEmpty())return;
     QList<INP> fltrXdinp;
 //    qDebug()<<"ok"<<__LINE__;
     for (int i=0;i<xdinp.size();i++){
@@ -8448,6 +8480,22 @@ void MyWindow::filterDistant(){
     filtered=1;
     update();
     cubeGL->updateGL();
+  }
+}
+
+void MyWindow::showCoordinatesOfThis(){
+  if ((cubeGL->expandatom>-1)&&(cubeGL->expandatom<xdinp.size())){
+    int i=cubeGL->expandatom;
+    printf("fractional coordinates of %s:\n%18.7f%18.7f%18.7f\n",
+        xdinp[i].atomname,
+        xdinp[i].frac.x,
+        xdinp[i].frac.y,
+        xdinp[i].frac.z);
+    printf("Cartesian coordinates of %s:\n%18.7f%18.7f%18.7f\n",
+        xdinp[i].atomname,
+        xdinp[i].kart.x,
+        xdinp[i].kart.y,
+        xdinp[i].kart.z);
   }
 }
 
@@ -9895,6 +9943,24 @@ void MyWindow::expandAround(){
   }
 }
 
+void MyWindow::exportVisible(){
+//  qDebug()<<"here IT comes soon!"<<xdinp.size();
+  QString efn=dirName+"_vis_export.txt";
+  FILE *ef=fopen(efn.toLocal8Bit(),"wt");
+  for (int j=0;j<xdinp.size();j++){
+    fprintf(ef,"%-6s %3d %10.5f %10.5f %10.5f (3,%1d) %10.5f %g\n",
+      xdinp.at(j).atomname,
+      xdinp.at(j).OrdZahl,
+      xdinp.at(j).kart.x,
+      xdinp.at(j).kart.y,      
+      xdinp.at(j).kart.z,
+      xdinp.at(j).cptype-3,
+      xdinp.at(j).peakHeight,
+      xdinp.at(j).lam1+xdinp.at(j).lam2+xdinp.at(j).lam3);
+  }
+  fclose(ef);
+}
+
 inline int trindex(int i,int j){
   int I=(i>j)?i:j;
   int J=(i<j)?i:j;
@@ -10271,20 +10337,24 @@ void MyWindow::SDM(QStringList &brauchSymm,int packart){
 
   qSort(sdm.begin(),sdm.end());
   for (int i=0; i<sdm.size(); i++){
-   if ((asymmUnit[sdm.at(i).a1].OrdZahl==-2)&&(asymmUnit[sdm.at(i).a2].OrdZahl>-1)&&(sdm.at(i).d<1.5)&&(asymmUnit[sdm.at(i).a1].cptype==2)){
+   if ((asymmUnit[sdm.at(i).a1].OrdZahl==-2)&&(asymmUnit[sdm.at(i).a2].OrdZahl>-1)&&(sdm.at(i).d<1.5)){//
+//     &&(asymmUnit[sdm.at(i).a1].cptype==0)&&(asymmUnit[sdm.at(i).a1].peakHeight<2.0)){
      bool done=false;
      for (int j=0; j<sdm.size(); j++){
-       if ((!done)&&(sdm.at(i).a1==sdm.at(j).a1)&&(sdm.at(j).a2!=sdm.at(i).a2)&&(asymmUnit[sdm.at(j).a2].OrdZahl>-1)&&(sdm.at(j).d<1.5)){
-         printf("%-6s=%-6s %-5s (3,%d) %9.6f %6.2f d1=%9.6fAng d2=%9.6fAng\n",
+       if ((!done)&&(sdm.at(i).a1==sdm.at(j).a1)&&(sdm.at(j).a2!=sdm.at(i).a2)&&(asymmUnit[sdm.at(j).a2].OrdZahl>-1)&&(sdm.at(j).d<2.5)){
+         printf("%6s=%-6s %-6s (3,%d) %9.4f %9.4f %9.4f %6.2f %4.2f \n",
              asymmUnit[sdm.at(i).a2].atomname,
              asymmUnit[sdm.at(j).a2].atomname,
-
              asymmUnit[sdm.at(i).a1].atomname,
              asymmUnit[sdm.at(i).a1].cptype-3,
-             asymmUnit[sdm.at(i).a1].peakHeight,
-             asymmUnit[sdm.at(i).a1].lap,
              sdm.at(i).d,
-             sdm.at(j).d); 
+             sdm.at(j).d,
+             asymmUnit[sdm.at(i).a1].peakHeight,
+             asymmUnit[sdm.at(i).a1].lam1+
+             asymmUnit[sdm.at(i).a1].lam2+
+             asymmUnit[sdm.at(i).a1].lam3,
+             asymmUnit[sdm.at(i).a1].lam1/asymmUnit[sdm.at(i).a1].lam2-1.0
+             ); 
          done=true;
        }
      }
@@ -11242,46 +11312,39 @@ void MyWindow::growSymm(int packart,int packatom){
       statusBar()->showMessage(tr("Neighbor search is finished"));
     }  
     
-    if (packart==7){
+    if (packart==7){//1
       QDialog *boxpack= new QDialog(this);
       QDoubleSpinBox 
         *aminlim,*amaxlim,
         *bminlim,*bmaxlim,
         *cminlim,*cmaxlim;
-
       aminlim = new QDoubleSpinBox(boxpack);
       amaxlim = new QDoubleSpinBox(boxpack);
       bminlim = new QDoubleSpinBox(boxpack);
       bmaxlim = new QDoubleSpinBox(boxpack);
       cminlim = new QDoubleSpinBox(boxpack);
       cmaxlim = new QDoubleSpinBox(boxpack);
-
       aminlim->setMinimum(-10.0);
       amaxlim->setMinimum(0.0);
       bminlim->setMinimum(-10.0);
       bmaxlim->setMinimum(0.0);
       cminlim->setMinimum(-10.0);
       cmaxlim->setMinimum(0.0);
-
       aminlim->setMaximum(1.0);
       amaxlim->setMaximum(10.0);
       bminlim->setMaximum(1.0);
       bmaxlim->setMaximum(10.0);
       cminlim->setMaximum(1.0);
       cmaxlim->setMaximum(10.0);
-
       aminlim->setValue(0.0);
       amaxlim->setValue(1.0);
       bminlim->setValue(0.0);
       bmaxlim->setValue(1.0);
       cminlim->setValue(0.0);
       cmaxlim->setValue(1.0);
-
       QDialogButtonBox *buttonBox = new QDialogButtonBox( QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
-      // QPushButton *ok = buttonBoxMC->button(QDialogButtonBox::Ok);
       connect(buttonBox, SIGNAL(rejected()), boxpack, SLOT(reject())); 
       connect(buttonBox, SIGNAL(accepted()), boxpack, SLOT(accept())); 
-
       QGridLayout *g = new QGridLayout(boxpack);
       g->addWidget(new QLabel("pack range along a "),0,0);
       g->addWidget(aminlim,1,0);
@@ -11301,7 +11364,7 @@ void MyWindow::growSymm(int packart,int packatom){
         for (int n=0; n<mol.zelle.symmops.size();n++){
           for (int i=0; i<asymmUnit.size();i++){
             if ((asymmUnit.at(i).OrdZahl>-1)&&(asymmUnit.at(i).molindex>0)){
-              prime=mol.zelle.symmops.at(n) * asymmUnit.at(i).frac + mol.zelle.trans.at(n) ;//+ V3(-0.0050,-0.0050,-0.0050)
+              prime=mol.zelle.symmops.at(n) * asymmUnit.at(i).frac + mol.zelle.trans.at(n);
               floorD=V3(floor(prime.x),floor(prime.y),floor(prime.z));
               prime=prime -floorD;	  
               dawars=1000.0;
@@ -11310,7 +11373,7 @@ void MyWindow::growSymm(int packart,int packatom){
                 dl=fl(prime.x-xdinp[g].frac.x, prime.y-xdinp[g].frac.y, prime.z-xdinp[g].frac.z);
                 dawars=(dl<dawars)?dl:dawars;
               }
-              if (dawars<0.01) continue; // */
+              if (dawars<0.01) continue; 
               for (int hh=-11; hh<12; hh++)
                 for (int kk=-11; kk<12; kk++)
                   for (int ll=-11; ll<12; ll++){
@@ -11335,9 +11398,7 @@ void MyWindow::growSymm(int packart,int packatom){
                       Usym(asymmUnit[i].uf,mol.zelle.symmops[n],newAtom.uf);
                       mol.Uf2Uo(newAtom.uf,newAtom.u);
                     }
-                    //printf("%-10s %9.5f %9.5f %9.5f\n",newAtom.atomname,newAtom.frac.x,newAtom.frac.y,newAtom.frac.z);
                     xdinp.append(newAtom);
-
                   }//ll
             }//packable 
             else if ((asymmUnit.at(i).OrdZahl<0)&&(n==0)) xdinp.append(asymmUnit[i]);//non atoms BCPs, Dummys, etc.

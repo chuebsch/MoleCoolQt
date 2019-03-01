@@ -179,6 +179,7 @@ signals:
   MolIso();
   ~MolIso();
   void loadMI(QString fname,bool om=false,bool mima=true);
+  void findContour(QList<Vector3> &lines, GLfloat value);
   void readBMBinaryHeader(QString fname);
   void readGVDHeader(QString fname);
   void readXDGridHeader(QString fname,int &fileType);

@@ -137,6 +137,7 @@ class MyWindow : public QMainWindow {
     void findAtoms();
     void editAtomColor();
     void exportFMaps();
+    void exportVisible();
     void openFile();
     void openDipoleFile();
     void openHirsh();
@@ -213,6 +214,7 @@ class MyWindow : public QMainWindow {
     void filterSelectedAtoms();
     void filterGroup(int index);
     void filterThisFragment();
+    void showCoordinatesOfThis();
     void selectThisFragment();
     void filterOtherFragments();
     void textFilterChanged();
@@ -280,7 +282,7 @@ class MyWindow : public QMainWindow {
     QDialog *sfdlg;
 //    QDialog *packdlg;
     int maxResi,filtered;
-    char CID[80];
+    char CID[85];
     double isomax,isomin;
     double scalePic;
     QString dirName;

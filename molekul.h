@@ -497,7 +497,8 @@ struct INP {
   int resiNr;
   char ami3[5];
   char shortname[strgl];
-  double peakHeight,lap,eps;
+  double peakHeight,eps;
+  double lam1,lam2,lam3;
   int cptype;
   int molindex;
   int sg;
@@ -603,6 +604,7 @@ class molekul {
   bool polyShapColor;
   void Farbverlauf (GLfloat wrt,GLfloat min,GLfloat max,GLfloat alpha=1.0f);
   bool decodeSymmCard(const QString symmCard);
+  void enviSDM(double range);
   void countMols(QList<INP> & xdinp);
   bool applyLatticeCentro(const QChar latt,const bool centro);
   QString symmcode2human(QStringList brachSymm);
@@ -771,6 +773,7 @@ class molekul {
   int fvl;
   int vorobas;
   QString voroMsg;
+  QList<SdmItem> envi_sdm;//!< shortest distance matrix for the ENVIron ment listing functionality.
 
   MAS scat[20];
   V3 uz0k,uz1k,uz2k,uz3k,uz4k,uz5k,uz6k,uz7k;  
