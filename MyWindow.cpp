@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=598;
+int rev=599;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -2307,6 +2307,21 @@ void MyWindow::genMoliso(QString isoname, QString mapname, QString lfcename, QSt
   cubeGL->moliso->findContour(cubeGL->cont,0.30f);
   cubeGL->moliso->findContour(cubeGL->cont,0.40f);
   cubeGL->moliso->findContour(cubeGL->cont,0.50f);
+  cubeGL->moliso->findContour(cubeGL->cont,0.60f);
+  cubeGL->moliso->findContour(cubeGL->cont,0.70f);
+  cubeGL->moliso->findContour(cubeGL->cont,0.80f);
+  cubeGL->moliso->findContour(cubeGL->cont,0.90f);
+  cubeGL->moliso->findContour(cubeGL->cont,1.00f);
+  cubeGL->moliso->findContour(cubeGL->cont,-0.10f);
+  cubeGL->moliso->findContour(cubeGL->cont,-0.20f);
+  cubeGL->moliso->findContour(cubeGL->cont,-0.30f);
+  cubeGL->moliso->findContour(cubeGL->cont,-0.40f);
+  cubeGL->moliso->findContour(cubeGL->cont,-0.50f);
+  cubeGL->moliso->findContour(cubeGL->cont,-0.60f);
+  cubeGL->moliso->findContour(cubeGL->cont,-0.70f);
+  cubeGL->moliso->findContour(cubeGL->cont,-0.80f);
+  cubeGL->moliso->findContour(cubeGL->cont,-0.90f);
+  cubeGL->moliso->findContour(cubeGL->cont,-1.00f);
   printf("Contour has %dlines.\n",cubeGL->cont.size());
   if (cubeGL->moliso->calcextrema) il();
   updateStatusBar();

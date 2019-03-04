@@ -4928,21 +4928,6 @@ if (!selectedAtoms.isEmpty()){
       if ((bas)&&(drawAx)) callList(bas+2);
       if ((bas)&&(drawUz)) callList(bas+3);
       if ((MIS)&&(moliso->mibas)) { 
-        glPushMatrix();{
-          glScaled( L, L, L );
-          glColor3d(0.0,0.0,0.0);
-          glDisable( GL_LIGHTING ); 
-          glDisable( GL_DEPTH_TEST ); 
-          glLineWidth(3);
-          glBegin(GL_LINES);
-          for (int ci=0;ci<cont.size();ci++){
-            glVertex3d(cont.at(ci).x,cont.at(ci).y,cont.at(ci).z);
-          }
-          glEnd();
-          glEnable( GL_LIGHTING ); 
-          glEnable( GL_DEPTH_TEST ); 
-        }glPopMatrix();
-          glLineWidth(0.7);
         glDisable(GL_CULL_FACE);
         if (moving->isActive()||chicken->isChecked()) {Pers=1; glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);}
         else glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
@@ -5078,8 +5063,25 @@ if (!selectedAtoms.isEmpty()){
     glEnable(   GL_CULL_FACE);
     glEnable(GL_BLEND);
     }
-      
-
+     if (!cont.isEmpty()){ 
+        glPushMatrix();{
+          glScaled( L, L, L );
+          //glColor3d(0.0,0.0,0.0);
+          glDisable( GL_LIGHTING ); 
+          glEnable( GL_DEPTH_TEST ); 
+          //glDisable( GL_DEPTH_TEST ); 
+          glLineWidth(2);
+          glBegin(GL_LINES);
+          for (int ci=0;ci<cont.size();ci++){
+            moliso->Farbverlauf(((float)ci/cont.size()*(moliso->max-moliso->min))+moliso->min);
+            glVertex3d(cont.at(ci).x,cont.at(ci).y,cont.at(ci).z);
+          }
+          glEnd();
+          glEnable( GL_LIGHTING ); 
+          //glEnable( GL_DEPTH_TEST ); 
+        }glPopMatrix();
+          glLineWidth(0.7);
+      }
       if (((!moving->isActive())||(!chicken->isChecked()))&&(drawLa)) {
         glClear( GL_DEPTH_BUFFER_BIT);
         glPushMatrix();{
