@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=599;
+int rev=600;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -406,6 +406,7 @@ MyWindow::MyWindow( QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(pa
   fileMenu->addAction("Export Fourier Maps",this,SLOT(exportFMaps()));
   fileMenu->addAction(createmoliso);
   fileMenu->addAction(noMoliso);
+  fileMenu->addAction("Create Contour Plot",this, SLOT(contourPlot()));
   ldipAct = fileMenu->addAction(QIcon(":images/dipole.png"),tr("Load &Dipole moments"),this,SLOT(openDipoleFile()),QKeySequence(tr("D", "File|Load &Dipole moments"))); 
   ldipAct->setWhatsThis("<img src=\":images/dipole.png\"> This loads dipole moments from a file.<br>\
 The first three numbers in a row are taken as xyz of the dipole vector.<br>\
@@ -2078,6 +2079,77 @@ void MyWindow::findAtoms(){
   cubeGL->updateGL();
 }
 
+void MyWindow::brwsCont(){
+  QString selectedFilter;
+  cubeGL->moliso->contMapFile->setText(QFileDialog::getOpenFileName(this, tr("Open Contour-grid file "), "",
+        "XD-3D-Grid-Files (*.grd);;"
+        "Jana2006 m81-Files (*.m81);;"
+        "BayMEM binary file (*.raw);;"
+        "General volumetric data (*.?ed);;"
+        "GAUSSIAN Cube-Files (*.cube *.cub *.rho_r_3);;" ,&selectedFilter,QFileDialog::DontUseNativeDialog ));
+}
+
+void MyWindow::contourPlot(){
+  if (asymmUnit.isEmpty()) return;
+  if (cubeGL->moliso==NULL){
+  cubeGL->moliso = new MolIso();
+  cubeGL->moliso->fixmax=isomax;
+  cubeGL->moliso->fixmin=isomin;
+  connect(cubeGL->moliso,SIGNAL(bigmessage(const QString &)),this,SLOT(infoKanalNews(const QString&)));
+  cubeGL->moliso->L=cubeGL->L;
+  cubeGL->moliso->orig=Vector3(0.0,0.0,0.0);
+  }
+
+  QDialog *contDlg     = new QDialog(this);
+  QLabel *contMapFileL = new QLabel("3D-Map or Grid-File",contDlg);
+  QPushButton *brwsCF  = new QPushButton("Browse",contDlg);
+  connect(brwsCF,SIGNAL(pressed()),this,SLOT(brwsCont()));
+  cubeGL->moliso->contMapFile  = new QLineEdit(contDlg);
+
+  QSettings settings(QSettings::IniFormat,  QSettings::UserScope ,"Christian_B._Huebschle", "MoleCoolQt" );
+  settings.beginGroup("Version 0.1");    
+  cubeGL->moliso->contMapFile->setText(settings.value("iso_grid_name").toString());
+  settings.endGroup();
+  QLabel *planeAtomDefL = new QLabel("Define plane by:");
+  int at1=0,at2=1,at3=2;
+  if (cubeGL->selectedAtoms.size()>2){
+    at1=cubeGL->selectedAtoms.at(0).GLname;
+    at2=cubeGL->selectedAtoms.at(1).GLname;
+    at3=cubeGL->selectedAtoms.at(2).GLname;
+  }
+  QLineEdit *planeAtomDef = new QLineEdit(QString("%1 %2 %3")
+      .arg(asymmUnit.at(at1).atomname)
+      .arg(asymmUnit.at(at2).atomname)
+      .arg(asymmUnit.at(at3).atomname));
+  cubeGL->moliso->contMapFile->setReadOnly(true);
+  cubeGL->moliso->contMapFile->setEnabled(false);
+  cubeGL->moliso->contourValueEdit = new QLineEdit(contDlg);
+  cubeGL->moliso->contourValueEdit->setText("-1.0 -0.9 -0.8 -0.7 -0.6 -0.5 -0.4 -0.3 -0.2 -0.1 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0");
+  QDialogButtonBox *buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+  connect(buttonBox, SIGNAL(accepted()), contDlg, SLOT(accept()));
+  connect(buttonBox, SIGNAL(rejected()), contDlg, SLOT(reject()));  
+  QGridLayout *gl = new QGridLayout(contDlg);
+  gl->addWidget(contMapFileL, 0, 0, 1, 1);
+  gl->addWidget(cubeGL->moliso->contMapFile, 0, 1, 1, 1);
+  gl->addWidget(brwsCF, 0, 2, 1, 1);
+  gl->addWidget(planeAtomDefL, 1, 0, 1, 1);
+  gl->addWidget(planeAtomDef, 1, 1, 1, 2);
+  gl->addWidget(new QLabel("Contour values",contDlg), 2, 0, 1, 4);
+  gl->addWidget(cubeGL->moliso->contourValueEdit, 3, 0, 1, 4);
+  gl->addWidget(buttonBox, 10, 0, 1, 4);
+
+  if (contDlg->exec()==QDialog::Accepted){
+    cubeGL->moliso->makePlane(cubeGL->cont,at1,at2,at3);
+    cubeGL->selectedAtoms.clear();
+    /*showLeg->setChecked ( true );
+    showLeg->setVisible(true);
+    cubeGL->setLegend(true);*/
+    cubeGL->updateGL();
+  }
+
+}
+
+
 void MyWindow::genMoliso(QString isoname, QString mapname, QString lfcename, QString sfcename, int check, QString adpname) {
 
   atmax=0;
@@ -2301,6 +2373,8 @@ void MyWindow::genMoliso(QString isoname, QString mapname, QString lfcename, QSt
      cubeGL->moliso->loadMI(lfaceFile,true);
   }
   else cubeGL->moliso->loadMI(lfaceFile,false);
+//  cubeGL->moliso->makePlane(cubeGL->cont,0,1,2);
+  /*
   cubeGL->moliso->findContour(cubeGL->cont,0.00f);
   cubeGL->moliso->findContour(cubeGL->cont,0.10f);
   cubeGL->moliso->findContour(cubeGL->cont,0.20f);
@@ -2322,7 +2396,7 @@ void MyWindow::genMoliso(QString isoname, QString mapname, QString lfcename, QSt
   cubeGL->moliso->findContour(cubeGL->cont,-0.80f);
   cubeGL->moliso->findContour(cubeGL->cont,-0.90f);
   cubeGL->moliso->findContour(cubeGL->cont,-1.00f);
-  printf("Contour has %dlines.\n",cubeGL->cont.size());
+  printf("Contour has %dlines.\n",cubeGL->cont.size());*/
   if (cubeGL->moliso->calcextrema) il();
   updateStatusBar();
   statusBar()->showMessage(tr("surfaces loaded") );
@@ -7926,8 +8000,11 @@ void MyWindow::load_gaus(QString fileName){
 	k=sscanf(line,"%s %d %s %d %s %d %s",newAtom.atomname,&b[bi],bname[bi],&a[ai],aname[ai],&d[di],dname[di]);
 	switch (k) {
 		case 7: di++;
+                        __attribute__ ((fallthrough));
 		case 5: ai++;
+                        __attribute__ ((fallthrough));
 		case 3: bi++;
+                        __attribute__ ((fallthrough));
 		case 1: i++;
 			asymmUnit.append(newAtom);
 		default: ;

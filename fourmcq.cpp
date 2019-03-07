@@ -2094,8 +2094,8 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu, int maxmap){
   nr=0;
   if (!ok) {
     char masname[4096];
-    int len=strlen(filename);
-    strncpy(masname,filename,len-3);
+//    int len=strlen(filename);
+    strncpy(masname,filename,4093);
     strcat(masname,"mas");
     fprintf(stderr,"Problems while reading XD master file! [%s]\n",masname);
     return false;
@@ -3078,7 +3078,7 @@ int FourMCQ::readMas(const char *filename){
   //size_t zlen=120;
   int ok=0;
   int i;double T,V;
-  strncpy(masname,filename,len-4);
+  strncpy(masname,filename,4094);
   masname[len-4]='\0';
   strcat(masname,".mas");
   f=fopen(masname,"r");

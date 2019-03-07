@@ -100,6 +100,8 @@ class MyWindow : public QMainWindow {
     QComboBox *filterColumnComboBox;
     QDoubleSpinBox *modScale;
     public slots:
+      void brwsCont();
+      void contourPlot();
       void bubblebub();
       void allowPolyeder();
     void addMoreQPeaks();

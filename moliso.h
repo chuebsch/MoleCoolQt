@@ -123,6 +123,8 @@ signals:
   int atomanzahl;
   QVector<Ort> orte;
   QVector<Polygn> pgns;
+  QVector<Ort> Planorte;
+  QVector<Polygn> Planpgns;
   double aborp(double max,double v);
   void DrawPlys();
   double pgnArea();
@@ -134,8 +136,11 @@ signals:
   void Pzsort( void); 
   void makeFaces(int nn, Node poly[] );
   void MakeElement( int ix, int iy, int iz ,int s1, int s2);
+  void makeFacesp(int nn, Node poly[] );
+  void MakeElementp( int ix, int iy, int iz ,int s1, int s2);
   void simpelGrad(void);
   void CalcVertex( int ix, int iy, int iz );
+  void CalcPlaneVertex( int ix, int iy, int iz ,Vector3 n,Vector3 ap);
   void CalcVertexes( void );
   void CalcNormals( void );
   Vector3& VectorSelected( Node& node0, Node& node1, Node& node2, Node& node3 );
@@ -147,6 +152,7 @@ signals:
   }
 
   int IndexSelected( Node& node0, Node& node1, Node& node2, Node& node3 );
+  int IndexSelectedP( Node& node0, Node& node1, Node& node2, Node& node3 );
   Vector3 *grad;
   Node *nodex;
   Node *nodey;
@@ -156,6 +162,8 @@ signals:
     cubeiso=b;
   }
   int breite, hoehe, tiefe,bh;
+  QMap<int,GLfloat> contval;
+  QLineEdit *contMapFile, *contourValueEdit;
   bool calcextrema;
   double untersumme,obersumme;
   bool thisIsPDF;
@@ -180,6 +188,7 @@ signals:
   ~MolIso();
   void loadMI(QString fname,bool om=false,bool mima=true);
   void findContour(QList<Vector3> &lines, GLfloat value);
+  void makePlane(QList<Vector3> &lines,int a1, int a2, int a3);
   void readBMBinaryHeader(QString fname);
   void readGVDHeader(QString fname);
   void readXDGridHeader(QString fname,int &fileType);

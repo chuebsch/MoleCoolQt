@@ -4903,252 +4903,269 @@ if (!selectedAtoms.isEmpty()){
     mol.adp=ae;
   }
   }
-    if (rmode==GL_RENDER){
-
-      if (!mol.wombats.isEmpty()){
-        glDisable(GL_LIGHTING);
-        glLineWidth(3.5*scalePicNow);
-        glEnable(GL_BLEND);
-        glColor4f(tCR,tCG,tCB,tCA);
-        int cntwmbts=0;
-        glPushMatrix();glScaled( L, L, L );
-        for (int wb=0;wb<mol.wombats.size();wb++){
-          glBegin(GL_LINE_STRIP);
-          for (int bp=0; bp<mol.wombats.at(wb).pth.size(); bp++){
-            glVertex3d(mol.wombats.at(wb).pth.at(bp).x,mol.wombats.at(wb).pth.at(bp).y,mol.wombats.at(wb).pth.at(bp).z);
-            cntwmbts++;
-          }
-          glEnd();
-        }
-        glPopMatrix();
-        glEnable(GL_LIGHTING);
-        glLineWidth(1.0*scalePicNow);
-        //printf("%d wombats\n",cntwmbts);
-      }
-      if ((bas)&&(drawAx)) callList(bas+2);
-      if ((bas)&&(drawUz)) callList(bas+3);
-      if ((MIS)&&(moliso->mibas)) { 
-        glDisable(GL_CULL_FACE);
-        if (moving->isActive()||chicken->isChecked()) {Pers=1; glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);}
-        else glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
-        if (molisoTransparence) glEnable(GL_BLEND);
-        else glDisable(GL_BLEND);
-        if ((!moving->isActive())&&(zebra)){
-          GLubyte contours[2049];
-          for (int i=0;i<512;i++){
-            contours[4*i]=  ((i%cdens)>cwid)?0xff:0x00;
-            contours[4*i+1]=((i%cdens)>cwid)?0xff:0x00;
-            contours[4*i+2]=((i%cdens)>cwid)?0xff:0x00;
-            contours[4*i+3]=((i%cdens)>cwid)?0xff:0xff;
-          }
-          glTexParameteri( GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT );
-          glTexParameteri( GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-          glTexParameteri( GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-          glTexImage1D( GL_TEXTURE_1D, 0,GL_RGBA, 512, 0,
-              GL_RGBA, GL_UNSIGNED_BYTE, contours );
-          glBindTexture(GL_TEXTURE_1D,contours[0]);
-          glEnable(GL_TEXTURE_1D);
-        }
-        if (faceCull) glEnable(   GL_CULL_FACE);
-        if (faceCull==2) glCullFace(GL_FRONT);
-        if (faceCull==1) glCullFace(GL_BACK);
-        switch (Pers) {
-          case 1: {callList(moliso->mibas);break;}
-          case 2: {callList(moliso->mibas+1);break;}
-          case 3: {callList(moliso->mibas+2);break;}
-          case 4: {callList(moliso->mibas+3);break;}
-          case 5: {callList(moliso->mibas+4);break;}
-          case 6: {callList(moliso->mibas+5);break;}
-          default: qDebug()<<"Impossible Orientation!!!";exit(1);
-        }      
-        glDisable(GL_TEXTURE_1D);
-        glDisable(   GL_CULL_FACE);
-        glCullFace(GL_BACK);
-        glDisable(GL_BLEND);
-        glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
-
-        if (MILe){
-          GLfloat fw;
-          glPushMatrix();
-          double mat[16];
-          glEnable(GL_COLOR_MATERIAL);
-          glGetDoublev( GL_MODELVIEW_MATRIX, (double*)mat );
-          glLoadIdentity();
-          glDisable( GL_LIGHTING ); 
-          glDisable( GL_DEPTH_TEST ); 
-          if (zebra)  glEnable(GL_TEXTURE_1D);
-          glBegin( GL_TRIANGLE_STRIP );
-          for (int j=0;j<256;j++){	
-            moliso->Farbverlauf((0.0039*j*(moliso->max-moliso->min))+moliso->min);
-            glTexCoord1f(0.0039*j);
-            if (horizont) {
-              glVertex3f(mil.y+0.006640625*j*milsize,mil.x+0.05*milsize,-6.1);
-              glVertex3f(mil.y+0.006640625*j*milsize,mil.x     ,-6.1);
-            }else{
-              glVertex3f(mil.x+0.05*milsize,mil.y+0.006640625*j*milsize,-6.1);
-              glVertex3f(mil.x,mil.y+0.006640625*j*milsize,-6.1);
-            }
-          }
-          glEnd();
-          QRect R;
-          QFontMetrics FM(MLegendFont);
-          QString lab="AAA";
-          R= FM.boundingRect(lab);
-
-          for (int i=0;i<7;i++) {
-            fw=(0.1666666666666667*i*(moliso->max-moliso->min)) + moliso->min;
-            if (moliso->thisIsPDF)
-              lab = QString("%1%2").arg(fw,4,'f',0).arg("%");
-            else lab = QString("%1").arg(fw,7,'f',3);
-            R= FM.boundingRect(lab);
-            if (!monochrom)  moliso->Farbverlauf(fw); 
-            else glColor4f(tCR,tCG,tCB,tCA);
-            glDisable(GL_BLEND);
-            if (horizont) renderText(mil.y+0.275*i*milsize+0.00,mil.x+0.07*milsize,-6.1,lab ,MLegendFont);
-            else{
-              if (mil.x<0) renderText(mil.x+0.07*milsize,mil.y+0.275*i*milsize+0.0,-6.1,lab,MLegendFont);
-              else {
-                renderText(mil.x-(0.18*vangle/_win_width *R.width()),mil.y+0.275*i*milsize+0.0,-6.1,lab ,MLegendFont);
-              }
-            }	  
-          }
-
-          glEnable( GL_LIGHTING ); 
-          glEnable( GL_DEPTH_TEST ); 
-          glLoadMatrixd(mat);
-          glDisable(GL_TEXTURE_1D);
-          glPopMatrix();
-        }
-        glEnable(GL_CULL_FACE);
-      }
-      // */ 
-
-      if (pole.size()>0){ 
-	glPushMatrix();
+  if (rmode==GL_RENDER){
+    if (!cont.isEmpty()){ 
+      glPushMatrix();{
         glScaled( L, L, L );
-    dieDiPole(sumse);
-	glPopMatrix();
-      }
-
-
-      if (foubas[0]|foubas[1]|foubas[2]|foubas[3]|foubas[4]) {
-        if ((MIS)&&(moliso->mibas)) glClear( GL_DEPTH_BUFFER_BIT);
-        glDisable(GL_CULL_FACE);
-        glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
-        glDisable(GL_LIGHTING);
-        glLineWidth(0.5*scalePicNow);
-        glEnable(GL_BLEND);
-        if (fofcact->isChecked()) {
-            glCallList(foubas[0]);
-            glCallList(foubas[1]);
+        //glColor3d(0.0,0.0,0.0);
+        glDisable( GL_LIGHTING ); 
+        glEnable( GL_DEPTH_TEST ); 
+        glEnable( GL_LINE_STIPPLE );
+        //glDisable( GL_DEPTH_TEST ); 
+        glLineWidth(2.5);
+        moliso->Farbverlauf(0.0);
+        glLineStipple(1,0xFFFF);
+        glBegin(GL_LINES);
+        for (int ci=0;ci<cont.size();ci++){
+          //moliso->Farbverlauf(((float)ci/cont.size()*(moliso->max-moliso->min))+moliso->min);
+          if (moliso->contval.contains(ci)) {
+            if (moliso->contval.value(ci)>0.0f) glColor4d(0.0,0.0,1.0,1.0);
+            else if (moliso->contval.value(ci)<0.0f)glColor4d(1.0,0.0,0.0,1.0);
+            else glColor4d(0.0,0.0,0.0,1.0);
+            //moliso->Farbverlauf(moliso->contval.value(ci));
+            /*
+            if (moliso->contval.value(ci)>0.0f) glLineStipple(1,0xFFFF);
+            else if (moliso->contval.value(ci)<0.0f)glLineStipple(1,0xF0F0);
+            else glLineStipple(3,0xAAAA);
+            */
+          }
+          glVertex3d(cont.at(ci).x,cont.at(ci).y,cont.at(ci).z);
         }
-        if (foact->isChecked()) glCallList(foubas[2]);
-        if (f1f2act->isChecked()){
-            glCallList(foubas[3]);
-            glCallList(foubas[4]);
-        }
-        glEnable(GL_LIGHTING);
-        glDisable(GL_BLEND);
-        glLineWidth(1.0*scalePicNow);
-        glEnable(GL_CULL_FACE);
-        glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
-      }
-      if ((showPolys->isChecked())&&(mol.knopf_made>0)){
-         // glClear( GL_DEPTH_BUFFER_BIT);
-    glDisable(   GL_CULL_FACE);
-    glPushMatrix();
-    glScaled(L,L,L);
-    mol.draw_polyeders(xdinp);
-    glPopMatrix();
-    glEnable(   GL_CULL_FACE);
-    glEnable(GL_BLEND);
+        glEnd();
+        glEnable( GL_LIGHTING ); 
+        //glEnable( GL_DEPTH_TEST ); 
+      }glPopMatrix();
+      glLineWidth(0.7);
+      //          glDisable( GL_LINE_STIPPLE );
     }
-     if (!cont.isEmpty()){ 
-        glPushMatrix();{
-          glScaled( L, L, L );
-          //glColor3d(0.0,0.0,0.0);
-          glDisable( GL_LIGHTING ); 
-          glEnable( GL_DEPTH_TEST ); 
-          //glDisable( GL_DEPTH_TEST ); 
-          glLineWidth(2);
-          glBegin(GL_LINES);
-          for (int ci=0;ci<cont.size();ci++){
-            moliso->Farbverlauf(((float)ci/cont.size()*(moliso->max-moliso->min))+moliso->min);
-            glVertex3d(cont.at(ci).x,cont.at(ci).y,cont.at(ci).z);
+
+    if (MILe){
+      glDisable(GL_CULL_FACE);
+      GLfloat fw;
+      glPushMatrix();
+      double mat[16];
+      glEnable(GL_COLOR_MATERIAL);
+      glGetDoublev( GL_MODELVIEW_MATRIX, (double*)mat );
+      glLoadIdentity();
+      glDisable( GL_LIGHTING ); 
+      glDisable( GL_DEPTH_TEST ); 
+      if (zebra)  glEnable(GL_TEXTURE_1D);
+      glBegin( GL_TRIANGLE_STRIP );
+      for (int j=0;j<256;j++){	
+        moliso->Farbverlauf((0.0039*j*(moliso->max-moliso->min))+moliso->min);
+        glTexCoord1f(0.0039*j);
+        if (horizont) {
+          glVertex3f(mil.y+0.006640625*j*milsize,mil.x+0.05*milsize,-6.1);
+          glVertex3f(mil.y+0.006640625*j*milsize,mil.x     ,-6.1);
+        }else{
+          glVertex3f(mil.x+0.05*milsize,mil.y+0.006640625*j*milsize,-6.1);
+          glVertex3f(mil.x,mil.y+0.006640625*j*milsize,-6.1);
+        }
+      }
+      glEnd();
+      QRect R;
+      QFontMetrics FM(MLegendFont);
+      QString lab="AAA";
+      R= FM.boundingRect(lab);
+
+      for (int i=0;i<7;i++) {
+        fw=(0.1666666666666667*i*(moliso->max-moliso->min)) + moliso->min;
+        if (moliso->thisIsPDF)
+          lab = QString("%1%2").arg(fw,4,'f',0).arg("%");
+        else lab = QString("%1").arg(fw,7,'f',3);
+        R= FM.boundingRect(lab);
+        if (!monochrom)  moliso->Farbverlauf(fw); 
+        else glColor4f(tCR,tCG,tCB,tCA);
+        glDisable(GL_BLEND);
+        if (horizont) renderText(mil.y+0.275*i*milsize+0.00,mil.x+0.07*milsize,-6.1,lab ,MLegendFont);
+        else{
+          if (mil.x<0) renderText(mil.x+0.07*milsize,mil.y+0.275*i*milsize+0.0,-6.1,lab,MLegendFont);
+          else {
+            renderText(mil.x-(0.18*vangle/_win_width *R.width()),mil.y+0.275*i*milsize+0.0,-6.1,lab ,MLegendFont);
           }
-          glEnd();
-          glEnable( GL_LIGHTING ); 
-          //glEnable( GL_DEPTH_TEST ); 
-        }glPopMatrix();
-          glLineWidth(0.7);
+        }	  
       }
-      if (((!moving->isActive())||(!chicken->isChecked()))&&(drawLa)) {
-        glClear( GL_DEPTH_BUFFER_BIT);
-        glPushMatrix();{
-          glScaled(L,L,L);
+
+      glEnable( GL_LIGHTING ); 
+      glEnable( GL_DEPTH_TEST ); 
+      glLoadMatrixd(mat);
+      glDisable(GL_TEXTURE_1D);
+      glPopMatrix();
+      glEnable(GL_CULL_FACE);
+    }
+    if (!mol.wombats.isEmpty()){
+      glDisable(GL_LIGHTING);
+      glLineWidth(3.5*scalePicNow);
+      glEnable(GL_BLEND);
+      glColor4f(tCR,tCG,tCB,tCA);
+      int cntwmbts=0;
+      glPushMatrix();glScaled( L, L, L );
+      for (int wb=0;wb<mol.wombats.size();wb++){
+        glBegin(GL_LINE_STRIP);
+        for (int bp=0; bp<mol.wombats.at(wb).pth.size(); bp++){
+          glVertex3d(mol.wombats.at(wb).pth.at(bp).x,mol.wombats.at(wb).pth.at(bp).y,mol.wombats.at(wb).pth.at(bp).z);
+          cntwmbts++;
+        }
+        glEnd();
+      }
+      glPopMatrix();
+      glEnable(GL_LIGHTING);
+      glLineWidth(1.0*scalePicNow);
+      //printf("%d wombats\n",cntwmbts);
+    }
+    if ((bas)&&(drawAx)) callList(bas+2);
+    if ((bas)&&(drawUz)) callList(bas+3);
+    if ((MIS)&&(moliso->mibas)) { 
+      glDisable(GL_CULL_FACE);
+      if (moving->isActive()||chicken->isChecked()) {Pers=1; glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);}
+      else glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+      if (molisoTransparence) glEnable(GL_BLEND);
+      else glDisable(GL_BLEND);
+      if ((!moving->isActive())&&(zebra)){
+        GLubyte contours[2049];
+        for (int i=0;i<512;i++){
+          contours[4*i]=  ((i%cdens)>cwid)?0xff:0x00;
+          contours[4*i+1]=((i%cdens)>cwid)?0xff:0x00;
+          contours[4*i+2]=((i%cdens)>cwid)?0xff:0x00;
+          contours[4*i+3]=((i%cdens)>cwid)?0xff:0xff;
+        }
+        glTexParameteri( GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT );
+        glTexParameteri( GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+        glTexParameteri( GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+        glTexImage1D( GL_TEXTURE_1D, 0,GL_RGBA, 512, 0,
+            GL_RGBA, GL_UNSIGNED_BYTE, contours );
+        glBindTexture(GL_TEXTURE_1D,contours[0]);
+        glEnable(GL_TEXTURE_1D);
+      }
+      if (faceCull) glEnable(   GL_CULL_FACE);
+      if (faceCull==2) glCullFace(GL_FRONT);
+      if (faceCull==1) glCullFace(GL_BACK);
+      switch (Pers) {
+        case 1: {callList(moliso->mibas);break;}
+        case 2: {callList(moliso->mibas+1);break;}
+        case 3: {callList(moliso->mibas+2);break;}
+        case 4: {callList(moliso->mibas+3);break;}
+        case 5: {callList(moliso->mibas+4);break;}
+        case 6: {callList(moliso->mibas+5);break;}
+        default: qDebug()<<"Impossible Orientation!!!";exit(1);
+      }      
+      glDisable(GL_TEXTURE_1D);
+      glDisable(   GL_CULL_FACE);
+      glCullFace(GL_BACK);
+      glDisable(GL_BLEND);
+      glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+
+      glEnable(GL_CULL_FACE);
+    }
+    // */ 
+
+    if (pole.size()>0){ 
+      glPushMatrix();
+      glScaled( L, L, L );
+      dieDiPole(sumse);
+      glPopMatrix();
+    }
 
 
-	  for (int j=0;j<xdinp.size();j++){
+    if (foubas[0]|foubas[1]|foubas[2]|foubas[3]|foubas[4]) {
+      if ((MIS)&&(moliso->mibas)) glClear( GL_DEPTH_BUFFER_BIT);
+      glDisable(GL_CULL_FACE);
+      glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
+      glDisable(GL_LIGHTING);
+      glLineWidth(0.5*scalePicNow);
+      glEnable(GL_BLEND);
+      if (fofcact->isChecked()) {
+        glCallList(foubas[0]);
+        glCallList(foubas[1]);
+      }
+      if (foact->isChecked()) glCallList(foubas[2]);
+      if (f1f2act->isChecked()){
+        glCallList(foubas[3]);
+        glCallList(foubas[4]);
+      }
+      glEnable(GL_LIGHTING);
+      glDisable(GL_BLEND);
+      glLineWidth(1.0*scalePicNow);
+      glEnable(GL_CULL_FACE);
+      glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+    }
+    if ((showPolys->isChecked())&&(mol.knopf_made>0)){
+      // glClear( GL_DEPTH_BUFFER_BIT);
+      glDisable(   GL_CULL_FACE);
+      glPushMatrix();
+      glScaled(L,L,L);
+      mol.draw_polyeders(xdinp);
+      glPopMatrix();
+      glEnable(   GL_CULL_FACE);
+      glEnable(GL_BLEND);
+    }
+    if (((!moving->isActive())||(!chicken->isChecked()))&&(drawLa)) {
+      glClear( GL_DEPTH_BUFFER_BIT);
+      glPushMatrix();{
+        glScaled(L,L,L);
 
-	    if (imFokus==j) qglColor(Qt::yellow); else  glColor4f(tCR,tCG,tCB,tCA);
-	    if (((iSel)&&(mol.firstHL<=j)&&(mol.lastHL>=j))||(!iSel)){
-	      if (xdinp[j].OrdZahl<0) renderText( xdinp[j].labPos.x,xdinp[j].labPos.y,xdinp[j].labPos.z, xdinp[j].atomname,nonAtomFont);
-	      else 
-		if ((imFokus==j)||(!(mol.aStyle[xdinp[j].OrdZahl]&ATOM_STYLE_NOLABEL)))
-		  renderText( xdinp[j].labPos.x,xdinp[j].labPos.y,xdinp[j].labPos.z, xdinp[j].atomname,
-                      ((specialFragment1)&&(xdinp[j].molindex==1))?myFont:nonAtomFont);
-	    }
-	  }    
-	  for (int j=0;j<matoms.size();j++){
-        if (matoms[j].hidden)continue;
-	    if (imFokus==j) qglColor(Qt::yellow); else  glColor4f(tCR,tCG,tCB,tCA);
-            if ((imFokus==j)||(!(mol.aStyle[matoms[j].OrdZahl]&ATOM_STYLE_NOLABEL))){
-              bool out=false;
-              V3 lpos=matoms[j].kart(tvalue,&out);              
-              if ((!mol.ccc.isEmpty())&&(!mol.zelle.commensurate)&&(out)) continue;
-              double o=matoms[j].occupancy(tvalue);
-              if (o>0.1) renderText( lpos.x,lpos.y,lpos.z, matoms[j].atomname,myFont);
-            }
+
+        for (int j=0;j<xdinp.size();j++){
+
+          if (imFokus==j) qglColor(Qt::yellow); else  glColor4f(tCR,tCG,tCB,tCA);
+          if (((iSel)&&(mol.firstHL<=j)&&(mol.lastHL>=j))||(!iSel)){
+            if (xdinp[j].OrdZahl<0) renderText( xdinp[j].labPos.x,xdinp[j].labPos.y,xdinp[j].labPos.z, xdinp[j].atomname,nonAtomFont);
+            else 
+              if ((imFokus==j)||(!(mol.aStyle[xdinp[j].OrdZahl]&ATOM_STYLE_NOLABEL)))
+                renderText( xdinp[j].labPos.x,xdinp[j].labPos.y,xdinp[j].labPos.z, xdinp[j].atomname,
+                    ((specialFragment1)&&(xdinp[j].molindex==1))?myFont:nonAtomFont);
           }
-	}glPopMatrix();
-      }
-      if (mol.vorobas){
-        glPushMatrix();
-        glScaled( L, L, L );
-//        glCallList(mol.vorobas+1);
-        //glCallList(mol.vorobas);
-        mol.drawVoronoi(auge);
-        //glCallList(mol.vorobas);
-    //    glCallList(mol.vorobas+Pers);
-    //    glCallList(mol.vorobas);
-        glPopMatrix();
-      }
+        }    
+        for (int j=0;j<matoms.size();j++){
+          if (matoms[j].hidden)continue;
+          if (imFokus==j) qglColor(Qt::yellow); else  glColor4f(tCR,tCG,tCB,tCA);
+          if ((imFokus==j)||(!(mol.aStyle[matoms[j].OrdZahl]&ATOM_STYLE_NOLABEL))){
+            bool out=false;
+            V3 lpos=matoms[j].kart(tvalue,&out);              
+            if ((!mol.ccc.isEmpty())&&(!mol.zelle.commensurate)&&(out)) continue;
+            double o=matoms[j].occupancy(tvalue);
+            if (o>0.1) renderText( lpos.x,lpos.y,lpos.z, matoms[j].atomname,myFont);
+          }
+        }
+      }glPopMatrix();
+    }
+    if (mol.vorobas){
+      glPushMatrix();
+      glScaled( L, L, L );
+      //        glCallList(mol.vorobas+1);
+      //glCallList(mol.vorobas);
+      mol.drawVoronoi(auge);
+      //glCallList(mol.vorobas);
+      //    glCallList(mol.vorobas+Pers);
+      //    glCallList(mol.vorobas);
+      glPopMatrix();
+    }
     {
-        glPushMatrix();
-        glScaled(L,L,L);{
+      glPushMatrix();
+      glScaled(L,L,L);{
 
-            GLdouble model[16];
-            GLdouble proj[16];
-            GLint viewport[4];
-            glGetIntegerv(GL_VIEWPORT, viewport);
-            glGetDoublev( GL_PROJECTION_MATRIX , (double*)proj );
-            glGetDoublev( GL_MODELVIEW_MATRIX, (double*)model );
-            for (int j=0;j<xdinp.size();j++){
-	      if (((iSel)&&(mol.firstHL<=j)&&(mol.lastHL>=j))||(!iSel)){
-		if (!posTo2D(xdinp.at(j).kart,model,proj,viewport, &xdinp[j].screenX, &xdinp[j].screenY))
-                {xdinp[j].screenX=-200; xdinp[j].screenY=-200;}
-            }
-	    }
-            for (int j=0;j<matoms.size();j++){
-	      if (((iSel)&&(mol.firstHL<=j)&&(mol.lastHL>=j))||(!iSel)){
-		if (!posTo2D(matoms[j].kart(tvalue),model,proj,viewport, &matoms[j].screenX, &matoms[j].screenY))
-                {matoms[j].screenX=-200; matoms[j].screenY=-200;}
-            }
-	    }
+        GLdouble model[16];
+        GLdouble proj[16];
+        GLint viewport[4];
+        glGetIntegerv(GL_VIEWPORT, viewport);
+        glGetDoublev( GL_PROJECTION_MATRIX , (double*)proj );
+        glGetDoublev( GL_MODELVIEW_MATRIX, (double*)model );
+        for (int j=0;j<xdinp.size();j++){
+          if (((iSel)&&(mol.firstHL<=j)&&(mol.lastHL>=j))||(!iSel)){
+            if (!posTo2D(xdinp.at(j).kart,model,proj,viewport, &xdinp[j].screenX, &xdinp[j].screenY))
+            {xdinp[j].screenX=-200; xdinp[j].screenY=-200;}
+          }
         }
-        glPopMatrix();
+        for (int j=0;j<matoms.size();j++){
+          if (((iSel)&&(mol.firstHL<=j)&&(mol.lastHL>=j))||(!iSel)){
+            if (!posTo2D(matoms[j].kart(tvalue),model,proj,viewport, &matoms[j].screenX, &matoms[j].screenY))
+            {matoms[j].screenX=-200; matoms[j].screenY=-200;}
+          }
+        }
+      }
+      glPopMatrix();
     }
-    } 
+  } 
 
 }
 
