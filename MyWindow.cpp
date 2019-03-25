@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=600;
+int rev=601;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -2090,7 +2090,7 @@ void MyWindow::brwsCont(){
 }
 
 void MyWindow::contourPlot(){
-  if (asymmUnit.isEmpty()) return;
+  if (xdinp.isEmpty()) return;
   if (cubeGL->moliso==NULL){
   cubeGL->moliso = new MolIso();
   cubeGL->moliso->fixmax=isomax;
@@ -2118,9 +2118,9 @@ void MyWindow::contourPlot(){
     at3=cubeGL->selectedAtoms.at(2).GLname;
   }
   QLineEdit *planeAtomDef = new QLineEdit(QString("%1 %2 %3")
-      .arg(asymmUnit.at(at1).atomname)
-      .arg(asymmUnit.at(at2).atomname)
-      .arg(asymmUnit.at(at3).atomname));
+      .arg(xdinp.at(at1).atomname)
+      .arg(xdinp.at(at2).atomname)
+      .arg(xdinp.at(at3).atomname));
   cubeGL->moliso->contMapFile->setReadOnly(true);
   cubeGL->moliso->contMapFile->setEnabled(false);
   cubeGL->moliso->contourValueEdit = new QLineEdit(contDlg);
@@ -8000,13 +8000,13 @@ void MyWindow::load_gaus(QString fileName){
 	k=sscanf(line,"%s %d %s %d %s %d %s",newAtom.atomname,&b[bi],bname[bi],&a[ai],aname[ai],&d[di],dname[di]);
 	switch (k) {
 		case 7: di++;
-                        __attribute__ ((fallthrough));
+//                        __attribute__ ((fallthrough));
 		case 5: ai++;
-                        __attribute__ ((fallthrough));
+//                        __attribute__ ((fallthrough));
 		case 3: bi++;
-                        __attribute__ ((fallthrough));
+ //                       __attribute__ ((fallthrough));
 		case 1: i++;
-			asymmUnit.append(newAtom);
+//			asymmUnit.append(newAtom);
 		default: ;
 	}
 	asymmUnit[i-1].OrdZahl=mol.Get_OZ(asymmUnit[i-1].atomname);

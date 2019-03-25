@@ -2673,7 +2673,7 @@ void MolIso::makePlane(QList<Vector3> &lines,int a1, int a2, int a3) {
 
   //fprintf(stderr, "makePlane\n");
   extern molekul mol;
-  extern QList<INP> asymmUnit;
+  extern QList<INP> xdinp;
   orig=Vector3(0,0,0);
   QString isoFileName=contMapFile->text();
   QFile isoF(isoFileName);
@@ -2807,18 +2807,18 @@ void MolIso::makePlane(QList<Vector3> &lines,int a1, int a2, int a3) {
   if (cubeiso) test3 =orig;
   printf("cubeiso %d %g %g %g\n",cubeiso,test3.x,test3.y,test3.z);
   //fprintf(stderr, "makePlane %d %p\n",asymmUnit.size(),nodex);
-  if ((a1>=asymmUnit.size())||(a2>=asymmUnit.size())||(a3>=asymmUnit.size())) return;
+  if ((a1>=xdinp.size())||(a2>=xdinp.size())||(a3>=xdinp.size())) return;
   if ((a1<0.)||(a2<0.)||(a3<0.1)) return;
-  if  (asymmUnit[a1].kart==asymmUnit[a2].kart){
-    mol.frac2kart(asymmUnit[a1].frac,asymmUnit[a1].kart);
-    mol.frac2kart(asymmUnit[a2].frac,asymmUnit[a2].kart);
-    mol.frac2kart(asymmUnit[a3].frac,asymmUnit[a3].kart);
+  if  (xdinp[a1].kart==xdinp[a2].kart){
+    mol.frac2kart(xdinp[a1].frac,xdinp[a1].kart);
+    mol.frac2kart(xdinp[a2].frac,xdinp[a2].kart);
+    mol.frac2kart(xdinp[a3].frac,xdinp[a3].kart);
   }
-  Vector3 a1v=Vector3(asymmUnit.at(a1).kart.x,asymmUnit.at(a1).kart.y,asymmUnit.at(a1).kart.z);
-  Vector3 a2v=Vector3(asymmUnit.at(a2).kart.x,asymmUnit.at(a2).kart.y,asymmUnit.at(a2).kart.z);
-  Vector3 a3v=Vector3(asymmUnit.at(a3).kart.x,asymmUnit.at(a3).kart.y,asymmUnit.at(a3).kart.z);
+  Vector3 a1v=Vector3(xdinp.at(a1).kart.x,xdinp.at(a1).kart.y,xdinp.at(a1).kart.z);
+  Vector3 a2v=Vector3(xdinp.at(a2).kart.x,xdinp.at(a2).kart.y,xdinp.at(a2).kart.z);
+  Vector3 a3v=Vector3(xdinp.at(a3).kart.x,xdinp.at(a3).kart.y,xdinp.at(a3).kart.z);
   pnormal = Normalize((a2v - a1v) % (a3v - a1v));
-  aufpunkt = Vector3(asymmUnit.at(a1).kart.x,asymmUnit.at(a1).kart.y,asymmUnit.at(a1).kart.z);
+  aufpunkt = Vector3(xdinp.at(a1).kart.x,xdinp.at(a1).kart.y,xdinp.at(a1).kart.z);
   printf("%g  %g %g %g   %g %g %g\n",Norm(pnormal),pnormal.x,pnormal.y,pnormal.z,aufpunkt.x,aufpunkt.y,aufpunkt.z);
   double angle = winkel(pnormal, Vector3(0,0,1))/180.0*M_PI;
   Vector3 ax= Normalize(pnormal % Vector3(0,0,1));
