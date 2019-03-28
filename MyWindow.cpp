@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=601;
+int rev=602;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -2082,11 +2082,19 @@ void MyWindow::findAtoms(){
 void MyWindow::brwsCont(){
   QString selectedFilter;
   cubeGL->moliso->contMapFile->setText(QFileDialog::getOpenFileName(this, tr("Open Contour-grid file "), "",
-        "XD-3D-Grid-Files (*.grd);;"
         "Jana2006 m81-Files (*.m81);;"
         "BayMEM binary file (*.raw);;"
         "General volumetric data (*.?ed);;"
         "GAUSSIAN Cube-Files (*.cube *.cub *.rho_r_3);;" ,&selectedFilter,QFileDialog::DontUseNativeDialog ));
+}
+
+void MyWindow::brwsEPS(){
+  QString selectedFilter;
+  cubeGL->moliso->contEPSFile->setText(QFileDialog::getSaveFileName(this, tr("Save Contour-Encapsulated PostScript file "), "",
+        "Encapsulated PostScript-Files (*.eps);;"
+        ,&selectedFilter,QFileDialog::DontUseNativeDialog ));
+  if (!cubeGL->moliso->contEPSFile->text().endsWith(".eps",Qt::CaseInsensitive))
+    cubeGL->moliso->contEPSFile->setText(cubeGL->moliso->contEPSFile->text()+".eps");
 }
 
 void MyWindow::contourPlot(){
@@ -2105,6 +2113,11 @@ void MyWindow::contourPlot(){
   QPushButton *brwsCF  = new QPushButton("Browse",contDlg);
   connect(brwsCF,SIGNAL(pressed()),this,SLOT(brwsCont()));
   cubeGL->moliso->contMapFile  = new QLineEdit(contDlg);
+  
+  QLabel *contEPSFileL = new QLabel("Write Encapsulated Postscript file",contDlg);
+  QPushButton *brwsEPS  = new QPushButton("Browse",contDlg);
+  connect(brwsEPS,SIGNAL(pressed()),this,SLOT(brwsEPS()));
+  cubeGL->moliso->contEPSFile  = new QLineEdit(contDlg);
 
   QSettings settings(QSettings::IniFormat,  QSettings::UserScope ,"Christian_B._Huebschle", "MoleCoolQt" );
   settings.beginGroup("Version 0.1");    
@@ -2121,22 +2134,53 @@ void MyWindow::contourPlot(){
       .arg(xdinp.at(at1).atomname)
       .arg(xdinp.at(at2).atomname)
       .arg(xdinp.at(at3).atomname));
+  planeAtomDef->setReadOnly(true);
+  planeAtomDef->setEnabled(false);
+  /*
   cubeGL->moliso->contMapFile->setReadOnly(true);
   cubeGL->moliso->contMapFile->setEnabled(false);
+  */
   cubeGL->moliso->contourValueEdit = new QLineEdit(contDlg);
-  cubeGL->moliso->contourValueEdit->setText("-1.0 -0.9 -0.8 -0.7 -0.6 -0.5 -0.4 -0.3 -0.2 -0.1 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0");
+  cubeGL->moliso->contourValueEdit->setText("-1.0 0.0 1.0");
   QDialogButtonBox *buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
   connect(buttonBox, SIGNAL(accepted()), contDlg, SLOT(accept()));
   connect(buttonBox, SIGNAL(rejected()), contDlg, SLOT(reject()));  
+  QPushButton *edo  = new QPushButton("uniform contours",contDlg);
+  cStepBx = new QDoubleSpinBox(contDlg);
+  cStepBx->setPrefix("Step size: ");
+  cStepBx->setMinimum(0.001);
+  cStepBx->setDecimals(3);
+  cStepBx->setValue(0.1);
+  cStepBx->setSingleStep(0.05);
+  cubeGL->moliso->cScopeBx = new QDoubleSpinBox(contDlg);
+  cubeGL->moliso->cScopeBx->setMinimum(0.0);
+  cubeGL->moliso->cScopeBx->setDecimals(1);
+  cubeGL->moliso->cScopeBx->setSingleStep(0.5);
+  QPushButton *eAIM = new QPushButton("+AIM contours",contDlg);
+  connect(edo ,SIGNAL(released ()),this,SLOT(everyPointOne()));
+  connect(eAIM,SIGNAL(released ()),this,SLOT(everyAIM()));
+  QLabel *hint = new QLabel("<div style=color:#0000aa; style=white-space:normal; style=background-color:"
+      "#f8f5cd; style=font-size:large;><b><u>Hint:</u></b>"
+      "Select 3 atoms before using this feature in order to define a plane.</div>");
+  hint->setWordWrap(true);
   QGridLayout *gl = new QGridLayout(contDlg);
   gl->addWidget(contMapFileL, 0, 0, 1, 1);
-  gl->addWidget(cubeGL->moliso->contMapFile, 0, 1, 1, 1);
-  gl->addWidget(brwsCF, 0, 2, 1, 1);
+  gl->addWidget(cubeGL->moliso->contMapFile, 0, 1, 1, 3);
+  gl->addWidget(brwsCF, 0, 4, 1, 1);
   gl->addWidget(planeAtomDefL, 1, 0, 1, 1);
-  gl->addWidget(planeAtomDef, 1, 1, 1, 2);
-  gl->addWidget(new QLabel("Contour values",contDlg), 2, 0, 1, 4);
-  gl->addWidget(cubeGL->moliso->contourValueEdit, 3, 0, 1, 4);
-  gl->addWidget(buttonBox, 10, 0, 1, 4);
+  gl->addWidget(planeAtomDef, 1, 3, 1, 2);
+  gl->addWidget(hint,2,0,1,5);
+  gl->addWidget(new QLabel("Contour values",contDlg), 3, 0, 1, 4);
+  gl->addWidget(cubeGL->moliso->contourValueEdit, 4, 0, 1, 5);
+  gl->addWidget(cStepBx ,5,0,1,1);
+  gl->addWidget(edo,5,1,1,1);
+  gl->addWidget(eAIM,5,2,1,1);
+  gl->addWidget(new QLabel("Scope (0 means now restriction)"),6,0,1,1);
+  gl->addWidget(cubeGL->moliso->cScopeBx,6,1,1,1);
+  gl->addWidget(contEPSFileL, 7, 0, 1, 1);
+  gl->addWidget(cubeGL->moliso->contEPSFile, 7, 1, 1, 3);
+  gl->addWidget(brwsEPS, 7, 4, 1, 1);
+  gl->addWidget(buttonBox, 10, 0, 1, 5);
 
   if (contDlg->exec()==QDialog::Accepted){
     cubeGL->moliso->makePlane(cubeGL->cont,at1,at2,at3);
@@ -2149,6 +2193,43 @@ void MyWindow::contourPlot(){
 
 }
 
+void MyWindow::everyPointOne(){
+  QString cfs;
+  if (cStepBx->value()==0) return;
+  double val=-100*cStepBx->value();
+  double end=-val;  
+  while (val<end) {
+    cfs.append(QString("%1 ").arg(val));
+    val+=cStepBx->value();
+  }
+  cubeGL->moliso->contourValueEdit->setText(cfs);
+  update();
+}
+
+void MyWindow::everyAIM(){
+  double val=0.001;
+//  double step=fabs(0.001)/5.0f;
+  int i=-3;
+  QString cfs;
+  while (val<1e9) {
+    cfs.append(QString("%1 ").arg(val));//1
+    val+=1*pow(10,i);
+    cfs.append(QString("%1 ").arg(val));//2
+    val+=2*pow(10,i);
+    cfs.append(QString("%1 ").arg(val));//4
+    val+=2*pow(10,i);
+    cfs.append(QString("%1 ").arg(val));//6
+    val+=2*pow(10,i);
+    cfs.append(QString("%1 ").arg(val));//8
+    val+=2*pow(10,i);
+    
+    i++;
+  }
+
+  cubeGL->moliso->contourValueEdit->setText(cfs);
+  update();
+
+}
 
 void MyWindow::genMoliso(QString isoname, QString mapname, QString lfcename, QString sfcename, int check, QString adpname) {
 

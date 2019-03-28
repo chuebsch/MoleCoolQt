@@ -163,7 +163,8 @@ signals:
   }
   int breite, hoehe, tiefe,bh;
   QMap<int,GLfloat> contval;
-  QLineEdit *contMapFile, *contourValueEdit;
+  QLineEdit *contMapFile, *contourValueEdit, *contEPSFile;
+  QDoubleSpinBox *cScopeBx;
   bool calcextrema;
   double untersumme,obersumme;
   bool thisIsPDF;

@@ -4919,8 +4919,8 @@ if (!selectedAtoms.isEmpty()){
         for (int ci=0;ci<cont.size();ci++){
           //moliso->Farbverlauf(((float)ci/cont.size()*(moliso->max-moliso->min))+moliso->min);
           if (moliso->contval.contains(ci)) {
-            if (moliso->contval.value(ci)>0.0f) glColor4d(0.0,0.0,1.0,1.0);
-            else if (moliso->contval.value(ci)<0.0f)glColor4d(1.0,0.0,0.0,1.0);
+            if (moliso->contval.value(ci)>0.0001f) glColor4d(0.0,0.0,1.0,1.0);
+            else if (moliso->contval.value(ci)<-0.0001f)glColor4d(1.0,0.0,0.0,1.0);
             else glColor4d(0.0,0.0,0.0,1.0);
             //moliso->Farbverlauf(moliso->contval.value(ci));
             /*

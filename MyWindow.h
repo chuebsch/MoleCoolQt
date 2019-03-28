@@ -98,9 +98,12 @@ class MyWindow : public QMainWindow {
     void growSymm(int packart,int packatom = -1);
     void mgrowSymm(int packart,int packatom = -1);
     QComboBox *filterColumnComboBox;
-    QDoubleSpinBox *modScale;
+    QDoubleSpinBox *modScale, *cStepBx;
     public slots:
       void brwsCont();
+      void brwsEPS();
+      void everyPointOne();
+      void everyAIM();
       void contourPlot();
       void bubblebub();
       void allowPolyeder();

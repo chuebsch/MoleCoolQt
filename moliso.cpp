@@ -2806,9 +2806,10 @@ void MolIso::makePlane(QList<Vector3> &lines,int a1, int a2, int a3) {
   test3= ((breite-1)/-2.0) *  x_dim + ((hoehe-1)/-2.0) * y_dim + ((tiefe-1)/-2.0) * z_dim + orig;
   if (cubeiso) test3 =orig;
   printf("cubeiso %d %g %g %g\n",cubeiso,test3.x,test3.y,test3.z);
+  printf("%d %d %d < %d\n",a1,a2,a3,xdinp.size());
   //fprintf(stderr, "makePlane %d %p\n",asymmUnit.size(),nodex);
   if ((a1>=xdinp.size())||(a2>=xdinp.size())||(a3>=xdinp.size())) return;
-  if ((a1<0.)||(a2<0.)||(a3<0.1)) return;
+  if ((a1<0)||(a2<0)||(a3<0)) return;
   if  (xdinp[a1].kart==xdinp[a2].kart){
     mol.frac2kart(xdinp[a1].frac,xdinp[a1].kart);
     mol.frac2kart(xdinp[a2].frac,xdinp[a2].kart);
@@ -2828,9 +2829,29 @@ void MolIso::makePlane(QList<Vector3> &lines,int a1, int a2, int a3) {
          cp+cp1*X*X, -Z*sp+cp1*X*Y,  Y*sp+cp1*X*Z, 
        Z*sp+cp1*X*Y,    cp+cp1*Y*Y, -X*sp+cp1*Y*Z, 
       -Y*sp+cp1*X*Z,  X*sp+cp1*Y*Z,    cp+cp1*Z*Z);
+  V3 bv=ROT*Normalize(V3(a2v.x-a1v.x,a2v.y-a1v.y,a2v.z-a1v.z));
+  printf("BV %g %g %g\n",bv.x,bv.y,bv.z);
+  double bww=mol.winkel(bv,V3( 1,0,0))/180.0*M_PI;
+  cp=cos(bww);
+  sp=sin(bww);
+  printf("%g %g %g\n",bww*180.0/M_PI,cp,sp);
+  Matrix R2 = Matrix(
+      cp, sp, 0,
+     -sp, cp, 0,
+       0,  0, 1);//*/
+  bv=R2*bv;
+  bww=mol.winkel(bv,V3( 1,0,0));
+  if (fabs(bww)>1) {
+  R2 = Matrix(
+      cp,-sp, 0,
+      sp, cp, 0,
+       0,  0, 1);//*/
   
+  } 
+  printf("BV %g %g %g %g\n",bv.x,bv.y,bv.z,bww);
   V3 vt = ROT * V3(pnormal.x, pnormal.y, pnormal.z);
-  printf("ang %g %g %g %12.6f %12.6f %12.6f %g %g\n",angle/M_PI*180.0, pnormal*ax,ax*Vector3(0,0,1), vt.x, vt.y, vt.z,determinant(ROT),Norm(ax));
+  vt = R2*vt;
+  printf("ang %g %g %g \n%12.6f %12.6f %12.6f \n%g %g\n%g\n",angle/M_PI*180.0, pnormal*ax,ax*Vector3(0,0,1), vt.x, vt.y, vt.z,determinant(ROT),Norm(ax),winkel(a1v,Vector3(0,1,0)));
   //fprintf(stderr, "makePlane\n");
   for( int ix=0; ix<breite; ix++ ){
     for( int iy=0; iy<hoehe; iy++ ){
@@ -2857,6 +2878,7 @@ void MolIso::makePlane(QList<Vector3> &lines,int a1, int a2, int a3) {
   QStringList numbers = QString(contourValueEdit->text()).split(" ",QString::SkipEmptyParts);
   int z=0;
   printf("ok\n");
+  if (!numbers.isEmpty()) contval[0]=numbers.at(0).toFloat();
   for (int i = 0; i < numbers.size(); i++){
     float contour = numbers.at(i).toFloat();
     findContour(lines,contour);
@@ -2867,7 +2889,7 @@ void MolIso::makePlane(QList<Vector3> &lines,int a1, int a2, int a3) {
     }
     z=lines.size();
   }
-  printf("ok\n");
+  printf("ok %f %f\n",min,max);
   //legende();
   free(nodex);
   nodex=NULL;
@@ -2884,7 +2906,7 @@ void MolIso::makePlane(QList<Vector3> &lines,int a1, int a2, int a3) {
   float miY=9.e30,maY=-9.e30;
   V3 v1;//,v2=V3(99,99,99);
   for (int i=0; i<lines.size(); i++){
-    v1=ROT * V3(lines.at(i).x-aufpunkt.x,lines.at(i).y-aufpunkt.y,lines.at(i).z-aufpunkt.z);
+    v1=R2*(ROT * V3(lines.at(i).x-aufpunkt.x,lines.at(i).y-aufpunkt.y,lines.at(i).z-aufpunkt.z));
     //if (Distance(v1,v2)>0.0) 
     lin2d.append(v1);
     miX=fmin(v1.x,miX);
@@ -2895,9 +2917,22 @@ void MolIso::makePlane(QList<Vector3> &lines,int a1, int a2, int a3) {
 
     //v2=v1;
   }
-  printf("%d %d\n",lin2d.size(),lines.size());
+  printf("!%d == %d! %f < X < %f, %f < Y < %f \n",lin2d.size(),lines.size(),miX,maX,miY,maY);
+  if (cScopeBx->value() > 0.0){
+    double XX=cScopeBx->value();
+    double YY=XX/4.0*3.0;
+    miX=-XX;
+    miY=-YY;
+    maX= XX;
+    maY= YY;
+  }
+  printf("!%d == %d! %f < X < %f, %f < Y < %f \n",lin2d.size(),lines.size(),miX,maX,miY,maY);
+  if (contEPSFile->text().isEmpty()){ 
+    qDebug()<<"contEPSFile->text() is Empty()";
+    return;}
 
-  FILE *f=fopen("testContour.eps","wt");
+//      ||(!QFile::exists (contEPSFile->text()))) 
+  FILE *f=fopen(contEPSFile->text().toLocal8Bit(),"wt");
   fprintf(f,"%s",
 "%!PS-Adobe-3.0 ESPF 3.0\n"
 "%%BoundingBox: 0 0 1024 768\n"
@@ -2906,29 +2941,120 @@ void MolIso::makePlane(QList<Vector3> &lines,int a1, int a2, int a3) {
 "%%Pages: 1\n"
 "%%EndComments\n"
 "%%BeginProlog\n"
-"/l { newpath moveto lineto stroke } bind def\n"
+//"/l { newpath moveto lineto stroke } bind def\n"
+//"/nm { newpath moveto } bind def\n"
+"/cp {closepath} bind def\n"
+"/ef {eofill} bind def\n"
+"/gr {grestore} bind def\n"
+"/gs {gsave} bind def\n"
+"/sa {save} bind def\n"
+"/rs {restore} bind def\n"
+"/l {lineto} bind def\n"
+"/m {moveto} bind def\n"
+"/rm {rmoveto} bind def\n"
+"/n {newpath} bind def\n"
+"/s {stroke} bind def\n"
+"/sh {show} bind def\n"
+"/slc {setlinecap} bind def\n"
+"/slj {setlinejoin} bind def\n"
+"/slw {setlinewidth} bind def\n"
+"/srgb {setrgbcolor} bind def\n"
+"/rot {rotate} bind def\n"
+"/sc {scale} bind def\n"
+"/sd {setdash} bind def\n"
+"/ff {findfont} bind def\n"
+"/sf {setfont} bind def\n"
+"/scf {scalefont} bind def\n"
+"/sw {stringwidth} bind def\n"
 "%%EndSetup\n"
 "%%Page: 1 1\n"
-"gsave\n"
+//"gsave\n"
 //"20 20 scale\n"
 //"10 10 translate\n"
-"0 setgray\n"
+"/Helvetica ff 18 scf sf\n"
+"n 1 1 m 1023 1 l 1023 767 l 1 767 l 1 1 l cp s\n"
+//"0 setgray\n"
 
 
 );
+  //Atoms
+  for (int i=0; i<xdinp.size(); i++){
+    V3 ato=R2*(ROT*(xdinp.at(i).kart-V3(aufpunkt.x,aufpunkt.y,aufpunkt.z)));
+    if ((ato.x>maX)||(ato.x<miX)||(ato.y>maY)||(ato.y<miY)) continue;
+    //Acol[xdinp[j].OrdZahl]
+    if (fabs(ato.z)<0.2){
+      double rad=(xdinp[i].OrdZahl>-1)?mol.arad[xdinp[i].OrdZahl]:0.15;
+      fprintf(f,"n %G %G %G 0 360 arc cp gs %g %g %g srgb fill s gr%% %g %s\n",
+          (ato.x-miX)/(maX-miX)*1024, (ato.y-miY)/(maY-miY)*768, rad*50,
+          mol.Acol[xdinp[i].OrdZahl][0], 
+          mol.Acol[xdinp[i].OrdZahl][1], 
+          mol.Acol[xdinp[i].OrdZahl][2],ato.z,
+          xdinp.at(i).atomname);
+    }
+    //    4 5 3 0 360 arc closepath
+  }
+  //Bonds
+  for (int k=0;k<mol.bcnt;k++){
+    V3 anf=R2*(ROT*(xdinp.at(mol.bd[k].a).kart-V3(aufpunkt.x,aufpunkt.y,aufpunkt.z)));
+    V3 end=R2*(ROT*(xdinp.at(mol.bd[k].e).kart-V3(aufpunkt.x,aufpunkt.y,aufpunkt.z)));
+    if ((anf.x>maX)||(anf.x<miX)||(anf.y>maY)||(anf.y<miY)) continue;
+    if ((end.x>maX)||(end.x<miX)||(end.y>maY)||(end.y<miY)) continue;
+    if ((fabs(anf.z)<0.2)&&(fabs(end.z)<0.2))
+    fprintf(f,"n %G %G m %G %G l cp s\n",
+        (anf.x-miX)/(maX-miX)*1024, (anf.y-miY)/(maY-miY)*768,
+        (end.x-miX)/(maX-miX)*1024, (end.y-miY)/(maY-miY)*768);
+
+  }
 
  // V3 v1,v2;
+ //qDebug()<<contval;
+  float red=0.0f,green=0.0f,blue=0.0f;
+  QString contourDescription;
   for (int i=0; i<lin2d.size()/2; i++){
     //(wrt-min)/(max-min)
-    fprintf(f,"%G %G %G %G l\n",
+    if (contval.contains(i*2)) {
+      if (contval.value(i*2)>0.00001f) {
+        red=0.0f;green=0.0f;blue=1.0f;
+        contourDescription.append(QString("|blue@%1, %2 lines|").arg(contval.value(i*2)).arg(i));
+//        printf("blau %f %d\n",contval.value(i*2),i);
+      }
+      else if (contval.value(i*2)<-0.00001f){
+        red=1.0f;green=0.0f;blue=0.0f;
+        contourDescription.append(QString("|red@%1, %2 lines|").arg(contval.value(i*2)).arg(i));
+//        printf("rot %f %d\n",contval.value(i),i);
+      }
+      else {
+        red=0.0f;green=0.0f;blue=0.0f;
+        contourDescription.append(QString("|black@%1, %2 lines|").arg(contval.value(i*2)).arg(i));
+//        printf("schwarz %f %d\n",contval.value(i*2),i);
+      }
+    }
+    if ((lin2d.at(2*i  ).x>maX)||(lin2d.at(2*i  ).x<miX)||(lin2d.at(2*i  ).y>maY)||(lin2d.at(2*i  ).y<miY)) continue;
+    if ((lin2d.at(2*i+1).x>maX)||(lin2d.at(2*i+1).x<miX)||(lin2d.at(2*i+1).y>maY)||(lin2d.at(2*i+1).y<miY)) continue;
+    fprintf(f,"n %G %G m %G %G l cp gs %g %g %g srgb 0.5 slw s gr\n",
         (lin2d.at(2*i  ).x-miX)/(maX-miX)*1024, (lin2d.at(i*2  ).y-miY)/(maY-miY)*768, 
-        (lin2d.at(2*i+1).x-miX)/(maX-miX)*1024, (lin2d.at(i*2+1).y-miY)/(maY-miY)*768);
+        (lin2d.at(2*i+1).x-miX)/(maX-miX)*1024, (lin2d.at(i*2+1).y-miY)/(maY-miY)*768,red,green,blue);
+  }
+  for (int i=0; i<xdinp.size(); i++){
+    V3 ato=R2*(ROT*(xdinp.at(i).kart-V3(aufpunkt.x,aufpunkt.y,aufpunkt.z)));
+    if ((ato.x>maX)||(ato.x<miX)||(ato.y>maY)||(ato.y<miY)) continue;
+    if (fabs(ato.z)<0.2){
+      double rad=(xdinp[i].OrdZahl>-1)?mol.arad[xdinp[i].OrdZahl]:0.15;
+      fprintf(f,"gs n %G %G m (%s) true charpath 1 slw 1 setgray s gr\n",(ato.x-miX)/(maX-miX)*1024+rad*50, (ato.y-miY)/(maY-miY)*768,xdinp.at(i).atomname);
+      fprintf(f,"gs %G %G m (%s) sh gr\n",(ato.x-miX)/(maX-miX)*1024+rad*50, (ato.y-miY)/(maY-miY)*768,xdinp.at(i).atomname);
+    }
+    //    4 5 3 0 360 arc closepath
   }
   fprintf(f,"%s",
 "%%DocumentFonts: Helvetica\n"
 "%%EOF\n"
 );
-
+  fprintf(f,"%% map: %s\n%% plane: %s %s %s\n%% contours: %s\n",
+      contMapFile->text().toStdString().c_str(),
+      xdinp.at(a1).atomname,
+      xdinp.at(a2).atomname,
+      xdinp.at(a3).atomname,
+      contourDescription.toStdString().c_str());
   fclose(f);
   printf("ok\n");
 
