@@ -2679,7 +2679,7 @@ void MolIso::makePlane(QList<Vector3> &lines,int a1, int a2, int a3) {
   QFile isoF(isoFileName);
   int fileType=0;
   readXDGridHeader(isoFileName, fileType);
-  printf("file type %d\n",fileType);
+  //printf("file type %d\n",fileType);
   if (fileType==-666) {
     return;
   }
@@ -2725,7 +2725,7 @@ void MolIso::makePlane(QList<Vector3> &lines,int a1, int a2, int a3) {
         minv=qMin(data.at(ii),minv);
         maxv=qMax(data.at(ii),maxv);
       }
-      printf("minmax grd: %g %g %g\n",minv,maxv,summ);
+      //printf("minmax grd: %g %g %g\n",minv,maxv,summ);
     }
   }else if ((fileType==321)||(fileType==125)){// ein cube file hoffentlich oder ein ?ed file 
     isoF.open(QIODevice::ReadOnly);
@@ -2763,7 +2763,7 @@ void MolIso::makePlane(QList<Vector3> &lines,int a1, int a2, int a3) {
           minv=qMin(data.at(ii),minv);
           maxv=qMax(data.at(ii),maxv);
         }
-        printf("minmax m81: %g %g mean: %g %g\n",minv,maxv,meanv/data.size(),meanv/data.size()*mol.zelle.V);
+        //printf("minmax m81: %g %g mean: %g %g\n",minv,maxv,meanv/data.size(),meanv/data.size()*mol.zelle.V);
       }
       free(floatdat);
       cubeiso=true;
@@ -2793,7 +2793,7 @@ void MolIso::makePlane(QList<Vector3> &lines,int a1, int a2, int a3) {
           rmax=fmax(data.at(i),rmax);
 
         }
-        printf("minmax raw: %g %g mean: %g %g\n",rmin,rmax,meanv/data.size(),meanv/data.size()*mol.zelle.V);
+        //printf("minmax raw: %g %g mean: %g %g\n",rmin,rmax,meanv/data.size(),meanv/data.size()*mol.zelle.V);
         free(headdummy);
         free(doubdat);
       }
@@ -2805,8 +2805,8 @@ void MolIso::makePlane(QList<Vector3> &lines,int a1, int a2, int a3) {
 
   test3= ((breite-1)/-2.0) *  x_dim + ((hoehe-1)/-2.0) * y_dim + ((tiefe-1)/-2.0) * z_dim + orig;
   if (cubeiso) test3 =orig;
-  printf("cubeiso %d %g %g %g\n",cubeiso,test3.x,test3.y,test3.z);
-  printf("%d %d %d < %d\n",a1,a2,a3,xdinp.size());
+  //printf("cubeiso %d %g %g %g\n",cubeiso,test3.x,test3.y,test3.z);
+  printf("Atomindices: %d %d %d < %d\n",a1,a2,a3,xdinp.size());
   //fprintf(stderr, "makePlane %d %p\n",asymmUnit.size(),nodex);
   if ((a1>=xdinp.size())||(a2>=xdinp.size())||(a3>=xdinp.size())) return;
   if ((a1<0)||(a2<0)||(a3<0)) return;
@@ -2820,7 +2820,7 @@ void MolIso::makePlane(QList<Vector3> &lines,int a1, int a2, int a3) {
   Vector3 a3v=Vector3(xdinp.at(a3).kart.x,xdinp.at(a3).kart.y,xdinp.at(a3).kart.z);
   pnormal = Normalize((a2v - a1v) % (a3v - a1v));
   aufpunkt = Vector3(xdinp.at(a1).kart.x,xdinp.at(a1).kart.y,xdinp.at(a1).kart.z);
-  printf("%g  %g %g %g   %g %g %g\n",Norm(pnormal),pnormal.x,pnormal.y,pnormal.z,aufpunkt.x,aufpunkt.y,aufpunkt.z);
+  //printf("%g  %g %g %g   %g %g %g\n",Norm(pnormal),pnormal.x,pnormal.y,pnormal.z,aufpunkt.x,aufpunkt.y,aufpunkt.z);
   double angle = winkel(pnormal, Vector3(0,0,1))/180.0*M_PI;
   Vector3 ax= Normalize(pnormal % Vector3(0,0,1));
   double cp = cos(angle), cp1 = 1.0 - cos(angle), sp = sin(angle);
@@ -2830,11 +2830,11 @@ void MolIso::makePlane(QList<Vector3> &lines,int a1, int a2, int a3) {
        Z*sp+cp1*X*Y,    cp+cp1*Y*Y, -X*sp+cp1*Y*Z, 
       -Y*sp+cp1*X*Z,  X*sp+cp1*Y*Z,    cp+cp1*Z*Z);
   V3 bv=ROT*Normalize(V3(a2v.x-a1v.x,a2v.y-a1v.y,a2v.z-a1v.z));
-  printf("BV %g %g %g\n",bv.x,bv.y,bv.z);
+  //printf("BV %g %g %g\n",bv.x,bv.y,bv.z);
   double bww=mol.winkel(bv,V3( 1,0,0))/180.0*M_PI;
   cp=cos(bww);
   sp=sin(bww);
-  printf("%g %g %g\n",bww*180.0/M_PI,cp,sp);
+  //printf("%g %g %g\n",bww*180.0/M_PI,cp,sp);
   Matrix R2 = Matrix(
       cp, sp, 0,
      -sp, cp, 0,
@@ -2848,10 +2848,10 @@ void MolIso::makePlane(QList<Vector3> &lines,int a1, int a2, int a3) {
        0,  0, 1);//*/
   
   } 
-  printf("BV %g %g %g %g\n",bv.x,bv.y,bv.z,bww);
+  //printf("BV %g %g %g %g\n",bv.x,bv.y,bv.z,bww);
   V3 vt = ROT * V3(pnormal.x, pnormal.y, pnormal.z);
   vt = R2*vt;
-  printf("ang %g %g %g \n%12.6f %12.6f %12.6f \n%g %g\n%g\n",angle/M_PI*180.0, pnormal*ax,ax*Vector3(0,0,1), vt.x, vt.y, vt.z,determinant(ROT),Norm(ax),winkel(a1v,Vector3(0,1,0)));
+  //printf("ang %g %g %g \n%12.6f %12.6f %12.6f \n%g %g\n%g\n",angle/M_PI*180.0, pnormal*ax,ax*Vector3(0,0,1), vt.x, vt.y, vt.z,determinant(ROT),Norm(ax),winkel(a1v,Vector3(0,1,0)));
   //fprintf(stderr, "makePlane\n");
   for( int ix=0; ix<breite; ix++ ){
     for( int iy=0; iy<hoehe; iy++ ){
@@ -2872,12 +2872,12 @@ void MolIso::makePlane(QList<Vector3> &lines,int a1, int a2, int a3) {
     maxP=fmax(Planorte.at(i).color,maxP);
   }
 
-  fprintf(stderr, "makePlane Planpgns.size = %d Planorte.size = %d minP = %g maxP = %g\n",Planpgns.size(),Planorte.size(),minP,maxP);
+  //fprintf(stderr, "makePlane Planpgns.size = %d Planorte.size = %d minP = %g maxP = %g\n",Planpgns.size(),Planorte.size(),minP,maxP);
   min= 1e37;
   max=-1e37;
   QStringList numbers = QString(contourValueEdit->text()).split(" ",QString::SkipEmptyParts);
   int z=0;
-  printf("ok\n");
+  //printf("ok\n");
   if (!numbers.isEmpty()) contval[0]=numbers.at(0).toFloat();
   for (int i = 0; i < numbers.size(); i++){
     float contour = numbers.at(i).toFloat();
@@ -2889,7 +2889,7 @@ void MolIso::makePlane(QList<Vector3> &lines,int a1, int a2, int a3) {
     }
     z=lines.size();
   }
-  printf("ok %f %f\n",min,max);
+  //printf("ok %f %f\n",min,max);
   //legende();
   free(nodex);
   nodex=NULL;
@@ -2900,8 +2900,10 @@ void MolIso::makePlane(QList<Vector3> &lines,int a1, int a2, int a3) {
   data.clear();
   Planpgns.clear();
   Planorte.clear();
-  printf("ok\n");
+  //printf("ok\n");
   QList<V3> lin2d;
+  int aspect1=3,aspect2=4;//todo make aspect ratio changable
+  int width=1024*aspect1/aspect2;
   float miX=9.e30,maX=-9.e30;
   float miY=9.e30,maY=-9.e30;
   V3 v1;//,v2=V3(99,99,99);
@@ -2920,7 +2922,7 @@ void MolIso::makePlane(QList<Vector3> &lines,int a1, int a2, int a3) {
   printf("!%d == %d! %f < X < %f, %f < Y < %f \n",lin2d.size(),lines.size(),miX,maX,miY,maY);
   if (cScopeBx->value() > 0.0){
     double XX=cScopeBx->value();
-    double YY=XX/4.0*3.0;
+    double YY=(XX*aspect1)/aspect2;//todo make aspect ratio changable
     miX=-XX;
     miY=-YY;
     maX= XX;
@@ -2932,10 +2934,10 @@ void MolIso::makePlane(QList<Vector3> &lines,int a1, int a2, int a3) {
     return;}
 
 //      ||(!QFile::exists (contEPSFile->text()))) 
+
   FILE *f=fopen(contEPSFile->text().toLocal8Bit(),"wt");
+  fprintf(f,"%s%d\n","%!PS-Adobe-3.0 ESPF 3.0\n%%BoundingBox: 0 0 1024 ",width);
   fprintf(f,"%s",
-"%!PS-Adobe-3.0 ESPF 3.0\n"
-"%%BoundingBox: 0 0 1024 768\n"
 "%%Title: MoleCoolQt Contour Plot\n"
 "%%Creator: Christian B. Hubschle\n"
 "%%Pages: 1\n"
@@ -2985,7 +2987,7 @@ void MolIso::makePlane(QList<Vector3> &lines,int a1, int a2, int a3) {
     if (fabs(ato.z)<0.2){
       double rad=(xdinp[i].OrdZahl>-1)?mol.arad[xdinp[i].OrdZahl]:0.15;
       fprintf(f,"n %G %G %G 0 360 arc cp gs %g %g %g srgb fill s gr%% %g %s\n",
-          (ato.x-miX)/(maX-miX)*1024, (ato.y-miY)/(maY-miY)*768, rad*50,
+          (ato.x-miX)/(maX-miX)*1024, (ato.y-miY)/(maY-miY)*width, rad*50,
           mol.Acol[xdinp[i].OrdZahl][0], 
           mol.Acol[xdinp[i].OrdZahl][1], 
           mol.Acol[xdinp[i].OrdZahl][2],ato.z,
@@ -3001,8 +3003,8 @@ void MolIso::makePlane(QList<Vector3> &lines,int a1, int a2, int a3) {
     if ((end.x>maX)||(end.x<miX)||(end.y>maY)||(end.y<miY)) continue;
     if ((fabs(anf.z)<0.2)&&(fabs(end.z)<0.2))
     fprintf(f,"n %G %G m %G %G l cp s\n",
-        (anf.x-miX)/(maX-miX)*1024, (anf.y-miY)/(maY-miY)*768,
-        (end.x-miX)/(maX-miX)*1024, (end.y-miY)/(maY-miY)*768);
+        (anf.x-miX)/(maX-miX)*1024, (anf.y-miY)/(maY-miY)*width,
+        (end.x-miX)/(maX-miX)*1024, (end.y-miY)/(maY-miY)*width);
 
   }
 
@@ -3032,16 +3034,16 @@ void MolIso::makePlane(QList<Vector3> &lines,int a1, int a2, int a3) {
     if ((lin2d.at(2*i  ).x>maX)||(lin2d.at(2*i  ).x<miX)||(lin2d.at(2*i  ).y>maY)||(lin2d.at(2*i  ).y<miY)) continue;
     if ((lin2d.at(2*i+1).x>maX)||(lin2d.at(2*i+1).x<miX)||(lin2d.at(2*i+1).y>maY)||(lin2d.at(2*i+1).y<miY)) continue;
     fprintf(f,"n %G %G m %G %G l cp gs %g %g %g srgb 0.5 slw s gr\n",
-        (lin2d.at(2*i  ).x-miX)/(maX-miX)*1024, (lin2d.at(i*2  ).y-miY)/(maY-miY)*768, 
-        (lin2d.at(2*i+1).x-miX)/(maX-miX)*1024, (lin2d.at(i*2+1).y-miY)/(maY-miY)*768,red,green,blue);
+        (lin2d.at(2*i  ).x-miX)/(maX-miX)*1024, (lin2d.at(i*2  ).y-miY)/(maY-miY)*width, 
+        (lin2d.at(2*i+1).x-miX)/(maX-miX)*1024, (lin2d.at(i*2+1).y-miY)/(maY-miY)*width,red,green,blue);
   }
   for (int i=0; i<xdinp.size(); i++){
     V3 ato=R2*(ROT*(xdinp.at(i).kart-V3(aufpunkt.x,aufpunkt.y,aufpunkt.z)));
     if ((ato.x>maX)||(ato.x<miX)||(ato.y>maY)||(ato.y<miY)) continue;
     if (fabs(ato.z)<0.2){
       double rad=(xdinp[i].OrdZahl>-1)?mol.arad[xdinp[i].OrdZahl]:0.15;
-      fprintf(f,"gs n %G %G m (%s) true charpath 1 slw 1 setgray s gr\n",(ato.x-miX)/(maX-miX)*1024+rad*50, (ato.y-miY)/(maY-miY)*768,xdinp.at(i).atomname);
-      fprintf(f,"gs %G %G m (%s) sh gr\n",(ato.x-miX)/(maX-miX)*1024+rad*50, (ato.y-miY)/(maY-miY)*768,xdinp.at(i).atomname);
+      fprintf(f,"gs n %G %G m (%s) true charpath 1 slw 1 setgray s gr\n",(ato.x-miX)/(maX-miX)*1024+rad*50, (ato.y-miY)/(maY-miY)*width,xdinp.at(i).atomname);
+      fprintf(f,"gs %G %G m (%s) sh gr\n",(ato.x-miX)/(maX-miX)*1024+rad*50, (ato.y-miY)/(maY-miY)*width,xdinp.at(i).atomname);
     }
     //    4 5 3 0 360 arc closepath
   }
@@ -3056,7 +3058,7 @@ void MolIso::makePlane(QList<Vector3> &lines,int a1, int a2, int a3) {
       xdinp.at(a3).atomname,
       contourDescription.toStdString().c_str());
   fclose(f);
-  printf("ok\n");
+ // printf("ok\n");
 
 
   }
