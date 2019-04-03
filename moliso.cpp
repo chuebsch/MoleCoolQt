@@ -2952,7 +2952,7 @@ void MolIso::makePlane(QList<Vector3> &lines,int a1, int a2, int a3) {
     return;}
 
 //      ||(!QFile::exists (contEPSFile->text()))) 
-qDebug()<<QDate::currentDate().toString(Qt::ISODate);
+//qDebug()<<QDate::currentDate().toString(Qt::ISODate);
   FILE *f=fopen(contEPSFile->text().toLocal8Bit(),"wt");
   fprintf(f,"%s%d\n","%!PS-Adobe-3.0 EPSF-3.0\n%%BoundingBox: 0 0 1024 ",width);
   fprintf(f,"%s",
