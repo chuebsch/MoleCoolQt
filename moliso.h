@@ -164,6 +164,7 @@ signals:
   int breite, hoehe, tiefe,bh;
   QMap<int,GLfloat> contval;
   QLineEdit *contMapFile, *contourValueEdit, *contEPSFile;
+  QComboBox *aspectRatios, *centerIsOn;
   QDoubleSpinBox *cScopeBx;
   bool calcextrema;
   double untersumme,obersumme;

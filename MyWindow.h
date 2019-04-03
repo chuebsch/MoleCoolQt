@@ -76,6 +76,7 @@ class MyWindow : public QMainWindow {
     QAction *createmoliso,*noMoliso;
     QAction *showface,*showLeg,*movLeg, *mildir;
     QAction *aboutAct;
+    QAction *cntrPlot;
     QLabel *sLabel,*ffl;
     QProgressBar *bar;
     QPushButton *savset, *lodset, *closeFF ;

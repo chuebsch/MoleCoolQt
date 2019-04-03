@@ -62,5 +62,6 @@
         <file>images/adpsphere.png</file>
         <file>images/poly.png</file>
         <file>images/mapcontrol.png</file>
+        <file>images/cont.png</file>
     </qresource>
 </RCC>

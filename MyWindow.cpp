@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=604;
+int rev=606;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -406,7 +406,7 @@ MyWindow::MyWindow( QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(pa
   fileMenu->addAction("Export Fourier Maps",this,SLOT(exportFMaps()));
   fileMenu->addAction(createmoliso);
   fileMenu->addAction(noMoliso);
-  fileMenu->addAction("Create Contour Plot",this, SLOT(contourPlot()));
+  cntrPlot = fileMenu->addAction(QIcon(":images/cont.png"),"Create Contour Plot",this, SLOT(contourPlot()));
   ldipAct = fileMenu->addAction(QIcon(":images/dipole.png"),tr("Load &Dipole moments"),this,SLOT(openDipoleFile()),QKeySequence(tr("D", "File|Load &Dipole moments"))); 
   ldipAct->setWhatsThis("<img src=\":images/dipole.png\"> This loads dipole moments from a file.<br>\
 The first three numbers in a row are taken as xyz of the dipole vector.<br>\
@@ -1080,6 +1080,7 @@ createRenameWgd();
   toolFile->addAction(act3);
   toolFile->addAction(ldipAct);
   toolFile->addAction(nodipAct);
+  toolFile->addAction(cntrPlot);
 
   toolFile->setWhatsThis("This is the file tool bar. You can move it to any window border if you want."
 			 " By clicking right on the menu or tool bar region, you can toggel the tool bars.");
@@ -2163,12 +2164,26 @@ void MyWindow::contourPlot(){
       "#f8f5cd; style=font-size:large;><b><u>Hint:</u></b>"
       "Select 3 atoms before using this feature in order to define a plane.</div>");
   hint->setWordWrap(true);
+  cubeGL->moliso->centerIsOn = new QComboBox(contDlg);
+  cubeGL->moliso->centerIsOn ->addItem("first atom",0);
+  cubeGL->moliso->centerIsOn ->addItem("second atom",1);
+  cubeGL->moliso->centerIsOn ->addItem("third atom",2);
+  cubeGL->moliso->centerIsOn ->addItem("center of 3 atoms",3);
+
+  cubeGL->moliso->aspectRatios = new QComboBox(contDlg);
+  cubeGL->moliso->aspectRatios->addItem("4:3",0);
+  cubeGL->moliso->aspectRatios->addItem("16:9",1);
+  cubeGL->moliso->aspectRatios->addItem("1:1",2);
+  cubeGL->moliso->aspectRatios->setCurrentIndex(0);
+
   QGridLayout *gl = new QGridLayout(contDlg);
   gl->addWidget(contMapFileL, 0, 0, 1, 1);
   gl->addWidget(cubeGL->moliso->contMapFile, 0, 1, 1, 3);
   gl->addWidget(brwsCF, 0, 4, 1, 1);
   gl->addWidget(planeAtomDefL, 1, 0, 1, 1);
-  gl->addWidget(planeAtomDef, 1, 3, 1, 2);
+  gl->addWidget(planeAtomDef, 1, 1, 1, 1);
+  gl->addWidget(new QLabel("Center on",contDlg), 1, 3, 1, 1);
+  gl->addWidget(cubeGL->moliso->centerIsOn, 1, 4, 1, 1);
   gl->addWidget(hint,2,0,1,5);
   gl->addWidget(new QLabel("Contour values",contDlg), 3, 0, 1, 4);
   gl->addWidget(cubeGL->moliso->contourValueEdit, 4, 0, 1, 5);
@@ -2177,6 +2192,9 @@ void MyWindow::contourPlot(){
   gl->addWidget(eAIM,5,2,1,1);
   gl->addWidget(new QLabel("Scope (0 means now restriction)"),6,0,1,1);
   gl->addWidget(cubeGL->moliso->cScopeBx,6,1,1,1);
+  gl->addWidget(new QLabel("Aspect ratio"),6,3,1,1);
+  gl->addWidget(cubeGL->moliso->aspectRatios,6,4,1,1);
+
   gl->addWidget(contEPSFileL, 7, 0, 1, 1);
   gl->addWidget(cubeGL->moliso->contEPSFile, 7, 1, 1, 3);
   gl->addWidget(brwsEPS, 7, 4, 1, 1);

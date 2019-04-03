@@ -2819,7 +2819,20 @@ void MolIso::makePlane(QList<Vector3> &lines,int a1, int a2, int a3) {
   Vector3 a2v=Vector3(xdinp.at(a2).kart.x,xdinp.at(a2).kart.y,xdinp.at(a2).kart.z);
   Vector3 a3v=Vector3(xdinp.at(a3).kart.x,xdinp.at(a3).kart.y,xdinp.at(a3).kart.z);
   pnormal = Normalize((a2v - a1v) % (a3v - a1v));
-  aufpunkt = Vector3(xdinp.at(a1).kart.x,xdinp.at(a1).kart.y,xdinp.at(a1).kart.z);
+  switch (centerIsOn->currentIndex()){
+    case 0: aufpunkt = Vector3(xdinp.at(a1).kart.x,xdinp.at(a1).kart.y,xdinp.at(a1).kart.z);break;
+    case 1: aufpunkt = Vector3(xdinp.at(a2).kart.x,xdinp.at(a2).kart.y,xdinp.at(a2).kart.z);break;
+    case 2: aufpunkt = Vector3(xdinp.at(a3).kart.x,xdinp.at(a3).kart.y,xdinp.at(a3).kart.z);break;
+    case 3: {
+              aufpunkt = (1.0/3.0)*
+                (Vector3(xdinp.at(a1).kart.x,xdinp.at(a1).kart.y,xdinp.at(a1).kart.z)+
+                Vector3(xdinp.at(a2).kart.x,xdinp.at(a2).kart.y,xdinp.at(a2).kart.z)+
+                Vector3(xdinp.at(a3).kart.x,xdinp.at(a3).kart.y,xdinp.at(a3).kart.z));
+              break;
+            }
+    
+  }
+//  aufpunkt = Vector3(xdinp.at(a1).kart.x,xdinp.at(a1).kart.y,xdinp.at(a1).kart.z);
   //printf("%g  %g %g %g   %g %g %g\n",Norm(pnormal),pnormal.x,pnormal.y,pnormal.z,aufpunkt.x,aufpunkt.y,aufpunkt.z);
   double angle = winkel(pnormal, Vector3(0,0,1))/180.0*M_PI;
   Vector3 ax= Normalize(pnormal % Vector3(0,0,1));
@@ -2903,6 +2916,11 @@ void MolIso::makePlane(QList<Vector3> &lines,int a1, int a2, int a3) {
   //printf("ok\n");
   QList<V3> lin2d;
   int aspect1=3,aspect2=4;//todo make aspect ratio changable
+  switch (aspectRatios->currentIndex()) {
+    case 0: aspect1=3,aspect2=4; break;
+    case 1: aspect1=9,aspect2=16; break;
+    case 2: aspect1=1,aspect2=1; break;
+  }
   int width=1024*aspect1/aspect2;
   float miX=9.e30,maX=-9.e30;
   float miY=9.e30,maY=-9.e30;
@@ -2934,13 +2952,16 @@ void MolIso::makePlane(QList<Vector3> &lines,int a1, int a2, int a3) {
     return;}
 
 //      ||(!QFile::exists (contEPSFile->text()))) 
-
+qDebug()<<QDate::currentDate().toString(Qt::ISODate);
   FILE *f=fopen(contEPSFile->text().toLocal8Bit(),"wt");
-  fprintf(f,"%s%d\n","%!PS-Adobe-3.0 ESPF 3.0\n%%BoundingBox: 0 0 1024 ",width);
+  fprintf(f,"%s%d\n","%!PS-Adobe-3.0 EPSF-3.0\n%%BoundingBox: 0 0 1024 ",width);
   fprintf(f,"%s",
 "%%Title: MoleCoolQt Contour Plot\n"
-"%%Creator: Christian B. Hubschle\n"
-"%%Pages: 1\n"
+"%%Creator: MoleCoolQt by Christian B. Hubschle\n");
+  fprintf(f,"%%%%CreationDate: %s\n",QDate::currentDate().toString(Qt::ISODate).toStdString().c_str());
+
+  fprintf(f,"%s",
+//"%%Pages: 1\n"
 "%%EndComments\n"
 "%%BeginProlog\n"
 //"/l { newpath moveto lineto stroke } bind def\n"
@@ -2968,17 +2989,18 @@ void MolIso::makePlane(QList<Vector3> &lines,int a1, int a2, int a3) {
 "/sf {setfont} bind def\n"
 "/scf {scalefont} bind def\n"
 "/sw {stringwidth} bind def\n"
-"%%EndSetup\n"
-"%%Page: 1 1\n"
+//"%%EndSetup\n"
+"%%EndProlog\n"
+//"%%Page: 1 1\n"
 //"gsave\n"
 //"20 20 scale\n"
 //"10 10 translate\n"
-"/Helvetica ff 18 scf sf\n"
-"n 1 1 m 1023 1 l 1023 767 l 1 767 l 1 1 l cp s\n"
+"save\n0 slc 0 slj\n/Helvetica ff 18 scf sf\n");
+fprintf(f,"n 0 0 m 1024 0 l 1024 %d l 0 %d l cp clip s\n",width,width);
+fprintf(f,"n 2 2 m 1023 2 l 1023 %d l 2 %d l cp s \n",width-2,width-2);
 //"0 setgray\n"
 
 
-);
   //Atoms
   for (int i=0; i<xdinp.size(); i++){
     V3 ato=R2*(ROT*(xdinp.at(i).kart-V3(aufpunkt.x,aufpunkt.y,aufpunkt.z)));
@@ -3017,17 +3039,17 @@ void MolIso::makePlane(QList<Vector3> &lines,int a1, int a2, int a3) {
     if (contval.contains(i*2)) {
       if (contval.value(i*2)>0.00001f) {
         red=0.0f;green=0.0f;blue=1.0f;
-        contourDescription.append(QString("|blue@%1, %2 lines|").arg(contval.value(i*2)).arg(i));
+        contourDescription.append(QString("%blue@%1, %2 lines\n").arg(contval.value(i*2)).arg(i));
 //        printf("blau %f %d\n",contval.value(i*2),i);
       }
       else if (contval.value(i*2)<-0.00001f){
         red=1.0f;green=0.0f;blue=0.0f;
-        contourDescription.append(QString("|red@%1, %2 lines|").arg(contval.value(i*2)).arg(i));
+        contourDescription.append(QString("%red@%1, %2 lines\n").arg(contval.value(i*2)).arg(i));
 //        printf("rot %f %d\n",contval.value(i),i);
       }
       else {
         red=0.0f;green=0.0f;blue=0.0f;
-        contourDescription.append(QString("|black@%1, %2 lines|").arg(contval.value(i*2)).arg(i));
+        contourDescription.append(QString("%black@%1, %2 lines\n").arg(contval.value(i*2)).arg(i));
 //        printf("schwarz %f %d\n",contval.value(i*2),i);
       }
     }
@@ -3048,9 +3070,11 @@ void MolIso::makePlane(QList<Vector3> &lines,int a1, int a2, int a3) {
     //    4 5 3 0 360 arc closepath
   }
   fprintf(f,"%s",
-"%%DocumentFonts: Helvetica\n"
-"%%EOF\n"
-);
+      "restore\n"
+      "showpage\n"      
+      "%%Trailer\n"
+      "%%EOF\n"
+      );
   fprintf(f,"%% map: %s\n%% plane: %s %s %s\n%% contours: %s\n",
       contMapFile->text().toStdString().c_str(),
       xdinp.at(a1).atomname,
