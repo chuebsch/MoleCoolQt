@@ -600,32 +600,50 @@ void MolIso::exportObj() {
   base=base.remove(QRegExp("mtl$"));
   QString path=wfmtl.section('/',0, -2);
   //  qDebug()<<wfmtlbase<<path;
+  Vector3 centr=Vector3(0,0,0);
+  for (int i=0; i<orte.size(); i++){
+    centr+=orte.at(i).vertex;
+  }
+  centr*=1.0/orte.size();
   QFile of(wfobj);
   of.open(QIODevice::WriteOnly|QIODevice::Text);
-  of.write(QString("#Created by MoleCoolQt\nmtllib %1\n#%2 vertices %3 faces\nusemtl grad\n").arg(wfmtlbase).arg(orte.size()).arg(pgns.size()).toLatin1());
+  of.write(QString("#Created by MoleCoolQt\nmtllib %1\n#%2 vertices %3 faces\nusemtl grad\no Mesh\n").arg(wfmtlbase).arg(orte.size()).arg(pgns.size()).toLatin1());
   for (int i=0; i<orte.size(); i++){
-    of.write(QString("v  %1 %2 %3\nvn %4 %5 %6\nvt %7     0.0\n")
-        .arg(orte.at(i).vertex.x,12,'f',6) 
-        .arg(orte.at(i).vertex.y,12,'f',6) 
-        .arg(orte.at(i).vertex.z,12,'f',6) 
+    of.write(QString("v  %1 %2 %3\n")
+        .arg(orte.at(i).vertex.x-centr.x,12,'f',6) 
+        .arg(orte.at(i).vertex.y-centr.y,12,'f',6) 
+        .arg(orte.at(i).vertex.z-centr.z,12,'f',6) 
+        .toLatin1()
+        ); 
+  }
+  for (int i=0; i<orte.size(); i++){
+    of.write(QString("vn %1 %2 %3\n")
         .arg(orte.at(i).normal.x,12,'f',6) 
         .arg(orte.at(i).normal.y,12,'f',6) 
         .arg(orte.at(i).normal.z,12,'f',6) 
-        .arg((orte.at(i).color-min)/(max-min),12,'f',6).toLatin1()
+        .toLatin1()
         ); 
   }
+  for (int i=0; i<orte.size(); i++){
+    of.write(QString("vt %1 0.2\n")
+        .arg((orte.at(i).color-min)/(max-min),12,'f',6)
+        .toLatin1()
+        ); 
+  
+  }
   for (int i=0; i<pgns.size();i++){
-    of.write("f ");
-    for (int j=0; j<pgns.at(i).n;j++){
-      int n= pgns.at(i).ii[j]+1;
-      of.write(QString(" %1/%1/%1 ").arg(n).toLatin1());
+    for (int j=1; j<pgns.at(i).n-1;j++){
+      int n= pgns.at(i).ii[0]+1;
+      int m= pgns.at(i).ii[j]+1;
+      int o= pgns.at(i).ii[j+1]+1;
+      of.write(QString("f %1/%1/%1  %2/%2/%2  %3/%3/%3\n").arg(n).arg(m).arg(o).toLatin1());
+    
     }
-    of.write("\n");
   }
   of.close();
   QFile mf(wfmtl);
   mf.open(QIODevice::WriteOnly|QIODevice::Text);
-  mf.write(QString("newmtl grad\nmap_Kd %1png\n").arg(base).toLatin1());
+  mf.write(QString("newmtl grad\nKa 1 1 1\nKs 0.6 0.6 0.6\nmap_Kd %1png\n").arg(base).toLatin1());
   mf.close();
   QPixmap fmap = QPixmap(512,8);
   fmap.fill(QColor(128,128,128,0));
@@ -633,9 +651,10 @@ void MolIso::exportObj() {
   QPen pen;
   for (int i=0; i<512; i++){
     QColor c=farbverlauf(i/512.0);
+    c.setAlpha(255);
     pen.setBrush(c);
     paint->setPen(pen);
-    paint->drawLine(i,1,i,7);
+    paint->drawLine(i,0,i,7);
   }
   paint->end();
   QString fn2=QString("%1/%2png").arg(path).arg(base);
