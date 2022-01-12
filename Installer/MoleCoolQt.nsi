@@ -86,8 +86,6 @@ Section "MoleCoolQt" SecMoleCoolQt
   File ..\release\QtGui4.dll
   File ..\release\QtNetwork4.dll
   File ..\release\libstdc++-6.dll
-  File ..\release\libfftw3f-3.dll
-  File ..\release\libfftw3-3.dll
   File ..\release\libgomp-1.dll
   File ..\release\libwinpthread-1.dll
   File ..\release\libgcc_s_dw2-1.dll

@@ -1,4 +1,14 @@
 #include <QtGui>
+#include <QDialog>
+#include <QFileDialog>
+#include <QPushButton>
+#include <QLineEdit>
+#include <QRadioButton>
+#include <QCheckBox>
+#include <QWidget>
+#include <QLabel>
+//#include <>
+#include <QGridLayout>
 
 class MolisoStartDlg:public QDialog{
 Q_OBJECT

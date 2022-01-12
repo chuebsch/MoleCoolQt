@@ -2,7 +2,8 @@
 #define _HIRSH_H 1
 #include "molekul.h"
 #include "moliso.h"
-#include <fftw3.h>
+//#include <fftw3.h>
+#include "kissfft/kiss_fftnd.h"
 
 typedef struct SFAC{
  char lab[12];
@@ -223,7 +224,7 @@ private:
   void writeM81(double *data, QString fileName);
   void writeM812(double *data, QString fileName);
   int absent(V3 hkl);
-  void genSymmRmap(fftw_complex *map,bool *doneMap, int idx);
+  void genSymmRmap(kiss_fft_cpx *map,bool *doneMap, int idx);
 public slots:
  
   void changeExpansion(double d); 
@@ -239,7 +240,7 @@ public slots:
   void calcESP();
   void raw2xdhkl();
   double checkSymmOfMap(double *map);
-  double checkSymmOfRMap(fftw_complex *map);
+  double checkSymmOfRMap(kiss_fft_cpx *map);
   double dirESP(double *map);
   void dynESPmol();
   void loadIAMPrior();

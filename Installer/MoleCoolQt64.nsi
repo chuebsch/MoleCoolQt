@@ -59,7 +59,7 @@ SetCompressor /SOLID lzma
   !insertmacro MUI_PAGE_INSTFILES
   !define MUI_FINISHPAGE_LINK "Visit the MoleCoolQt site for latest news and versions"
   !define MUI_FINISHPAGE_LINK_LOCATION "http://www.molecoolqt.de" 
-  !define MUI_FINISHPAGE_RUN "$INSTDIR\molecoolQt.exe"
+  !define MUI_FINISHPAGE_RUN "$INSTDIR\molecoolqtQt5-64.exe"
   !define MUI_FINISHPAGE_NOREBOOTSUPPORT
   !insertmacro MUI_PAGE_FINISH
   
@@ -81,24 +81,35 @@ Section "MoleCoolQt64" SecMoleCoolQt
   
  ; SectionIn 1 2 RO
   ;ADD YOUR OWN FILES HERE...
-  File ..\64\molecoolQt.exe
-  File ..\64\QtCore4.dll
-  File ..\64\QtGui4.dll
-  File ..\64\QtNetwork4.dll
-  File ..\64\libstdc++-6.dll
-  File ..\64\libfftw3f-3.dll
-  File ..\64\libfftw3-3.dll
-  File ..\64\libgomp-1.dll
-  File ..\64\libwinpthread-1.dll
-  File ..\64\libgcc_s_seh-1.dll
-  File ..\64\QtOpenGL4.dll
+  File ..\QT564\libgcc_s_seh-1.dll
+  File ..\QT564\libgomp-1.dll
+  File ..\QT564\libstdc++-6.dll
+  File ..\QT564\libwinpthread-1.dll
+  File ..\QT564\molecoolqtQt5-64.exe
+  File ..\QT564\Qt5Core.dll
+  File ..\QT564\Qt5Gui.dll
+  File ..\QT564\Qt5Network.dll
+  File ..\QT564\Qt5OpenGL.dll
+  File ..\QT564\Qt5Svg.dll
+  File ..\QT564\Qt5Widgets.dll
+  Createdirectory "$instdir\platforms"
+  SetOutPath "$INSTDIR\platforms"
+  File ..\QT564\qwindows.dll   
   CreateDirectory "$INSTDIR\imageformats"
-  SetOutPath "$INSTDIR\imageformats"  
-  File ..\64\imageformats\qgif4.dll
-  File ..\64\imageformats\qico4.dll
-  File ..\64\imageformats\qjpeg4.dll
-  File ..\64\imageformats\qmng4.dll
-  File ..\64\imageformats\qtiff4.dll
+  SetOutPath "$INSTDIR\imageformats"
+  File ..\QT564\imageformats\qgif.dll
+  File ..\QT564\imageformats\qicns.dll
+  File ..\QT564\imageformats\qico.dll
+  File ..\QT564\imageformats\qjpeg.dll
+  File ..\QT564\imageformats\qsvg.dll
+  File ..\QT564\imageformats\qtiff.dll
+
+  CreateDirectory "$INSTDIR\iconengines"  
+  SetOutPath "$INSTDIR\iconengines"
+  File ..\QT564\iconengines\qsvgicon.dll
+  CreateDirectory "$INSTDIR\styles"
+  SetOutPath "$INSTDIR\styles"
+  File ..\QT564\styles\qwindowsvistastyle.dll
 
   
   ;Store installation folder
@@ -111,9 +122,9 @@ Section "MoleCoolQt64" SecMoleCoolQt
     
     ;Create shortcuts
     CreateDirectory "$SMPROGRAMS\$StartMenuFolder"
-    CreateShortCut "$SMPROGRAMS\$StartMenuFolder\MoleCoolQt64.lnk" "$INSTDIR\molecoolQt.exe"
-    CreateShortCut "$DESKTOP\MoleCoolQt64.lnk" "$INSTDIR\molecoolQt.exe"                     
-    CreateShortCut "$QUICKLAUNCH\MoleCoolQt64.lnk" "$INSTDIR\molecoolQt.exe"
+    CreateShortCut "$SMPROGRAMS\$StartMenuFolder\MoleCoolQt64.lnk" "$INSTDIR\molecoolqtQt5-64.exe"
+    CreateShortCut "$DESKTOP\MoleCoolQt64.lnk" "$INSTDIR\molecoolqtQt5-64.exe"                     
+    CreateShortCut "$QUICKLAUNCH\MoleCoolQt64.lnk" "$INSTDIR\molecoolqtQt5-64.exe"
     CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Uninstall.lnk" "$INSTDIR\Uninstall.exe"
   
   !insertmacro MUI_STARTMENU_WRITE_END
@@ -156,8 +167,33 @@ Section "Uninstall"
   Delete "$INSTDIR\imageformats\qmng4.dll"
   Delete "$INSTDIR\imageformats\qtiff4.dll"
   Delete "$INSTDIR\Uninstall.exe"
+  
+  
+  Delete "$INSTDIR\libgcc_s_seh-1.dll"
+  Delete "$INSTDIR\libgomp-1.dll"
+  Delete "$INSTDIR\libstdc++-6.dll"
+  Delete "$INSTDIR\libwinpthread-1.dll"
+  Delete "$INSTDIR\molecoolqtQt5-64.exe"
+  Delete "$INSTDIR\Qt5Core.dll"
+  Delete "$INSTDIR\Qt5Gui.dll"
+  Delete "$INSTDIR\Qt5Network.dll"
+  Delete "$INSTDIR\Qt5OpenGL.dll"
+  Delete "$INSTDIR\Qt5Svg.dll"
+  Delete "$INSTDIR\Qt5Widgets.dll"
+  Delete "$INSTDIR\platforms\qwindows.dll"   
+  Delete "$INSTDIR\imageformats\qgif.dll"
+  Delete "$INSTDIR\imageformats\qicns.dll"
+  Delete "$INSTDIR\imageformats\qico.dll"
+  Delete "$INSTDIR\imageformats\qjpeg.dll"
+  Delete "$INSTDIR\imageformats\qsvg.dll"
+  Delete "$INSTDIR\imageformats\qtiff.dll"
+  Delete "$INSTDIR\iconengines\qsvgicon.dll"
+  Delete "$INSTDIR\styles\qwindowsvistastyle.dll"
 
   RMDir "$INSTDIR\imageformats"
+  RMDir "$INSTDIR\iconengines"
+  RMDir "$INSTDIR\platforms"
+  RMDir "$INSTDIR\styles"
   RMDir "$INSTDIR"
   !insertmacro MUI_STARTMENU_GETFOLDER Application $StartMenuFolder
 

@@ -1,3 +1,4 @@
+#include <QtGui>
 #include "molisoStartDlg.h"
 
 MolisoStartDlg::MolisoStartDlg(QWidget *p,QString isoname, QString mapname, QString lfcename, QString sfcename, int check, QString adpname){

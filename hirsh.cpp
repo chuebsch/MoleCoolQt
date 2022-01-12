@@ -504,30 +504,34 @@ void Hirshfeld::dynESP(QString densityIN, QString espOut){
     readMap(D,densityIN);
    // checkSymmOfMap(D);
   }
-  fftw_complex *B,*BP=NULL;//,*BPE;
-  fftw_plan  fwd_plan;
+  kiss_fft_cpx *B,*BP=NULL;//,*BPE;
+  kiss_fftnd_cfg  fwd_plan;
   printf("nx%d ny%d nz%d ntot%d %g\n",nx,ny,nz,ntot,capvx);
   forts->setMaximum(ntot);
   forts->show();
   update();
-  B=(fftw_complex*)fftw_malloc(sizeof(fftw_complex)*ntot);
+  B=(kiss_fft_cpx*)KISS_FFT_MALLOC(sizeof(kiss_fft_cpx)*ntot);
   bool *doneMap=(bool*) malloc(sizeof(bool)*ntot); 
   bool *doneMapp=NULL;
-  BP=(fftw_complex*)fftw_malloc(sizeof(fftw_complex)*ntot);
+  BP=(kiss_fft_cpx*)KISS_FFT_MALLOC(sizeof(kiss_fft_cpx)*ntot);
   doneMapp=(bool*) malloc(sizeof(bool)*ntot); 
-  //  BPE=(fftw_complex*)fftw_malloc(sizeof(fftw_complex)*ntot);
+  //  BPE=(kiss_fft_cpx*)KISS_FFT_MALLOC(sizeof(kiss_fft_cpx)*ntot);
   for (int i=0; i<ntot; i++){
     doneMap[i]=false;
     doneMapp[i]=false;
-    B[i][0]=D[i]*capvx;
-    B[i][1]=0.0;
+    B[i].r=D[i]*capvx;
+    B[i].i=0.0;
   }
   //checkSymmOfRMap(B);
   fillUnitCell2(*au);
   printf("FFT start!\n");
-  fwd_plan = fftw_plan_dft_3d(nz,ny,nx,B,B,FFTW_BACKWARD,FFTW_ESTIMATE);
-  fftw_execute(fwd_plan);
-  fftw_destroy_plan(fwd_plan);
+  int dims[3];//528
+  dims[0]=nz;
+  dims[1]=nz;
+  dims[2]=nz;
+  fwd_plan = kiss_fftnd_alloc(dims,3,1,0,0);
+  kiss_fftnd( fwd_plan,B,B);
+  free(fwd_plan);
 
   printf("FFT end!\n");
   int step=ntot/100;
@@ -553,8 +557,8 @@ void Hirshfeld::dynESP(QString densityIN, QString espOut){
     int h=H.x,k=H.y,l=H.z;
     if (doneMap[m])continue;
     if (absent(H)) {
-      //printf("%4d%4d%4d is systematically absent! A%16.6e B%16.6e m%8d \n",h,k,l,B[m][0],B[m][1],m);
-      B[m][0]=0.0;B[m][1]=0.0; 
+      //printf("%4d%4d%4d is systematically absent! A%16.6e B%16.6e m%8d \n",h,k,l,B[m].r,B[m].i,m);
+      B[m].r=0.0;B[m].i=0.0; 
       genSymmRmap(B,doneMap,m);
       genSymmRmap(BP,doneMapp,m);
       continue;
@@ -581,36 +585,36 @@ void Hirshfeld::dynESP(QString densityIN, QString espOut){
       }
 
 
-      //      printf("%4d%4d%4d  AE%16.6e BE%12.6f m%8d |H|^2%12.6f AP%12.6f BP%12.6f\n",h,k,l,B[m][0],B[m][1],m,stl2,acal,bcal);
-      B[m][0]=acal-B[m][0];
-      if (mol->zelle.centro)B[m][1]=0.0;
-      else B[m][1]=bcal-B[m][1];
-      BP[m][0]=B[m][0];//-B[m][0];//acal; 
-      BP[m][1]=B[m][1];//bcal; 
-      Fcmax=qMax(Fcmax,(double) sqrt(B[m][0]*B[m][0]+B[m][1]*B[m][1]));
-      Fcmin=qMin(Fcmin,(double) sqrt(B[m][0]*B[m][0]+B[m][1]*B[m][1]));
+      //      printf("%4d%4d%4d  AE%16.6e BE%12.6f m%8d |H|^2%12.6f AP%12.6f BP%12.6f\n",h,k,l,B[m].r,B[m].i,m,stl2,acal,bcal);
+      B[m].r=acal-B[m].r;
+      if (mol->zelle.centro)B[m].i=0.0;
+      else B[m].i=bcal-B[m].i;
+      BP[m].r=B[m].r;//-B[m].r;//acal; 
+      BP[m].i=B[m].i;//bcal; 
+      Fcmax=qMax(Fcmax,(double) sqrt(B[m].r*B[m].r+B[m].i*B[m].i));
+      Fcmin=qMin(Fcmin,(double) sqrt(B[m].r*B[m].r+B[m].i*B[m].i));
     }
     else{
-      //      if (stl2==0.0)      printf("%4d%4d%4d  AE%16.6e BE%12.6f m%8d |H|^2%12.6f AP%12.6f BP%12.6f\n",h,k,l,B[m][0],B[m][1],m,stl2,acal,bcal);
+      //      if (stl2==0.0)      printf("%4d%4d%4d  AE%16.6e BE%12.6f m%8d |H|^2%12.6f AP%12.6f BP%12.6f\n",h,k,l,B[m].r,B[m].i,m,stl2,acal,bcal);
       //      printf("stl2 %g\n",stl2);
     }
     if (stl2>0.0){
       //int kk=(int)((s/smax)*100);
-      //FT[kk]+=sqrt(B[m][0]*B[m][0]+B[m][1]*B[m][1]);
-      B[m][0]/=stl2; 
-      B[m][1]/=stl2;
+      //FT[kk]+=sqrt(B[m].r*B[m].r+B[m].i*B[m].i);
+      B[m].r/=stl2; 
+      B[m].i/=stl2;
       genSymmRmap(B,doneMap,m);
       genSymmRmap(BP,doneMapp,m);
       //BPE[m][0]=acal/stl2;
       //BPE[m][1]=bcal/stl2;
-      //Fav[kk]+=sqrt(B[m][0]*B[m][0]+B[m][1]*B[m][1]);
+      //Fav[kk]+=sqrt(B[m].r*B[m].r+B[m].i*B[m].i);
       //nshell[kk]++;
     }else{
-      //BPE[m][0]=B[m][0];
+      //BPE[m][0]=B[m].r;
       //printf("==============%f\n",BPE[m][0]);
-      BP[m][1]=BP[m][0]=0.0;
-      B[m][0]=0.0; 
-      B[m][1]=0.0;
+      BP[m].i=BP[m].r=0.0;
+      B[m].r=0.0; 
+      B[m].i=0.0;
       //BPE[m][1]=0.0;
     } 
 
@@ -634,28 +638,28 @@ void Hirshfeld::dynESP(QString densityIN, QString espOut){
     getHKL(H,m);
     int h=H.x,k=H.y,l=H.z;
     if ((h>0)&&(k==0)&&(l==0)) {
-      dx+=BP[m][1]/h;
-      qxx+=BP[m][0]/(h*h);
+      dx+=BP[m].i/h;
+      qxx+=BP[m].r/(h*h);
     }
     if ((h==0)&&(k>0)&&(l==0)) {
-      dy+=BP[m][1]/k;
-      qyy+=BP[m][0]/(k*k);
+      dy+=BP[m].i/k;
+      qyy+=BP[m].r/(k*k);
     }
     if ((h==0)&&(k==0)&&(l>0)) {
-      dz+=BP[m][1]/l;
-      qzz+=BP[m][0]/(l*l);
+      dz+=BP[m].i/l;
+      qzz+=BP[m].r/(l*l);
     }
     if ((h!=0)&&(k!=0)&&(l==0)) {
-      qxya+=BP[m][0]/(h*k);
-      qxyb+=BP[m][1]/(h*k);
+      qxya+=BP[m].r/(h*k);
+      qxyb+=BP[m].i/(h*k);
     }
     if ((h==0)&&(k!=0)&&(l!=0)) {
-      qyza+=BP[m][0]/(k*l);
-      qyzb+=BP[m][1]/(k*l);
+      qyza+=BP[m].r/(k*l);
+      qyzb+=BP[m].i/(k*l);
     }
     if ((h!=0)&&(k==0)&&(l!=0)) {
-      qzxa=qzxa+BP[m][0]/(h*l);
-      qzxb=qzxb+BP[m][1]/(h*l);
+      qzxa=qzxa+BP[m].r/(h*l);
+      qzxb=qzxb+BP[m].i/(h*l);
     }
   }
   dx/=-M_PI;
@@ -670,26 +674,26 @@ void Hirshfeld::dynESP(QString densityIN, QString espOut){
   double omega=(qxx*mol->zelle.G.m11 + qyy*mol->zelle.G.m22 + qzz*mol->zelle.G.m33 + 2*(qxy*mol->zelle.G.m12 + qzx*mol->zelle.G.m13 + qyz*mol->zelle.G.m23));
   printf("Dipole: %f %f %f\n",dx,dy,dz);
   printf("QXX QYY QZZ\n %f %f %f\nQXY QZX QYZ\n %f %f %f\n omega %f\n V00 %f\n",qxx,qyy,qzz,qxy,qzx,qyz,omega,omega*twopi/(-3.0));
-  B[0][0]=omega*twopi/(-3.0);
-  printf("%f\n",B[0][0]);
+  B[0].r=omega*twopi/(-3.0);
+  printf("%f\n",B[0].r);
   //checkSymmOfRMap(B);
   printf("FFT start!\n");
-  fwd_plan = fftw_plan_dft_3d(nz,ny,nx,B,B,FFTW_FORWARD,FFTW_ESTIMATE);
-  fftw_execute(fwd_plan);
-  fftw_destroy_plan(fwd_plan);
+  fwd_plan = kiss_fftnd_alloc(dims,3,0,0,0);
+  kiss_fftnd( fwd_plan,B,B);
+  free(fwd_plan);
   if (totr){ 
-    fwd_plan = fftw_plan_dft_3d(nz,ny,nx,BP,BP,FFTW_FORWARD,FFTW_ESTIMATE);
-    fftw_execute(fwd_plan);
-    fftw_destroy_plan(fwd_plan);
+    fwd_plan = kiss_fftnd_alloc(dims,3,0,0,0);
+    kiss_fftnd( fwd_plan,BP,BP);
+    free(fwd_plan);
   }
   //  fwd_plan = fftw_plan_dft_3d(nz,ny,nx,BPE,BPE,FFTW_FORWARD,FFTW_ESTIMATE);
-  //  fftw_execute(fwd_plan);
-  //  fftw_destroy_plan(fwd_plan);
-  /*fftw_complex *onedim=(fftw_complex*)fftw_malloc(sizeof(fftw_complex)*200);
+  //  kiss_fftnd( fwd_plan,B,B);
+  //  free(fwd_plan);
+  /*kiss_fft_cpx *onedim=(kiss_fft_cpx*)KISS_FFT_MALLOC(sizeof(kiss_fft_cpx)*200);
     for (int w=0; w<200; w++){onedim[w][0]=Fav[w]; onedim[w][0]=0;}
     fwd_plan = fftw_plan_dft_1d(200,onedim,onedim,FFTW_FORWARD,FFTW_ESTIMATE);
-    fftw_execute(fwd_plan);
-    fftw_destroy_plan(fwd_plan);
+    kiss_fftnd( fwd_plan,B,B);
+    free(fwd_plan);
     FILE *f=fopen("four1d","wt");
     for (int i=0; i<200; i++){
     fprintf(f,"%24.18E %24.18E %24.18E \n",(smax/100.0)*i,onedim[i][0],onedim[i][1]);
@@ -699,8 +703,8 @@ void Hirshfeld::dynESP(QString densityIN, QString espOut){
   printf("FFT end!\n");
   double mean=0;
   for (int i=0; i<ntot; i++){
-    D[i]=B[i][0]/(mol->zelle.V*M_PI);
-    if (totr) protrho[i]=BP[i][0]/mol->zelle.V;
+    D[i]=B[i].r/(mol->zelle.V*M_PI);
+    if (totr) protrho[i]=BP[i].r/mol->zelle.V;
     //   protesp[i]=BPE[i][0]/(mol->zelle.V*M_PI);
     mean+=D[i];
   }
@@ -879,22 +883,26 @@ void Hirshfeld::dynESPmol(){
     D=(double*)malloc(sizeof(double)*ntot);
     readMap(D,DensityOut);
   }
-  fftw_complex *B;
-  fftw_plan  fwd_plan;
+  kiss_fft_cpx *B;
+  kiss_fftnd_cfg  fwd_plan;
   printf("nx%d ny%d nz%d ntot%d %g\n",nx,ny,nz,ntot,capvx);
   forts->setMaximum(ntot);
   forts->show();
   update();
-  B=(fftw_complex*)fftw_malloc(sizeof(fftw_complex)*ntot);
+  B=(kiss_fft_cpx*)KISS_FFT_MALLOC(sizeof(kiss_fft_cpx)*ntot);
   for (int i=0; i<ntot; i++){
-    B[i][0]=D[i]*capvx;
-    B[i][1]=0.0;
+    B[i].r=D[i]*capvx;
+    B[i].i=0.0;
   }
 
   printf("FFT start!\n");
-  fwd_plan = fftw_plan_dft_3d(nz,ny,nx,B,B,FFTW_BACKWARD,FFTW_ESTIMATE);
-  fftw_execute(fwd_plan);
-  fftw_destroy_plan(fwd_plan);
+  int dims[3];//899
+  dims[0]=nz;
+  dims[1]=nz;
+  dims[2]=nz;
+  fwd_plan = kiss_fftnd_alloc(dims,3,1,0,0);
+  kiss_fftnd( fwd_plan,B,B);
+  free(fwd_plan);
 
   printf("FFT end!\n");
   int step=ntot/100;
@@ -921,46 +929,46 @@ void Hirshfeld::dynESPmol(){
       }
 
 
-      //      printf("%4d%4d%4d  AE%16.6e BE%12.6f m%8d |H|^2%12.6f AP%12.6f BP%12.6f\n",h,k,l,B[m][0],B[m][1],m,stl2,acal,bcal);
-      B[m][0]=acal-B[m][0];
-      if (mol->zelle.centro)B[m][1]=0.0;
-      else B[m][1]=bcal-B[m][1];
+      //      printf("%4d%4d%4d  AE%16.6e BE%12.6f m%8d |H|^2%12.6f AP%12.6f BP%12.6f\n",h,k,l,B[m].r,B[m].i,m,stl2,acal,bcal);
+      B[m].r=acal-B[m].r;
+      if (mol->zelle.centro)B[m].i=0.0;
+      else B[m].i=bcal-B[m].i;
     }
     else{
-      //      printf("%4d%4d%4d  AE%16.6e BE%12.6f m%8d |H|^2%12.6f AP%12.6f BP%12.6f\n",h,k,l,B[m][0],B[m][1],m,stl2,acal,bcal);
+      //      printf("%4d%4d%4d  AE%16.6e BE%12.6f m%8d |H|^2%12.6f AP%12.6f BP%12.6f\n",h,k,l,B[m].r,B[m].i,m,stl2,acal,bcal);
     }
     if ((h>0)&&(k==0)&&(l==0)) {
-      dx+=B[m][1]/h;
-      qxx+=B[m][0]/(h*h);
+      dx+=B[m].i/h;
+      qxx+=B[m].r/(h*h);
     }
     if ((h==0)&&(k>0)&&(l==0)) {
-      dy+=B[m][1]/k;
-      qyy+=B[m][0]/(k*k);
+      dy+=B[m].i/k;
+      qyy+=B[m].r/(k*k);
     }
     if ((h==0)&&(k==0)&&(l>0)) {
-      dz+=B[m][1]/l;
-      qzz+=B[m][0]/(l*l);
+      dz+=B[m].i/l;
+      qzz+=B[m].r/(l*l);
     }
     if ((h!=0)&&(k!=0)&&(l==0)) {
-      qxya+=B[m][0]/(h*k);
-      qxyb+=B[m][1]/(h*k);
+      qxya+=B[m].r/(h*k);
+      qxyb+=B[m].i/(h*k);
     }
     if ((h==0)&&(k!=0)&&(l!=0)) {
-      qyza+=B[m][0]/(k*l);
-      qyzb+=B[m][1]/(k*l);
+      qyza+=B[m].r/(k*l);
+      qyzb+=B[m].i/(k*l);
     }
     if ((h!=0)&&(k==0)&&(l!=0)) {
-      qzxa=qzxa+B[m][0]/(h*l);
-      qzxb=qzxb+B[m][1]/(h*l);
+      qzxa=qzxa+B[m].r/(h*l);
+      qzxb=qzxb+B[m].i/(h*l);
     }
     if (stl2>0.0){
-      B[m][0]/=stl2; 
-      B[m][1]/=stl2;
+      B[m].r/=stl2; 
+      B[m].i/=stl2;
     }else{
-      B[m][0]=0.0; 
-      B[m][1]=0.0;
+      B[m].r=0.0; 
+      B[m].i=0.0;
     } 
-    //  printf("%4d%4d%4d  A%16.6e B%12.6f m%8d |H|^2%12.6f\n",h,k,l,B[m][0],B[m][1],m,stl2);
+    //  printf("%4d%4d%4d  A%16.6e B%12.6f m%8d |H|^2%12.6f\n",h,k,l,B[m].r,B[m].i,m,stl2);
   }
   dx/=-M_PI;
   dy/=-M_PI;
@@ -974,15 +982,15 @@ void Hirshfeld::dynESPmol(){
   double omega=(qxx*mol->zelle.G.m11 + qyy*mol->zelle.G.m22 + qzz*mol->zelle.G.m33 + 2*(qxy*mol->zelle.G.m12 + qzx*mol->zelle.G.m13 + qyz*mol->zelle.G.m23));
   printf("Dipole: %f %f %f\n",dx,dy,dz);
   printf("QXX QYY QZZ\n %f %f %f\nQXY QZX QYZ\n %f %f %f\n omega %f\n V00 %f\n",qxx,qyy,qzz,qxy,qzx,qyz,omega,omega*twopi/(-3.0));
-  B[0][0]=omega*twopi/(-3.0);
+  B[0].r=omega*twopi/(-3.0);
   printf("FFT start!\n");
-  fwd_plan = fftw_plan_dft_3d(nz,ny,nx,B,B,FFTW_FORWARD,FFTW_ESTIMATE);
-  fftw_execute(fwd_plan);
-  fftw_destroy_plan(fwd_plan);
+  fwd_plan = kiss_fftnd_alloc(dims,3,0,0,0);
+  kiss_fftnd( fwd_plan,B,B);
+  free(fwd_plan);
   printf("FFT end!\n");
   double mean=0;
   for (int i=0; i<ntot; i++){
-    D[i]=B[i][0]/(mol->zelle.V*M_PI);
+    D[i]=B[i].r/(mol->zelle.V*M_PI);
     mean+=D[i];
   }
   mean/=ntot;
@@ -1464,7 +1472,7 @@ double Hirshfeld::checkSymmOfMap(double *map){
 
 }
 
-void Hirshfeld::genSymmRmap(fftw_complex *map,bool *doneMap, int idx){
+void Hirshfeld::genSymmRmap(kiss_fft_cpx *map,bool *doneMap, int idx){
   V3 hkl=V3(0,0,0);
   getHKL(hkl,idx);
   const double twopi=2.0*M_PI;
@@ -1481,15 +1489,15 @@ void Hirshfeld::genSymmRmap(fftw_complex *map,bool *doneMap, int idx){
     if (doneMap[stot]) continue;
     sn=sin(phaseshift);
     cs=cos(phaseshift);
-    map[stot][0]= (map[idx][0]*cs) + (map[idx][1]*sn);
-    map[stot][1]= (map[idx][1]*cs) - (map[idx][0]*sn);
+    map[stot].r= (map[idx].r*cs) + (map[idx].i*sn);
+    map[stot].i= (map[idx].i*cs) - (map[idx].r*sn);
     doneMap[stot]=true;
 
   }
 
 }
 
-double Hirshfeld::checkSymmOfRMap(fftw_complex *map){
+double Hirshfeld::checkSymmOfRMap(kiss_fft_cpx *map){
   double err=0.0,er,twopi=2.0*M_PI,sn,cs,A,B;
   int  stot,sx,sy,sz,ttot;
   const double g2r=180.0/M_PI;
@@ -1513,9 +1521,9 @@ double Hirshfeld::checkSymmOfRMap(fftw_complex *map){
       stot=sx+(sy+sz*ny)*nx;
       sn=sin(phaseshift);
       cs=cos(phaseshift);
-      A=(map[itot][0]*cs)+(map[itot][1]*sn);
-      B=(map[itot][1]*cs)-(map[itot][0]*sn);
-      er=fabs(A-(map[stot][0]));
+      A=(map[itot].r*cs)+(map[itot].i*sn);
+      B=(map[itot].i*cs)-(map[itot].r*sn);
+      er=fabs(A-(map[stot].r));
       if (er>0.01) {
         mol->printm(mol->zelle.symmops.at(n));
         qDebug()<<mol->encodeSymm(n);
@@ -1527,8 +1535,8 @@ double Hirshfeld::checkSymmOfRMap(fftw_complex *map){
             hkl.x, hkl.y, hkl.z, 
             shkl.x, shkl.y, shkl.z, 
             sx, sy, sz,
-            map[itot][0],map[itot][1],
-            map[stot][0],map[stot][1],A,B,phaseshift*g2r,er,itot,stot,ttot);//,tx,ty,tz);
+            map[itot].r,map[itot].i,
+            map[stot].r,map[stot].i,A,B,phaseshift*g2r,er,itot,stot,ttot);//,tx,ty,tz);
       }// */
       err+=er;
     }
@@ -1649,15 +1657,20 @@ void Hirshfeld::raw2xdhkl(){
     readMap(D,DensityIn);
    // checkSymmOfMap(D);
   }else return;
-  fftw_complex* B=(fftw_complex*)fftw_malloc(sizeof(fftw_complex)*ntot);
+  kiss_fft_cpx* B=(kiss_fft_cpx*)KISS_FFT_MALLOC(sizeof(kiss_fft_cpx)*ntot);
   for (int i=0; i<ntot; i++){
-    B[i][0]=D[i]*capvx;
-    B[i][1]=0.0;
+    B[i].r=D[i]*capvx;
+    B[i].i=0.0;
   }
   printf("FFT start!\n");
-  fftw_plan fwd_plan = fftw_plan_dft_3d(nz,ny,nx,B,B,FFTW_FORWARD,FFTW_ESTIMATE);
-  fftw_execute(fwd_plan);
-  fftw_destroy_plan(fwd_plan);
+
+  int dims[3];
+  dims[0]=nz;
+  dims[1]=nz;
+  dims[2]=nz;
+  kiss_fftnd_cfg fwd_plan = kiss_fftnd_alloc(dims,3,0,0,0);
+  kiss_fftnd( fwd_plan,B,B);
+  free(fwd_plan);
   printf("FFT end!\n");
   FILE *f=fopen("test_xd.hkl","wt");
   fprintf(f,"T            F^2        NDAT    6\n");
@@ -1671,7 +1684,7 @@ void Hirshfeld::raw2xdhkl(){
     }
     stl2=mol->sintl2(h,k,l);
     if (stl2>12.0) continue;//
-    double F2=B[m][0]*B[m][0]+B[m][1]*B[m][1];
+    double F2=B[m].r*B[m].r+B[m].i*B[m].i;
     fprintf(f,"%3d%4d%4d%3d %10.3f %8.3f\n",h,k,l,1,F2,fmax(0.15,0.15*F2));//,sqrt(stl2)/2.0);
   } 
   fclose(f);

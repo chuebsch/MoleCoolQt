@@ -4506,7 +4506,7 @@ for (int i=1; i<24; i++){
     printm(dreh(w2,acos(cosphi)));
   }// */
 int end=1;
-switch (zelle.lattis.toAscii()){
+switch (zelle.lattis.toLatin1()){
   case 'P': end=zelle.symmops.size(); break;
   case 'I': end=zelle.symmops.size()/2; break;
   case 'R': end=zelle.symmops.size()/3; break;
@@ -4882,7 +4882,7 @@ bool molekul::applyLatticeCentro(const QChar latt,const bool centro){
 //printf("om\n%g %g %g \n%g %g %g \n%g %g %g \n\n", mm.m11,mm.m12,mm.m13,mm.m21,mm.m22,mm.m23,mm.m31,mm.m32,mm.m33);
     }
   z=zelle.symmops.size();
-  switch (latt.toAscii()){
+  switch (latt.toLatin1()){
 	  case 'A' :
 		  for (int i=0; i<z;i++){
 		    V3 tt = zelle.trans.at(i)+V3(0.0, 0.5, 0.5);

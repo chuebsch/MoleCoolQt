@@ -472,10 +472,15 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
       DX=1.0/n1;
       DY=1.0/n2;
       DZ=1.0/n3;
+
     }
+    int nbytes,dims[3];
+    dims[0]=n3;
+    dims[1]=n2;
+    dims[2]=n1;
     for (int typ=0; typ<2;typ++){
-      B=(fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*n5);
-      for (int i=0; i<n5; i++){B[i][0]=0;B[i][1]=0;}
+      B=(kiss_fft_cpx*)KISS_FFT_MALLOC(nbytes = (sizeof(kiss_fft_cpx)*n5));  
+      for (int i=0; i<n5; i++){B[i].r=0;B[i].i=0;}
       for (int i=0; i<nr;i++){
         float  u,v,w;
         u=lr[i].ih;
@@ -512,9 +517,9 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
           l=(999*n3+l)%n3;
           m=j+n1*(k+n2*l);
           p=ss*cosf(q);
-          B[m][0]=p;
+          B[m].r=p;
           q=ss*sinf(q);
-          B[m][1]=q;
+          B[m].i=q;
           j*=-1;
           if(j<0)j=n1+j;
           k*=-1;
@@ -522,32 +527,36 @@ bool FourMCQ::loadm80AndPerform(const char filename[],bool neu){
           l*=-1;
           if(l<0)l=n3+l;
           m=j+n1*(k+n2*l);
-          B[m][0]=p;
-          B[m][1]=-q;
+          B[m].r=p;
+          B[m].i=-q;
         }
       }
       if (typ==0) {
         FILE *OOO=fopen("123.hkl","wt");
         for (int i=0; i<n5;i++){
-          if ((B[i][0]!=0.0)||(B[i][1]!=0.0))fprintf(OOO,"%8d %18.9e %18.9e \n",i,B[i][0],B[i][1]);
+          if ((B[i].r!=0.0)||(B[i].i!=0.0))fprintf(OOO,"%8d %18.9e %18.9e \n",i,B[i].r,B[i].i);
         }
         fclose(OOO);
       }
       fprintf(stderr,"Starting Fourier %d %d %d!\n",n1,n2,n3);
-      fwd_plan = fftwf_plan_dft_3d(n3,n2,n1,B,B,FFTW_FORWARD,FFTW_ESTIMATE);
-      fftwf_execute(fwd_plan);
-      fftwf_destroy_plan(fwd_plan);
+      //fwd_plan = fftwf_plan_dft_3d(n3,n2,n1,B,B,FFTW_FORWARD,FFTW_ESTIMATE);
+      //fftwf_execute(fwd_plan);
+      //fftwf_destroy_plan(fwd_plan);
+
+      fwd_plan = kiss_fftnd_alloc(dims,3,0,0,0);
+      kiss_fftnd( fwd_plan,B,B);
+      free(fwd_plan);
       float t=0;
       double DM=0.,  DS=0., DD  ;
       for (int i=0; i<n5;i++){
-        DD=B[i][0];
+        DD=B[i].r;
         DM+=DD;
         DS+=DD*DD;
         if (typ==0) datfo_fc[i]=DD;
         else if (typ==1) datfo[i]=DD;
       }
       sigma[typ]=t=sqrt((DS/n5)-((DM/n5)*(DM/n5)));
-      fftwf_free(B);
+      free(B);
       fprintf(stderr,"Finished! sigma %g %g %g %d\n",t,DS,DM,n5);
     }//1
   }//2
@@ -1132,9 +1141,15 @@ bool FourMCQ::loadDimensionm80AndPerform(const char filename[],bool neu){
       datfo_fc6=(float*) malloc(sizeof(float)*n5);
       datf1_f2=NULL;//(float*) malloc(sizeof(float)*n5);
     } 
+    int nbytes;//,dims[3];
+//    dims[0]=n3;
+//    dims[1]=n2;
+//    dims[2]=n1;
     for (int typ=0; typ<2;typ++){
-      B=(fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*n5);
-      for (int i=0; i<n5; i++){B[i][0]=0;B[i][1]=0;}
+      B=(kiss_fft_cpx*)KISS_FFT_MALLOC(nbytes = (sizeof(kiss_fft_cpx)*n5));  
+      for (int i=0; i<n5; i++){B[i].r=0;B[i].i=0;}
+      //B=(fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*n5);
+      //for (int i=0; i<n5; i++){B[i][0]=0;B[i][1]=0;}
       for (int i=0; i<nr;i++){
         V6 xkl,ykl,zkl;
         xkl.v[0]= m80r[i].h; xkl.v[1]= m80r[i].k; xkl.v[2]= m80r[i].l; xkl.v[3]= m80r[i].m; xkl.v[4]= m80r[i].n; xkl.v[5]= m80r[i].o;
@@ -1173,9 +1188,9 @@ bool FourMCQ::loadDimensionm80AndPerform(const char filename[],bool neu){
           mmx=(mmx>m)?mmx:m;
           mmn=(mmn<m)?mmn:m;
           p=ss*cosf(q);
-          B[m][0]=p;
+          B[m].r=p;
           q=ss*sinf(q);        
-          B[m][1]=q;
+          B[m].i=q;
           
           zkl=ykl;
           for (int iq=0; iq < dimension; iq++){
@@ -1190,8 +1205,8 @@ bool FourMCQ::loadDimensionm80AndPerform(const char filename[],bool neu){
           mmx=(mmx>m)?mmx:m;
           mmn=(mmn<m)?mmn:m;
           nzer++;
-          B[m][0]=p;
-          B[m][1]=-q;
+          B[m].r=p;
+          B[m].i=-q;
         }
       }
 /*      if (typ==1) {
@@ -1218,22 +1233,24 @@ bool FourMCQ::loadDimensionm80AndPerform(const char filename[],bool neu){
         fprintf(stderr,"%8d ",nn[nii]);
       }
       fprintf(stderr,"\n");
-
+/*
       fwd_plan = fftwf_plan_dft(dimension,rnn,B,B,FFTW_FORWARD,FFTW_ESTIMATE);
-      //(int rank, const int *n, C *in, C *out, int sign, unsigned flags)
       fftwf_execute(fwd_plan);
-      fftwf_destroy_plan(fwd_plan);
+      fftwf_destroy_plan(fwd_plan);*/
+      fwd_plan = kiss_fftnd_alloc(rnn,dimension,0,0,0);
+      kiss_fftnd( fwd_plan,B,B);
+      free(fwd_plan);
       float t=0;
       double DM=0.,  DS=0., DD  ;
       for (int i=0; i<n5;i++){
-        DD=B[i][0];
+        DD=B[i].r;
         DM+=DD;
         DS+=DD*DD;
         if (typ==0) datfo_fc6[i]=DD;
         else if (typ==1) datfo6[i]=DD;
       }
       sigma[typ]=t=sqrt((DS/n5)-((DM/n5)*(DM/n5)));
-      fftwf_free(B);
+      free(B);
       fprintf(stderr,"Finished! sigma %g %g %g %d\n",t,DS,DM/n5,n5);
     }//1
   }//2
@@ -1678,13 +1695,16 @@ void FourMCQ::PDFbyFFT(int i, int options,double probab){
   DZ=1./(N3);
   int hi,ki,li;
   double FA,FB,tharm;
-  B=(fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*N5);
-  fftwf_complex *Harm=(fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*N5);
+  int nbytes;
+  //B=(fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*N5);
+  //fftwf_complex *Harm=(fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*N5);
+  B=(kiss_fft_cpx*)KISS_FFT_MALLOC(nbytes = (sizeof(kiss_fft_cpx)*n5));
+  kiss_fft_cpx *Harm=(kiss_fft_cpx*)KISS_FFT_MALLOC(nbytes);
   for (int i=0; i<N5; i++){
-    B[i][0]=0;
-    B[i][1]=0;
-    Harm[i][0]=0;
-    Harm[i][1]=0;
+    B[i].r=0;
+    B[i].i=0;
+    Harm[i].r=0;
+    Harm[i].i=0;
   }
   V3 pos= atom.frac;
   //printf("Calculate %d structure factors for p.d.f. (%d ms)\n",N5,tack.elapsed());
@@ -1731,51 +1751,51 @@ void FourMCQ::PDFbyFFT(int i, int options,double probab){
         if (atom.jtf<3){
           //    a=cos(p);
           //    b=sin(p);
-          //    B[m][0]=FA*a-FB*b;
-          //    B[m][1]=FB*a+FA*b;
+          //    B[m].r=FA*a-FB*b;
+          //    B[m].i=FB*a+FA*b;
           if (!scnd) {TA-=tharm;}
-          B[m][0]=FA;
-          B[m][1]=FB;
-          B[m][0]*=TA/N5;
-          B[m][1]*=TA/N5;
+          B[m].r=FA;
+          B[m].i=FB;
+          B[m].r*=TA/N5;
+          B[m].i*=TA/N5;
           hi=(N1*999-h)%N1;
           ki=(N2*999-k)%N2;
           li=(N3*999-l)%N3;
           mm=hi+N1*(ki+N2*li);
-          B[mm][0]= B[m][0];
-          B[mm][1]=-B[m][1];
-          //   B[mm][0]= B[m][0];
-          //   B[mm][1]=-B[m][1];
+          B[mm].r= B[m].r;
+          B[mm].i=-B[m].i;
+          //   B[mm][0]= B[m].r;
+          //   B[mm][1]=-B[m].i;
         }else{
           //  a=cos(p);
           //  b=sin(p);
-          //  B[m][0]=FA*a-FB*b;
-          //  B[m][1]=FA*b+FB*a;
+          //  B[m].r=FA*a-FB*b;
+          //  B[m].i=FA*b+FB*a;
           if (!frth) {TA=tharm;}
           if (!thrd) {TB=0;}
           if (!scnd) {TA-=tharm;}
-          B[m][0]=FA*TA-FB*TB;
-          B[m][1]=FB*TA+FA*TB;
-          B[m][0]*=1.0/N5;
-          B[m][1]*=1.0/N5;
+          B[m].r=FA*TA-FB*TB;
+          B[m].i=FB*TA+FA*TB;
+          B[m].r*=1.0/N5;
+          B[m].i*=1.0/N5;
           hi=(N1*999-h)%N1;
           ki=(N2*999-k)%N2;
           li=(N3*999-l)%N3;
           mm=hi+N1*(ki+N2*li);
-          B[mm][0]= B[m][0];
-          B[mm][1]=-B[m][1];
+          B[mm].r= B[m].r;
+          B[mm].i=-B[m].i;
         }
-        Harm[m][0]=FA*tharm/N5;
-        Harm[m][1]=FB*tharm/N5;
-        Harm[mm][0]= Harm[m][0];
-        Harm[mm][1]=-Harm[m][1];
+        Harm[m].r=FA*tharm/N5;
+        Harm[m].i=FB*tharm/N5;
+        Harm[mm].r= Harm[m].r;
+        Harm[mm].i=-Harm[m].i;
         if ((h==k)&&(h==l)&&(h==0)) {
-          printf("%4d%4d%4d A%12g B%12g m%d mm%d %g\n",h,k,l,B[m][0]*N5,B[m][1]*N5,m,mm,p);
-          B[m][0]=1000.0/N5;
-          B[m][1]=0.0;
-          printf("%4d%4d%4d A%12g B%12g m%d mm%d\n",h,k,l,B[m][0]*N5,B[m][1]*N5,m,mm);
-          Harm[m][0]=1000.0/N5;
-          Harm[m][1]=0.0;
+          printf("%4d%4d%4d A%12g B%12g m%d mm%d %g\n",h,k,l,B[m].r*N5,B[m].i*N5,m,mm,p);
+          B[m].r=1000.0/N5;
+          B[m].i=0.0;
+          printf("%4d%4d%4d A%12g B%12g m%d mm%d\n",h,k,l,B[m].r*N5,B[m].i*N5,m,mm);
+          Harm[m].r=1000.0/N5;
+          Harm[m].i=0.0;
         }
 
 
@@ -1789,8 +1809,8 @@ void FourMCQ::PDFbyFFT(int i, int options,double probab){
            li*=-1;
            if(li<0)li=N3+li;
            m=hi+N1*(ki+N2*li);
-           B[m][0]=a;
-           B[m][1]=-b;/ * */
+           B[m].r=a;
+           B[m].i=-b;/ * */
     }
   }
 }
@@ -1807,6 +1827,11 @@ int loc;
 V3 dx1=V3(DX,0,0);
 V3 dy1=V3(0,DY,0);
 V3 dz1=V3(0,0,DZ);
+int dims[3];
+dims[0]=n3;
+dims[1]=n2;
+dims[2]=n1;
+
 {
   if (chgl->moliso){
     glDeleteLists(chgl->moliso->mibas,6);
@@ -1850,13 +1875,17 @@ V3 dz1=V3(0,0,DZ);
       fprintf(stderr,"Starting p.d.f.Fourier %d %d %d! (ms %d)\n",N1,N2,N3,tack.elapsed());
   info=QString("Starting p.d.f.Fourier...");
   emit bigmessage(info); 
+  /*
   fwd_plan = fftwf_plan_dft_3d(N3,N2,N1,B,B,FFTW_FORWARD,FFTW_ESTIMATE);
   fftwf_execute(fwd_plan);
-  fftwf_destroy_plan(fwd_plan);
+  fftwf_destroy_plan(fwd_plan);*/
+  fwd_plan = kiss_fftnd_alloc(dims,3,0,0,0);
+  kiss_fftnd( fwd_plan,B,B);
+  free(fwd_plan);
   float t=0,pmin=1e99,pmax=-1e99,boxmin=1e99,boxmax=-1e99;
   int inbox=0;//,imax=0,imin=0;
   for (int i=0,rest,h,k,l,ho,ko,lo; i<N5;i++){
-    DD=B[i][0];
+    DD=B[i].r;
     if (mapping)locat[i]=-1;
     //    if (DD<pmin) imin=i;
     pmin=fmin(DD,pmin);
@@ -1912,7 +1941,7 @@ chgl->moliso->data.append(pdf[i]);
   h = rest;
   printf("%d %g %4d%4d%4d %g\n",imin,B[imin][0],h,k,l,boxmin);
   }//  */
-fftwf_free(B);
+free(B);
   fprintf(stderr,"Finished p.d.f.Fourier sigma %g DS%g DM%g N5%d Vol%g min %g max %g (ms %d) iso 50%% = %g, iso 90%% = %g, 99%% = %g\n",
       t,DS,DM,n8,mole->zelle.V,pmin,pmax,tack.elapsed()
       ,pmax*prob(50.0)
@@ -1922,14 +1951,18 @@ fftwf_free(B);
   info=QString("Finished p.d.f.Fourier. "); 
   double ahpmin=pmin;
   emit bigmessage(info);
+  /*
   fwd_plan = fftwf_plan_dft_3d(N3,N2,N1,Harm,Harm,FFTW_FORWARD,FFTW_ESTIMATE);
   fftwf_execute(fwd_plan);
-  fftwf_destroy_plan(fwd_plan);
+  fftwf_destroy_plan(fwd_plan);*/
+  fwd_plan = kiss_fftnd_alloc(dims,3,0,0,0);
+  kiss_fftnd( fwd_plan,Harm,Harm);
+  free(fwd_plan);
   DM=DS=t=0;
   pmin= 1e99;
   pmax=-1e99;
   for (int i=0; i<N5;i++){
-    DD=Harm[i][0];
+    DD=Harm[i].r;
     if ((mapping)&&(locat[i]!=-1)) pdf[locat[i]]=DD;
     DM+=DD;
     DS+=DD*DD;
@@ -1960,7 +1993,7 @@ chgl->moliso->mdata.append(pdf[i]);
   chgl->setVisible(true);
   chgl->pause=false;
   chgl->updateGL();
-  fftwf_free(Harm);
+  free(Harm);
   fprintf(stderr,"p.d.f. finished after %d ms\n",tack.elapsed());
   double minpct=aborp(pmax,ahpmin);
 if (fabs(minpct)<99.0)  
@@ -2279,6 +2312,10 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu, int maxmap){
     float DX;
     float DY;
     float DZ;	
+    int nbytes,dims[3];
+    dims[0]=n3;
+    dims[1]=n2;
+    dims[2]=n1;
 
 
     {
@@ -2327,8 +2364,9 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu, int maxmap){
       DZ=1.0/n3;
     } 
     for (int typ=0; typ<maxmap;typ++){
-      B=(fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*n5);
-      for (int i=0; i<n5; i++){B[i][0]=0;B[i][1]=0;}
+      //B=(fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*n5);
+      B=(kiss_fft_cpx*)KISS_FFT_MALLOC(nbytes = (sizeof(kiss_fft_cpx)*n5));
+      for (int i=0; i<n5; i++){B[i].r=0;B[i].i=0;}
       for (int i=0; i<nr;i++){
         float fmod1 = sqrtf(lr[i].d4*lr[i].d4+lr[i].d5*lr[i].d5);
         float fmod2 = sqrtf(fc2[i][0]*fc2[i][0]+fc2[i][1]*fc2[i][1]);
@@ -2375,9 +2413,9 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu, int maxmap){
           l=(999*n3+l)%n3;
           m=j+n1*(k+n2*l);
           p=ss*cosf(q);
-          B[m][0]=p;
+          B[m].r=p;
           q=ss*sinf(q);        
-          B[m][1]=q;
+          B[m].i=q;
           j*=-1;
           if(j<0)j=n1+j;
           k*=-1;
@@ -2385,18 +2423,22 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu, int maxmap){
           l*=-1;
           if(l<0)l=n3+l;
           m=j+n1*(k+n2*l);
-          B[m][0]=p;
-          B[m][1]=-q;
+          B[m].r=p;
+          B[m].i=-q;
         }
       }
       fprintf(stderr,"Starting Fourier %d %d %d!\n",n1,n2,n3);
+      /*
       fwd_plan = fftwf_plan_dft_3d(n3,n2,n1,B,B,FFTW_FORWARD,FFTW_ESTIMATE);
       fftwf_execute(fwd_plan);
-      fftwf_destroy_plan(fwd_plan);
+      fftwf_destroy_plan(fwd_plan);*/
+      fwd_plan = kiss_fftnd_alloc(dims,3,0,0,0);
+      kiss_fftnd( fwd_plan,B,B);
+      free(fwd_plan);
       float t=0;
       double DM=0.,  DS=0., DD  ;
       for (int i=0; i<n5;i++){
-        DD=B[i][0];
+        DD=B[i].r;
         DM+=DD;
         DS+=DD*DD;
         switch (typ){
@@ -2407,7 +2449,7 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu, int maxmap){
         }
       }
       if (typ<3)sigma[typ]=t=sqrt((DS/n5)-((DM/n5)*(DM/n5)));
-      fftwf_free(B);
+      free(B);
       fprintf(stderr,"Finished type %d! sigma %g %g %g %d\n",typ+1,t,DS,DM,n5);
     }//1
   }//2

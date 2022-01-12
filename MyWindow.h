@@ -150,7 +150,7 @@ class MyWindow : public QMainWindow {
     void removeDipoleMoments();
     void openRecentFile();
     void saveScene();
-    void printScene();
+//    void printScene();
     void setFFMPEGEXE();
     void setMP4();
     void pdfDlg();

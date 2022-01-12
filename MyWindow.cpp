@@ -12,7 +12,7 @@
 #include "molisoStartDlg.h"
 #include "ewaldsphere.h"
 #include <locale.h>
-int rev=610;
+int rev=615;
 int atmax,smx,dummax,egal;
 V3 atom1Pos,atom2Pos,atom3Pos;
 QList<INP> xdinp,oxd,asymmUnit;
@@ -3194,7 +3194,11 @@ void MyWindow::changeADP(){
   int ad,d=50;
   QAction *action = qobject_cast<QAction *>(sender());
   if (action) d=action->data().toInt();
+#if (QT_VERSION >= 0x040500)
+  if (d==0) d=QInputDialog::getInt(this, "Set ADP probability",tr("Percentage:"), mol.proba, 10, 90, 20, &ok);
+#else
   if (d==0) d=QInputDialog::getInteger(this, "Set ADP probability",tr("Percentage:"), mol.proba, 10, 90, 20, &ok);
+#endif
   else mol.proba=d;
   if (ok) {
     if ((d==10)||(d==30)||(d==50)||(d==70)||(d==90))
@@ -3303,6 +3307,7 @@ void MyWindow::saveScene(){
   cubeGL->updateGL();
 }
 
+/*
 void MyWindow::printScene(){
   glGetDoublev(GL_MODELVIEW_MATRIX,cubeGL->MM);
   QPrinter printer(QPrinter::HighResolution);
@@ -3329,6 +3334,7 @@ void MyWindow::printScene(){
     cubeGL->updateGL();
   }
 }
+*/
 
 double &Cjkl(INP &a,int j, int k, int l){
 int pro=j*k*l;
@@ -3821,7 +3827,7 @@ void MyWindow::load_MoPro(QString fileName) {
                 if ((tok.size()>2 )&&(tok.at(0).toUpper()=="SYMM")){
                     int nsym = tok.at(1).toInt();
                     char gitt;
-                    gitt=tok.at(2).toAscii()[0];
+                    gitt=tok.at(2).toLatin1()[0];
                     for (int k=li+1; k<(li+1+nsym); k++){
                         mol.decodeSymmCard(all.at(k));
                     }
@@ -9905,7 +9911,7 @@ void MyWindow::paintEvent(QPaintEvent *){
 void MyWindow::updateTime() {
    QDateTime Time = QDateTime::currentDateTime();
    QString text = Time.toString("dd.MM.yyyy hh:mm:ss");
-   time->setNumDigits(text.size()+1);
+   time->setDigitCount(text.size()+1);
    time->display(text);
 
 }

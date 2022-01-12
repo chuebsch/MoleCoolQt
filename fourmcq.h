@@ -5,7 +5,8 @@
 #include <math.h>
 #include <ctype.h>
 #include <string.h>
-#include <fftw3.h>
+//#include <fftw3.h>
+#include "kissfft/kiss_fftnd.h"
 #include "molekul.h"
 #include "cubeGL.h"
 #include <QObject>
@@ -137,8 +138,10 @@ Q_OBJECT
 	  inline int Intersect( double& vm, double& vp ){ return vm*vp <= 0.0 && (vm<0.0 || vp<0.0); }
       QString path,title;
 	  V3  delDA[27];
-	  fftwf_plan  fwd_plan;
-          fftwf_complex *B,*B6;
+	  //fftwf_plan  fwd_plan;
+          //fftwf_complex *B,*B6;
+          kiss_fftnd_cfg fwd_plan;
+          kiss_fft_cpx *B,*B6;
           FNode *nodex,*nodey,*nodez;
           rec128 llr[LM];
 	  rec64 lr[LM];
