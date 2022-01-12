@@ -1,0 +1,10 @@
+Makefile
+Makefile.release
+Makefile.debug
+MoleCoolQt.pro.user
+moc_*.cpp
+*.exe
+*.obj
+*.o
+qrc_icons.cpp
+molecoolqt.res
