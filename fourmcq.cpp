@@ -2313,9 +2313,6 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu, int maxmap){
     float DY;
     float DZ;	
     int nbytes,dims[3];
-    dims[0]=n3;
-    dims[1]=n2;
-    dims[2]=n1;
 
 
     {
@@ -2362,6 +2359,9 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu, int maxmap){
       DX=1.0/n1;
       DY=1.0/n2;
       DZ=1.0/n3;
+      dims[0]=n3;
+      dims[1]=n2;
+      dims[2]=n1;
     } 
     for (int typ=0; typ<maxmap;typ++){
       //B=(fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex)*n5);
@@ -2427,7 +2427,7 @@ bool FourMCQ::loadFouAndPerform(const char filename[],bool neu, int maxmap){
           B[m].i=-q;
         }
       }
-      fprintf(stderr,"Starting Fourier %d %d %d!\n",n1,n2,n3);
+      fprintf(stderr,"Starting Fourier %d %d %d! %d %d %d %d %d\n",n1,n2,n3,dims[0],dims[1],dims[2],nbytes,n5);
       /*
       fwd_plan = fftwf_plan_dft_3d(n3,n2,n1,B,B,FFTW_FORWARD,FFTW_ESTIMATE);
       fftwf_execute(fwd_plan);
@@ -3411,7 +3411,7 @@ void FourMCQ::gen_surface(bool neu,int imin,int imax){
     */
 //  printf("gen surf is new? %d\n",neu);
   if (!n5) return;
-  static float isoo=-iso[0];
+  static float isoo=-iso[0],iso1=-33.0,iso2=-33.0 ;
   disconnect(chgl,SIGNAL(diffscroll(int ,int )),0,0);
   disconnect(chgl,SIGNAL(neuemitte(V3)),0,0);
   disconnect(chgl,SIGNAL(inimibas()),0,0);
@@ -3532,8 +3532,10 @@ void FourMCQ::gen_surface(bool neu,int imin,int imax){
       .arg(iso[0],6,'g',2)
       .arg(QKeySequence(Qt::ShiftModifier).toString(QKeySequence::NativeText))
       ;
-  if (isoo!=iso[0]) emit bigmessage(info);
+  if ((isoo!=iso[0])||(iso1!=iso[1])||(iso2!=iso[2])) emit bigmessage(info);
   isoo=iso[0];
+  iso1=iso[1];
+  iso2=iso[2];
   connect(chgl,SIGNAL(inimibas()),this,SLOT(inimap()));
   connect(chgl,SIGNAL(neuemitte(V3)),this, SLOT(bewegt(V3)));
   connect(chgl,SIGNAL(diffscroll(int ,int )),this,SLOT(change_iso(int ,int )));
