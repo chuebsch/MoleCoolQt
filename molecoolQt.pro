@@ -4,6 +4,16 @@
 
 TEMPLATE = app
 TARGET = molecoolqt
+
+exists("C:/bn/Python27/Qt"){
+message("console is on")
+CONFIG += console
+}
+!exists("C:/bn/Python27/Qt"){
+message($$QTDIRECTORY)
+message("console is off")
+}
+
 DEPENDPATH += .
 INCLUDEPATH += . 
 QT += opengl
