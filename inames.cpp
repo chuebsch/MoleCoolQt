@@ -94,7 +94,7 @@ QString inames::botostr(int bo){
 }
    
 int ringCodeSort(int rg){// aus ringlort.cc (Invariomtool)
-  int stellen=(int)(log(rg)/log(10))+1;
+  int stellen=static_cast<int>((log(0.0+rg)/log(10.0))+1);
   int *stelle=(int*)malloc(sizeof(int)*stellen);
   int c=rg;
   stelle[0]=c%10;

@@ -1,6 +1,23 @@
 #ifndef MOLEKUL_H
 #define MOLEKUL_H 1
 #include <math.h>
+#ifndef fmin
+#define fmin(x, y) (((x) < (y)) ? (x) : (y))
+#endif
+#ifndef fmax
+#define fmax(x, y) (((x) > (y)) ? (x) : (y))
+#endif
+#if defined _MSC_VER &&  _MSC_VER == 1500
+#ifndef round 
+#define round(x) (x<0?ceil((x)-0.5):floor((x)+0.5))
+#endif
+#ifndef trunc
+#define trunc(d) (d>0) ? floor(d) : ceil(d) 
+#endif
+
+#include <float.h>
+#define finite _finite
+#endif
 #include <QList>
 #include <QMap>
 #include <QSettings>

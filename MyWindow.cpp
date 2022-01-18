@@ -2231,15 +2231,15 @@ void MyWindow::everyAIM(){
   QString cfs;
   while (val<1e9) {
     cfs.append(QString("%1 ").arg(val));//1
-    val+=1*pow(10,i);
+    val+=1*pow(10.0,i);
     cfs.append(QString("%1 ").arg(val));//2
-    val+=2*pow(10,i);
+    val+=2*pow(10.0,i);
     cfs.append(QString("%1 ").arg(val));//4
-    val+=2*pow(10,i);
+    val+=2*pow(10.0,i);
     cfs.append(QString("%1 ").arg(val));//6
-    val+=2*pow(10,i);
+    val+=2*pow(10.0,i);
     cfs.append(QString("%1 ").arg(val));//8
-    val+=2*pow(10,i);
+    val+=2*pow(10.0,i);
     
     i++;
   }
@@ -2750,7 +2750,7 @@ void MyWindow::setRO(){
   min=(min>0)?min+9:15;
   editor->setReadOnly((spalte<min));
   if ((spalte<min)) {
-    c.movePosition(QTextCursor::Right,QTextCursor::MoveAnchor,fabs(min-spalte));
+    c.movePosition(QTextCursor::Right,QTextCursor::MoveAnchor,static_cast<int>(fabs(0.0+min-spalte)));
     if (c.isNull()) {
       c=editor-> textCursor();
        c.movePosition(QTextCursor::Start,QTextCursor::MoveAnchor);

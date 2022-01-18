@@ -1297,7 +1297,7 @@ void Hirshfeld::prepareMagicNumbers(){
   printf("pixel must be multiples of %d\n",mustbe);
   for (int i=0; i<15; i++){
     for (int j=0; j<7; j++){
-      z=(int)(pow(2,i)*pow(3,j));
+      z=static_cast<int>(pow(2.0,i)*pow(3.0,j));
       if ((z>11)&&(z<5000)&&(0==(z%mustbe)))
         magic.append(z);
     }
